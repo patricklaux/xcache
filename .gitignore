@@ -1,0 +1,52 @@
+### STS ###
+.apt_generated
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+*.iws
+*.iml
+*.ipr
+.idea/
+idea/
+
+### eclipse ignore ###
+Servers/
+.settings/
+.metadata/
+.project
+.classpath
+.factorypath
+.externalToolBuilers/
+
+### NetBeans ###
+/nbproject/private/
+/build/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### maven ignore ###
+bin/
+logs/
+target/
+*.war
+*.zip
+*.tar
+*.tar.gz
+.flattened-pom.xml
+
+### gradle ignore ###
+.gradle
+
+### system ignore ###
+.DS_Store
+Thumbs.db
+
+### temp ignore ###
+*.log
+*.cache
+*.diff
+*.patch
+*.tmp

@@ -1,0 +1,174 @@
+xcache:
+  redis:
+    - id: primaryRedisProperties
+      lettuce:
+
+
+  beans:
+    - class: com.igeeksky.xcache.extension.compress.GzipCompressorProvider
+      type: compressor
+      id: gzipCompressorProvider
+    - class: com.igeeksky.xcache.serialization.jackson.Jackson2JsonSerializerProvider
+      type: serializer
+      id: jackson2JsonSerializerProvider
+    - class: com.igeeksky.xcache.serializer.jackson.GenericJackson2JsonSerializerProvider
+      type: serializer
+      id: genericJackson2JsonSerializerProvider
+    - class: com.igeeksky.xcache.extension.contain.AlwaysTruePredicateProvider
+      type: cache-lock
+      id: alwaysTruePredicateProvider
+    - class:
+      type: cache-update
+      id: noOpCacheUpdatePublisherProvider
+      constructor:
+
+    - class:
+      type: cache-statistic
+      id: noOpCacheStatisticsProvider
+      constructor:
+
+    - class:
+      type: cache-monitor
+      id: noOpCacheStatisticsProvider
+      constructor:
+
+    - class:
+      type: cache-loader
+      id: noOpCacheStatisticsProvider
+      constructor:
+
+    - class:
+      type: event-serializer
+      id: noOpCacheStatisticsProvider
+      constructor:
+
+    - class: com.igeeksky.xcache.redis.lettuce.LettuceRedisWriterProvider
+      type:
+      id: primaryLettuceRedisWriterProvider
+      constructor:
+        redisProperties:
+          index: 0
+          ref: primaryRedisProperties
+    - class: com.igeeksky.xcache.redis.lettuce.LettuceRedisWriterProvider
+      type:
+      id: secondaryLettuceRedisWriterProvider
+      constructor:
+        redisProperties:
+          index: 0
+          ref: secondaryLettuceRedisProperties
+    - class: com.igeeksky.xcache.redis.RedisCacheStoreProvider
+      id: primaryRedisCacheStoreProvider
+      constructor:
+        redisWriterProvider:
+          index: 0
+          ref: primaryLettuceRedisWriterProvider
+    - class: com.igeeksky.xcache.redis.RedisCacheStoreProvider
+      id: secondaryRedisCacheStoreProvider
+      constructor:
+        redisWriterProvider:
+          index: 0
+          ref: secondaryLettuceRedisWriterProvider
+    - class: com.igeeksky.xcache.caffeine.CaffeineCacheStoreProvider
+      id: caffeineCacheStoreProvider
+
+  multi-cache-manager:
+    appliaction: shop
+    charset: UTF-8
+    enable-cache: true
+    enable-cache-proxy: true
+    enable-update-listener:
+    enable-update-broadcast:
+    enable-statistic: true
+    cache-loader:
+    cache-writer:
+    cache-lock:
+    cache-update:
+    contains-predicate:
+    event-serializer:
+    statistic-publisher:
+    statistic-serializer:
+    cache-monitors:
+      - a
+      - b
+    metadata:
+      lock-size: 512
+    caches:
+      - cacheLevel: L1
+        stores:
+          - caffeineCacheStoreProvider
+        caffeine:
+          spec:
+          maximum-size: 4000000
+          expire-after-write: 3600
+          expire-after-access: 3600
+          enable-null-value: true
+          enable-serialize-value: false
+          enable-compress-value: true
+          value-compressor: gzipCompressorProvider
+          value-serializer: jacksonSerializerProvider
+          cache-monitors:
+            - a
+            - b
+      - cacheLevel: L2
+        stores:
+          - primaryRedisCacheStoreProvider
+          - secondaryRedisCacheStoreProvider
+        default-store: primaryRedisCacheStoreProvider
+        redis:
+          store-type: redis-string
+          expire-after-write: 259200
+          namespace:
+          enable-key-prefix: true
+          enable-null-value: true
+          enable-compress-value: true
+          key-serializer: stringSerializerProvider
+          value-serializer: jacksonSerializerProvider
+          value-compressor: gzipCompressorProvider
+          cache-monitors:
+            - a
+            - b
+  multi-caches:
+    - name: user
+      charset: UTF-8
+      enable-cache: true
+      enable-update-listener: true
+      enable-update-broadcast: true
+      enable-statistic: true
+      cache-loader:
+      cache-writer:
+      cache-lock:
+      cache-update:
+      contains-predicate:
+      event-serializer:
+      statistic-publisher:
+      statistic-serializer:
+      cache-monitors:
+        - a
+        - b
+      metadata:
+        lock-size: 512
+      caches:
+        - cacheLevel: L1
+          default-store: caffeineCacheStoreProvider
+          caffeine:
+            spec:
+            maximum-size: 4000000
+            expire-after-write: 3600
+            expire-after-access: 3600
+            enable-null-value: true
+            enable-serialize-value: false
+            enable-compress-value: true
+            value-compressor: gzipCompressorProvider
+            value-serializer: jacksonSerializerProvider
+        - cacheLevel: L2
+          default-store: secondaryRedisCacheStoreProvider
+          redis:
+            store-type: redis-string
+            expire-after-write: 259200
+            namespace:
+            enable-key-prefix: true
+            enable-null-value: true
+            enable-compress-value: true
+            key-serializer: stringSerializerProvider
+            value-serializer: jacksonSerializerProvider
+            value-compressor: gzipCompressorProvider
