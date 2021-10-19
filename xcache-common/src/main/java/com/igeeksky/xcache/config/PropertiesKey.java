@@ -82,19 +82,49 @@ public abstract class PropertiesKey {
     public static final String LOCAL_LOCk_SIZE = "lock-size";
     /* metadata----key----end */
 
-    public static <K, V> boolean getBoolean(Map<K, V> map, K key, boolean defaultValue) {
-        String value = getString(map, key);
-        return (StringUtils.isNotEmpty(value)) ? Boolean.parseBoolean(value) : defaultValue;
+    public static <K, V> Boolean getBoolean(Map<K, V> map, K key, Boolean defaultValue) {
+        V value = getObject(map, key);
+        if (null != value) {
+            if (value instanceof Boolean) {
+                return (boolean) value;
+            } else {
+                String temp = StringUtils.trim(value.toString());
+                if (null != temp) {
+                    return Boolean.valueOf(temp);
+                }
+            }
+        }
+        return defaultValue;
     }
 
     public static <K, V> Integer getInteger(Map<K, V> map, K key, Integer defaultValue) {
-        String value = getString(map, key);
-        return (StringUtils.isNotEmpty(value)) ? Integer.valueOf(value) : defaultValue;
+        V value = getObject(map, key);
+        if (null != value) {
+            if (value instanceof Integer) {
+                return (Integer) value;
+            } else {
+                String temp = StringUtils.trim(value.toString());
+                if (null != temp) {
+                    return Integer.valueOf(temp);
+                }
+            }
+        }
+        return defaultValue;
     }
 
     public static <K, V> Long getLong(Map<K, V> map, K key, Long defaultValue) {
-        String value = getString(map, key);
-        return (StringUtils.isNotEmpty(value)) ? Long.valueOf(value) : defaultValue;
+        V value = getObject(map, key);
+        if (null != value) {
+            if (value instanceof Long) {
+                return (Long) value;
+            } else {
+                String temp = StringUtils.trim(value.toString());
+                if (null != temp) {
+                    return Long.valueOf(temp);
+                }
+            }
+        }
+        return defaultValue;
     }
 
     public static <K, V> String getString(Map<K, V> map, K key, String defaultValue) {
@@ -103,12 +133,17 @@ public abstract class PropertiesKey {
     }
 
     public static <K, V> String getString(Map<K, V> map, K key) {
-        return StringUtils.trim(getObject(map, key).toString());
+        return StringUtils.trim((String) getObject(map, key));
     }
 
     @SuppressWarnings("unchecked")
     public static <K, V> HashMap<String, Object> getHashMap(Map<K, V> map, K key) {
         return (null == map) ? null : (HashMap<String, Object>) map.get(key);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <K, V> HashMap<Object, Object> getObjectHashMap(Map<K, V> map, K key) {
+        return (null == map) ? null : (HashMap<Object, Object>) map.get(key);
     }
 
     public static <K, V> V getObject(Map<K, V> map, K key) {
