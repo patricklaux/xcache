@@ -1,6 +1,8 @@
 package com.igeeksky.xcache.common.writer;
 
-import com.igeeksky.xcache.util.CollectionUtils;
+
+import com.igeeksky.xtool.core.collection.CollectionUtils;
+import com.igeeksky.xtool.core.collection.Maps;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -17,7 +19,7 @@ public interface CacheWriter<K, V> {
     void write(K key, V value);
 
     default Mono<Void> writeAll(Map<? extends K, ? extends V> keyValues) {
-        if (CollectionUtils.isNotEmpty(keyValues)) {
+        if (Maps.isNotEmpty(keyValues)) {
             return Flux.fromIterable(keyValues.entrySet())
                     .filter(Objects::nonNull)
                     .doOnNext(entry -> write(entry.getKey(), entry.getValue()))

@@ -9,7 +9,7 @@ import com.igeeksky.xcache.common.loader.CacheLoader;
 import com.igeeksky.xcache.config.CacheProperties;
 import com.igeeksky.xcache.extension.monitor.CacheMonitor;
 import com.igeeksky.xcache.extension.monitor.CacheMonitorProxy;
-import com.igeeksky.xcache.util.CollectionUtils;
+import com.igeeksky.xtool.core.collection.Maps;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -89,7 +89,7 @@ public abstract class AbstractCacheStore<K, V> extends AbstractCache<K, V> {
                     }
                     return map;
                 })
-                .filter(CollectionUtils::isNotEmpty)
+                .filter(Maps::isNotEmpty)
                 .flatMap(map -> doPutAll(map).doOnNext(vo -> cacheMonitor.afterPutAll(map)));
     }
 

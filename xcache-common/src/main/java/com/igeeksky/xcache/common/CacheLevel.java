@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.common;
 
 
-import com.igeeksky.xcache.util.StringUtils;
+import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -51,7 +51,7 @@ public enum CacheLevel {
     }
 
     public static CacheLevel getByName(String name) {
-        if (StringUtils.isEmpty(name)) {
+        if (StringUtils.hasText(name)) {
             return null;
         }
         String upperCase = name.toUpperCase();

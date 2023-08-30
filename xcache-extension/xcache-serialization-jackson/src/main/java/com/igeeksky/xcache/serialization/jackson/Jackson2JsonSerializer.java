@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.igeeksky.xcache.event.CacheLoadAllEvent;
 import com.igeeksky.xcache.extension.serialization.SerializationFailedException;
 import com.igeeksky.xcache.extension.serialization.ValueSerializer;
-import com.igeeksky.xcache.util.BytesUtils;
+import com.igeeksky.xtool.core.lang.ArrayUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -118,7 +118,7 @@ public class Jackson2JsonSerializer<T> implements ValueSerializer<T> {
 
     @Override
     public T deserialize(byte[] source) {
-        if (BytesUtils.isEmpty(source)) {
+        if (ArrayUtils.isEmpty(source)) {
             return null;
         }
         try {
@@ -134,7 +134,7 @@ public class Jackson2JsonSerializer<T> implements ValueSerializer<T> {
 
     @Override
     public <R> R deserialize(byte[] source, Class<R> type) {
-        if (BytesUtils.isEmpty(source)) {
+        if (ArrayUtils.isEmpty(source)) {
             return null;
         }
         try {

@@ -2,9 +2,8 @@ package com.igeeksky.xcache.store;
 
 import com.igeeksky.xcache.common.annotation.NotNull;
 import com.igeeksky.xcache.extension.serialization.Serializer;
-import com.igeeksky.xcache.util.BytesUtils;
-import com.igeeksky.xcache.util.StringUtils;
-
+import com.igeeksky.xtool.core.lang.ArrayUtils;
+import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -52,7 +51,7 @@ public class CacheKeyPrefix<K> {
     }
 
     public byte[] concatPrefixBytes(K key) {
-        return BytesUtils.merge(keyPrefixBytes, serializer.serialize(key));
+        return ArrayUtils.concat(keyPrefixBytes, serializer.serialize(key));
     }
 
     public K removePrefix(String keyWithPrefix) {

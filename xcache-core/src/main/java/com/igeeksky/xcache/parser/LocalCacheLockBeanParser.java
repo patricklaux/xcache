@@ -1,10 +1,11 @@
 package com.igeeksky.xcache.parser;
 
-import com.igeeksky.xcache.beans.BeanParser;
 import com.igeeksky.xcache.beans.BeanDesc;
 import com.igeeksky.xcache.beans.BeanHolder;
+import com.igeeksky.xcache.beans.BeanParser;
 import com.igeeksky.xcache.config.PropertiesKey;
 import com.igeeksky.xcache.extension.lock.LocalCacheLockProvider;
+import com.igeeksky.xtool.core.collection.Maps;
 
 import java.util.Map;
 
@@ -14,7 +15,9 @@ import java.util.Map;
  */
 public class LocalCacheLockBeanParser implements BeanParser {
 
+    private static final int LOCAL_LOCK_SIZE = 16;
     private final String finalClassName = "com.igeeksky.xcache.extension.lock.LocalCacheLockProvider";
+
 
     @Override
     public String getClassName() {
@@ -29,7 +32,7 @@ public class LocalCacheLockBeanParser implements BeanParser {
         }
 
         Map<String, Object> constructor = beanDesc.getConstructor();
-        Integer lockSize = PropertiesKey.getInteger(constructor, PropertiesKey.METADATA_LOCK_SIZE, null);
+        int lockSize = Maps.getInteger(constructor, PropertiesKey.METADATA_LOCK_SIZE, LOCAL_LOCK_SIZE);
         return new BeanHolder(id, finalClassName, true, () -> new LocalCacheLockProvider(lockSize));
     }
 }

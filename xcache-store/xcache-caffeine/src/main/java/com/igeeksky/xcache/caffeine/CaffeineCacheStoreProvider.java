@@ -13,7 +13,7 @@ import com.igeeksky.xcache.extension.compress.Compressor;
 import com.igeeksky.xcache.extension.monitor.CacheMonitor;
 import com.igeeksky.xcache.extension.serialization.Serializer;
 import com.igeeksky.xcache.store.AbstractCacheStoreProvider;
-import com.igeeksky.xcache.util.StringUtils;
+import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.nio.charset.Charset;
 import java.time.Duration;

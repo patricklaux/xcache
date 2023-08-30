@@ -164,14 +164,7 @@ public class XcacheManager {
 
         int size = cacheList.size();
         if (size > THREE_LEVEL) {
-            Cache<K, V> firstCache = cacheList.get(0);
-            MultiExtension<K, V> multiExtension = MultiExtension.builder(keyType, valueType)
-                    .setMultiCacheProperties(multiProperties)
-                    .setStoreType(ManyLevelCache.STORE_TYPE)
-                    .setFirstCache(firstCache)
-                    .setUpdateType(CacheUpdateType.REMOVE)
-                    .build();
-            return new ManyLevelCache<>(multiProperties, multiExtension, cacheList);
+            throw new CacheInitializationException("Cache size can't more than three");
         }
 
         if (size == THREE_LEVEL) {

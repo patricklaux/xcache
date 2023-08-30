@@ -4,8 +4,8 @@ import com.igeeksky.xcache.beans.BeanContext;
 import com.igeeksky.xcache.beans.BeanDesc;
 import com.igeeksky.xcache.beans.BeanParser;
 import com.igeeksky.xcache.common.CacheLevel;
-import com.igeeksky.xcache.util.CollectionUtils;
-import com.igeeksky.xcache.util.StringUtils;
+import com.igeeksky.xtool.core.collection.Maps;
+import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -156,13 +156,13 @@ public class XcacheProperties {
 
         multiCacheProperties.setBeanContext(multiManagerProperties.getBeanContext());
 
-        CollectionUtils.merge(multiManagerProperties.getMetadata(), multiCacheProperties.getMetadata());
+        Maps.merge(multiManagerProperties.getMetadata(), multiCacheProperties.getMetadata());
     }
 
 
     private void merge(CacheProperties managerProperties, CacheProperties cacheProperties) {
         String defaultStore = managerProperties.getDefaultStore();
-        if (StringUtils.isEmpty(defaultStore)) {
+        if (!StringUtils.hasText(defaultStore)) {
             List<String> stores = managerProperties.getStores();
             if (stores.size() > 1) {
                 throw new CacheConfigException("storeUse must not be null");
@@ -248,7 +248,7 @@ public class XcacheProperties {
             cacheGeneric.setStatisticsSerializer(generic.getStatisticsSerializer());
         }
 
-        CollectionUtils.merge(generic.getMetadata(), cacheGeneric.getMetadata());
+        Maps.merge(generic.getMetadata(), cacheGeneric.getMetadata());
     }
 
 

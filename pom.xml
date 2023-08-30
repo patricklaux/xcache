@@ -39,6 +39,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <flatten-maven-plugin.version>1.1.0</flatten-maven-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
+        <maven-javadoc-plugin.version>3.3.1</maven-javadoc-plugin.version>
     </properties>
 
     <modules>
@@ -107,6 +109,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
+                <version>${maven-source-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -119,6 +122,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${maven-javadoc-plugin.version}</version>
                 <configuration>
                     <encoding>${maven.compiler.encoding}</encoding>
                     <docencoding>${maven.compiler.encoding}</docencoding>
