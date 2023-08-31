@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 缓存包装类<br/>
+ * 缓存代理类<br/>
  * 用于在运行时变更缓存实例
  *
  * @author Patrick.Lau

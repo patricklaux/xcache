@@ -17,7 +17,6 @@ import java.util.Map;
  */
 public class CacheProperties {
 
-
     private String application;
     private String cacheId;
 
@@ -293,20 +292,16 @@ public class CacheProperties {
      */
     public static class Remote extends Generic {
 
-        private Boolean enableCompressValue;
+        private boolean enableCompressValue;
         private String keySerializer;
         private String valueSerializer;
         private String valueCompressor;
 
-        public Boolean getEnableCompressValue() {
+        public boolean isEnableCompressValue() {
             return enableCompressValue;
         }
 
-        public boolean isEnableCompressValue() {
-            return null != enableCompressValue ? enableCompressValue : false;
-        }
-
-        public void setEnableCompressValue(Boolean enableCompressValue) {
+        public void setEnableCompressValue(boolean enableCompressValue) {
             this.enableCompressValue = enableCompressValue;
         }
 
@@ -424,7 +419,7 @@ public class CacheProperties {
         private String storeType;
         private Long expireAfterWrite;
         private String namespace;
-        private Boolean enableKeyPrefix;
+        private boolean enableKeyPrefix;
 
         public String getStoreType() {
             return storeType;
@@ -450,15 +445,11 @@ public class CacheProperties {
             this.namespace = namespace;
         }
 
-        public Boolean getEnableKeyPrefix() {
+        public boolean isEnableKeyPrefix() {
             return enableKeyPrefix;
         }
 
-        public boolean isEnableKeyPrefix() {
-            return null != enableKeyPrefix ? enableKeyPrefix : true;
-        }
-
-        public void setEnableKeyPrefix(Boolean enableKeyPrefix) {
+        public void setEnableKeyPrefix(boolean enableKeyPrefix) {
             this.enableKeyPrefix = enableKeyPrefix;
         }
     }

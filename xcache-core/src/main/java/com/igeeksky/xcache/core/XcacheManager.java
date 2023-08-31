@@ -30,9 +30,9 @@ public class XcacheManager {
 
     private static final Logger log = LoggerFactory.getLogger(XcacheManager.class);
 
-    private static final int THREE_LEVEL = 3;
-    private static final int TWO_LEVEL = 2;
     private static final int ONE_LEVEL = 1;
+    private static final int TWO_LEVEL = 2;
+    private static final int THREE_LEVEL = 3;
 
     private XcacheProperties xcacheProperties;
     private final ConcurrentMap<String, Cache<?, ?>> multiCacheMap = new ConcurrentHashMap<>(16);

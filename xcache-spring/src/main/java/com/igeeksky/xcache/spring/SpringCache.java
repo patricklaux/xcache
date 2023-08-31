@@ -40,11 +40,9 @@ public class SpringCache implements org.springframework.cache.Cache {
         return toValueWrapper(cacheValue);
     }
 
-
     private ValueWrapper toValueWrapper(CacheValue<Object> wrapper) {
         return null == wrapper ? null : (wrapper::getValue);
     }
-
 
     @Override
     public <T> T get(@NonNull Object key, Class<T> type) {

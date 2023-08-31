@@ -40,6 +40,7 @@ public class OneLevelCache<K, V> extends AbstractMultiCache<K, V> {
         return cache.getAll(keys);
     }
 
+    @Override
     protected Mono<Void> doPut(K key, V value) {
         return cache.put(key, Mono.justOrEmpty(value));
     }

@@ -51,7 +51,6 @@ public class CaffeineCacheStoreProvider extends AbstractCacheStoreProvider {
         List<CacheMonitor<K, V>> cacheMonitors = ExtensionHelper.statisticsMonitor(statisticsId, beanContext,
                 enableStatistics, name, CaffeineExpiryCacheStore.STORE_TYPE, application);
 
-
         Long expireAfterWrite = caffeine.getExpireAfterWrite();
         Long expireAfterAccess = caffeine.getExpireAfterAccess();
         if (null != expireAfterWrite && null != expireAfterAccess) {

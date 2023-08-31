@@ -10,11 +10,23 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
+ * 同步缓存
+ *
  * @author Patrick.Lau
  * @date 2020-12-11
  */
 public interface SyncCache<K, V> {
 
+    /**
+     * 通过键从缓存中读取值
+     *
+     * @param key 键
+     * @return CacheValue – 值的包装类
+     * <p>1. CacheValue 为空，表示 key 不存在于缓存中。</p>
+     * <p>2. CacheValue 不为空，表示 key 存在于缓存中：</p>
+     * <p>2.1. CacheValue 内部的 value 不为空，缓存的是正常值；</p>
+     * <p>2.2. CacheValue 内部的 value 为空，缓存的是空值；</p>
+     */
     CacheValue<V> get(K key);
 
     CacheValue<V> get(K key, CacheLoader<K, V> loader);
