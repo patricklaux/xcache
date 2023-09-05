@@ -83,7 +83,7 @@ public class XcacheManager {
      */
     private void initializeManagers() {
         cacheManagerMap.clear();
-        MultiManagerProperties multiManagerProperties = xcacheProperties.getMultiCacheManager();
+        MultiManagerProperties multiManagerProperties = xcacheProperties.getMultiManagerProperties();
         List<CacheProperties> caches = multiManagerProperties.getCaches();
         for (CacheProperties cacheProperties : caches) {
             if (null != cacheProperties) {
@@ -125,7 +125,7 @@ public class XcacheManager {
     private <K, V> Cache<K, V> createCache(String name, Class<K> keyType, Class<V> valueType) {
         MultiCacheProperties multiCacheProperties = xcacheProperties.getFromMultiCaches(name);
         Cache<K, V> multiCache = createCache(name, multiCacheProperties, keyType, valueType);
-        if (xcacheProperties.getMultiCacheManager().isEnableCacheProxy()) {
+        if (xcacheProperties.getMultiManagerProperties().isEnableCacheProxy()) {
             return new CacheProxy<>(multiCache);
         }
         return multiCache;

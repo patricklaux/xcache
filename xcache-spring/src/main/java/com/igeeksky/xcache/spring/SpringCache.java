@@ -9,6 +9,8 @@ import org.springframework.lang.NonNull;
 import java.util.concurrent.Callable;
 
 /**
+ * 适配 Spring Cache
+ *
  * @author Patrick.Lau
  * @since 0.0.2 2021-06-03
  */

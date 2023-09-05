@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.parser;
+package com.igeeksky.xcache.extension.compress;
 
 import com.igeeksky.xcache.beans.BeanParser;
 import com.igeeksky.xcache.beans.BeanDesc;

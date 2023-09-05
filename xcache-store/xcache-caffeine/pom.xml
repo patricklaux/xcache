@@ -13,17 +13,17 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.igeeksky.xcache</groupId>
+            <artifactId>xcache-store-common</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-store-common</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

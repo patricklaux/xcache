@@ -19,24 +19,23 @@ public interface CacheWriter<K, V> {
     void write(K key, V value);
 
     default Mono<Void> writeAll(Map<? extends K, ? extends V> keyValues) {
-        if (Maps.isNotEmpty(keyValues)) {
-            return Flux.fromIterable(keyValues.entrySet())
-                    .filter(Objects::nonNull)
-                    .doOnNext(entry -> write(entry.getKey(), entry.getValue()))
-                    .then();
-        }
-        return Mono.empty();
+        return Mono.justOrEmpty(keyValues)
+                .filter(Maps::isNotEmpty)
+                .map(Map::entrySet)
+                .flatMapMany(Flux::fromIterable)
+                .filter(Objects::nonNull)
+                .doOnNext(entry -> write(entry.getKey(), entry.getValue()))
+                .then();
     }
 
     void delete(K key);
 
     default Mono<Void> deleteAll(Set<? extends K> keys) {
-        if (CollectionUtils.isNotEmpty(keys)) {
-            return Flux.fromIterable(keys)
-                    .filter(Objects::nonNull)
-                    .doOnNext(this::delete)
-                    .then();
-        }
-        return Mono.empty();
+        return Mono.justOrEmpty(keys)
+                .filter(CollectionUtils::isNotEmpty)
+                .flatMapMany(Flux::fromIterable)
+                .filter(Objects::nonNull)
+                .doOnNext(this::delete)
+                .then();
     }
 }

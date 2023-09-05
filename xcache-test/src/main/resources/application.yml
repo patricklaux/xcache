@@ -1,0 +1,46 @@
+xcache:
+  redis:
+  - name: 1  # bean name
+    url:
+    database:
+    password:
+    host:
+    port:
+    ssl:
+    timeout:
+    client-name:
+    sentinel:
+    cluster:
+      nodes:
+    jedis:
+      pool:
+    lettuce:
+      pool:
+        max-idle:
+        min-idle:
+        max-active:
+        max-wait:
+        time-between-eviction-runs:
+      shutdown-timeout:
+  - name: 2
+    url:
+    database:
+    password:
+    host:
+    port:
+    ssl:
+    timeout:
+    client-name:
+    sentinel:
+    cluster:
+      nodes:
+    jedis:
+      pool:
+    lettuce:
+      pool:
+        max-idle:
+        min-idle:
+        max-active:
+        max-wait:
+        time-between-eviction-runs:
+      shutdown-timeout:

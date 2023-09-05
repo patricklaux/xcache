@@ -32,8 +32,8 @@ public abstract class AbstractExpiryLocalCacheStore<K, V> extends AbstractCacheS
                                          List<CacheMonitor<K, V>> cacheMonitors,
                                          Serializer<V> valueSerializer, Compressor compressor) {
         super(name, local, keyType, valueType, cacheMonitors);
-        this.enableSerializeValue = local.getEnableSerializeValue();
-        this.enableCompressValue = local.getEnableCompressValue();
+        this.enableSerializeValue = local.isEnableSerializeValue();
+        this.enableCompressValue = local.isEnableCompressValue();
         this.valueSerializer = valueSerializer;
         this.compressor = compressor;
     }

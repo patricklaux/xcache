@@ -27,7 +27,8 @@ import java.util.Objects;
 public class CaffeineCacheStoreProvider extends AbstractCacheStoreProvider {
 
     @Override
-    public <K, V> com.igeeksky.xcache.Cache<K, V> get(String name, CacheProperties cacheProperties, Class<K> keyType, Class<V> valueType) {
+    public <K, V> com.igeeksky.xcache.Cache<K, V> get(String name, CacheProperties cacheProperties, Class<K> keyType,
+                                                      Class<V> valueType) {
         CacheProperties.Caffeine caffeine = cacheProperties.getCaffeine();
         Charset charset = caffeine.getCharset();
         BeanContext beanContext = cacheProperties.getBeanContext();
@@ -69,6 +70,7 @@ public class CaffeineCacheStoreProvider extends AbstractCacheStoreProvider {
     private <K> Cache<K, ExpiryCacheValue<Object>> buildExpiryCache(String name, CacheProperties cacheProperties, Class<K> keyType,
                                                                     RandomRangeCacheExpiry<K, Object> expiry) {
         Caffeine<Object, Object> builder = Caffeine.newBuilder();
+        // 基于时间的自定义驱逐策略
         builder.expireAfter(expiry);
         setOther(name, cacheProperties, keyType, builder);
         return builder.build();
@@ -77,6 +79,7 @@ public class CaffeineCacheStoreProvider extends AbstractCacheStoreProvider {
     private <K> Cache<K, CacheValue<Object>> buildCache(String name, CacheProperties cacheProperties, Class<K> keyType,
                                                         Long expireAfterWrite, Long expireAfterAccess) {
         Caffeine<Object, Object> builder = Caffeine.newBuilder();
+        // 基于时间的驱逐策略
         if (null != expireAfterWrite) {
             builder.expireAfterWrite(Duration.ofMillis(expireAfterWrite));
         }
@@ -89,16 +92,20 @@ public class CaffeineCacheStoreProvider extends AbstractCacheStoreProvider {
 
     private <K> void setOther(String name, CacheProperties properties, Class<K> keyType, Caffeine<Object, Object> builder) {
         CacheProperties.Caffeine caffeine = properties.getCaffeine();
+
+        // 初始化缓存容量
         Integer initialCapacity = caffeine.getInitialCapacity();
         if (initialCapacity != null) {
             builder.initialCapacity(initialCapacity);
         }
 
+        // 基于容量的驱逐策略
         Long maximumSize = caffeine.getMaximumSize();
         if (null != maximumSize) {
             builder.maximumSize(maximumSize);
         }
 
+        // 基于权重的驱逐策略
         Long maximumWeight = caffeine.getMaximumWeight();
         if (null != maximumWeight) {
             builder.maximumWeight(maximumWeight);
@@ -115,6 +122,7 @@ public class CaffeineCacheStoreProvider extends AbstractCacheStoreProvider {
             builder.weigher(weigher);
         }
 
+        // 基于引用的驱逐策略
         String weak = "weak";
         String soft = "soft";
         String keyStrength = StringUtils.toLowerCase(caffeine.getKeyStrength());

@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
  * 同步缓存
  *
  * @author Patrick.Lau
- * @date 2020-12-11
+ * @since 0.0.3 2020-12-11
  */
 public interface SyncCache<K, V> {
 

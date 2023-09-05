@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class XcacheProperties {
 
-    private MultiManagerProperties multiCacheManager;
+    private MultiManagerProperties multiManagerProperties;
 
     private final List<BeanDesc> beans = new ArrayList<>();
 
@@ -31,24 +31,24 @@ public class XcacheProperties {
     private Map<String, MultiCacheProperties> multiCaches = new LinkedHashMap<>(16);
 
     public void prepare(BeanContext beanContext) {
-        multiCacheManager.setBeanContext(beanContext);
-        multiCaches.forEach((name, multiCacheProperties) -> merge(multiCacheManager, multiCacheProperties));
+        multiManagerProperties.setBeanContext(beanContext);
+        multiCaches.forEach((name, multiCacheProperties) -> merge(multiManagerProperties, multiCacheProperties));
     }
 
     public boolean isEnableCacheProxy() {
-        return multiCacheManager.isEnableCacheProxy();
+        return multiManagerProperties.isEnableCacheProxy();
     }
 
     public List<BeanDesc> getBeans() {
         return beans;
     }
 
-    public MultiManagerProperties getMultiCacheManager() {
-        return multiCacheManager;
+    public MultiManagerProperties getMultiManagerProperties() {
+        return multiManagerProperties;
     }
 
-    public void setMultiCacheManager(MultiManagerProperties multiCacheManager) {
-        this.multiCacheManager = multiCacheManager;
+    public void setMultiManagerProperties(MultiManagerProperties multiManagerProperties) {
+        this.multiManagerProperties = multiManagerProperties;
     }
 
     public Map<String, MultiCacheProperties> getMultiCaches() {
@@ -69,7 +69,7 @@ public class XcacheProperties {
         return multiCaches.computeIfAbsent(name, nameKey -> {
             MultiCacheProperties multiCacheProperties = new MultiCacheProperties();
             multiCacheProperties.setName(nameKey);
-            merge(multiCacheManager, multiCacheProperties);
+            merge(multiManagerProperties, multiCacheProperties);
             return multiCacheProperties;
         });
     }
@@ -227,18 +227,15 @@ public class XcacheProperties {
         }
     }
 
+
     private void mergeGeneric(CacheProperties.Generic generic, CacheProperties.Generic cacheGeneric) {
         if (null == cacheGeneric.getCacheLevel()) {
             cacheGeneric.setCacheLevel(generic.getCacheLevel());
         }
 
-        if (null == cacheGeneric.getEnableNullValue()) {
-            cacheGeneric.setEnableNullValue(generic.isEnableNullValue());
-        }
+        cacheGeneric.setEnableNullValue(generic.isEnableNullValue());
 
-        if (null == cacheGeneric.getEnableStatistics()) {
-            cacheGeneric.setEnableStatistics(generic.getEnableStatistics());
-        }
+        cacheGeneric.setEnableStatistics(generic.isEnableStatistics());
 
         if (null == cacheGeneric.getStatisticsPublisher()) {
             cacheGeneric.setStatisticsPublisher(generic.getStatisticsPublisher());
@@ -254,13 +251,8 @@ public class XcacheProperties {
 
     private void mergeLocal(CacheProperties.Local local, CacheProperties.Local cacheLocal) {
         mergeGeneric(local, cacheLocal);
-        if (null == cacheLocal.getEnableSerializeValue()) {
-            cacheLocal.setEnableSerializeValue(local.isEnableSerializeValue());
-        }
-
-        if (null == cacheLocal.getEnableCompressValue()) {
-            cacheLocal.setEnableCompressValue(local.isEnableCompressValue());
-        }
+        cacheLocal.setEnableSerializeValue(local.isEnableSerializeValue());
+        cacheLocal.setEnableCompressValue(local.isEnableCompressValue());
 
         if (null == cacheLocal.getValueSerializer()) {
             cacheLocal.setValueSerializer(local.getValueSerializer());
@@ -274,9 +266,8 @@ public class XcacheProperties {
 
     private void mergeRemote(CacheProperties.Remote remote, CacheProperties.Remote cacheRemote) {
         mergeGeneric(remote, cacheRemote);
-        if (null == cacheRemote.getEnableCompressValue()) {
-            cacheRemote.setEnableCompressValue(remote.isEnableCompressValue());
-        }
+
+        cacheRemote.setEnableCompressValue(remote.isEnableCompressValue());
 
         if (null == cacheRemote.getKeySerializer()) {
             cacheRemote.setKeySerializer(remote.getKeySerializer());
@@ -343,8 +334,6 @@ public class XcacheProperties {
             cacheRedis.setNamespace(redis.getNamespace());
         }
 
-        if (null == cacheRedis.getEnableKeyPrefix()) {
-            cacheRedis.setEnableKeyPrefix(redis.isEnableKeyPrefix());
-        }
+        cacheRedis.setEnableKeyPrefix(redis.isEnableKeyPrefix());
     }
 }

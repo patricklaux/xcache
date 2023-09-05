@@ -17,5 +17,4 @@
         <module>xcache-redis-lettuce</module>
     </modules>
 
-
 </project>

@@ -32,7 +32,7 @@ public abstract class AbstractRemoteCacheStore<K, V> extends AbstractCacheStore<
                                     Serializer<V> valueSerializer, Compressor valueCompressor) {
         super(name, remote, keyType, valueType, cacheMonitors);
         this.valueSerializer = valueSerializer;
-        this.enableCompressValue = remote.getEnableCompressValue();
+        this.enableCompressValue = remote.isEnableCompressValue();
         this.valueCompressor = valueCompressor;
     }
 

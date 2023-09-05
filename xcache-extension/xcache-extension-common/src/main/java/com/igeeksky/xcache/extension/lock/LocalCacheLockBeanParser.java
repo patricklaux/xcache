@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.parser;
+package com.igeeksky.xcache.extension.lock;
 
 import com.igeeksky.xcache.beans.BeanDesc;
 import com.igeeksky.xcache.beans.BeanHolder;

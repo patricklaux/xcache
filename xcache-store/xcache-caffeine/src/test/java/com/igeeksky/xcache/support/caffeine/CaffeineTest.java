@@ -2,8 +2,8 @@ package com.igeeksky.xcache.support.caffeine;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.igeeksky.xcache.common.ExpiryCacheValue;
 import com.igeeksky.xcache.caffeine.RandomRangeCacheExpiry;
+import com.igeeksky.xcache.common.ExpiryCacheValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

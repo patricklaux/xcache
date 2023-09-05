@@ -30,7 +30,7 @@ public abstract class AbstractCacheStore<K, V> extends AbstractCache<K, V> {
                               List<CacheMonitor<K, V>> cacheMonitors) {
         super(name, keyType, valueType);
         this.cacheLevel = generic.getCacheLevel();
-        this.enableNullValue = generic.getEnableNullValue();
+        this.enableNullValue = generic.isEnableNullValue();
         this.cacheMonitor.addCacheMonitors(cacheMonitors);
     }
 
