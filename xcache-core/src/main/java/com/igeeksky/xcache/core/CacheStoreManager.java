@@ -28,7 +28,7 @@ public class CacheStoreManager implements CacheManager {
         BeanContext beanContext = cacheProperties.getBeanContext();
         for (String id : stores) {
             BeanHolder beanHolder = beanContext.getBeanHolder(id);
-            CacheProvider cacheProvider = beanHolder.getBean2();
+            CacheProvider cacheProvider = beanHolder.getBean(CacheProvider.class);
             cacheProviders.put(id, cacheProvider);
         }
     }

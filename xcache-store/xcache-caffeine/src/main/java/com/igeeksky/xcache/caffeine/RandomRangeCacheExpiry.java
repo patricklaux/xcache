@@ -19,7 +19,7 @@ public class RandomRangeCacheExpiry<K, V> implements Expiry<K, ExpiryCacheValue<
     private final long expireAfterCreateNanos;
     private final long expiresAfterAccessNanos;
 
-    public RandomRangeCacheExpiry(Duration expireAfterCreate, Duration expiresAfterAccess) {
+    public RandomRangeCacheExpiry(@NonNull Duration expireAfterCreate, @NonNull Duration expiresAfterAccess) {
         this.expireAfterCreateNanos = expireAfterCreate.toNanos();
         this.originExpireAfterCreateNanos = expireAfterCreateNanos - (long) (expireAfterCreateNanos * 0.1);
         this.nullValueExpireAfterCreateNanos = (long) (expireAfterCreateNanos * 0.5);

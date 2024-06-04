@@ -1,17 +1,16 @@
-package com.igeeksky.xcache.parser;
+package com.igeeksky.xcache.extension.contain;
 
 import com.igeeksky.xcache.beans.BeanDesc;
 import com.igeeksky.xcache.beans.BeanHolder;
 import com.igeeksky.xcache.beans.BeanParser;
-import com.igeeksky.xcache.extension.serialization.JdkSerializerProvider;
 
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2021-10-03
  */
-public class JdkSerializerBeanParser implements BeanParser {
+public class AlwaysTruePredicateBeanParser implements BeanParser {
 
-    private final String finalClassName = "com.igeeksky.xcache.extension.serialization.JdkSerializerProvider";
+    private final String finalClassName = "com.igeeksky.xcache.extension.contain.AlwaysTruePredicateProvider";
 
     @Override
     public String getClassName() {
@@ -22,8 +21,8 @@ public class JdkSerializerBeanParser implements BeanParser {
     public BeanHolder parse(BeanDesc beanDesc) {
         String id = beanDesc.getId();
         if (null == id) {
-            id = "jdkSerializerProvider";
+            id = "alwaysTruePredicateProvider";
         }
-        return new BeanHolder(id, finalClassName, true, JdkSerializerProvider::new);
+        return new BeanHolder(id, finalClassName, true, com.igeeksky.xcache.extension.contain.AlwaysTruePredicateProvider::new);
     }
 }

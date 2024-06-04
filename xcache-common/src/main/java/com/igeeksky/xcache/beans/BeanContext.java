@@ -3,8 +3,9 @@ package com.igeeksky.xcache.beans;
 import com.igeeksky.xcache.common.annotation.NotNull;
 import com.igeeksky.xcache.common.annotation.Nullable;
 import com.igeeksky.xcache.config.CacheConfigException;
-import com.igeeksky.xcache.util.CollectionUtils;
-import com.igeeksky.xcache.util.StringUtils;
+import com.igeeksky.xtool.core.collection.CollectionUtils;
+import com.igeeksky.xtool.core.collection.Maps;
+import com.igeeksky.xtool.core.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,7 @@ public class BeanContext {
      * @param beans 用户配置
      */
     public BeanContext(@Nullable List<BeanDesc> beans, @Nullable Map<String, BeanParser> beanParsers) {
-        if (CollectionUtils.isNotEmpty(beanParsers)) {
+        if (Maps.isNotEmpty(beanParsers)) {
             this.beanParsers.putAll(beanParsers);
         }
 
@@ -76,13 +77,13 @@ public class BeanContext {
     }
 
     private void parseBean(@NotNull BeanDesc beanDesc) {
-        String id = StringUtils.trim(beanDesc.getId());
+        String id = StringUtils.trimToNull(beanDesc.getId());
         if (null == id) {
             throw new CacheConfigException("id must not be null");
         }
 
         boolean singleton = beanDesc.isSingleton();
-        String className = StringUtils.trim(beanDesc.getClassName());
+        String className = StringUtils.trimToNull(beanDesc.getClassName());
 
         //Step 1: 根据 Supplier 生成 BeanHolder
         Supplier<Object> supplier = beanDesc.getSupplier();

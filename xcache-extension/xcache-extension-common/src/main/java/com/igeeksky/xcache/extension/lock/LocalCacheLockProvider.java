@@ -2,6 +2,7 @@ package com.igeeksky.xcache.extension.lock;
 
 import com.igeeksky.xcache.common.Singleton;
 import com.igeeksky.xcache.config.PropertiesKey;
+import com.igeeksky.xtool.core.collection.Maps;
 
 import java.util.Map;
 
@@ -21,7 +22,7 @@ public class LocalCacheLockProvider implements CacheLockProvider {
 
     @Override
     public <K> CacheLock<K> get(String name, Class<K> keyClazz, Map<String, Object> metadata) {
-        int lockSize = PropertiesKey.getInteger(metadata, PropertiesKey.METADATA_LOCK_SIZE, presetLockSize);
+        int lockSize = Maps.getInteger(metadata, PropertiesKey.METADATA_LOCK_SIZE, presetLockSize);
         return new LocalCacheLock<>(lockSize);
     }
 

@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.extension.compress;
 
-import com.igeeksky.xcache.util.BytesUtils;
+
+import com.igeeksky.xtool.core.io.IOUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -38,7 +39,7 @@ public class GzipCompressor implements Compressor {
         try (ByteArrayOutputStream targetStream = new ByteArrayOutputStream(source.length * 2);
              ByteArrayInputStream sourceStream = new ByteArrayInputStream(source)) {
             try (GZIPInputStream decompressor = new GZIPInputStream(sourceStream)) {
-                BytesUtils.copy(decompressor, targetStream);
+                IOUtils.copy(decompressor, targetStream);
             }
             return targetStream.toByteArray();
         }

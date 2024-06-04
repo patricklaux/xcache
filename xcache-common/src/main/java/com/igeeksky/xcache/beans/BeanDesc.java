@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.beans;
 
-import com.igeeksky.xcache.util.CollectionUtils;
+import com.igeeksky.xtool.core.collection.Maps;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -78,7 +78,7 @@ public class BeanDesc {
     }
 
     public void setConstructor(Map<String, Object> constructor) {
-        if (CollectionUtils.isNotEmpty(constructor)) {
+        if (Maps.isNotEmpty(constructor)) {
             this.constructor.putAll(constructor);
         }
     }
@@ -88,7 +88,7 @@ public class BeanDesc {
     }
 
     public void setProperty(Map<String, Object> property) {
-        if (CollectionUtils.isNotEmpty(property)) {
+        if (Maps.isNotEmpty(property)) {
             this.property.putAll(property);
         }
     }

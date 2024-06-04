@@ -1,7 +1,9 @@
 package com.igeeksky.xcache.support.caffeine;
 
 import com.igeeksky.xcache.Cache;
+import com.igeeksky.xcache.caffeine.CaffeineCacheStoreProvider;
 import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.config.CacheProperties;
 import org.junit.jupiter.api.*;
 import reactor.core.publisher.Mono;
 
@@ -15,13 +17,16 @@ import java.util.Map;
  */
 class CaffeineCacheStoreTest {
 
-    static Cache<String, String> cache;
+    Cache<String, String> cache;
 
     @BeforeAll
     static void beforeAll() {
         String name = "test";
         String namespace = "default";
+        CacheProperties cacheProperties = new CacheProperties();
 
+        CaffeineCacheStoreProvider provider = new CaffeineCacheStoreProvider();
+        provider.get(name, cacheProperties, String.class, String.class);
     }
 
     @Test

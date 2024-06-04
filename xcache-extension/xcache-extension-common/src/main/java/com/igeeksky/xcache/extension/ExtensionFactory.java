@@ -1,9 +1,9 @@
 package com.igeeksky.xcache.extension;
 
+import com.igeeksky.xcache.beans.BeanUtils;
 import com.igeeksky.xcache.common.SPI;
 import com.igeeksky.xcache.common.Singleton;
-import com.igeeksky.xcache.util.BeanUtils;
-import com.igeeksky.xcache.util.StringUtils;
+import com.igeeksky.xtool.core.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +23,7 @@ public class ExtensionFactory {
 
     @SuppressWarnings("unchecked")
     public static <T> T instantiate(Class<T> interfaceClass, String clazz, String id, Object... params) {
-        if (StringUtils.isNotEmpty(id)) {
+        if (StringUtils.hasLength(id)) {
             return (T) BEAN_MAP.computeIfAbsent(id, key -> instantiateClass(interfaceClass, clazz, params));
         }
         return instantiateClass(interfaceClass, clazz, params);
@@ -31,10 +31,10 @@ public class ExtensionFactory {
 
     @SuppressWarnings("unchecked")
     public static <T> T instantiateClass(Class<T> interfaceClass, String clazz, Object... params) {
-        if (StringUtils.isEmpty(clazz)) {
+        if (!StringUtils.hasLength(clazz)) {
             SPI spi = interfaceClass.getAnnotation(SPI.class);
             clazz = spi.value();
-            if (StringUtils.isEmpty(clazz)) {
+            if (!StringUtils.hasLength(clazz)) {
                 throw new BeanInstantiationException("className must not be null");
             }
         }

@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping;
 import com.igeeksky.xcache.extension.serialization.SerializationFailedException;
 import com.igeeksky.xcache.extension.serialization.ValueSerializer;
-import com.igeeksky.xcache.util.BytesUtils;
-import com.igeeksky.xcache.util.StringUtils;
+import com.igeeksky.xtool.core.lang.ArrayUtils;
+import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -54,7 +54,7 @@ public class GenericJackson2JsonSerializer implements ValueSerializer<Object> {
     public GenericJackson2JsonSerializer(ObjectMapper mapper, Charset charset, String classPropertyTypeName) {
         this.mapper = (null != mapper ? mapper : new ObjectMapper());
         this.charset = (null != charset ? charset : StandardCharsets.UTF_8);
-        if (StringUtils.isNotEmpty(classPropertyTypeName)) {
+        if (StringUtils.hasLength(classPropertyTypeName)) {
             this.mapper.enableDefaultTypingAsProperty(DefaultTyping.NON_FINAL, classPropertyTypeName);
         } else {
             this.mapper.enableDefaultTyping(DefaultTyping.NON_FINAL, As.PROPERTY);
@@ -82,7 +82,7 @@ public class GenericJackson2JsonSerializer implements ValueSerializer<Object> {
     public <T> T deserialize(byte[] source, Class<T> type) {
         Objects.requireNonNull(mapper, "Deserialization type must not be null! ");
 
-        if (BytesUtils.isEmpty(source)) {
+        if (ArrayUtils.isEmpty(source)) {
             return null;
         }
         try {

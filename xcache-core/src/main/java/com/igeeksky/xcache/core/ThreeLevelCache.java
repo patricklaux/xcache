@@ -4,7 +4,7 @@ import com.igeeksky.xcache.Cache;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.KeyValue;
 import com.igeeksky.xcache.config.MultiCacheProperties;
-import com.igeeksky.xcache.util.CollectionUtils;
+import com.igeeksky.xtool.core.collection.CollectionUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

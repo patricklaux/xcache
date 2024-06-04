@@ -1,7 +1,6 @@
 package com.igeeksky.xcache.spring;
 
 import com.igeeksky.xcache.Cache;
-import com.igeeksky.xcache.common.annotation.NotNull;
 import com.igeeksky.xcache.core.XcacheManager;
 import org.springframework.cache.CacheManager;
 import org.springframework.lang.NonNull;
@@ -42,7 +41,8 @@ public class SpringCacheManager implements CacheManager {
     }
 
     @Override
-    public @NonNull Collection<String> getCacheNames() {
+    public @NonNull
+    Collection<String> getCacheNames() {
         return Collections.unmodifiableCollection(cacheMap.keySet());
     }
 

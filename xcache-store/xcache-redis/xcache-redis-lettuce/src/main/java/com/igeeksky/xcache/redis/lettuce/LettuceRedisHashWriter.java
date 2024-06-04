@@ -27,7 +27,7 @@ import java.util.Objects;
  */
 public class LettuceRedisHashWriter implements RedisHashWriter {
 
-    private static final Logger logger = LoggerFactory.getLogger(LettuceRedisHashWriter.class);
+    private static final Logger log = LoggerFactory.getLogger(LettuceRedisHashWriter.class);
 
     private final AbstractRedisClient abstractRedisClient;
     private final StatefulConnection<byte[], byte[]> statefulConnection;
@@ -98,7 +98,7 @@ public class LettuceRedisHashWriter implements RedisHashWriter {
     private void isSetSuccess(byte[] key, byte[] value, String result) {
         if (!Objects.equals(OK, result)) {
             RuntimeException e = new RuntimeException("redis set error. key=" + new String(key) + ", value=" + new String(value));
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }

@@ -59,7 +59,7 @@ public class MultiManagerProperties {
     }
 
     /**
-     * 如果不设置，由缓存自动生成：{@link UUID#randomUUID()#toString()}
+     * 如果不设置，由缓存自动生成：{@link UUID#randomUUID()#toString}
      *
      * @param cacheId 缓存ID
      */

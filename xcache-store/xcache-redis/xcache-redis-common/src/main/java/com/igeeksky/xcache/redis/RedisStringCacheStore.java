@@ -10,6 +10,7 @@ import com.igeeksky.xcache.extension.monitor.CacheMonitor;
 import com.igeeksky.xcache.extension.serialization.Serializer;
 import com.igeeksky.xcache.store.AbstractRemoteCacheStore;
 import com.igeeksky.xcache.store.CacheKeyPrefix;
+import com.igeeksky.xtool.core.collection.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -47,7 +48,7 @@ public class RedisStringCacheStore<K, V> extends AbstractRemoteCacheStore<K, V> 
         this.useKeyPrefix = redis.isEnableKeyPrefix();
         this.cacheKeyPrefix = new CacheKeyPrefix<>(keySerializer, redis.getCharset(), redis.getNamespace(), getName());
 
-        this.expireAfterWriteMills = PropertiesKey.getLong(redis.getMetadata(), PropertiesKey.METADATA_EXPIRE_AFTER_WRITE, PropertiesKey.UN_SET);
+        this.expireAfterWriteMills = Maps.getLong(redis.getMetadata(), PropertiesKey.METADATA_EXPIRE_AFTER_WRITE, PropertiesKey.UN_SET);
     }
 
     @Override

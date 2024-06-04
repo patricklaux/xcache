@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping;
 import com.igeeksky.xcache.extension.serialization.SerializationFailedException;
 import com.igeeksky.xcache.extension.serialization.Serializer;
-import com.igeeksky.xcache.util.StringUtils;
+import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -52,7 +52,7 @@ public class StringKeySerializer implements Serializer<Object> {
     public StringKeySerializer(ObjectMapper mapper, Charset charset, String classPropertyTypeName) {
         this.mapper = (null == mapper ? new ObjectMapper() : mapper);
         this.charset = (null == charset ? StandardCharsets.UTF_8 : charset);
-        if (StringUtils.isNotEmpty(classPropertyTypeName)) {
+        if (StringUtils.hasLength(classPropertyTypeName)) {
             this.mapper.enableDefaultTypingAsProperty(DefaultTyping.NON_FINAL, classPropertyTypeName);
         } else {
             this.mapper.enableDefaultTyping(DefaultTyping.NON_FINAL, As.PROPERTY);

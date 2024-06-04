@@ -1,9 +1,8 @@
-package com.igeeksky.xcache.parser;
+package com.igeeksky.xcache.serialization.jackson;
 
-import com.igeeksky.xcache.beans.BeanParser;
 import com.igeeksky.xcache.beans.BeanDesc;
 import com.igeeksky.xcache.beans.BeanHolder;
-import com.igeeksky.xcache.serialization.jackson.Jackson2JsonSerializerProvider;
+import com.igeeksky.xcache.beans.BeanParser;
 
 /**
  * @author Patrick.Lau

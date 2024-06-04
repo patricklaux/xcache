@@ -8,7 +8,7 @@ import com.igeeksky.xcache.config.MultiCacheProperties;
 import com.igeeksky.xcache.extension.contain.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.CacheLock;
 import com.igeeksky.xcache.extension.monitor.CacheMonitorProxy;
-import com.igeeksky.xcache.util.CollectionUtils;
+import com.igeeksky.xtool.core.collection.Maps;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -94,7 +94,7 @@ public abstract class AbstractMultiCache<K, V> extends AbstractCache<K, V> {
     @Override
     public Mono<Void> putAll(Mono<Map<? extends K, ? extends V>> keyValues) {
         return keyValues
-                .filter(CollectionUtils::isNotEmpty)
+                .filter(Maps::isNotEmpty)
                 .flatMap(kvs -> this.doPutAll(kvs)
                         .doOnNext(vod -> cacheMonitor.afterPutAll(kvs))
                 );

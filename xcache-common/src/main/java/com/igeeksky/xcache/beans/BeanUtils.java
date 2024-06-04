@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.igeeksky.xcache.util;
+package com.igeeksky.xcache.beans;
 
 
 import java.lang.reflect.Constructor;
@@ -46,7 +46,7 @@ public abstract class BeanUtils {
         Objects.requireNonNull(list, "beanList must not be null");
 
         if (list.length > 0) {
-            List<T> ids = new ArrayList<T>();
+            List<T> ids = new ArrayList<>();
             for (Object o : list) {
                 ids.add((T) getBeanProperty(o, fieldName));
             }

@@ -10,13 +10,12 @@ import java.util.Map;
 
 
 /**
- * <b>缓存配置类</b><br/>
+ * <b>单个缓存配置类</b><br/>
  *
  * @author Patrick.Lau
  * @since 0.0.2 2020-12-11
  */
 public class CacheProperties {
-
 
     private String application;
     private String cacheId;
@@ -149,8 +148,8 @@ public class CacheProperties {
         private Charset charset;
 
         private CacheLevel cacheLevel;
-        private Boolean enableNullValue;
-        private Boolean enableStatistics;
+        private boolean enableNullValue;
+        private boolean enableStatistics;
         private String statisticsPublisher;
         private String statisticsSerializer;
 
@@ -160,7 +159,7 @@ public class CacheProperties {
             return charset;
         }
 
-        void setCharset(Charset charset) {
+        public void setCharset(Charset charset) {
             this.charset = charset;
         }
 
@@ -172,27 +171,19 @@ public class CacheProperties {
             this.cacheLevel = cacheLevel;
         }
 
-        public Boolean getEnableNullValue() {
+        public boolean isEnableNullValue() {
             return enableNullValue;
         }
 
-        public boolean isEnableNullValue() {
-            return null != enableNullValue ? enableNullValue : true;
-        }
-
-        public void setEnableNullValue(Boolean enableNullValue) {
+        public void setEnableNullValue(boolean enableNullValue) {
             this.enableNullValue = enableNullValue;
         }
 
-        public Boolean getEnableStatistics() {
+        public boolean isEnableStatistics() {
             return enableStatistics;
         }
 
-        public boolean isEnableStatistics() {
-            return null != enableStatistics ? enableStatistics : false;
-        }
-
-        public void setEnableStatistics(Boolean enableStatistics) {
+        public void setEnableStatistics(boolean enableStatistics) {
             this.enableStatistics = enableStatistics;
         }
 
@@ -235,37 +226,31 @@ public class CacheProperties {
     }
 
     /**
+     * 本地缓存配置
+     *
      * @author Patrick.Lau
      * @since 0.0.4 2021-09-28
      */
     public static class Local extends Generic {
 
-        private Boolean enableSerializeValue;
-        private Boolean enableCompressValue;
+        private boolean enableSerializeValue;
+        private boolean enableCompressValue;
         private String valueSerializer;
         private String valueCompressor;
 
-        public Boolean getEnableSerializeValue() {
+        public boolean isEnableSerializeValue() {
             return enableSerializeValue;
         }
 
-        public boolean isEnableSerializeValue() {
-            return null != enableSerializeValue ? enableSerializeValue : false;
-        }
-
-        public void setEnableSerializeValue(Boolean enableSerializeValue) {
+        public void setEnableSerializeValue(boolean enableSerializeValue) {
             this.enableSerializeValue = enableSerializeValue;
         }
 
-        public Boolean getEnableCompressValue() {
+        public boolean isEnableCompressValue() {
             return enableCompressValue;
         }
 
-        public boolean isEnableCompressValue() {
-            return null != enableCompressValue ? enableCompressValue : false;
-        }
-
-        public void setEnableCompressValue(Boolean enableCompressValue) {
+        public void setEnableCompressValue(boolean enableCompressValue) {
             this.enableCompressValue = enableCompressValue;
         }
 
@@ -284,29 +269,26 @@ public class CacheProperties {
         public void setValueCompressor(String valueCompressor) {
             this.valueCompressor = valueCompressor;
         }
-
     }
 
     /**
+     * 远程缓存配置
+     *
      * @author Patrick.Lau
      * @since 0.0.4 2021-09-28
      */
     public static class Remote extends Generic {
 
-        private Boolean enableCompressValue;
+        private boolean enableCompressValue;
         private String keySerializer;
         private String valueSerializer;
         private String valueCompressor;
 
-        public Boolean getEnableCompressValue() {
+        public boolean isEnableCompressValue() {
             return enableCompressValue;
         }
 
-        public boolean isEnableCompressValue() {
-            return null != enableCompressValue ? enableCompressValue : false;
-        }
-
-        public void setEnableCompressValue(Boolean enableCompressValue) {
+        public void setEnableCompressValue(boolean enableCompressValue) {
             this.enableCompressValue = enableCompressValue;
         }
 
@@ -424,7 +406,7 @@ public class CacheProperties {
         private String storeType;
         private Long expireAfterWrite;
         private String namespace;
-        private Boolean enableKeyPrefix;
+        private boolean enableKeyPrefix;
 
         public String getStoreType() {
             return storeType;
@@ -450,15 +432,11 @@ public class CacheProperties {
             this.namespace = namespace;
         }
 
-        public Boolean getEnableKeyPrefix() {
+        public boolean isEnableKeyPrefix() {
             return enableKeyPrefix;
         }
 
-        public boolean isEnableKeyPrefix() {
-            return null != enableKeyPrefix ? enableKeyPrefix : true;
-        }
-
-        public void setEnableKeyPrefix(Boolean enableKeyPrefix) {
+        public void setEnableKeyPrefix(boolean enableKeyPrefix) {
             this.enableKeyPrefix = enableKeyPrefix;
         }
     }

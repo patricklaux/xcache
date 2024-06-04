@@ -37,7 +37,7 @@ public class CaffeineCacheStore<K, V> extends AbstractLocalCacheStore<K, V> {
 
     @Override
     public Mono<Void> doClear() {
-        cache.asMap().clear();
+        cache.invalidateAll();
         return Mono.empty();
     }
 

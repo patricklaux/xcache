@@ -8,8 +8,8 @@ import com.igeeksky.xcache.config.CacheProperties;
 import com.igeeksky.xcache.extension.compress.Compressor;
 import com.igeeksky.xcache.extension.monitor.CacheMonitor;
 import com.igeeksky.xcache.extension.serialization.Serializer;
-import com.igeeksky.xcache.util.BytesUtils;
-import com.igeeksky.xcache.util.CollectionUtils;
+import com.igeeksky.xtool.core.collection.CollectionUtils;
+import com.igeeksky.xtool.core.lang.ArrayUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
@@ -32,14 +32,14 @@ public abstract class AbstractRemoteCacheStore<K, V> extends AbstractCacheStore<
                                     Serializer<V> valueSerializer, Compressor valueCompressor) {
         super(name, remote, keyType, valueType, cacheMonitors);
         this.valueSerializer = valueSerializer;
-        this.enableCompressValue = remote.getEnableCompressValue();
+        this.enableCompressValue = remote.isEnableCompressValue();
         this.valueCompressor = valueCompressor;
     }
 
     @Override
     protected Mono<CacheValue<V>> doGet(K key) {
         byte[] keyBytes = toStoreKey(key);
-        if (BytesUtils.isNotEmpty(keyBytes)) {
+        if (ArrayUtils.isNotEmpty(keyBytes)) {
             return doStoreGet(keyBytes);
         }
         return Mono.error(new RuntimeException("Key bytes must not be null or empty."));

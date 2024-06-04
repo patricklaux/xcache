@@ -30,21 +30,6 @@
             <artifactId>xcache-store-common</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-serialization-jackson</artifactId>
-            <optional>true</optional>
-        </dependency>
-<!--            <dependency>
-            <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-redis-lettuce</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-caffeine</artifactId>
-            <optional>true</optional>
-        </dependency>-->
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>

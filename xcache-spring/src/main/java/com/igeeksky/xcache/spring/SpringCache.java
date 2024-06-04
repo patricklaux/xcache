@@ -9,6 +9,8 @@ import org.springframework.lang.NonNull;
 import java.util.concurrent.Callable;
 
 /**
+ * 适配 Spring Cache
+ *
  * @author Patrick.Lau
  * @since 0.0.2 2021-06-03
  */
@@ -40,11 +42,9 @@ public class SpringCache implements org.springframework.cache.Cache {
         return toValueWrapper(cacheValue);
     }
 
-
     private ValueWrapper toValueWrapper(CacheValue<Object> wrapper) {
         return null == wrapper ? null : (wrapper::getValue);
     }
-
 
     @Override
     public <T> T get(@NonNull Object key, Class<T> type) {

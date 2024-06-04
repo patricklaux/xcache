@@ -30,9 +30,9 @@ public class XcacheManager {
 
     private static final Logger log = LoggerFactory.getLogger(XcacheManager.class);
 
-    private static final int THREE_LEVEL = 3;
-    private static final int TWO_LEVEL = 2;
     private static final int ONE_LEVEL = 1;
+    private static final int TWO_LEVEL = 2;
+    private static final int THREE_LEVEL = 3;
 
     private XcacheProperties xcacheProperties;
     private final ConcurrentMap<String, Cache<?, ?>> multiCacheMap = new ConcurrentHashMap<>(16);
@@ -83,7 +83,7 @@ public class XcacheManager {
      */
     private void initializeManagers() {
         cacheManagerMap.clear();
-        MultiManagerProperties multiManagerProperties = xcacheProperties.getMultiCacheManager();
+        MultiManagerProperties multiManagerProperties = xcacheProperties.getMultiManagerProperties();
         List<CacheProperties> caches = multiManagerProperties.getCaches();
         for (CacheProperties cacheProperties : caches) {
             if (null != cacheProperties) {
@@ -125,7 +125,7 @@ public class XcacheManager {
     private <K, V> Cache<K, V> createCache(String name, Class<K> keyType, Class<V> valueType) {
         MultiCacheProperties multiCacheProperties = xcacheProperties.getFromMultiCaches(name);
         Cache<K, V> multiCache = createCache(name, multiCacheProperties, keyType, valueType);
-        if (xcacheProperties.getMultiCacheManager().isEnableCacheProxy()) {
+        if (xcacheProperties.getMultiManagerProperties().isEnableCacheProxy()) {
             return new CacheProxy<>(multiCache);
         }
         return multiCache;
@@ -164,14 +164,7 @@ public class XcacheManager {
 
         int size = cacheList.size();
         if (size > THREE_LEVEL) {
-            Cache<K, V> firstCache = cacheList.get(0);
-            MultiExtension<K, V> multiExtension = MultiExtension.builder(keyType, valueType)
-                    .setMultiCacheProperties(multiProperties)
-                    .setStoreType(ManyLevelCache.STORE_TYPE)
-                    .setFirstCache(firstCache)
-                    .setUpdateType(CacheUpdateType.REMOVE)
-                    .build();
-            return new ManyLevelCache<>(multiProperties, multiExtension, cacheList);
+            throw new CacheInitializationException("Cache size can't more than three");
         }
 
         if (size == THREE_LEVEL) {

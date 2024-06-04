@@ -3,9 +3,9 @@ package com.igeeksky.xcache.extension.update;
 import com.igeeksky.xcache.Cache;
 import com.igeeksky.xcache.event.*;
 import com.igeeksky.xcache.extension.serialization.CacheEventSerializer;
-import com.igeeksky.xcache.util.BytesUtils;
-import com.igeeksky.xcache.util.CollectionUtils;
-import com.igeeksky.xcache.util.StringUtils;
+import com.igeeksky.xtool.core.collection.Maps;
+import com.igeeksky.xtool.core.lang.ArrayUtils;
+import com.igeeksky.xtool.core.lang.StringUtils;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -28,7 +28,7 @@ public class CacheUpdatePolicy<K, V> implements CacheEventPolicy<K, V> {
 
     @Override
     public void onMessage(byte[] msgBytes) {
-        if (BytesUtils.isEmpty(msgBytes)) {
+        if (ArrayUtils.isEmpty(msgBytes)) {
             return;
         }
         CacheUpdateMessage msg = serializer.deserialize(msgBytes);
@@ -39,7 +39,7 @@ public class CacheUpdatePolicy<K, V> implements CacheEventPolicy<K, V> {
 
     private void onMessage(CacheUpdateMessage msg) {
         String eventStr = msg.getEvent();
-        if (StringUtils.isEmpty(eventStr)) {
+        if (StringUtils.hasLength(eventStr)) {
             return;
         }
 
@@ -92,7 +92,7 @@ public class CacheUpdatePolicy<K, V> implements CacheEventPolicy<K, V> {
 
     private void onLoadAllEvent(CacheLoadAllEvent<K, V> event) {
         Map<? extends K, ? extends V> keyValues = event.getKeyValues();
-        if (CollectionUtils.isEmpty(keyValues)) {
+        if (Maps.isEmpty(keyValues)) {
             return;
         }
 
@@ -113,7 +113,7 @@ public class CacheUpdatePolicy<K, V> implements CacheEventPolicy<K, V> {
 
     private void onPutAllEvent(CachePutAllEvent<K, V> event) {
         Map<? extends K, ? extends V> keyValues = event.getKeyValues();
-        if (CollectionUtils.isEmpty(keyValues)) {
+        if (Maps.isEmpty(keyValues)) {
             return;
         }
 

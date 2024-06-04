@@ -1,10 +1,11 @@
 package com.igeeksky.xcache.redis.lettuce;
 
-import com.igeeksky.xcache.config.PropertiesKey;
-import com.igeeksky.xcache.redis.RedisPropertiesKey;
 import com.igeeksky.xcache.redis.RedisHashWriter;
+import com.igeeksky.xcache.redis.RedisPropertiesKey;
 import com.igeeksky.xcache.redis.RedisStringWriter;
 import com.igeeksky.xcache.redis.RedisWriterProvider;
+import com.igeeksky.xtool.core.collection.Maps;
+import com.igeeksky.xtool.core.lang.StringUtils;
 import io.lettuce.core.AbstractRedisClient;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -30,17 +31,17 @@ public class LettuceRedisWriterProvider implements RedisWriterProvider {
     private AbstractRedisClient createRedisClient(Map<String, Object> metadata) {
         // TODO 连接池、哨兵、集群配置
         RedisURI redisURI;
-        String uri = PropertiesKey.getString(metadata, RedisPropertiesKey.URI, null);
-        if (null != uri) {
+        String uri = Maps.getString(metadata, RedisPropertiesKey.URI);
+        if (StringUtils.hasLength(uri)) {
             redisURI = RedisURI.create(uri);
             return RedisClient.create(redisURI);
         }
 
-        String host = PropertiesKey.getString(metadata, RedisPropertiesKey.HOST, null);
-        int port = PropertiesKey.getInteger(metadata, RedisPropertiesKey.PORT, 6379);
+        String host = Maps.getString(metadata, RedisPropertiesKey.HOST);
+        int port = Maps.getInteger(metadata, RedisPropertiesKey.PORT, 6379);
         redisURI = RedisURI.create(host, port);
 
-        Long timeout = PropertiesKey.getLong(metadata, RedisPropertiesKey.TIMEOUT, null);
+        Long timeout = Maps.getLong(metadata, RedisPropertiesKey.TIMEOUT);
         if (null != timeout) {
             redisURI.setTimeout(Duration.ofSeconds(timeout));
         }

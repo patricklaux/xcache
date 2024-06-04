@@ -2,7 +2,9 @@ package com.igeeksky.xcache.common.loader;
 
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.KeyValue;
+import com.igeeksky.xtool.core.collection.CollectionUtils;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Objects;
 import java.util.Set;
@@ -17,12 +19,11 @@ public interface CacheLoader<K, V> {
     V load(K key);
 
     default Flux<KeyValue<K, CacheValue<V>>> loadAll(Set<? extends K> keys) {
-        return Flux.fromIterable(keys)
+        return Mono.justOrEmpty(keys)
+                .filter(CollectionUtils::isNotEmpty)
+                .flatMapMany(Flux::fromIterable)
                 .filter(Objects::nonNull)
-                .map(key -> {
-                    CacheValue<V> cacheValue = new CacheValue<>(load(key));
-                    return new KeyValue<>(key, cacheValue);
-                });
+                .map(key -> new KeyValue<>(key, new CacheValue<>(load(key))));
     }
 
 }
