@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.extension.loader;
 
-import com.igeeksky.xcache.config.props.CacheProps;
+import com.igeeksky.xcache.props.CacheProps;
 
 /**
  * @author Patrick.Lau

@@ -1,10 +1,9 @@
 package com.igeeksky.xcache.core;
 
 
-import com.igeeksky.xcache.AbstractCache;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.StoreType;
-import com.igeeksky.xcache.config.CacheConfig;
+import com.igeeksky.xcache.core.config.CacheConfig;
 import com.igeeksky.xcache.extension.loader.CacheLoader;
 import com.igeeksky.xcache.extension.statistic.CacheStatMonitor;
 

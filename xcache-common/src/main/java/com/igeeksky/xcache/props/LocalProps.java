@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.config.props;
+package com.igeeksky.xcache.props;
 
 import com.igeeksky.xcache.common.ReferenceType;
 import com.igeeksky.xtool.core.json.SimpleJSON;

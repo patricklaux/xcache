@@ -1,9 +1,9 @@
 package com.igeeksky.xcache.redis;
 
-import com.igeeksky.xcache.config.CacheConfig;
+import com.igeeksky.xcache.core.config.CacheConfig;
+import com.igeeksky.xcache.core.store.RemoteStore;
+import com.igeeksky.xcache.core.store.RemoteStoreProvider;
 import com.igeeksky.xcache.extension.serializer.StringSerializer;
-import com.igeeksky.xcache.store.RemoteStore;
-import com.igeeksky.xcache.store.RemoteStoreProvider;
 import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.nio.charset.Charset;

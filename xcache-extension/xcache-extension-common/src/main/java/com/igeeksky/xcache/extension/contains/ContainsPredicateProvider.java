@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.extension.contains;
 
 import com.igeeksky.xcache.common.Provider;
-import com.igeeksky.xcache.config.props.CacheProps;
+import com.igeeksky.xcache.props.CacheProps;
 
 /**
  * 判断数据源是否包含此key对应的value，工厂类

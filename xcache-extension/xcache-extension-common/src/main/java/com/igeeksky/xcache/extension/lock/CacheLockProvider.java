@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.extension.lock;
 
 import com.igeeksky.xcache.common.Provider;
-import com.igeeksky.xcache.config.props.CacheProps;
+import com.igeeksky.xcache.props.CacheProps;
 
 /**
  * 缓存锁工厂，用于获取 {@link CacheLock}

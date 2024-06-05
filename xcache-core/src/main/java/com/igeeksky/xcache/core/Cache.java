@@ -1,4 +1,7 @@
-package com.igeeksky.xcache;
+package com.igeeksky.xcache.core;
+
+import com.igeeksky.xcache.Base;
+import com.igeeksky.xcache.extension.loader.CacheLoader;
 
 /**
  * <p>缓存</p>

@@ -1,8 +1,8 @@
 package com.igeeksky.xcache.spring;
 
-import com.igeeksky.xcache.Cache;
 import com.igeeksky.xcache.common.CacheLoaderException;
 import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.core.Cache;
 import com.igeeksky.xcache.extension.loader.CacheLoader;
 import org.springframework.lang.NonNull;
 
@@ -46,19 +46,20 @@ public class SpringCache implements org.springframework.cache.Cache {
     }
 
     @Override
-    public <T> T get(@NonNull Object key, Class<T> type) {
+    public <V> V get(@NonNull Object key, Class<V> type) {
         return fromStoreValue(cache.get(key));
     }
 
     @Override
-    public <T> T get(@NonNull Object key, @NonNull Callable<T> valueLoader) {
-        CacheValue<Object> cacheValue = cache.get(key, k -> new CacheLoaderImpl<>(valueLoader));
-        return fromStoreValue(cacheValue);
+    @SuppressWarnings("unchecked")
+    public <V> V get(@NonNull Object key, @NonNull Callable<V> valueLoader) {
+        Object value = cache.get(key, k -> new CacheLoaderImpl<>(valueLoader));
+        return (V) value;
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T fromStoreValue(CacheValue<Object> cacheValue) {
-        return null == cacheValue ? null : (T) cacheValue.getValue();
+    private <V> V fromStoreValue(CacheValue<Object> cacheValue) {
+        return null == cacheValue ? null : (V) cacheValue.getValue();
     }
 
     @Override

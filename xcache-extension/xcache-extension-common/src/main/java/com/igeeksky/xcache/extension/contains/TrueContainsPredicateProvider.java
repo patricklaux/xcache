@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.extension.contains;
 
-import com.igeeksky.xcache.config.props.CacheProps;
+import com.igeeksky.xcache.props.CacheProps;
 
 /**
  * 无操作类工厂，test方法始终返回true

@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.config;
+package com.igeeksky.xcache.core.config;
 
 /**
  * @author Patrick.Lau

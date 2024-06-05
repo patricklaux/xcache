@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.redis.lettuce.config.props;
 
-import com.igeeksky.xcache.config.HostAndPort;
+
+import com.igeeksky.xcache.core.config.HostAndPort;
 import com.igeeksky.xcache.redis.lettuce.config.LettuceClusterConfig;
 import com.igeeksky.xcache.redis.lettuce.config.LettuceGenericConfig;
 import com.igeeksky.xcache.redis.lettuce.config.LettuceSentinelConfig;

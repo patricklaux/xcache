@@ -1,4 +1,4 @@
-package com.igeeksky.xcache;
+package com.igeeksky.xcache.core;
 
 import java.util.Collection;
 

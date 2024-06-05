@@ -1,8 +1,9 @@
 package com.igeeksky.xcache.extension.sync;
 
+import com.igeeksky.xcache.Base;
 import com.igeeksky.xcache.extension.CacheMessageConsumer;
 import com.igeeksky.xcache.extension.serializer.Serializer;
-import com.igeeksky.xcache.store.LocalStore;
+
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 
 import java.util.Objects;
@@ -19,13 +20,13 @@ public class CacheSyncConsumer implements CacheMessageConsumer {
 
     private final String sid;
 
-    private final LocalStore localCacheStore;
+    private final Base<String, Object> localStore;
 
     private final Serializer<CacheSyncMessage> serializer;
 
-    public CacheSyncConsumer(String sid, LocalStore localCacheStore, Serializer<CacheSyncMessage> serializer) {
+    public CacheSyncConsumer(String sid, Base<String, Object> localStore, Serializer<CacheSyncMessage> serializer) {
         this.sid = sid;
-        this.localCacheStore = localCacheStore;
+        this.localStore = localStore;
         this.serializer = serializer;
     }
 
@@ -39,12 +40,12 @@ public class CacheSyncConsumer implements CacheMessageConsumer {
         if (Objects.equals(CacheSyncMessage.TYPE_REMOVE, type)) {
             Set<String> keys = message.getKeys();
             if (CollectionUtils.isNotEmpty(keys)) {
-                localCacheStore.evictAll(keys);
+                localStore.evictAll(keys);
             }
             return;
         }
         if (Objects.equals(CacheSyncMessage.TYPE_CLEAR, type)) {
-            localCacheStore.clear();
+            localStore.clear();
         }
     }
 

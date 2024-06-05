@@ -17,10 +17,10 @@
     </properties>
 
     <dependencies>
-        <!--        <dependency>-->
-        <!--            <groupId>com.igeeksky.xcache</groupId>-->
-        <!--            <artifactId>xcache-common</artifactId>-->
-        <!--        </dependency>-->
+        <dependency>
+            <groupId>com.igeeksky.xcache</groupId>
+            <artifactId>xcache-common</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.igeeksky.xtool</groupId>
             <artifactId>xtool</artifactId>

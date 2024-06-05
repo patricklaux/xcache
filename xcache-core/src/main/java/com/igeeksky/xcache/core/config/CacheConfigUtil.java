@@ -1,8 +1,9 @@
-package com.igeeksky.xcache.config;
+package com.igeeksky.xcache.core.config;
 
 import com.igeeksky.xcache.common.CacheType;
 import com.igeeksky.xcache.common.ReferenceType;
 import com.igeeksky.xcache.config.props.*;
+import com.igeeksky.xcache.props.*;
 import com.igeeksky.xtool.core.annotation.Perfect;
 import com.igeeksky.xtool.core.lang.StringUtils;
 
@@ -236,7 +237,7 @@ public class CacheConfigUtil {
     }
 
     @Perfect
-    private static <K, V> LocalConfig<V> createLocalConfig(LocalProps local) {
+    private static <V> LocalConfig<V> createLocalConfig(LocalProps local) {
         LocalConfig<V> config = new LocalConfig<>();
         config.setStoreName(StringUtils.trim(local.getStoreName()));
         config.setInitialCapacity(local.getInitialCapacity());
@@ -270,7 +271,7 @@ public class CacheConfigUtil {
     }
 
     @Perfect
-    private static <K, V> RemoteConfig<V> createRemoteConfig(RemoteProps remote) {
+    private static <V> RemoteConfig<V> createRemoteConfig(RemoteProps remote) {
         RemoteConfig<V> config = new RemoteConfig<>();
         config.setStoreName(remote.getStoreName());
         config.setExpireAfterWrite(remote.getExpireAfterWrite());

@@ -1,14 +1,12 @@
 package com.igeeksky.xcache.core;
 
-import com.igeeksky.xcache.Cache;
-import com.igeeksky.xcache.CacheManager;
 import com.igeeksky.xcache.common.CacheType;
-import com.igeeksky.xcache.config.CacheConfig;
-import com.igeeksky.xcache.config.CacheConfigException;
-import com.igeeksky.xcache.config.CacheConfigUtil;
-import com.igeeksky.xcache.config.CacheConstants;
-import com.igeeksky.xcache.config.props.CacheProps;
-import com.igeeksky.xcache.config.props.TemplateProps;
+import com.igeeksky.xcache.core.config.CacheConfig;
+import com.igeeksky.xcache.core.config.CacheConfigException;
+import com.igeeksky.xcache.core.config.CacheConfigUtil;
+import com.igeeksky.xcache.core.config.CacheConstants;
+import com.igeeksky.xcache.props.CacheProps;
+import com.igeeksky.xcache.props.TemplateProps;
 import com.igeeksky.xcache.extension.compress.Compressor;
 import com.igeeksky.xcache.extension.compress.CompressorProvider;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
@@ -25,10 +23,10 @@ import com.igeeksky.xcache.extension.serializer.SerializerProvider;
 import com.igeeksky.xcache.extension.statistic.CacheStatManager;
 import com.igeeksky.xcache.extension.statistic.CacheStatMonitor;
 import com.igeeksky.xcache.extension.sync.*;
-import com.igeeksky.xcache.store.LocalStore;
-import com.igeeksky.xcache.store.LocalStoreProvider;
-import com.igeeksky.xcache.store.RemoteStore;
-import com.igeeksky.xcache.store.RemoteStoreProvider;
+import com.igeeksky.xcache.core.store.LocalStore;
+import com.igeeksky.xcache.core.store.LocalStoreProvider;
+import com.igeeksky.xcache.core.store.RemoteStore;
+import com.igeeksky.xcache.core.store.RemoteStoreProvider;
 import com.igeeksky.xtool.core.annotation.Perfect;
 import com.igeeksky.xtool.core.lang.StringUtils;
 

@@ -1,7 +1,8 @@
-package com.igeeksky.xcache.store;
+package com.igeeksky.xcache.core.store;
 
 import com.igeeksky.xcache.common.Provider;
-import com.igeeksky.xcache.config.CacheConfig;
+import com.igeeksky.xcache.core.config.CacheConfig;
+
 
 /**
  * @author Patrick.Lau

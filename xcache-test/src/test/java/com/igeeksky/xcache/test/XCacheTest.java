@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.test;
 
-import com.igeeksky.xcache.Cache;
-import com.igeeksky.xcache.CacheManager;
+import com.igeeksky.xcache.core.Cache;
+import com.igeeksky.xcache.core.CacheManager;
 import com.igeeksky.xcache.common.CacheValue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

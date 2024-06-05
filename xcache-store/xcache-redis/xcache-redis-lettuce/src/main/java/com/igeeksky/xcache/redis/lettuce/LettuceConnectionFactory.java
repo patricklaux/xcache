@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.redis.lettuce;
 
-import com.igeeksky.xcache.config.HostAndPort;
+import com.igeeksky.xcache.core.config.HostAndPort;
 import com.igeeksky.xcache.redis.RedisConnectionFactory;
 import com.igeeksky.xcache.redis.lettuce.config.LettuceStandaloneConfig;
 import com.igeeksky.xtool.core.collection.CollectionUtils;

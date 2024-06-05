@@ -1,7 +1,5 @@
 package com.igeeksky.xcache.extension.serializer;
 
-import com.igeeksky.xcache.config.CacheConfigException;
-
 import java.nio.charset.Charset;
 import java.util.Objects;
 
@@ -17,7 +15,7 @@ public class StringSerializerProvider implements SerializerProvider {
         if (Objects.equals(String.class, type)) {
             return (Serializer<T>) StringSerializer.getInstance(charset);
         }
-        throw new CacheConfigException("type must be String.class. " + type);
+        throw new IllegalArgumentException("type must be String.class. " + type);
     }
 
 }

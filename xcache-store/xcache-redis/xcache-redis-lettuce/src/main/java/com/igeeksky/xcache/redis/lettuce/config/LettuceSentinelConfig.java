@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.redis.lettuce.config;
 
-import com.igeeksky.xcache.config.HostAndPort;
+import com.igeeksky.xcache.core.config.HostAndPort;
 import com.igeeksky.xcache.redis.lettuce.config.props.Lettuce;
 import io.lettuce.core.ReadFrom;
 

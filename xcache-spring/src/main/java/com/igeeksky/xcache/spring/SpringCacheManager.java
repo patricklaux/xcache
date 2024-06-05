@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.spring;
 
-import com.igeeksky.xcache.Cache;
-import com.igeeksky.xcache.CacheManager;
+import com.igeeksky.xcache.core.Cache;
+import com.igeeksky.xcache.core.CacheManager;
 import org.springframework.lang.NonNull;
 
 import java.util.Collection;
@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentMap;
 public class SpringCacheManager implements org.springframework.cache.CacheManager {
 
     private final CacheManager cacheManager;
-    private final ConcurrentMap<String, SpringCache> cacheMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, SpringCache> caches = new ConcurrentHashMap<>();
 
     public SpringCacheManager(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
@@ -29,11 +29,11 @@ public class SpringCacheManager implements org.springframework.cache.CacheManage
 
     @SuppressWarnings("unchecked")
     public <K, V> org.springframework.cache.Cache getCache(String name, Class<K> keyType, Class<V> valueType) {
-        SpringCache cache = cacheMap.get(name);
+        SpringCache cache = caches.get(name);
         if (null != cache) {
             return cache;
         }
-        return cacheMap.computeIfAbsent(name, nameKey -> {
+        return caches.computeIfAbsent(name, nameKey -> {
             Cache<K, V> kvCache = cacheManager.getOrCreateCache(nameKey, keyType, valueType, null);
             return new SpringCache((Cache<Object, Object>) kvCache);
         });
@@ -42,7 +42,7 @@ public class SpringCacheManager implements org.springframework.cache.CacheManage
     @Override
     public @NonNull
     Collection<String> getCacheNames() {
-        return Collections.unmodifiableCollection(cacheMap.keySet());
+        return Collections.unmodifiableCollection(caches.keySet());
     }
 
 }

@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.common;
+package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.extension.serializer.StringSerializer;
 import com.igeeksky.xtool.core.lang.ArrayUtils;

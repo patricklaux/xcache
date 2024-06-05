@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.extension.lock;
 
-import com.igeeksky.xcache.config.props.CacheProps;
+import com.igeeksky.xcache.props.CacheProps;
 
 /**
  * @author Patrick.Lau

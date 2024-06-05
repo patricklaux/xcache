@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.config;
+package com.igeeksky.xcache.core.config;
 
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.contains.TrueContainsPredicate;
