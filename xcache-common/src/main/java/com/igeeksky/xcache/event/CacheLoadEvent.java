@@ -7,15 +7,12 @@ package com.igeeksky.xcache.event;
 public class CacheLoadEvent<K, V> extends CacheEvent {
 
     private K key;
-    private V value;
 
     public CacheLoadEvent() {
     }
 
-    public CacheLoadEvent(K key, V value, long millis) {
+    public CacheLoadEvent(K key) {
         this.key = key;
-        this.value = value;
-        this.setMillis(millis);
     }
 
     public K getKey() {
@@ -25,13 +22,4 @@ public class CacheLoadEvent<K, V> extends CacheEvent {
     public void setKey(K key) {
         this.key = key;
     }
-
-    public V getValue() {
-        return value;
-    }
-
-    public void setValue(V value) {
-        this.value = value;
-    }
-
 }

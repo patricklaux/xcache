@@ -15,6 +15,7 @@
     <modules>
         <module>xcache-redis-common</module>
         <module>xcache-redis-lettuce</module>
+        <module>xcache-redis-jedis</module>
     </modules>
 
 </project>

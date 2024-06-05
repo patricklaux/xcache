@@ -1,8 +1,7 @@
 package com.igeeksky.xcache.spring;
 
 import com.igeeksky.xcache.Cache;
-import com.igeeksky.xcache.core.XcacheManager;
-import org.springframework.cache.CacheManager;
+import com.igeeksky.xcache.CacheManager;
 import org.springframework.lang.NonNull;
 
 import java.util.Collection;
@@ -14,13 +13,13 @@ import java.util.concurrent.ConcurrentMap;
  * @author Patrick.Lau
  * @since 0.0.4 2021-09-20
  */
-public class SpringCacheManager implements CacheManager {
+public class SpringCacheManager implements org.springframework.cache.CacheManager {
 
-    private final XcacheManager xcacheManager;
+    private final CacheManager cacheManager;
     private final ConcurrentMap<String, SpringCache> cacheMap = new ConcurrentHashMap<>();
 
-    public SpringCacheManager(XcacheManager xcacheManager) {
-        this.xcacheManager = xcacheManager;
+    public SpringCacheManager(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
     }
 
     @Override
@@ -35,7 +34,7 @@ public class SpringCacheManager implements CacheManager {
             return cache;
         }
         return cacheMap.computeIfAbsent(name, nameKey -> {
-            Cache<K, V> kvCache = xcacheManager.get(nameKey, keyType, valueType);
+            Cache<K, V> kvCache = cacheManager.getOrCreateCache(nameKey, keyType, valueType, null);
             return new SpringCache((Cache<Object, Object>) kvCache);
         });
     }

@@ -1,10 +1,11 @@
 package com.igeeksky.xcache.test;
 
 import com.igeeksky.xcache.Cache;
-import com.igeeksky.xcache.core.XcacheManager;
+import com.igeeksky.xcache.CacheManager;
 import com.igeeksky.xcache.common.CacheValue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
 
 /**
  * @author Patrick.Lau
@@ -17,7 +18,7 @@ public class XCacheTest {
     private static final String name = "test";
     private static final String name2 = "user";
 
-    static XcacheManager cacheManager;
+    static CacheManager cacheManager;
 
     @BeforeAll
     static void cacheManager() {
@@ -82,17 +83,17 @@ public class XCacheTest {
 
     @Test
     public void testSyncSetGetString() {
-        Cache<String, String> cache = cacheManager.get(name, String.class, String.class);
+        Cache<String, String> cache = cacheManager.getOrCreateCache(name, String.class, String.class, null);
         long start = System.currentTimeMillis();
         for (int i = 0; i < 1000000; i++) {
             String kv = "aa" + i;
-            cache.sync().put(kv, kv);
+            cache.put(kv, kv);
         }
         long end = System.currentTimeMillis();
         System.out.println(end - start);
         for (int i = 0; i < 1000000; i++) {
             String kv = "aa" + i;
-            CacheValue<String> value = cache.sync().get(kv);
+            CacheValue<String> value = cache.get(kv);
             if ((i & 4095) == 0) {
                 System.out.println(value.getValue());
             }
@@ -103,9 +104,9 @@ public class XCacheTest {
 
     @Test
     public void testSyncSetGetUser() throws InterruptedException {
-        Cache<String, User> cache = cacheManager.get(name2, String.class, User.class);
-        cache.sync().put("bb", new User());
-        CacheValue<User> cacheValue = cache.sync().get("bb");
+        Cache<String, User> cache = cacheManager.getOrCreateCache(name2, String.class, User.class, null);
+        cache.put("bb", new User());
+        CacheValue<User> cacheValue = cache.get("bb");
         System.out.println(cacheValue.getValue());
         Thread.sleep(1000);
     }

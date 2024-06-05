@@ -8,11 +8,16 @@ package com.igeeksky.xcache.common;
 public abstract class CacheValues {
 
     public static final CacheValue<?> EMPTY_CACHE_VALUE = new CacheValue<>(null);
-    public static final ExpiryCacheValue<?> EMPTY_EXPIRY_CACHE_VALUE = new ExpiryCacheValue<>(null);
 
     private CacheValues() {
     }
 
+    /**
+     * 返回的是全局唯一的静态对象
+     *
+     * @param <V> 值类型
+     * @return 全局唯一的静态对象（值为空）
+     */
     public static <V> CacheValue<V> emptyCacheValue() {
         return (CacheValue<V>) EMPTY_CACHE_VALUE;
     }
@@ -21,8 +26,8 @@ public abstract class CacheValues {
         return new CacheValue<>(value);
     }
 
-    public static <V> ExpiryCacheValue<V> emptyExpiryCacheValue() {
-        return (ExpiryCacheValue<V>) EMPTY_EXPIRY_CACHE_VALUE;
+    public static <V> ExpiryCacheValue<V> newEmptyExpiryCacheValue() {
+        return new ExpiryCacheValue<>(null);
     }
 
     public static <V> ExpiryCacheValue<V> newExpiryCacheValue(V value) {

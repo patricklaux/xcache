@@ -13,7 +13,7 @@
 
     <dependencies>
         <dependency>
-            <artifactId>xcache-store-common</artifactId>
+            <artifactId>xcache-extension-common</artifactId>
             <groupId>com.igeeksky.xcache</groupId>
         </dependency>
     </dependencies>

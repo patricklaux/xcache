@@ -1,28 +1,27 @@
 package com.igeeksky.xcache.event;
 
-import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Patrick.Lau
  * @since 0.0.3 2021-08-22
  */
-public class CachePutAllEvent<K, V> extends CacheEvent {
+public class CachePutAllEvent<K> extends CacheEvent {
 
-    private Map<? extends K, ? extends V> keyValues;
+    private Set<K> keys;
 
     public CachePutAllEvent() {
     }
 
-    public CachePutAllEvent(Map<? extends K, ? extends V> keyValues, long millis) {
-        this.keyValues = keyValues;
-        this.setMillis(millis);
+    public CachePutAllEvent(Set<K> keys) {
+        this.keys = keys;
     }
 
-    public Map<? extends K, ? extends V> getKeyValues() {
-        return keyValues;
+    public Set<K> getKeys() {
+        return keys;
     }
 
-    public void setKeyValues(Map<? extends K, ? extends V> keyValues) {
-        this.keyValues = keyValues;
+    public void setKeys(Set<K> keys) {
+        this.keys = keys;
     }
 }

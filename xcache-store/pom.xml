@@ -15,7 +15,6 @@
     <modules>
         <module>xcache-caffeine</module>
         <module>xcache-redis</module>
-        <module>xcache-store-common</module>
     </modules>
 
 </project>

@@ -56,7 +56,6 @@ public class CRC16 {
      * Utility constructor.
      */
     private CRC16() {
-
     }
 
     /**

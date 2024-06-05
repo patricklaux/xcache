@@ -1,6 +1,5 @@
 package com.igeeksky.xcache.common;
 
-
 /**
  * @author Patrick.Lau
  * since 0.0.3 2021-07-29
@@ -18,7 +17,7 @@ public class CacheValue<V> {
     }
 
     public boolean hasValue() {
-        return null != this.value;
+        return this.value != null;
     }
 
 }

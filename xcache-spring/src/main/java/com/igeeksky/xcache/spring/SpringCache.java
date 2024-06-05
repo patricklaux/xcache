@@ -1,9 +1,9 @@
 package com.igeeksky.xcache.spring;
 
 import com.igeeksky.xcache.Cache;
+import com.igeeksky.xcache.common.CacheLoaderException;
 import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.common.loader.CacheLoader;
-import com.igeeksky.xcache.common.loader.CacheLoaderException;
+import com.igeeksky.xcache.extension.loader.CacheLoader;
 import org.springframework.lang.NonNull;
 
 import java.util.concurrent.Callable;
@@ -38,8 +38,7 @@ public class SpringCache implements org.springframework.cache.Cache {
 
     @Override
     public ValueWrapper get(@NonNull Object key) {
-        CacheValue<Object> cacheValue = cache.sync().get(key);
-        return toValueWrapper(cacheValue);
+        return toValueWrapper(cache.get(key));
     }
 
     private ValueWrapper toValueWrapper(CacheValue<Object> wrapper) {
@@ -48,13 +47,12 @@ public class SpringCache implements org.springframework.cache.Cache {
 
     @Override
     public <T> T get(@NonNull Object key, Class<T> type) {
-        CacheValue<Object> cacheValue = cache.sync().get(key);
-        return fromStoreValue(cacheValue);
+        return fromStoreValue(cache.get(key));
     }
 
     @Override
     public <T> T get(@NonNull Object key, @NonNull Callable<T> valueLoader) {
-        CacheValue<Object> cacheValue = cache.sync().get(key, k -> new CacheLoaderImpl<>(valueLoader));
+        CacheValue<Object> cacheValue = cache.get(key, k -> new CacheLoaderImpl<>(valueLoader));
         return fromStoreValue(cacheValue);
     }
 
@@ -65,26 +63,20 @@ public class SpringCache implements org.springframework.cache.Cache {
 
     @Override
     public void put(@NonNull Object key, Object value) {
-        cache.sync().put(key, value);
+        cache.put(key, value);
     }
 
     @Override
     public void evict(@NonNull Object key) {
-        cache.remove(key);
+        cache.evict(key);
     }
 
     @Override
     public void clear() {
-        cache.sync().clear();
+        cache.clear();
     }
 
-    private static class CacheLoaderImpl<K, V> implements CacheLoader<K, V> {
-
-        private final Callable<V> valueLoader;
-
-        public CacheLoaderImpl(Callable<V> valueLoader) {
-            this.valueLoader = valueLoader;
-        }
+    private record CacheLoaderImpl<K, V>(Callable<V> valueLoader) implements CacheLoader<K, V> {
 
         @Override
         public V load(K k) {
