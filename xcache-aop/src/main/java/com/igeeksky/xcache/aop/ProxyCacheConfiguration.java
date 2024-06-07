@@ -1,9 +1,5 @@
-package com.igeeksky.xcache.autoconfigure;
+package com.igeeksky.xcache.aop;
 
-import com.igeeksky.xcache.aop.CacheInterceptor;
-import com.igeeksky.xcache.aop.CacheOperationAdvisor;
-import com.igeeksky.xcache.aop.CacheOperationSource;
-import com.igeeksky.xcache.aop.EnableCache;
 import com.igeeksky.xcache.core.CacheManager;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
