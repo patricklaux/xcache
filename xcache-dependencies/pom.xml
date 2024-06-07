@@ -49,11 +49,7 @@
                 <artifactId>xcache-serialization-jackson</artifactId>
                 <version>${revision}</version>
             </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-spring</artifactId>
-                <version>${revision}</version>
-            </dependency>
+
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-store</artifactId>
@@ -86,7 +82,27 @@
             </dependency>
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-spring-boot</artifactId>
+                <artifactId>xcache-redis-jedis</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-spring</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-spring-adapter</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-spring-boot-autoconfigure</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-redis-spring-boot-autoconfigure</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>

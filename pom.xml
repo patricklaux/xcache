@@ -47,6 +47,7 @@
         <jacoco.version>0.8.12</jacoco.version>
         <nexus.staging.version>1.7.0</nexus.staging.version>
         <!-- maven plugin end -->
+
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
@@ -60,7 +61,6 @@
         <module>xcache-extension</module>
         <module>xcache-common</module>
         <module>xcache-spring</module>
-        <module>xcache-spring-boot</module>
         <module>xcache-aop</module>
     </modules>
 
@@ -112,9 +112,9 @@
                     <target>${maven.compiler.target}</target>
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <parameters>true</parameters>
-<!--                    <compilerArgs>-->
-<!--                        <arg>-parameters</arg>-->
-<!--                    </compilerArgs>-->
+                    <!--                    <compilerArgs>-->
+                    <!--                        <arg>-parameters</arg>-->
+                    <!--                    </compilerArgs>-->
                 </configuration>
             </plugin>
             <plugin>

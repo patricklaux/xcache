@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.igeeksky.xcache</groupId>
-        <artifactId>xcache-parent</artifactId>
+        <artifactId>xcache-spring</artifactId>
         <version>${revision}</version>
     </parent>
 
-    <artifactId>xcache-aop</artifactId>
+    <artifactId>xcache-jackson-spring-boot-autoconfigure</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -20,16 +20,11 @@
     <dependencies>
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-core</artifactId>
+            <artifactId>xcache-spring-boot-autoconfigure</artifactId>
         </dependency>
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-annotation</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <optional>true</optional>
+            <artifactId>xcache-serialization-jackson</artifactId>
         </dependency>
     </dependencies>
 
