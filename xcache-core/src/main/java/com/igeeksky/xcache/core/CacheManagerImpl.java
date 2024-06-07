@@ -4,9 +4,10 @@ import com.igeeksky.xcache.common.CacheType;
 import com.igeeksky.xcache.core.config.CacheConfig;
 import com.igeeksky.xcache.core.config.CacheConfigException;
 import com.igeeksky.xcache.core.config.CacheConfigUtil;
-import com.igeeksky.xcache.core.config.CacheConstants;
-import com.igeeksky.xcache.props.CacheProps;
-import com.igeeksky.xcache.props.TemplateProps;
+import com.igeeksky.xcache.core.store.LocalStore;
+import com.igeeksky.xcache.core.store.LocalStoreProvider;
+import com.igeeksky.xcache.core.store.RemoteStore;
+import com.igeeksky.xcache.core.store.RemoteStoreProvider;
 import com.igeeksky.xcache.extension.compress.Compressor;
 import com.igeeksky.xcache.extension.compress.CompressorProvider;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
@@ -23,10 +24,9 @@ import com.igeeksky.xcache.extension.serializer.SerializerProvider;
 import com.igeeksky.xcache.extension.statistic.CacheStatManager;
 import com.igeeksky.xcache.extension.statistic.CacheStatMonitor;
 import com.igeeksky.xcache.extension.sync.*;
-import com.igeeksky.xcache.core.store.LocalStore;
-import com.igeeksky.xcache.core.store.LocalStoreProvider;
-import com.igeeksky.xcache.core.store.RemoteStore;
-import com.igeeksky.xcache.core.store.RemoteStoreProvider;
+import com.igeeksky.xcache.props.CacheConstants;
+import com.igeeksky.xcache.props.CacheProps;
+import com.igeeksky.xcache.props.TemplateProps;
 import com.igeeksky.xtool.core.annotation.Perfect;
 import com.igeeksky.xtool.core.lang.StringUtils;
 
@@ -62,7 +62,7 @@ public class CacheManagerImpl implements CacheManager {
         this.application = application;
         templates.forEach((id, template) -> {
             TemplateProps defaultTemplate = CacheConfigUtil.defaultTemplateProps(id);
-            this.templates.put(id, CacheConfigUtil.copyProperties(template, defaultTemplate));
+            this.templates.put(id, CacheConfigUtil.copyTemplateProps(template, defaultTemplate));
         });
         configs.forEach((name, config) -> {
             CacheProps cacheProps = this.cloneCacheProps(config);
@@ -161,7 +161,7 @@ public class CacheManagerImpl implements CacheManager {
         requireNonNull(template, () -> String.format("cache-config: template [%s] doesn't exist.", templateId));
 
         // 用户配置 覆盖 模板配置
-        return CacheConfigUtil.copyProperties(props, template.toCacheProps());
+        return CacheConfigUtil.copyCacheProps(props, template.toCacheProps());
     }
 
     private static String getTemplateId(String id) {

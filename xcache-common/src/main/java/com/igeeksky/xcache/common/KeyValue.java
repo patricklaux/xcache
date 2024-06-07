@@ -1,5 +1,9 @@
 package com.igeeksky.xcache.common;
 
+import com.igeeksky.xtool.core.json.SimpleJSON;
+
+import java.util.Objects;
+
 /**
  * @author Patrick.Lau
  * @since 0.0.1 2017-03-02 21:37:52
@@ -32,28 +36,22 @@ public class KeyValue<K, V> {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof KeyValue)) return false;
+        if (!(o instanceof KeyValue<?, ?> keyValue)) return false;
 
-        KeyValue<?, ?> keyValue = (KeyValue<?, ?>) o;
-
-        if (getKey() != null ? !getKey().equals(keyValue.getKey()) : keyValue.getKey() != null) return false;
-        return getValue() != null ? getValue().equals(keyValue.getValue()) : keyValue.getValue() == null;
+        return Objects.equals(getKey(), keyValue.getKey()) && Objects.equals(getValue(), keyValue.getValue());
     }
 
     @Override
     public int hashCode() {
-        int result = getKey() != null ? getKey().hashCode() : 0;
-        result = 31 * result + (getValue() != null ? getValue().hashCode() : 0);
+        int result = Objects.hashCode(getKey());
+        result = 31 * result + Objects.hashCode(getValue());
         return result;
     }
 
     @Override
     public String toString() {
-        return "KeyValue{" + "key=" + key +
-                ", value=" + value +
-                ", hasValue=" + hasValue() +
-                '}';
+        return SimpleJSON.toJSONString(this);
     }
 }

@@ -15,9 +15,4 @@ public class JdkKeyConvertorProvider implements KeyConvertorProvider {
         return JdkKeyConvertor.getInstance(charset);
     }
 
-    @Override
-    public void close() {
-        // do nothing
-    }
-
 }

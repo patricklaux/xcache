@@ -2,7 +2,6 @@ package com.igeeksky.xcache.core.config;
 
 import com.igeeksky.xcache.common.CacheType;
 import com.igeeksky.xcache.common.ReferenceType;
-import com.igeeksky.xcache.config.props.*;
 import com.igeeksky.xcache.props.*;
 import com.igeeksky.xtool.core.annotation.Perfect;
 import com.igeeksky.xtool.core.lang.StringUtils;
@@ -21,22 +20,8 @@ import java.util.Objects;
 public class CacheConfigUtil {
 
     @Perfect
-    public static TemplateProps copyProperties(TemplateProps from, TemplateProps to) {
-        String charset = StringUtils.toUpperCase(from.getCharset());
-        if (charset != null) {
-            to.setCharset(charset);
-        }
-
-        CacheType cacheType = from.getCacheType();
-        if (cacheType != null) {
-            to.setCacheType(cacheType);
-        }
-
-        copyProperties(from.getLocal(), to.getLocal());
-        copyProperties(from.getRemote(), to.getRemote());
-        copyProperties(from.getExtension(), to.getExtension());
-
-        to.getMetadata().putAll(from.getMetadata());
+    public static TemplateProps copyTemplateProps(TemplateProps from, TemplateProps to) {
+        copyProps(from, to);
         return to;
     }
 
@@ -47,9 +32,13 @@ public class CacheConfigUtil {
      * <p> String类型，如果不希望使用该配置项，可以配置为 “none” <p>
      */
     @Perfect
-    public static CacheProps copyProperties(CacheProps from, CacheProps to) {
+    public static CacheProps copyCacheProps(CacheProps from, CacheProps to) {
         to.setName(from.getName());
+        copyProps(from, to);
+        return to;
+    }
 
+    private static void copyProps(AbstractProps from, AbstractProps to) {
         String charset = StringUtils.toUpperCase(from.getCharset());
         if (charset != null) {
             to.setCharset(charset);
@@ -60,16 +49,15 @@ public class CacheConfigUtil {
             to.setCacheType(cacheType);
         }
 
-        copyProperties(from.getLocal(), to.getLocal());
-        copyProperties(from.getRemote(), to.getRemote());
-        copyProperties(from.getExtension(), to.getExtension());
+        copyLocalProps(from.getLocal(), to.getLocal());
+        copyRemoteProps(from.getRemote(), to.getRemote());
+        copyExtensionProps(from.getExtension(), to.getExtension());
 
         to.getMetadata().putAll(from.getMetadata());
-        return to;
     }
 
     @Perfect
-    private static void copyProperties(LocalProps from, LocalProps to) {
+    private static void copyLocalProps(LocalProps from, LocalProps to) {
         String cacheStore = StringUtils.trim(from.getCacheStore());
         if (StringUtils.hasLength(cacheStore)) {
             to.setCacheStore(cacheStore);
@@ -137,7 +125,7 @@ public class CacheConfigUtil {
     }
 
     @Perfect
-    private static void copyProperties(RemoteProps from, RemoteProps to) {
+    private static void copyRemoteProps(RemoteProps from, RemoteProps to) {
         String cacheStore = StringUtils.trim(from.getCacheStore());
         if (StringUtils.hasLength(cacheStore)) {
             to.setCacheStore(cacheStore);
@@ -180,7 +168,7 @@ public class CacheConfigUtil {
     }
 
     @Perfect
-    private static void copyProperties(ExtensionProps from, ExtensionProps to) {
+    private static void copyExtensionProps(ExtensionProps from, ExtensionProps to) {
         String keyConvertor = StringUtils.trim(from.getKeyConvertor());
         if (StringUtils.hasLength(keyConvertor)) {
             to.setKeyConvertor(keyConvertor);

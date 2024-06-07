@@ -11,7 +11,7 @@ import java.util.HashMap;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-13
  */
-public class CacheProps extends AbstractCacheProps implements Cloneable {
+public class CacheProps extends AbstractProps implements Cloneable {
 
     /**
      * 缓存名称（不能为空）
@@ -23,7 +23,7 @@ public class CacheProps extends AbstractCacheProps implements Cloneable {
      * <p>
      * 如未指定，采用默认模板：t0
      *
-     * @see com.igeeksky.xcache.config.CacheConstants#DEFAULT_TEMPLATE_ID
+     * @see com.igeeksky.xcache.props.CacheConstants#DEFAULT_TEMPLATE_ID
      */
     private String templateId;
 

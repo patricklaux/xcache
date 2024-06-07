@@ -576,23 +576,23 @@ sequenceDiagram
 
 #### 数据汇总
 
-| 序   | 数据操作 |   缓存类型   |        发送方缓存操作         |              发送事件类型              |      接收方本地缓存操作       |
-| ---- | :------: | :----------: | :---------------------------: | :------------------------------------: | :---------------------------: |
-| 1    | 新增数据 | 仅有本地缓存 |        put(key, value)        |                   无                   |              无               |
-| 2    | 新增数据 | 仅有远程缓存 |        put(key, value)        |                   无                   |              无               |
-| 3    | 新增数据 |  本地+远程   |        put(key, value)        |                   无                   |              无               |
-| 4    | 删除数据 | 仅有本地缓存 | remove(key) \| put(key, null) | CacheRemoveEvent <br>CachePutNullEvent | remove(key) \| put(key, null) |
-| 5    | 删除数据 | 仅有远程缓存 | remove(key) \| put(key, null) |                   无                   |              无               |
-| 6    | 删除数据 |  本地+远程   | remove(key) \| put(key, null) | CacheRemoveEvent<br/>CachePutNullEvent | remove(key) \| put(key, null) |
-| 7    | 修改数据 | 仅有本地缓存 |        put(key, value)        |        【?】CachePutEvent【?】         |    【?】remove(key) 【?】     |
-| 8    | 修改数据 | 仅有远程缓存 |        put(key, value)        |                   无                   |              无               |
-| 9    | 修改数据 |  本地+远程   |        put(key, value)        |             CachePutEvent              |          remove(key)          |
-| 10   | 查询数据 | 仅有本地缓存 |      get(key) & load(id)      |                   无                   |              无               |
-| 11   | 查询数据 | 仅有远程缓存 |      get(key) & load(id)      |                   无                   |              无               |
-| 12   | 查询数据 |  本地+远程   |      get(key) & load(id)      |             CacheLoadEvent             |          remove(key)          |
-| 13   | 清空数据 | 仅有本地缓存 |            clear()            |            CacheClearEvent             |            clear()            |
-| 14   | 清空数据 | 仅有远程缓存 |            clear()            |                   无                   |              无               |
-| 15   | 清空数据 |  本地+远程   |            clear()            |            CacheClearEvent             |            clear()            |
+| 序  | 数据操作 |  缓存类型  |            发送方缓存操作            |                 发送事件类型                 |           接收方本地缓存操作           |
+|----|:----:|:------:|:-----------------------------:|:--------------------------------------:|:-----------------------------:|
+| 1  | 新增数据 | 仅有本地缓存 |        put(key, value)        |                   无                    |               无               |
+| 2  | 新增数据 | 仅有远程缓存 |        put(key, value)        |                   无                    |               无               |
+| 3  | 新增数据 | 本地+远程  |        put(key, value)        |                   无                    |               无               |
+| 4  | 删除数据 | 仅有本地缓存 | remove(key) \| put(key, null) | CacheRemoveEvent <br>CachePutNullEvent | remove(key) \| put(key, null) |
+| 5  | 删除数据 | 仅有远程缓存 | remove(key) \| put(key, null) |                   无                    |               无               |
+| 6  | 删除数据 | 本地+远程  | remove(key) \| put(key, null) | CacheRemoveEvent<br/>CachePutNullEvent | remove(key) \| put(key, null) |
+| 7  | 修改数据 | 仅有本地缓存 |        put(key, value)        |          【?】CachePutEvent【?】           |      【?】remove(key) 【?】       |
+| 8  | 修改数据 | 仅有远程缓存 |        put(key, value)        |                   无                    |               无               |
+| 9  | 修改数据 | 本地+远程  |        put(key, value)        |             CachePutEvent              |          remove(key)          |
+| 10 | 查询数据 | 仅有本地缓存 |      get(key) & load(id)      |                   无                    |               无               |
+| 11 | 查询数据 | 仅有远程缓存 |      get(key) & load(id)      |                   无                    |               无               |
+| 12 | 查询数据 | 本地+远程  |      get(key) & load(id)      |             CacheLoadEvent             |          remove(key)          |
+| 13 | 清空数据 | 仅有本地缓存 |            clear()            |            CacheClearEvent             |            clear()            |
+| 14 | 清空数据 | 仅有远程缓存 |            clear()            |                   无                    |               无               |
+| 15 | 清空数据 | 本地+远程  |            clear()            |            CacheClearEvent             |            clear()            |
 
 #### 问题一
 

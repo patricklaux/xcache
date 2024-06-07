@@ -26,7 +26,7 @@ public interface Serializer<T> {
 
     /**
      * <p><b>序列化</b></p>
-     * 如果需实现此接口，需判断 obj 是否为空：如果 obj为空，请抛出 {@link com.igeeksky.xcache.extension.SerializationFailedException}
+     * 如果需实现此接口，需判断 obj 是否为空：如果 obj为空，请抛出 {@link com.igeeksky.xcache.extension.serializer.SerializationFailedException}
      *
      * @param obj 需序列化的对象
      * @return 序列化数组

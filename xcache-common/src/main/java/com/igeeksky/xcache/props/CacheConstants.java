@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.core.config;
+package com.igeeksky.xcache.props;
 
 
 import com.igeeksky.xcache.common.CacheType;

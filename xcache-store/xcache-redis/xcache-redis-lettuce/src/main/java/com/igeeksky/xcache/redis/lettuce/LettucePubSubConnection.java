@@ -41,7 +41,7 @@ public class LettucePubSubConnection implements RedisPubSubConnection {
     }
 
     public void addListener(RedisPubSubListener listener) {
-        connection.addListener(new io.lettuce.core.pubsub.RedisPubSubListener<String, byte[]>() {
+        connection.addListener(new io.lettuce.core.pubsub.RedisPubSubListener<>() {
             @Override
             public void message(String channel, byte[] message) {
                 listener.message(channel, message);

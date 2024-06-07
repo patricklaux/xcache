@@ -54,12 +54,14 @@
     <modules>
         <module>xcache-dependencies</module>
         <module>xcache-core</module>
-        <module>xcache-spring</module>
         <module>xcache-test</module>
         <module>xcache-store</module>
         <module>xcache-annotation</module>
         <module>xcache-extension</module>
         <module>xcache-common</module>
+        <module>xcache-spring</module>
+        <module>xcache-spring-boot</module>
+        <module>xcache-aop</module>
     </modules>
 
     <dependencyManagement>
@@ -109,9 +111,10 @@
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
                     <encoding>${project.build.sourceEncoding}</encoding>
-                    <compilerArgs>
-                        <arg>-parameters</arg>
-                    </compilerArgs>
+                    <parameters>true</parameters>
+<!--                    <compilerArgs>-->
+<!--                        <arg>-parameters</arg>-->
+<!--                    </compilerArgs>-->
                 </configuration>
             </plugin>
             <plugin>

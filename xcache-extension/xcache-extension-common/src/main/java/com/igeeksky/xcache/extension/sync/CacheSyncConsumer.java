@@ -3,7 +3,6 @@ package com.igeeksky.xcache.extension.sync;
 import com.igeeksky.xcache.Base;
 import com.igeeksky.xcache.extension.CacheMessageConsumer;
 import com.igeeksky.xcache.extension.serializer.Serializer;
-
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 
 import java.util.Objects;

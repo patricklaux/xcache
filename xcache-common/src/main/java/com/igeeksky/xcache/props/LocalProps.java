@@ -13,34 +13,54 @@ public class LocalProps implements Cloneable {
     /**
      * 默认值：caffeineCacheStoreProvider
      *
-     * @see com.igeeksky.xcache.config.CacheConstants#DEFAULT_LOCAL_CACHE_STORE
+     * @see com.igeeksky.xcache.props.CacheConstants#DEFAULT_LOCAL_CACHE_STORE
      */
     private String cacheStore;
 
     /**
      * 默认值：caffeine
      *
-     * @see com.igeeksky.xcache.config.CacheConstants#DEFAULT_LOCAL_STORE_NAME
+     * @see com.igeeksky.xcache.props.CacheConstants#DEFAULT_LOCAL_STORE_NAME
      */
     private String storeName;
 
     /**
-     * 默认值：caffeine
+     * 默认值：1024
      *
-     * @see com.igeeksky.xcache.config.CacheConstants#DEFAULT_LOCAL_STORE_NAME
+     * @see com.igeeksky.xcache.props.CacheConstants#DEFAULT_LOCAL_INITIAL_CAPACITY
      */
     private Integer initialCapacity;
 
-
+    /**
+     * 默认值：2048
+     *
+     * @see com.igeeksky.xcache.props.CacheConstants#DEFAULT_LOCAL_MAXIMUM_SIZE
+     */
     private Long maximumSize;
 
-
+    /**
+     * 默认值：0
+     *
+     * @see com.igeeksky.xcache.props.CacheConstants#DEFAULT_LOCAL_MAXIMUM_WEIGHT
+     */
     private Long maximumWeight;
 
-
+    /**
+     * 默认值：3600000
+     * <p>
+     * 单位：毫秒
+     *
+     * @see com.igeeksky.xcache.props.CacheConstants#DEFAULT_LOCAL_EXPIRE_AFTER_WRITE
+     */
     private Long expireAfterWrite;
 
-
+    /**
+     * 默认值：360000 millis
+     * <p>
+     * 单位：毫秒
+     *
+     * @see com.igeeksky.xcache.props.CacheConstants#DEFAULT_LOCAL_EXPIRE_AFTER_ACCESS
+     */
     private Long expireAfterAccess;
 
     /**
@@ -49,14 +69,24 @@ public class LocalProps implements Cloneable {
      * 部分本地缓存可以根据键的引用类型来执行不同的驱逐策略。
      * 默认值：STRONG
      * <p>
-     * Caffeine 可选值：WEAK（弱引用）, STRONG（强引用）
+     * Caffeine 可选值：WEAK(弱引用), STRONG(强引用)
      *
      * @see ReferenceType
-     * @see com.igeeksky.xcache.config.CacheConstants#DEFAULT_LOCAL_KEY_STRENGTH
+     * @see com.igeeksky.xcache.props.CacheConstants#DEFAULT_LOCAL_KEY_STRENGTH
      */
     private ReferenceType keyStrength;
 
-
+    /**
+     * 值的引用类型
+     * <p>
+     * 部分本地缓存可以根据值的引用类型来执行不同的驱逐策略。
+     * 默认值：STRONG
+     * <p>
+     * Caffeine 可选值：WEAK(弱引用), SOFT(软引用), STRONG(强引用)
+     *
+     * @see ReferenceType
+     * @see com.igeeksky.xcache.props.CacheConstants#DEFAULT_LOCAL_VALUE_STRENGTH
+     */
     private ReferenceType valueStrength;
 
 

@@ -2,7 +2,7 @@ package com.igeeksky.xcache.support.caffeine;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.igeeksky.xcache.caffeine.RandomRangeCacheExpiry;
+import com.igeeksky.xcache.caffeine.RandomRangeExpiry;
 import com.igeeksky.xcache.common.ExpiryCacheValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,9 +16,9 @@ import java.time.Duration;
  */
 class CaffeineTest {
 
-    Cache<String, ExpiryCacheValue<String>> cacheStore
+    final Cache<String, ExpiryCacheValue<String>> cacheStore
             = Caffeine.newBuilder()
-            .expireAfter(new RandomRangeCacheExpiry<String, String>(Duration.ofMillis(5000), Duration.ofMillis(5000)))
+            .expireAfter(new RandomRangeExpiry<String, String>(Duration.ofMillis(5000), Duration.ofMillis(5000)))
             .maximumSize(128)
             .build();
 

@@ -8,13 +8,36 @@ import com.igeeksky.xtool.core.json.SimpleJSON;
  */
 public class RemoteProps implements Cloneable {
 
+    /**
+     * 默认值：lettuceCacheStoreProvider
+     *
+     * @see com.igeeksky.xcache.props.CacheConstants#DEFAULT_REMOTE_CACHE_STORE
+     */
     private String cacheStore;
+
+    /**
+     * 默认值：redis-string
+     *
+     * @see com.igeeksky.xcache.props.CacheConstants#DEFAULT_REMOTE_STORE_NAME
+     */
     private String storeName;
+
+
     private Long expireAfterWrite;
+
+
     private String valueSerializer;
+
+
     private String valueCompressor;
+
+
     private Boolean enableKeyPrefix;
+
+
     private Boolean enableRandomTtl;
+
+
     private Boolean enableNullValue;
 
     public String getCacheStore() {

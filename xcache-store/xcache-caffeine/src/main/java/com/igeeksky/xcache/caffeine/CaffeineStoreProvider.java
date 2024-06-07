@@ -5,11 +5,12 @@ import com.github.benmanes.caffeine.cache.Expiry;
 import com.github.benmanes.caffeine.cache.Weigher;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.ReferenceType;
-import com.igeeksky.xcache.config.CacheConfig;
-import com.igeeksky.xcache.config.CacheConfigException;
-import com.igeeksky.xcache.config.LocalConfig;
-import com.igeeksky.xcache.store.LocalStore;
-import com.igeeksky.xcache.store.LocalStoreProvider;
+import com.igeeksky.xcache.core.config.CacheConfig;
+import com.igeeksky.xcache.core.config.CacheConfigException;
+import com.igeeksky.xcache.core.config.LocalConfig;
+import com.igeeksky.xcache.core.store.LocalStore;
+import com.igeeksky.xcache.core.store.LocalStoreProvider;
+
 
 import java.time.Duration;
 

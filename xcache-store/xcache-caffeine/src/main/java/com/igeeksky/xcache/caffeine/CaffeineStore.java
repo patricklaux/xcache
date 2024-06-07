@@ -3,7 +3,7 @@ package com.igeeksky.xcache.caffeine;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.store.LocalStore;
+import com.igeeksky.xcache.core.store.LocalStore;
 
 import java.util.Map;
 import java.util.Set;

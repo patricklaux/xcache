@@ -9,19 +9,19 @@ import java.util.Map;
  * @author patrick
  * @since 0.0.4 2024/6/3
  */
-public abstract class AbstractCacheProps {
+public abstract class AbstractProps {
 
     /**
      * 默认字符集：UTF-8
      *
-     * @see com.igeeksky.xcache.config.CacheConstants#DEFAULT_CHARSET_NAME
+     * @see com.igeeksky.xcache.props.CacheConstants#DEFAULT_CHARSET_NAME
      */
     private String charset;
 
     /**
      * 默认：BOTH（本地缓存 + 远程缓存）
      *
-     * @see com.igeeksky.xcache.config.CacheConstants#DEFAULT_CACHE_TYPE
+     * @see com.igeeksky.xcache.props.CacheConstants#DEFAULT_CACHE_TYPE
      */
     private CacheType cacheType;
 

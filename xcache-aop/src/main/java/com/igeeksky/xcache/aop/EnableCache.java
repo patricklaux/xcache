@@ -1,6 +1,5 @@
-package com.igeeksky.xcache.annotation;
+package com.igeeksky.xcache.aop;
 
-import com.igeeksky.xcache.aop.CacheConfigSelector;
 import org.springframework.context.annotation.AdviceMode;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.Ordered;

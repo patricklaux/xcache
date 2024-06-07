@@ -1,18 +1,19 @@
 package com.igeeksky.xcache.core.compress;
 
 import com.igeeksky.xcache.extension.compress.GzipCompressor;
+import com.igeeksky.xtool.core.lang.RandomUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.Random;
 
 /**
  * @author Patrick.Lau
- * @date 2021-06-23
+ * @version 1.0
+ * @since 0.0.4 2021-06-23
  */
 class GzipCompressorTest {
 
-    int size = 100;
+    final int size = 100;
 
     @Test
     void compress() throws IOException {
@@ -34,10 +35,9 @@ class GzipCompressorTest {
         System.out.println("decompress.length:" + decompress.length);
     }
 
-    private byte[] loadFile() throws IOException {
+    private byte[] loadFile() {
         byte[] out = new byte[1024 * 1024];
-        Random random = new Random();
-        random.nextBytes(out);
+        RandomUtils.nextBytes(out);
         return out;
     }
 

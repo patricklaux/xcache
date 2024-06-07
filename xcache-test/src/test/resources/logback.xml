@@ -4,7 +4,9 @@
 <configuration scan="true">
 
     <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径-->
-    <property name="CATALINA_BASE" value="E:\logs\xcache-test"></property>
+    <property name="CATALINA_BASE">
+        <value>E:/logs/xcache-test</value>
+    </property>
 
     <!-- 控制台输出 -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">

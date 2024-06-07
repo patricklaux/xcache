@@ -43,7 +43,7 @@ public class LettuceClusterPubSubConnection implements RedisPubSubConnection {
     }
 
     public void addListener(RedisPubSubListener listener) {
-        connection.addListener(new RedisClusterPubSubListener<String, byte[]>() {
+        connection.addListener(new RedisClusterPubSubListener<>() {
 
             @Override
             public void message(RedisClusterNode node, String channel, byte[] message) {
