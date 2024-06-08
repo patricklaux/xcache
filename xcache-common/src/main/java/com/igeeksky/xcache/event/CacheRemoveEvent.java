@@ -11,9 +11,8 @@ public class CacheRemoveEvent<K> extends CacheEvent {
     public CacheRemoveEvent() {
     }
 
-    public CacheRemoveEvent(K key, long millis) {
+    public CacheRemoveEvent(K key) {
         this.key = key;
-        this.setMillis(millis);
     }
 
     public K getKey() {

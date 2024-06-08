@@ -1,17 +1,18 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <packaging>pom</packaging>
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>com.igeeksky.xcache</groupId>
     <artifactId>xcache-parent</artifactId>
     <version>${revision}</version>
     <name>${project.artifactId}</name>
     <description>The parent project of xcache</description>
-    <packaging>pom</packaging>
 
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -32,26 +33,35 @@
     </developers>
 
     <properties>
-        <revision>0.0.4-SNAPSHOT</revision>
+        <revision>1.0.0-SNAPSHOT</revision>
+
+        <!-- maven plugin start -->
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.version>3.13.0</maven.compiler.version>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.gpg.version>3.2.4</maven.gpg.version>
+        <maven.source.version>3.3.1</maven.source.version>
+        <maven.javadoc.version>3.7.0</maven.javadoc.version>
+        <maven.flatten.version>1.1.0</maven.flatten.version>
+        <jacoco.version>0.8.12</jacoco.version>
+        <nexus.staging.version>1.7.0</nexus.staging.version>
+        <!-- maven plugin end -->
+
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <flatten-maven-plugin.version>1.1.0</flatten-maven-plugin.version>
-        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-        <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
-        <maven-javadoc-plugin.version>3.3.1</maven-javadoc-plugin.version>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <modules>
         <module>xcache-dependencies</module>
         <module>xcache-core</module>
-        <module>xcache-spring</module>
         <module>xcache-test</module>
         <module>xcache-store</module>
         <module>xcache-annotation</module>
         <module>xcache-extension</module>
         <module>xcache-common</module>
+        <module>xcache-spring</module>
+        <module>xcache-aop</module>
     </modules>
 
     <dependencyManagement>
@@ -69,9 +79,10 @@
     <build>
         <plugins>
             <plugin>
+                <!-- 主要作用：替换子项目的 reversion -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-                <version>${flatten-maven-plugin.version}</version>
+                <version>${maven.flatten.version}</version>
                 <configuration>
                     <updatePomFile>true</updatePomFile>
                     <flattenMode>resolveCiFriendliesOnly</flattenMode>
@@ -96,20 +107,21 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven-compiler-plugin.version}</version>
+                <version>${maven.compiler.version}</version>
                 <configuration>
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
                     <encoding>${project.build.sourceEncoding}</encoding>
-                    <compilerArgs>
-                        <arg>-parameters</arg>
-                    </compilerArgs>
+                    <parameters>true</parameters>
+                    <!--                    <compilerArgs>-->
+                    <!--                        <arg>-parameters</arg>-->
+                    <!--                    </compilerArgs>-->
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>${maven-source-plugin.version}</version>
+                <version>${maven.source.version}</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -122,7 +134,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>${maven-javadoc-plugin.version}</version>
+                <version>${maven.javadoc.version}</version>
                 <configuration>
                     <encoding>${maven.compiler.encoding}</encoding>
                     <docencoding>${maven.compiler.encoding}</docencoding>

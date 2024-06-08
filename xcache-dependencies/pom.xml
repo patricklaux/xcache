@@ -10,11 +10,12 @@
     <version>${revision}</version>
 
     <properties>
-        <spring-boot.version>2.2.9.RELEASE</spring-boot.version>
+        <revision>1.0.0-SNAPSHOT</revision>
+        <spring.boot.version>3.2.6</spring.boot.version>
         <redisson.version>3.15.6</redisson.version>
-        <jetbrains-annotations.version>17.0.0</jetbrains-annotations.version>
-        <xtool.version>1.0.6</xtool.version>
-        <revision>0.0.4-SNAPSHOT</revision>
+        <jetbrains.annotations.version>17.0.0</jetbrains.annotations.version>
+        <findbugs.version>3.0.2</findbugs.version>
+        <xtool.version>1.0.10</xtool.version>
     </properties>
 
     <dependencyManagement>
@@ -49,11 +50,7 @@
                 <artifactId>xcache-serialization-jackson</artifactId>
                 <version>${revision}</version>
             </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-spring</artifactId>
-                <version>${revision}</version>
-            </dependency>
+
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-store</artifactId>
@@ -81,7 +78,57 @@
             </dependency>
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-redis-common-test</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-redis-lettuce</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-redis-jedis</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-spring</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-spring-adapter</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-spring-boot-autoconfigure</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-redis-spring-boot-autoconfigure</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-lettuce-spring-boot-autoconfigure</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-jackson-spring-boot-autoconfigure</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-caffeine-spring-boot-autoconfigure</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-aop</artifactId>
                 <version>${revision}</version>
             </dependency>
 
@@ -94,15 +141,20 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
+                <version>${spring.boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.jetbrains</groupId>
                 <artifactId>annotations</artifactId>
-                <version>${jetbrains-annotations.version}</version>
+                <version>${jetbrains.annotations.version}</version>
                 <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.findbugs</groupId>
+                <artifactId>jsr305</artifactId>
+                <version>${findbugs.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.redisson</groupId>

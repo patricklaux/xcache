@@ -8,9 +8,4 @@ public class CacheClearEvent extends CacheEvent {
 
     public CacheClearEvent() {
     }
-
-    public CacheClearEvent(long millis) {
-        this.setMillis(millis);
-    }
-
 }

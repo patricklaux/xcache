@@ -13,8 +13,13 @@
 
     <dependencies>
         <dependency>
-            <artifactId>xcache-store-common</artifactId>
             <groupId>com.igeeksky.xcache</groupId>
+            <artifactId>xcache-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

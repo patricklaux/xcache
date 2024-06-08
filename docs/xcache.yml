@@ -72,7 +72,7 @@ xcache:
       id: caffeineCacheStoreProvider
 
   multi-cache-manager:
-    appliaction: shop
+    application: shop
     charset: UTF-8
     enable-cache: true
     enable-cache-proxy: true

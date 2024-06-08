@@ -8,7 +8,7 @@ import java.util.concurrent.locks.Lock;
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-10
  */
-public interface CacheLock<K> {
+public interface CacheLock {
 
     /**
      * 获取锁
@@ -16,6 +16,6 @@ public interface CacheLock<K> {
      * @param key 缓存Key
      * @return 锁
      */
-    Lock get(K key);
+    Lock get(String key);
 
 }
