@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.serialization.jackson;
+package com.igeeksky.xcache.extension.jackson;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -30,17 +30,13 @@ public class JacksonSerializer<T> implements Serializer<T> {
     }
 
     public JacksonSerializer(ObjectMapper mapper, Class<T> type, Charset charset) {
-        Objects.requireNonNull(mapper, "mapper must not be null");
-        Objects.requireNonNull(type, "type must not be null");
-        Objects.requireNonNull(charset, "charset must not be null");
-        this.mapper = mapper;
-        this.charset = charset;
-        this.javaType = TypeFactory.defaultInstance().constructType(type);
+        this(mapper, TypeFactory.defaultInstance().constructType(type), charset);
     }
 
     public JacksonSerializer(ObjectMapper mapper, JavaType javaType, Charset charset) {
         Objects.requireNonNull(mapper, "mapper must not be null");
         Objects.requireNonNull(javaType, "javaType must not be null");
+        Objects.requireNonNull(charset, "charset must not be null");
         this.mapper = mapper;
         this.charset = charset;
         this.javaType = javaType;

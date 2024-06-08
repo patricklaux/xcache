@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.serialization.jackson;
+package com.igeeksky.xcache.extension.jackson;
 
 import com.igeeksky.xcache.extension.convertor.KeyConvertor;
 import com.igeeksky.xcache.extension.convertor.KeyConvertorProvider;

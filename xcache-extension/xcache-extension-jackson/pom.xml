@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>xcache-serialization-jackson</artifactId>
+    <artifactId>xcache-extension-jackson</artifactId>
 
     <dependencies>
         <dependency>

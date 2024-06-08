@@ -47,7 +47,7 @@
             </dependency>
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-serialization-jackson</artifactId>
+                <artifactId>xcache-extension-jackson</artifactId>
                 <version>${revision}</version>
             </dependency>
 
