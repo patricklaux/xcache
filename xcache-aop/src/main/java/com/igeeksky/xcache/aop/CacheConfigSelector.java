@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.aop;
 
+
 import org.springframework.context.annotation.AdviceMode;
 import org.springframework.context.annotation.AdviceModeImportSelector;
 import org.springframework.context.annotation.AutoProxyRegistrar;
@@ -27,7 +28,7 @@ public class CacheConfigSelector extends AdviceModeImportSelector<EnableCache> {
     }
 
     private String[] getProxy() {
-        List<String> result = new ArrayList<>();
+        List<String> result = new ArrayList<>(2);
         result.add(AutoProxyRegistrar.class.getName());
         result.add(ProxyCacheConfiguration.class.getName());
         return result.toArray(new String[0]);

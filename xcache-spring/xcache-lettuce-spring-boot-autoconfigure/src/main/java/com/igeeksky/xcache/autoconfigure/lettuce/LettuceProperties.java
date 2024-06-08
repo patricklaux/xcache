@@ -24,4 +24,13 @@ public class LettuceProperties {
         this.connections = connections;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder("{");
+        if (connections != null) {
+            builder.append("\"connections:\"").append(connections);
+        }
+        builder.append("}");
+        return builder.toString();
+    }
 }

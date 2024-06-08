@@ -73,21 +73,20 @@ class LettuceAutoConfiguration {
                 holder.put(config.getId(), new LettuceSentinelConnectionFactory(config, options, res));
                 continue;
             }
-            if (lettuce.getStandalone() != null) {
-                LettuceStandaloneConfig config = lettuce.createStandaloneConfig();
-                ClientOptions options = clientOptions(config.getId(), config.getClientOptions(), customizers);
-                holder.put(config.getId(), new LettuceConnectionFactory(config, options, res));
-                continue;
-            }
             if (lettuce.getCluster() != null) {
                 LettuceClusterConfig config = lettuce.createClusterConfig();
                 ClusterClientOptions options = clusterOptions(config.getId(), config.getClientOptions(), customizers);
                 holder.put(config.getId(), new LettuceClusterConnectionFactory(config, options, res));
                 continue;
             }
+            if (lettuce.getStandalone() != null) {
+                LettuceStandaloneConfig config = lettuce.createStandaloneConfig();
+                ClientOptions options = clientOptions(config.getId(), config.getClientOptions(), customizers);
+                holder.put(config.getId(), new LettuceConnectionFactory(config, options, res));
+                continue;
+            }
             throw new CacheConfigException("lettuce:[" + lettuce.getId() + "] init error." + lettuce);
         }
-
         return holder;
     }
 

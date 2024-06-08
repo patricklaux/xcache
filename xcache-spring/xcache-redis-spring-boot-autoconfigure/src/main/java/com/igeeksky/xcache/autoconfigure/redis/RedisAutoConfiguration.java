@@ -9,6 +9,7 @@ import com.igeeksky.xcache.redis.RedisStoreProvider;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.lang.Assert;
 import com.igeeksky.xtool.core.lang.StringUtils;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,43 +31,48 @@ public class RedisAutoConfiguration {
     }
 
     @Bean
-    RemoteStoreProviderHolder redisCacheStoreProviderHolder(RedisConnectionFactoryHolder factoryHolder) {
-        RemoteStoreProviderHolder holder = new RemoteStoreProviderHolder();
+    RemoteStoreProviderHolder redisCacheStoreProviderHolder(ObjectProvider<RedisConnectionFactoryHolder> providers) {
+        RemoteStoreProviderHolder storeProviderHolder = new RemoteStoreProviderHolder();
 
-        List<RedisProperties.Store> stores = redisProperties.getStores();
-        if (CollectionUtils.isNotEmpty(stores)) {
-            for (RedisProperties.Store store : stores) {
-                String id = StringUtils.trim(store.getId());
-                String connection = StringUtils.trim(store.getConnection());
-                Assert.notNull(id, () -> "redis:stores: [" + store + "] id must not be null or empty.");
-                Assert.notNull(connection, () -> "redis:stores: [" + store + "] connection must not be null or empty.");
-                RedisConnectionFactory factory = factoryHolder.get(connection);
-                RedisStoreProvider storeProvider = new RedisStoreProvider(factory);
-                holder.put(id, storeProvider);
+        providers.orderedStream().forEach(factoryHolder -> {
+            List<RedisProperties.Store> stores = redisProperties.getStores();
+            if (CollectionUtils.isNotEmpty(stores)) {
+                for (RedisProperties.Store store : stores) {
+                    String id = StringUtils.trimToNull(store.getId());
+                    String connection = StringUtils.trimToNull(store.getConnection());
+                    Assert.notNull(id, () -> "redis:stores: [" + store + "] id must not be null or empty.");
+                    Assert.notNull(connection, () -> "redis:stores: [" + store + "] connection must not be null or empty.");
+                    RedisConnectionFactory factory = factoryHolder.get(connection);
+                    if (factory != null) {
+                        storeProviderHolder.put(id, new RedisStoreProvider(factory));
+                    }
+                }
             }
-        }
-
-        return holder;
+        });
+        return storeProviderHolder;
     }
 
     @Bean
-    CacheSyncProviderHolder redisCacheSyncProviderHolder(RedisConnectionFactoryHolder factoryHolder) {
-        CacheSyncProviderHolder holder = new CacheSyncProviderHolder();
+    CacheSyncProviderHolder redisCacheSyncProviderHolder(ObjectProvider<RedisConnectionFactoryHolder> providers) {
+        CacheSyncProviderHolder syncProviderHolder = new CacheSyncProviderHolder();
 
-        List<RedisProperties.Store> stores = redisProperties.getSyncs();
-        if (CollectionUtils.isNotEmpty(stores)) {
-            for (RedisProperties.Store store : stores) {
-                String id = StringUtils.trim(store.getId());
-                String connection = StringUtils.trim(store.getConnection());
-                Assert.notNull(id, () -> "redis:syncs: [" + store + "] id must not be null or empty.");
-                Assert.notNull(connection, () -> "redis:syncs: [" + store + "] connection must not be null or empty.");
-                RedisConnectionFactory factory = factoryHolder.get(connection);
-                RedisCacheSyncManager syncManager = new RedisCacheSyncManager(factory);
-                holder.put(id, syncManager);
+        providers.orderedStream().forEach(factoryHolder -> {
+            List<RedisProperties.Store> stores = redisProperties.getSyncs();
+            if (CollectionUtils.isNotEmpty(stores)) {
+                for (RedisProperties.Store store : stores) {
+                    String id = StringUtils.trim(store.getId());
+                    String connection = StringUtils.trim(store.getConnection());
+                    Assert.notNull(id, () -> "redis:syncs: [" + store + "] id must not be null or empty.");
+                    Assert.notNull(connection, () -> "redis:syncs: [" + store + "] connection must not be null or empty.");
+                    RedisConnectionFactory factory = factoryHolder.get(connection);
+                    if (factory != null) {
+                        syncProviderHolder.put(id, new RedisCacheSyncManager(factory));
+                    }
+                }
             }
-        }
+        });
 
-        return holder;
+        return syncProviderHolder;
     }
 
 }

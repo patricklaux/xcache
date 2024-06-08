@@ -1,10 +1,7 @@
-package com.igeeksky.xcache.core.compress;
+package com.igeeksky.xcache.extension.compress;
 
-import com.igeeksky.xcache.extension.compress.GzipCompressor;
 import com.igeeksky.xtool.core.lang.RandomUtils;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
 
 /**
  * @author Patrick.Lau
@@ -16,7 +13,7 @@ class GzipCompressorTest {
     final int size = 100;
 
     @Test
-    void compress() throws IOException {
+    void compress() {
         byte[] source = loadFile();
         System.out.println("File length: " + source.length);
         GzipCompressor gzipCompressor = new GzipCompressor();

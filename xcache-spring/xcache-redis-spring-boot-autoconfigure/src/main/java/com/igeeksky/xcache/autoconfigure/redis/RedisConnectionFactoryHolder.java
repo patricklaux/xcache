@@ -3,7 +3,6 @@ package com.igeeksky.xcache.autoconfigure.redis;
 
 import com.igeeksky.xcache.autoconfigure.holder.Holder;
 import com.igeeksky.xcache.redis.RedisConnectionFactory;
-import com.igeeksky.xtool.core.lang.Assert;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,9 +23,7 @@ public class RedisConnectionFactoryHolder implements Holder<RedisConnectionFacto
 
     @Override
     public RedisConnectionFactory get(String beanId) {
-        RedisConnectionFactory factory = map.get(beanId);
-        Assert.notNull(factory, "beanId:[" + beanId + "] RedisConnectionFactory doesn't exist");
-        return factory;
+        return map.get(beanId);
     }
 
     @Override

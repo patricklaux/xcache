@@ -79,6 +79,7 @@
     <build>
         <plugins>
             <plugin>
+                <!-- 主要作用：替换子项目的 reversion -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
                 <version>${maven.flatten.version}</version>
