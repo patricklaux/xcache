@@ -13,6 +13,7 @@ import com.igeeksky.xcache.extension.loader.CacheLoader;
 import com.igeeksky.xcache.extension.lock.CacheLock;
 import com.igeeksky.xcache.extension.serializer.Serializer;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
+import com.igeeksky.xtool.core.collection.Maps;
 
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -122,10 +123,11 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             throw new CacheKeyNullException("keys must not be null.");
         }
         if (keys.isEmpty()) {
-            return Collections.emptyMap();
+            return Maps.newHashMap(0);
         }
+
         // 1. 建立原生Key 和 缓存Key 之间的映射
-        Map<String, K> keyMapping = new LinkedHashMap<>(keys.size());
+        Map<String, K> keyMapping = Maps.newLinkedHashMap(keys.size());
         for (K k : keys) {
             if (k == null) {
                 throw new CacheKeyNullException();
@@ -137,7 +139,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         Map<String, CacheValue<V>> keyValues = this.doGetAll(new LinkedHashSet<>(keyMapping.keySet()));
 
         // 3. 原生Key 替换 缓存Key，并过滤掉无缓存的结果
-        Map<K, CacheValue<V>> result = new LinkedHashMap<>(keyValues.size());
+        Map<K, CacheValue<V>> result = Maps.newLinkedHashMap(keyValues.size());
         for (Map.Entry<String, CacheValue<V>> entry : keyValues.entrySet()) {
             CacheValue<V> cacheValue = entry.getValue();
             if (cacheValue != null) {
