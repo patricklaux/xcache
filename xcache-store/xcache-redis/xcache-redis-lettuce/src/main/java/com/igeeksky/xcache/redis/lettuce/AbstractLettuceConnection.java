@@ -7,19 +7,20 @@ import com.igeeksky.xcache.redis.RedisOperationException;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.io.IOUtils;
 import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.RedisFuture;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.ScanCursor;
 import io.lettuce.core.api.StatefulConnection;
-import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
+import io.lettuce.core.api.async.RedisStringAsyncCommands;
 import io.lettuce.core.api.sync.RedisHashCommands;
 import io.lettuce.core.api.sync.RedisKeyCommands;
 import io.lettuce.core.api.sync.RedisStringCommands;
-import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Patrick.Lau
@@ -28,14 +29,19 @@ import java.util.Objects;
 public abstract class AbstractLettuceConnection implements RedisConnection {
 
     /**
+     * 限定提交批处理命令后单次等待的最大超时
+     */
+    private static final long TIMEOUT = 50L;
+
+    /**
      * 限定单次删除 或 仅获取键 的最大命令数量
      */
-    private static final int KEYS_LIMIT = 1024;
+    private static final int KEYS_LIMIT = 20000;
 
     /**
      * 限定单次查询值 或 保存值 的最大命令数量
      */
-    private static final int VALUES_LIMIT = 512;
+    private static final int VALUES_LIMIT = 10000;
 
     private final StatefulConnection<byte[], byte[]> connection;
 
@@ -44,9 +50,9 @@ public abstract class AbstractLettuceConnection implements RedisConnection {
     private final RedisKeyCommands<byte[], byte[]> keyCommands;
 
     private final StatefulConnection<byte[], byte[]> bashConnection;
-    private final RedisStringReactiveCommands<byte[], byte[]> bashCommands;
+    private final RedisStringAsyncCommands<byte[], byte[]> bashCommands;
 
-    public AbstractLettuceConnection(StatefulConnection<byte[], byte[]> connection, RedisStringCommands<byte[], byte[]> stringCommands, RedisHashCommands<byte[], byte[]> hashCommands, RedisKeyCommands<byte[], byte[]> keyCommands, StatefulConnection<byte[], byte[]> bashConnection, RedisStringReactiveCommands<byte[], byte[]> bashCommands) {
+    public AbstractLettuceConnection(StatefulConnection<byte[], byte[]> connection, RedisStringCommands<byte[], byte[]> stringCommands, RedisHashCommands<byte[], byte[]> hashCommands, RedisKeyCommands<byte[], byte[]> keyCommands, StatefulConnection<byte[], byte[]> bashConnection, RedisStringAsyncCommands<byte[], byte[]> bashCommands) {
         this.connection = connection;
         this.stringCommands = stringCommands;
         this.hashCommands = hashCommands;
@@ -62,29 +68,28 @@ public abstract class AbstractLettuceConnection implements RedisConnection {
 
     @Override
     public List<KeyValue<byte[], byte[]>> mget(byte[]... keys) {
-        int len = keys.length;
+        int size = keys.length;
 
         // 当数据量较少时，直接查询（小于等于限定数量）
-        List<KeyValue<byte[], byte[]>> result = new ArrayList<>(len);
-        if (len <= VALUES_LIMIT) {
+        List<KeyValue<byte[], byte[]>> result = new ArrayList<>(size);
+        if (size <= VALUES_LIMIT) {
             addToResult(stringCommands.mget(keys), result);
             return result;
         }
 
         // 当数据量过多时，分批查询
-        byte[][] subKeys = new byte[VALUES_LIMIT][];
-        for (int i = 0, j = 0, max = len - 1; i < len; i++, j++) {
-            if (j == VALUES_LIMIT) {
+        int capacity = VALUES_LIMIT;
+        byte[][] subKeys = new byte[capacity][];
+        for (int i = 0, j = 0; i < size; ) {
+            subKeys[j++] = keys[i++];
+            if (j == capacity) {
                 addToResult(stringCommands.mget(subKeys), result);
-                j = 0;
-                int remaining = len - i;
-                if (remaining < VALUES_LIMIT) {
-                    subKeys = new byte[remaining][];
+                int remaining = size - i;
+                if (remaining > 0 && remaining < capacity) {
+                    capacity = remaining;
+                    subKeys = new byte[capacity][];
                 }
-            }
-            subKeys[j] = keys[i];
-            if (i == max) {
-                addToResult(stringCommands.mget(subKeys), result);
+                j = 0;
             }
         }
 
@@ -112,64 +117,67 @@ public abstract class AbstractLettuceConnection implements RedisConnection {
             return;
         }
 
-        int i = 1;
+        int i = 0;
         Map<byte[], byte[]> subKeyValues = Maps.newHashMap(VALUES_LIMIT);
         for (Map.Entry<byte[], byte[]> entry : keyValues.entrySet()) {
-            if (subKeyValues.size() == VALUES_LIMIT) {
-                checkResult(stringCommands.mset(subKeyValues));
-                subKeyValues = Maps.newHashMap(VALUES_LIMIT);
-            }
-            subKeyValues.put(entry.getKey(), entry.getValue());
-            if (i == size) {
-                checkResult(stringCommands.mset(subKeyValues));
-            }
             i++;
+            subKeyValues.put(entry.getKey(), entry.getValue());
+            if (subKeyValues.size() == VALUES_LIMIT || i == size) {
+                checkResult(stringCommands.mset(subKeyValues));
+                subKeyValues.clear();
+            }
         }
     }
 
     @Override
     public void mpsetex(List<ExpiryKeyValue<byte[], byte[]>> keyValues) {
-        int maximum = Math.min(VALUES_LIMIT, keyValues.size());
-        List<Mono<String>> monoList = new ArrayList<>(maximum);
-        for (ExpiryKeyValue<byte[], byte[]> kv : keyValues) {
-            monoList.add(bashCommands.psetex(kv.getKey(), kv.getTtl(), kv.getValue()));
-            if (monoList.size() >= maximum) {
-                monoList.forEach(Mono::subscribe);
-                bashConnection.flushCommands();
-                monoList.clear();
-            }
-        }
+        int i = 0, j = 0;
+        int size = keyValues.size();
+        int capacity = Math.min(VALUES_LIMIT, size);
 
-        if (!monoList.isEmpty()) {
-            monoList.forEach(Mono::subscribe);
-            bashConnection.flushCommands();
+        RedisFuture<?>[] futures = new RedisFuture[capacity];
+        for (ExpiryKeyValue<byte[], byte[]> kv : keyValues) {
+            i++;
+            futures[j++] = bashCommands.psetex(kv.getKey(), kv.getTtl(), kv.getValue());
+            if (j == capacity) {
+                bashConnection.flushCommands();
+                int index = Futures.awaitAll(TIMEOUT, TimeUnit.MILLISECONDS, 0, futures);
+                while (index < capacity) {
+                    index = Futures.awaitAll(TIMEOUT, TimeUnit.MILLISECONDS, index, futures);
+                }
+                int remaining = size - i;
+                if (remaining > 0 && remaining < capacity) {
+                    capacity = remaining;
+                    futures = new RedisFuture[capacity];
+                }
+                j = 0;
+            }
         }
     }
 
     @Override
     public void del(byte[]... keys) {
-        int len = keys.length;
+        int size = keys.length;
 
         // 当数据量较少时，直接删除（小于等于限定数量）
-        if (len <= KEYS_LIMIT) {
+        if (size <= KEYS_LIMIT) {
             keyCommands.del(keys);
             return;
         }
 
         // 当数据量过多时，分批删除
-        byte[][] subKeys = new byte[KEYS_LIMIT][];
-        for (int i = 0, j = 0, max = len - 1; i < len; i++, j++) {
-            if (j == KEYS_LIMIT) {
+        int capacity = KEYS_LIMIT;
+        byte[][] subKeys = new byte[capacity][];
+        for (int i = 0, j = 0; i < size; ) {
+            subKeys[j++] = keys[i++];
+            if (j == capacity) {
                 keyCommands.del(subKeys);
-                j = 0;
-                int remaining = len - i;
-                if (remaining < KEYS_LIMIT) {
-                    subKeys = new byte[remaining][];
+                int remaining = size - i;
+                if (remaining > 0 && remaining < capacity) {
+                    capacity = remaining;
+                    subKeys = new byte[capacity][];
                 }
-            }
-            subKeys[j] = keys[i];
-            if (i == max) {
-                keyCommands.del(subKeys);
+                j = 0;
             }
         }
     }
@@ -181,29 +189,28 @@ public abstract class AbstractLettuceConnection implements RedisConnection {
 
     @Override
     public List<KeyValue<byte[], byte[]>> hmget(byte[] key, byte[]... fields) {
-        int len = fields.length;
+        int size = fields.length;
 
         // 当数据量较少时，直接查询（小于等于限定数量）
-        List<KeyValue<byte[], byte[]>> result = new ArrayList<>(len);
-        if (len <= VALUES_LIMIT) {
+        List<KeyValue<byte[], byte[]>> result = new ArrayList<>(size);
+        if (size <= VALUES_LIMIT) {
             addToResult(hashCommands.hmget(key, fields), result);
             return result;
         }
 
         // 当数据量过多时，分批查询
-        byte[][] subFields = new byte[VALUES_LIMIT][];
-        for (int i = 0, j = 0, max = len - 1; i < len; i++, j++) {
-            if (j == VALUES_LIMIT) {
+        int capacity = VALUES_LIMIT;
+        byte[][] subFields = new byte[capacity][];
+        for (int i = 0, j = 0; i < size; ) {
+            subFields[j++] = fields[i++];
+            if (j == capacity) {
                 addToResult(hashCommands.hmget(key, subFields), result);
-                j = 0;
-                int remaining = len - i;
-                if (remaining < VALUES_LIMIT) {
-                    subFields = new byte[remaining][];
+                int remaining = size - i;
+                if (remaining > 0 && remaining < capacity) {
+                    capacity = remaining;
+                    subFields = new byte[capacity][];
                 }
-            }
-            subFields[j] = fields[i];
-            if (i == max) {
-                addToResult(hashCommands.hmget(key, subFields), result);
+                j = 0;
             }
         }
 
@@ -225,46 +232,41 @@ public abstract class AbstractLettuceConnection implements RedisConnection {
             return;
         }
 
-        int i = 1;
+        int i = 0;
         Map<byte[], byte[]> subKeyValues = Maps.newHashMap(VALUES_LIMIT);
         for (Map.Entry<byte[], byte[]> entry : keyValues.entrySet()) {
-            if (subKeyValues.size() == VALUES_LIMIT) {
-                checkResult(key, null, "hmset", hashCommands.hmset(key, subKeyValues));
-                subKeyValues = Maps.newHashMap(VALUES_LIMIT);
-            }
-            subKeyValues.put(entry.getKey(), entry.getValue());
-            if (i == size) {
-                checkResult(key, null, "hmset", hashCommands.hmset(key, subKeyValues));
-            }
             i++;
+            subKeyValues.put(entry.getKey(), entry.getValue());
+            if (subKeyValues.size() == VALUES_LIMIT || i == size) {
+                checkResult(key, null, "hmset", hashCommands.hmset(key, subKeyValues));
+                subKeyValues.clear();
+            }
         }
     }
 
     @Override
     public void hdel(byte[] key, byte[]... fields) {
-        int len = fields.length;
+        int size = fields.length;
 
         // 当数据量较少时，直接删除（小于等于限定数量）
-        if (len <= KEYS_LIMIT) {
+        if (size <= KEYS_LIMIT) {
             hashCommands.hdel(key, fields);
             return;
         }
 
         // 当数据量过多时，分批删除
-        int max = len - 1;
-        byte[][] subFields = new byte[KEYS_LIMIT][];
-        for (int i = 0, j = 0; i < len; i++, j++) {
-            if (j == KEYS_LIMIT) {
+        int capacity = KEYS_LIMIT;
+        byte[][] subFields = new byte[capacity][];
+        for (int i = 0, j = 0; i < size; ) {
+            subFields[j++] = fields[i++];
+            if (j == capacity) {
                 hashCommands.hdel(key, subFields);
-                j = 0;
-                int remaining = len - i;
-                if (remaining < KEYS_LIMIT) {
-                    subFields = new byte[remaining][];
+                int remaining = size - i;
+                if (remaining > 0 && remaining < capacity) {
+                    capacity = remaining;
+                    subFields = new byte[capacity][];
                 }
-            }
-            subFields[j] = fields[i];
-            if (i == max) {
-                hashCommands.hdel(key, subFields);
+                j = 0;
             }
         }
     }

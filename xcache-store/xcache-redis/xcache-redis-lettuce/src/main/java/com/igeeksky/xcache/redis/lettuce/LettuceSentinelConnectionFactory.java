@@ -6,6 +6,7 @@ import com.igeeksky.xcache.redis.lettuce.config.LettuceSentinelConfig;
 import com.igeeksky.xtool.core.io.IOUtils;
 import com.igeeksky.xtool.core.lang.StringUtils;
 import io.lettuce.core.*;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
@@ -38,7 +39,7 @@ public class LettuceSentinelConnectionFactory implements RedisConnectionFactory 
         StatefulRedisMasterReplicaConnection<byte[], byte[]> connection = connection(config, redisClient, redisURI);
         StatefulRedisMasterReplicaConnection<byte[], byte[]> bashConnection = connection(config, redisClient, redisURI);
         RedisCommands<byte[], byte[]> commands = connection.sync();
-        RedisReactiveCommands<byte[], byte[]> bashCommands = bashConnection.reactive();
+        RedisAsyncCommands<byte[], byte[]> bashCommands = bashConnection.async();
         this.lettuceConnection = new LettuceConnection(connection, commands, bashConnection, bashCommands);
     }
 

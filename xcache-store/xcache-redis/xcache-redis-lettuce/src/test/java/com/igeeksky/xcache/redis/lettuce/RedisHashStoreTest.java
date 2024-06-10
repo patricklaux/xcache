@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.redis.lettuce;
 
 import com.igeeksky.xcache.core.config.CacheConfig;
-import com.igeeksky.xcache.core.store.RemoteStoreTest;
+import com.igeeksky.xcache.core.store.RemoteTestCase;
 import com.igeeksky.xcache.redis.RedisHashStore;
 import com.igeeksky.xcache.redis.RedisStoreProvider;
 import com.igeeksky.xtool.core.io.IOUtils;
@@ -18,7 +18,7 @@ class RedisHashStoreTest {
 
     private static RedisStoreProvider provider;
 
-    private static RemoteStoreTest remoteStoreTest;
+    private static RemoteTestCase remoteStoreTest;
 
     @BeforeAll
     public static void beforeAll() {
@@ -26,7 +26,7 @@ class RedisHashStoreTest {
 
         CacheConfig<String, byte[]> cacheConfig = LettuceTestHelper.createCacheConfig(RedisHashStore.STORE_NAME);
 
-        remoteStoreTest = new RemoteStoreTest(provider.getRemoteCacheStore(cacheConfig));
+        remoteStoreTest = new RemoteTestCase(provider.getRemoteCacheStore(cacheConfig));
     }
 
     @Test

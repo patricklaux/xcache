@@ -9,13 +9,7 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>xcache-jackson-spring-boot-autoconfigure</artifactId>
-
-    <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+    <artifactId>xcache-spring-boot-starter</artifactId>
 
     <dependencies>
         <dependency>
@@ -24,7 +18,15 @@
         </dependency>
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-extension-jackson</artifactId>
+            <artifactId>xcache-caffeine-spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.igeeksky.xcache</groupId>
+            <artifactId>xcache-lettuce-spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.igeeksky.xcache</groupId>
+            <artifactId>xcache-jackson-spring-boot-autoconfigure</artifactId>
         </dependency>
     </dependencies>
 

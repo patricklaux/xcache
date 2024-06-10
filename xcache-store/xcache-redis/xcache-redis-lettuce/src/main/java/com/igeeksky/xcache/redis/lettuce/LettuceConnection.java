@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.redis.lettuce;
 
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 
 /**
@@ -17,7 +17,7 @@ public class LettuceConnection extends AbstractLettuceConnection {
     public LettuceConnection(StatefulRedisConnection<byte[], byte[]> connection,
                              RedisCommands<byte[], byte[]> commands,
                              StatefulRedisConnection<byte[], byte[]> bashConnection,
-                             RedisReactiveCommands<byte[], byte[]> bashCommands) {
+                             RedisAsyncCommands<byte[], byte[]> bashCommands) {
         super(connection, commands, commands, commands, bashConnection, bashCommands);
     }
 

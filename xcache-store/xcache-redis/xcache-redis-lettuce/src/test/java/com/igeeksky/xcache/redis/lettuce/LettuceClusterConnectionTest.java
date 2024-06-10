@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.redis.lettuce;
 
-import com.igeeksky.xcache.redis.RedisConnectionTest;
+import com.igeeksky.xcache.redis.RedisTestCase;
 import org.junit.jupiter.api.*;
 
 /**
@@ -11,33 +11,33 @@ class LettuceClusterConnectionTest {
 
     private static LettuceClusterConnectionFactory factory;
 
-    private static RedisConnectionTest redisConnectionTest;
+    private static RedisTestCase redisTestCase;
 
     @BeforeAll
     public static void beforeAll() {
         factory = LettuceTestHelper.createClusterConnectionFactory();
-        redisConnectionTest = new RedisConnectionTest(factory.getConnection());
+        redisTestCase = new RedisTestCase(factory.getConnection());
     }
 
     @Test
     void isCluster() {
-        Assertions.assertTrue(redisConnectionTest.isCluster());
+        Assertions.assertTrue(redisTestCase.isCluster());
     }
 
     // String Command --start--
     @Test
     void get() {
-        redisConnectionTest.get();
+        redisTestCase.get();
     }
 
     @Test
     void mget() {
-        redisConnectionTest.mget();
+        redisTestCase.mget();
     }
 
     @Test
     public void set() {
-        redisConnectionTest.set();
+        redisTestCase.set();
     }
 
     /**
@@ -48,7 +48,7 @@ class LettuceClusterConnectionTest {
     @Test
     @Disabled
     void psetex() {
-        redisConnectionTest.psetex();
+        redisTestCase.psetex();
     }
 
     /**
@@ -66,93 +66,127 @@ class LettuceClusterConnectionTest {
     @Test
     @Disabled
     void psetex2() throws InterruptedException {
-        redisConnectionTest.psetex2();
+        redisTestCase.psetex2();
     }
 
     @Test
     void mset() {
-        redisConnectionTest.mset();
-    }
-
-    @Test
-    void mpsetex() throws InterruptedException {
-        redisConnectionTest.mpsetex();
+        redisTestCase.mset();
     }
 
     /**
      * 性能测试
      * <p>
-     * 1000万数据，单线程，本地redis，单线程批处理，性能测试时长约 17 秒
-     *
-     * @throws InterruptedException 中断异常
+     * 1000 万数据，本地redis，单线程批处理，性能测试时长约 29763 毫秒
+     */
+    @Test
+    @Disabled
+    void msetPerformance() throws InterruptedException {
+        redisTestCase.msetPerformance();
+
+        Thread.sleep(3000);
+
+        redisTestCase.clear("test-mset:*");
+    }
+
+    /**
+     * 性能测试
+     * <p>
+     * 1000 万数据，本地redis，2线程批处理，性能测试时长约 19962 + 19979 毫秒
+     * <p>
+     * 1000 万数据，本地redis，单线程批处理，性能测试时长约 29763 毫秒
+     * <p>
+     * clear 耗时：49521
+     */
+    @Test
+    @Disabled
+    void msetPerformance2() throws InterruptedException {
+        redisTestCase.msetPerformance2();
+
+        Thread.sleep(3000);
+
+        redisTestCase.clear("test-mset:*");
+    }
+
+    @Test
+    void mpsetex() {
+        redisTestCase.mpsetex();
+    }
+
+    /**
+     * 性能测试
+     * <p>
+     * 1000万数据，单线程，本地redis，单线程批处理，性能测试时长约 37663 毫秒
      */
     @Test
     @Disabled
     void mpsetex1() throws InterruptedException {
-        redisConnectionTest.mpsetex1();
+        redisTestCase.mpsetex1();
+
+        Thread.sleep(3000);
+
+        redisTestCase.clear("test-mpsetex:*");
     }
 
     /**
      * 性能测试
      * <p>
-     * 1000万数据，4线程，本地redis，4线程批处理，耗时约 24 * 4 秒
+     * 1000万数据，本地redis，2线程批处理，耗时约 16818 + 16834 秒
      * <p>
-     * 1000万数据，单线程，本地redis，单线程批处理，耗时约 17 秒
+     * 1000万数据，本地redis，单线程批处理，耗时约 37663 毫秒
+     * <p>
+     * clear 耗时：60189
      * <p>
      * 测试结果表明：
      * 批处理能够有效提高性能，此时的性能瓶颈在于跨进程跨网络数据交换；
-     * 多线程调用批处理命令反而会更慢，估计与 Lettuce 内部的 queue 实现有关；
      * Lettuce 在不使用事务(MULTI)及阻塞命令 (,BLPOP……)时，无需开启连接池
-     *
-     * @throws InterruptedException 中断异常
      */
     @Test
     @Disabled
     void mpsetex2() throws InterruptedException {
-        redisConnectionTest.mpsetex2();
+        redisTestCase.mpsetex2();
+
+        Thread.sleep(3000);
+
+        redisTestCase.clear("test-mpsetex:*");
     }
 
     @Test
     void del() {
-        redisConnectionTest.del();
+        redisTestCase.del();
     }
     // String Command --end--
 
     // Hash Command --start--
     @Test
     void hget() {
-        redisConnectionTest.hget();
+        redisTestCase.hget();
     }
 
     @Test
     void hset() {
-        redisConnectionTest.hset();
+        redisTestCase.hset();
     }
 
     @Test
     void hmget() {
-        redisConnectionTest.hmget();
+        redisTestCase.hmget();
     }
 
     @Test
     void hmset() {
-        redisConnectionTest.hmset();
+        redisTestCase.hmset();
     }
 
     @Test
     void hdel() {
-        redisConnectionTest.hdel();
+        redisTestCase.hdel();
     }
     // Hash Command --end--
 
     @Test
     void keys() {
-        redisConnectionTest.keys();
-    }
-
-    @Test
-    void clear() {
-        redisConnectionTest.clear();
+        redisTestCase.keys();
     }
 
     @AfterAll

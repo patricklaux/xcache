@@ -11,13 +11,13 @@ import java.util.Map;
  * @author patrick
  * @since 1.0.0 2024/5/30
  */
-public class RemoteStoreTest {
+public class RemoteTestCase {
 
     private final RemoteStore remoteStore;
 
     private static final StringSerializer SERIALIZER = StringSerializer.UTF_8;
 
-    public RemoteStoreTest(RemoteStore remoteStore) {
+    public RemoteTestCase(RemoteStore remoteStore) {
         this.remoteStore = remoteStore;
     }
 

@@ -1,5 +1,6 @@
-package com.igeeksky.xcache.serialization.jackson;
+package com.igeeksky.xcache.extension.jackson;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igeeksky.xcache.extension.serializer.AbstractSerializerProvider;
@@ -19,9 +20,12 @@ public class JacksonSerializerProvider extends AbstractSerializerProvider {
     @Override
     public <T> Serializer<T> doGet(Charset charset, Class<T> type, Class<?>[] valueParams) {
         ObjectMapper mapper = new ObjectMapper();
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
         if (ArrayUtils.isEmpty(valueParams)) {
             return new JacksonSerializer<>(mapper, type, charset);
         }
+
         JavaType javaType = mapper.getTypeFactory().constructParametricType(type, valueParams);
         return new JacksonSerializer<>(mapper, javaType, charset);
     }

@@ -1,5 +1,6 @@
-package com.igeeksky.xcache.serialization.jackson;
+package com.igeeksky.xcache.extension.jackson;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igeeksky.xcache.extension.convertor.KeyConvertor;
@@ -20,6 +21,7 @@ public class JacksonKeyConvertor implements KeyConvertor {
 
     public JacksonKeyConvertor() {
         this.objectMapper = new ObjectMapper();
+        this.objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
     public static JacksonKeyConvertor getInstance() {

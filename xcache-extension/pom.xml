@@ -13,7 +13,7 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>xcache-serialization-jackson</module>
+        <module>xcache-extension-jackson</module>
         <module>xcache-extension-common</module>
     </modules>
 
