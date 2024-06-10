@@ -78,7 +78,7 @@
             </dependency>
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-redis-common-test</artifactId>
+                <artifactId>xcache-test-base</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>

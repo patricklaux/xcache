@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.redis.lettuce;
 
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 
@@ -13,7 +14,7 @@ public class LettuceClusterConnection extends AbstractLettuceConnection {
     public LettuceClusterConnection(StatefulRedisClusterConnection<byte[], byte[]> connection,
                                     RedisAdvancedClusterCommands<byte[], byte[]> commands,
                                     StatefulRedisClusterConnection<byte[], byte[]> bashConnection,
-                                    RedisAdvancedClusterReactiveCommands<byte[], byte[]> bashCommands) {
+                                    RedisAdvancedClusterAsyncCommands<byte[], byte[]> bashCommands) {
         super(connection, commands, commands, commands, bashConnection, bashCommands);
     }
 

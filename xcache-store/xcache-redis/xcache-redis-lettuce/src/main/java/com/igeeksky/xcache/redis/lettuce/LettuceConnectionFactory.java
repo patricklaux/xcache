@@ -8,7 +8,7 @@ import com.igeeksky.xtool.core.io.IOUtils;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.masterreplica.MasterReplica;
@@ -43,7 +43,7 @@ public class LettuceConnectionFactory implements RedisConnectionFactory {
         StatefulRedisMasterReplicaConnection<byte[], byte[]> connection = connection(true);
         StatefulRedisMasterReplicaConnection<byte[], byte[]> bashConnection = connection(false);
         RedisCommands<byte[], byte[]> commands = connection.sync();
-        RedisReactiveCommands<byte[], byte[]> bashCommands = bashConnection.reactive();
+        RedisAsyncCommands<byte[], byte[]> bashCommands = bashConnection.async();
         this.lettuceConnection = new LettuceConnection(connection, commands, bashConnection, bashCommands);
     }
 

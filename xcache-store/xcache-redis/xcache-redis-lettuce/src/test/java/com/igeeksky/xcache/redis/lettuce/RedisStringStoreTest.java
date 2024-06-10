@@ -2,7 +2,7 @@ package com.igeeksky.xcache.redis.lettuce;
 
 import com.igeeksky.xcache.core.config.CacheConfig;
 import com.igeeksky.xcache.core.store.RemoteStore;
-import com.igeeksky.xcache.core.store.RemoteStoreTest;
+import com.igeeksky.xcache.core.store.RemoteTestCase;
 import com.igeeksky.xcache.redis.RedisStoreProvider;
 import com.igeeksky.xcache.redis.RedisStringStore;
 import com.igeeksky.xtool.core.io.IOUtils;
@@ -19,7 +19,7 @@ class RedisStringStoreTest {
 
     private static RedisStoreProvider provider;
 
-    private static RemoteStoreTest remoteStoreTest;
+    private static RemoteTestCase remoteStoreTest;
 
     @BeforeAll
     public static void beforeAll() {
@@ -29,7 +29,7 @@ class RedisStringStoreTest {
 
         RemoteStore remoteStore = provider.getRemoteCacheStore(cacheConfig);
 
-        remoteStoreTest = new RemoteStoreTest(remoteStore);
+        remoteStoreTest = new RemoteTestCase(remoteStore);
     }
 
     @Test

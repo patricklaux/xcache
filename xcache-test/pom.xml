@@ -13,7 +13,7 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>xcache-redis-common-test</module>
+        <module>xcache-test-base</module>
     </modules>
 
 </project>

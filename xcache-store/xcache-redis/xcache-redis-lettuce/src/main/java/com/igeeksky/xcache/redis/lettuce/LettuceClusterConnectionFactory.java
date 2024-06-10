@@ -8,6 +8,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
@@ -40,7 +41,7 @@ public class LettuceClusterConnectionFactory implements RedisConnectionFactory {
         StatefulRedisClusterConnection<byte[], byte[]> connection = connection(redisClient, config, true);
         StatefulRedisClusterConnection<byte[], byte[]> bashConnection = connection(redisClient, config, false);
         RedisAdvancedClusterCommands<byte[], byte[]> commands = connection.sync();
-        RedisAdvancedClusterReactiveCommands<byte[], byte[]> bashCommands = bashConnection.reactive();
+        RedisAdvancedClusterAsyncCommands<byte[], byte[]> bashCommands = bashConnection.async();
         this.lettuceConnection = new LettuceClusterConnection(connection, commands, bashConnection, bashCommands);
     }
 
