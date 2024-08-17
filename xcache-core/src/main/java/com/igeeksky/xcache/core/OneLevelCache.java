@@ -1,14 +1,11 @@
 package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.common.StoreType;
-import com.igeeksky.xcache.core.config.CacheConfig;
-import com.igeeksky.xcache.core.store.LocalStore;
-import com.igeeksky.xcache.core.store.RemoteStore;
-import com.igeeksky.xcache.extension.loader.CacheLoader;
-import com.igeeksky.xcache.extension.statistic.CacheStatMonitor;
+import com.igeeksky.xcache.Store;
+import com.igeeksky.xcache.core.store.StoreProxy;
+import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
-import com.igeeksky.xtool.core.collection.Maps;
+import com.igeeksky.xcache.props.StoreLevel;
 
 import java.util.Map;
 import java.util.Set;
@@ -19,134 +16,60 @@ import java.util.Set;
  */
 public class OneLevelCache<K, V> extends AbstractCache<K, V> {
 
-    private final StoreType storeType;
-
-    private final LocalStore localStore;
-
-    private final RemoteStore remoteStore;
-
-    private final CacheStatMonitor statMonitor;
+    private final Store<V> store;
 
     private final CacheSyncMonitor syncMonitor;
 
-    public OneLevelCache(CacheConfig<K, V> config, LocalStore localStore, RemoteStore remoteStore) {
-        super(config);
-        this.localStore = localStore;
-        this.remoteStore = remoteStore;
-        this.storeType = (localStore != null) ? StoreType.LOCAL : StoreType.REMOTE;
-        this.statMonitor = config.getStatMonitor();
-        this.syncMonitor = config.getSyncMonitor();
+    public OneLevelCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend, Store<V>[] stores) {
+        super(config, extend);
+        this.syncMonitor = extend.getSyncMonitor();
+        store = getStore(extend.getStatMonitor(), stores);
+    }
+
+    private Store<V> getStore(CacheStatMonitor statMonitor, Store<V>[] stores) {
+        StoreLevel[] levels = StoreLevel.values();
+        for (int i = 0; i < stores.length; i++) {
+            if (stores[i] != null) {
+                return new StoreProxy<>(stores[i], levels[i], statMonitor);
+            }
+        }
+        return null;
     }
 
     @Override
     protected CacheValue<V> doGet(String key) {
-        CacheValue<V> value;
-        if (localStore != null) {
-            value = this.fromLocalStoreValue(localStore.get(key));
-        } else {
-            value = this.fromRemoteStoreValue(remoteStore.get(key));
-        }
-
-        if (value != null) {
-            statMonitor.incHits(storeType, 1L);
-        } else {
-            statMonitor.incMisses(storeType, 1L);
-        }
-
-        return value;
+        return store.get(key);
     }
 
     @Override
-    protected V doLoad(K key, String storeKey, CacheLoader<K, V> cacheLoader) {
-        V value = cacheLoader.load(key);
-        this.doPut(storeKey, value);
-
-        statMonitor.incPuts(storeType, 1L);
-        return value;
-    }
-
-    @Override
-    public Map<String, CacheValue<V>> doGetAll(Set<String> keys) {
-        int total = keys.size();
-
-        Map<String, CacheValue<V>> result;
-        if (localStore != null) {
-            Map<String, CacheValue<Object>> localGetAll = localStore.getAll(keys);
-            result = Maps.newHashMap(localGetAll.size());
-            localGetAll.forEach((key, value) -> result.put(key, fromLocalStoreValue(value)));
-        } else {
-            Map<String, CacheValue<byte[]>> remoteGetAll = remoteStore.getAll(keys);
-            result = Maps.newHashMap(remoteGetAll.size());
-            remoteGetAll.forEach((key, value) -> result.put(key, fromRemoteStoreValue(value)));
-        }
-
-        int hits = result.size();
-        statMonitor.incHits(storeType, hits);
-        statMonitor.incMisses(storeType, total - hits);
-        return result;
+    protected Map<String, CacheValue<V>> doGetAll(Set<String> keys) {
+        return store.getAll(keys);
     }
 
     @Override
     protected void doPut(String key, V value) {
-        if (localStore != null) {
-            localStore.put(key, toLocalStoreValue(value));
-        } else {
-            remoteStore.put(key, toRemoteStoreValue(value));
-        }
-        statMonitor.incPuts(storeType, 1L);
+        store.put(key, value);
     }
 
     @Override
     protected void doPutAll(Map<String, ? extends V> keyValues) {
-        int total = keyValues.size();
-
-        if (localStore != null) {
-            Map<String, Object> kvs = Maps.newHashMap(total);
-            keyValues.forEach((k, v) -> kvs.put(k, toLocalStoreValue(v)));
-            localStore.putAll(kvs);
-        } else {
-            Map<String, byte[]> kvs = Maps.newHashMap(total);
-            keyValues.forEach((k, v) -> kvs.put(k, toRemoteStoreValue(v)));
-            remoteStore.putAll(kvs);
-        }
-
-        statMonitor.incPuts(storeType, total);
+        store.putAll(keyValues);
     }
 
     @Override
     protected void doEvict(String key) {
-        if (localStore != null) {
-            localStore.evict(key);
-            syncMonitor.afterEvict(key);
-        } else {
-            remoteStore.evict(key);
-        }
-        statMonitor.incRemovals(storeType, 1L);
+        store.evict(key);
     }
 
     @Override
     protected void doEvictAll(Set<String> keys) {
-        int total = keys.size();
-
-        if (localStore != null) {
-            localStore.evictAll(keys);
-            syncMonitor.afterEvictAll(keys);
-        } else {
-            remoteStore.evictAll(keys);
-        }
-
-        statMonitor.incRemovals(storeType, total);
+        store.evictAll(keys);
     }
 
     @Override
     public void clear() {
-        if (localStore != null) {
-            localStore.clear();
-            syncMonitor.afterClear();
-        } else {
-            remoteStore.clear();
-        }
-        statMonitor.incClears(storeType);
+        store.clear();
+        syncMonitor.afterClear();
     }
 
 }

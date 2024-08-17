@@ -1,7 +1,6 @@
 package com.igeeksky.xcache.props;
 
 
-import com.igeeksky.xcache.common.CacheType;
 import com.igeeksky.xcache.common.ReferenceType;
 
 /**
@@ -13,65 +12,79 @@ public interface CacheConstants {
     /**
      * 停用某个 String 类型的配置项，可以配置为 none
      */
-    String NONE = "NONE";
-
-    /**
-     * <p>缓存数据同步广播的通道名的中缀</p>
-     * 完整通道名：配置项（cache-sync-channel） + ":sync:" + 配置项（cache-name）
-     */
-    String DEFAULT_SYNC_CHANNEL_INFIX = ":sync:";
-
-    /**
-     * <p>缓存数据统计信息的队列名的中缀</p>
-     * 完整通道名：配置项（cache-stat-channel） + ":stat:" + 配置项（cache-name）
-     */
-    String DEFAULT_STAT_CHANNEL_INFIX = ":stat:";
+    String NONE = "none";
 
 
+    // 默认组件注册 ID
+    String LETTUCE = "lettuce";
+    String CAFFEINE_STORE = "caffeine";
+    String JDK_CODEC = "jdk";
+    String JACKSON_CODEC = "jackson";
+    String GZIP_COMPRESSOR = "gzip";
+    String DEFLATER_COMPRESSOR = "deflate";
+    String LOG_CACHE_STAT = "log";
+    String EMBED_CACHE_LOCK = "embed";
+    String EMBED_CACHE_REFRESH = "embed";
+    String EMBED_CONTAINS_PREDICATE = "embed";
+
+
+    // 默认配置 start
     String DEFAULT_TEMPLATE_ID = "t0";
     String DEFAULT_CHARSET_NAME = "UTF-8";
-    CacheType DEFAULT_CACHE_TYPE = CacheType.BOTH;
 
 
-    // 本地缓存默认配置 start
-    String DEFAULT_LOCAL_CACHE_STORE = "caffeineCacheStoreProvider";
-    String DEFAULT_LOCAL_STORE_NAME = "caffeine";
-    int DEFAULT_LOCAL_INITIAL_CAPACITY = 1024;
-    long DEFAULT_LOCAL_MAXIMUM_SIZE = 2048L;
-    long DEFAULT_LOCAL_MAXIMUM_WEIGHT = 0L;
-    long DEFAULT_LOCAL_EXPIRE_AFTER_WRITE = 3600000L;
-    long DEFAULT_LOCAL_EXPIRE_AFTER_ACCESS = 360000L;
-    ReferenceType DEFAULT_LOCAL_KEY_STRENGTH = ReferenceType.STRONG;
-    ReferenceType DEFAULT_LOCAL_VALUE_STRENGTH = ReferenceType.STRONG;
-    String DEFAULT_LOCAL_VALUE_SERIALIZER = NONE;
-    String DEFAULT_LOCAL_VALUE_COMPRESSOR = NONE;
-    boolean DEFAULT_LOCAL_ENABLE_RANDOM_TTL = true;
-    boolean DEFAULT_LOCAL_ENABLE_NULL_VALUE = true;
-    // 本地缓存默认配置 end
+    // 内嵌缓存默认配置 start
+    String DEFAULT_EMBED_STORE_PROVIDER = CAFFEINE_STORE;
+    int DEFAULT_EMBED_INITIAL_CAPACITY = 8192;
+    long DEFAULT_EMBED_MAXIMUM_SIZE = 8192L;
+    long DEFAULT_EMBED_MAXIMUM_WEIGHT = 0L;
+    long DEFAULT_EMBED_EXPIRE_AFTER_WRITE = 3600000L;
+    long DEFAULT_EMBED_EXPIRE_AFTER_ACCESS = 300000L;
+    ReferenceType DEFAULT_EMBED_KEY_STRENGTH = ReferenceType.STRONG;
+    ReferenceType DEFAULT_EMBED_VALUE_STRENGTH = ReferenceType.STRONG;
+    String DEFAULT_EMBED_VALUE_CODEC = NONE;
+    String DEFAULT_EMBED_VALUE_COMPRESSOR = NONE;
+    boolean DEFAULT_EMBED_ENABLE_KEY_PREFIX = false;
+    boolean DEFAULT_EMBED_ENABLE_RANDOM_TTL = true;
+    boolean DEFAULT_EMBED_ENABLE_NULL_VALUE = true;
+    // 内嵌缓存默认配置 end
 
 
-    // 远程缓存默认配置 start
-    String DEFAULT_REMOTE_CACHE_STORE = "lettuceCacheStoreProvider";
-    String DEFAULT_REMOTE_STORE_NAME = "redis-string";
-    long DEFAULT_REMOTE_EXPIRE_AFTER_WRITE = 7200000L;
-    String DEFAULT_REMOTE_VALUE_SERIALIZER = "jacksonSerializerProvider";
-    String DEFAULT_REMOTE_VALUE_COMPRESSOR = NONE;
-    boolean DEFAULT_REMOTE_ENABLE_KEY_PREFIX = true;
-    boolean DEFAULT_REMOTE_ENABLE_RANDOM_TTL = true;
-    boolean DEFAULT_REMOTE_ENABLE_NULL_VALUE = true;
-    // 远程缓存默认配置 end
+    // 外部缓存默认配置 start
+    String DEFAULT_EXTRA_STORE_PROVIDER = LETTUCE;
+    RedisType DEFAULT_EXTRA_REDIS_TYPE = RedisType.STRING;
+    long DEFAULT_EXTRA_EXPIRE_AFTER_WRITE = 7200000L;
+    String DEFAULT_EXTRA_VALUE_CODEC = JACKSON_CODEC;
+    boolean DEFAULT_EXTRA_ENABLE_KEY_PREFIX = true;
+    boolean DEFAULT_EXTRA_ENABLE_RANDOM_TTL = true;
+    boolean DEFAULT_EXTRA_ENABLE_NULL_VALUE = true;
+    // 外部缓存默认配置 end
 
 
     // 扩展属性默认配置 start
-    String DEFAULT_EXTENSION_KEY_CONVERTOR = "jacksonKeyConvertorProvider";
-    String DEFAULT_EXTENSION_CACHE_LOCK = "localCacheLockProvider";
-    int DEFAULT_EXTENSION_CACHE_LOCK_SIZE = 128;
-    String DEFAULT_EXTENSION_CONTAINS_PREDICATE = "alwaysTruePredicateProvider";
-    String DEFAULT_EXTENSION_CACHE_SYNC = "lettuceCacheSyncManager";
-    String DEFAULT_EXTENSION_CACHE_SYNC_CHANNEL = NONE;
-    String DEFAULT_EXTENSION_CACHE_SYNC_SERIALIZER = "jacksonSerializerProvider";
-    String DEFAULT_EXTENSION_CACHE_STAT = "logCacheStatManager";
-    String DEFAULT_EXTENSION_CACHE_LOADER = NONE;
+    String DEFAULT_KEY_CODEC_PROVIDER = JACKSON_CODEC;
+
+    String DEFAULT_VALUE_COMPRESSOR = NONE;
+    int DEFAULT_VALUE_COMPRESSOR_LEVEL = -1;
+    boolean DEFAULT_VALUE_COMPRESSOR_WRAP = false;
+
+    String DEFAULT_LOCK_PROVIDER = EMBED_CACHE_LOCK;
+    long DEFAULT_LOCK_LEASE_TIME = 1000;
+    int DEFAULT_LOCK_INITIAL_CAPACITY = 256;
+
+    String DEFAULT_REFRESH_PROVIDER = NONE;
+    long DEFAULT_REFRESH_PERIOD = 1800000;
+    long DEFAULT_REFRESH_STOP_AFTER_ACCESS = 7200000;
+
+    String DEFAULT_PREDICATE_PROVIDER = EMBED_CONTAINS_PREDICATE;
+
+    String DEFAULT_SYNC_PROVIDER = LETTUCE;
+    String DEFAULT_SYNC_CODEC = JACKSON_CODEC;
+    long DEFAULT_SYNC_MAX_LEN = 10000;
+
+    String DEFAULT_STAT_PROVIDER = LOG_CACHE_STAT;
+    long DEFAULT_STAT_PERIOD = 60000;
+
     // 扩展属性默认配置 end
 
 }

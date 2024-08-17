@@ -1,9 +1,9 @@
 package com.igeeksky.xcache.aop;
 
-import com.igeeksky.xcache.core.Cache;
-import com.igeeksky.xcache.core.CacheManager;
 import com.igeeksky.xcache.annotation.operation.*;
 import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.Cache;
+import com.igeeksky.xcache.core.CacheManager;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.lang.StringUtils;
@@ -320,7 +320,9 @@ public class CacheOperationContext {
     }
 
     private Cache<Object, Object> getOrCreateCache(CacheOperation operation) {
-        return (Cache<Object, Object>) cacheManager.getOrCreateCache(operation.getName(), operation.getKeyType(), operation.getValueType(), operation.getValueParams());
+        return (Cache<Object, Object>) cacheManager.getOrCreateCache(operation.getName(),
+                operation.getKeyType(), operation.getKeyParams(),
+                operation.getValueType(), operation.getValueParams());
     }
 
 }

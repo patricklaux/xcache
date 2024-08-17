@@ -6,7 +6,7 @@ package com.igeeksky.xcache.common;
  */
 public class ExpiryCacheValue<V> extends CacheValue<V> {
 
-    private long expiryTime;
+    private volatile long expiryTime;
 
     public ExpiryCacheValue(V value) {
         super(value);

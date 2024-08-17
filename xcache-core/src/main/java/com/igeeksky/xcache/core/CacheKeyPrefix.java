@@ -1,9 +1,8 @@
 package com.igeeksky.xcache.core;
 
-import com.igeeksky.xcache.extension.serializer.StringSerializer;
-import com.igeeksky.xtool.core.lang.ArrayUtils;
 
-import java.util.Arrays;
+import com.igeeksky.xtool.core.lang.ArrayUtils;
+import com.igeeksky.xtool.core.lang.codec.StringCodec;
 
 /**
  * <p>缓存前缀</p>
@@ -17,24 +16,19 @@ public class CacheKeyPrefix {
 
     private final byte[] keyPrefixBytes;
 
-    private final StringSerializer serializer;
+    private final int keyPrefixLength;
 
-    public CacheKeyPrefix(String name, StringSerializer serializer) {
+    private final StringCodec stringCodec;
+
+    public CacheKeyPrefix(String name, StringCodec stringCodec) {
         this.keyPrefix = name + ":";
-        this.serializer = serializer;
-        this.keyPrefixBytes = serializer.serialize(keyPrefix);
-    }
-
-    public String getKeyPrefix() {
-        return keyPrefix;
-    }
-
-    public byte[] getKeyPrefixBytes() {
-        return keyPrefixBytes;
+        this.stringCodec = stringCodec;
+        this.keyPrefixBytes = stringCodec.encode(keyPrefix);
+        this.keyPrefixLength = keyPrefixBytes.length;
     }
 
     public byte[] createHashKey(int index) {
-        return serializer.serialize(keyPrefix + index);
+        return stringCodec.encode(keyPrefix + index);
     }
 
     public String concatPrefix(String key) {
@@ -42,16 +36,15 @@ public class CacheKeyPrefix {
     }
 
     public byte[] concatPrefixBytes(String key) {
-        return ArrayUtils.concat(keyPrefixBytes, serializer.serialize(key));
+        return ArrayUtils.concat(keyPrefixBytes, stringCodec.encode(key));
     }
 
     public String removePrefix(String keyWithPrefix) {
-        return removePrefix(serializer.serialize(keyWithPrefix));
+        return removePrefix(stringCodec.encode(keyWithPrefix));
     }
 
     public String removePrefix(byte[] keyWithPrefixBytes) {
-        byte[] keyBytes = Arrays.copyOfRange(keyWithPrefixBytes, keyPrefixBytes.length, keyWithPrefixBytes.length);
-        return serializer.deserialize(keyBytes);
+        return stringCodec.decode(keyWithPrefixBytes, keyPrefixLength, keyWithPrefixBytes.length);
     }
 
 }

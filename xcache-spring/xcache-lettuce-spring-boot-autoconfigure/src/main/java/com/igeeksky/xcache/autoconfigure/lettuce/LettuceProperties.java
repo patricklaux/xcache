@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.autoconfigure.lettuce;
 
-import com.igeeksky.xcache.redis.lettuce.config.props.Lettuce;
+import com.igeeksky.redis.lettuce.config.props.Lettuce;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,23 +14,22 @@ import java.util.List;
 @ConfigurationProperties(prefix = "xcache.redis.lettuce")
 public class LettuceProperties {
 
-    private List<Lettuce> connections;
+    private List<Lettuce> factory;
 
-    public List<Lettuce> getConnections() {
-        return connections;
+    public List<Lettuce> getFactory() {
+        return factory;
     }
 
-    public void setConnections(List<Lettuce> connections) {
-        this.connections = connections;
+    public void setFactory(List<Lettuce> factory) {
+        this.factory = factory;
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder("{");
-        if (connections != null) {
-            builder.append("\"connections:\"").append(connections);
+        if (factory != null) {
+            builder.append("\"factory:\"").append(factory);
         }
-        builder.append("}");
-        return builder.toString();
+        return builder.append("}").toString();
     }
 }

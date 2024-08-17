@@ -1,10 +1,8 @@
 package com.igeeksky.xcache.autoconfigure.jackson;
 
-import com.igeeksky.xcache.autoconfigure.CacheManagerConfiguration;
-import com.igeeksky.xcache.autoconfigure.holder.KeyConvertorProviderHolder;
-import com.igeeksky.xcache.autoconfigure.holder.SerializerProviderHolder;
-import com.igeeksky.xcache.extension.jackson.JacksonKeyConvertorProvider;
-import com.igeeksky.xcache.extension.jackson.JacksonSerializerProvider;
+import com.igeeksky.xcache.autoconfigure.CacheAutoConfiguration;
+import com.igeeksky.xcache.autoconfigure.holder.CodecProviderHolder;
+import com.igeeksky.xcache.extension.jackson.JacksonCodecProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,23 +12,15 @@ import org.springframework.context.annotation.Configuration;
  * @since 0.0.4 2023-10-08
  */
 @Configuration(proxyBeanMethods = false)
-@AutoConfigureBefore(CacheManagerConfiguration.class)
+@AutoConfigureBefore(CacheAutoConfiguration.class)
 public class JacksonAutoConfiguration {
 
-    public static final String JACKSON_CONVERTOR_PROVIDER_ID = "jacksonKeyConvertorProvider";
-    public static final String JACKSON_SERIALIZER_PROVIDER_ID = "jacksonSerializerProvider";
+    public static final String JACKSON_CODEC_PROVIDER_ID = "jackson";
 
     @Bean
-    KeyConvertorProviderHolder keyConvertorProviderHolder() {
-        KeyConvertorProviderHolder holder = new KeyConvertorProviderHolder();
-        holder.put(JACKSON_CONVERTOR_PROVIDER_ID, JacksonKeyConvertorProvider.INSTANCE);
-        return holder;
-    }
-
-    @Bean
-    SerializerProviderHolder serializerProviderHolder() {
-        SerializerProviderHolder holder = new SerializerProviderHolder();
-        holder.put(JACKSON_SERIALIZER_PROVIDER_ID, JacksonSerializerProvider.INSTANCE);
+    CodecProviderHolder serializerProviderHolder() {
+        CodecProviderHolder holder = new CodecProviderHolder();
+        holder.put(JACKSON_CODEC_PROVIDER_ID, JacksonCodecProvider.getInstance());
         return holder;
     }
 

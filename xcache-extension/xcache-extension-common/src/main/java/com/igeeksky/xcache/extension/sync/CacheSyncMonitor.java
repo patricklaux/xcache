@@ -1,7 +1,8 @@
 package com.igeeksky.xcache.extension.sync;
 
-import com.igeeksky.xcache.common.CacheType;
-import com.igeeksky.xcache.extension.serializer.Serializer;
+
+import com.igeeksky.xcache.common.MessagePublisher;
+import com.igeeksky.xcache.props.SyncType;
 
 import java.util.Set;
 
@@ -18,55 +19,68 @@ public class CacheSyncMonitor {
     /**
      * sync-channel:cache-name
      */
-    private final String channel;
+    private final byte[] channel;
 
-    private final CacheType cacheType;
+    private final SyncMessageCodec codec;
 
-    private final CacheMessagePublisher publisher;
+    private final MessagePublisher publisher;
 
-    private final Serializer<CacheSyncMessage> serializer;
+    private boolean remove = false;
+    private boolean clear = false;
 
-    public CacheSyncMonitor(String sid, String channel, CacheType cacheType,
-                            CacheMessagePublisher publisher, Serializer<CacheSyncMessage> serializer) {
-        this.sid = sid;
-        this.channel = channel;
-        this.cacheType = cacheType;
+    public CacheSyncMonitor(SyncConfig<?> config, MessagePublisher publisher) {
+        this.sid = config.getSid();
+        this.codec = config.getCodec();
+        this.channel = this.codec.encode(config.getChannel());
         this.publisher = publisher;
-        this.serializer = serializer;
+        SyncType first = config.getFirst();
+        SyncType second = config.getSecond();
+        if (first == SyncType.CLEAR || second == SyncType.CLEAR) {
+            remove = false;
+            clear = true;
+        }
+        if (first == SyncType.ALL || second == SyncType.ALL) {
+            remove = true;
+            clear = true;
+        }
+        if (publisher == null) {
+            remove = false;
+            clear = false;
+        }
     }
 
     public void afterPut(String key) {
-        if (CacheType.BOTH == cacheType) {
-            sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_REMOVE).addKey(key));
+        if (remove) {
+            sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_REMOVE, key));
         }
     }
 
     public void afterPutAll(Set<String> keys) {
-        if (CacheType.BOTH == cacheType) {
-            sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_REMOVE).setKeys(keys));
+        if (remove) {
+            sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_REMOVE, keys));
         }
     }
 
     public void afterEvict(String key) {
-        if (CacheType.BOTH == cacheType || CacheType.LOCAL == cacheType) {
-            sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_REMOVE).addKey(key));
+        if (remove) {
+            sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_REMOVE, key));
         }
     }
 
     public void afterEvictAll(Set<String> keys) {
-        if (CacheType.BOTH == cacheType || CacheType.LOCAL == cacheType) {
-            sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_REMOVE).setKeys(keys));
+        if (remove) {
+            sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_REMOVE, keys));
         }
     }
 
     public void afterClear() {
-        if (CacheType.BOTH == cacheType || CacheType.LOCAL == cacheType) {
+        if (clear) {
             sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_CLEAR));
         }
     }
 
     public void sendMessage(CacheSyncMessage message) {
-        publisher.publish(channel, serializer.serialize(message));
+        publisher.publish(channel, codec.encodeMsg(message));
     }
 
 }

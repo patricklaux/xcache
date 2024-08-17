@@ -45,23 +45,20 @@ public class CacheOperationSource {
         }
 
         AnnotatedElementKey methodKey = new AnnotatedElementKey(method, targetClass);
-        Collection<CacheOperation> cached = this.attributeCache.get(methodKey);
 
-        if (cached != null) {
-            return (cached != NULL_CACHING_ATTRIBUTE ? cached : null);
-        }
-
-        Collection<CacheOperation> cacheOps = computeCacheOperations(method, targetClass);
-        if (cacheOps != null) {
-            if (logger.isTraceEnabled()) {
-                logger.trace("Adding cacheable method '" + method.getName() + "' with attribute: " + cacheOps);
+        Collection<CacheOperation> cached = this.attributeCache.computeIfAbsent(methodKey, key -> {
+            Collection<CacheOperation> cacheOps = computeCacheOperations(method, targetClass);
+            if (cacheOps != null) {
+                if (logger.isTraceEnabled()) {
+                    logger.trace("Adding cacheable method '{}' with attribute: {}", method.getName(), cacheOps);
+                }
+                return cacheOps;
+            } else {
+                return NULL_CACHING_ATTRIBUTE;
             }
-            this.attributeCache.put(methodKey, cacheOps);
-        } else {
-            this.attributeCache.put(methodKey, NULL_CACHING_ATTRIBUTE);
-        }
+        });
 
-        return cacheOps;
+        return (cached != NULL_CACHING_ATTRIBUTE) ? cached : null;
     }
 
     private Collection<CacheOperation> computeCacheOperations(Method method, Class<?> targetClass) {
@@ -79,9 +76,9 @@ public class CacheOperationSource {
          * 如果实现方法和接口方法都有注解，以实现方法中的注解为准。
          */
         // 1.先从 specificMethod 获取注解
-        Collection<CacheOperation> opDef = getCacheOperations(specificMethod);
-        if (CollectionUtils.isNotEmpty(opDef)) {
-            return opDef;
+        Collection<CacheOperation> operations = cacheOperations(specificMethod, targetClass);
+        if (CollectionUtils.isNotEmpty(operations)) {
+            return operations;
         }
 
         // 2.如果注解不存在，判断 specificMethod 与 method 是否相同：
@@ -91,11 +88,11 @@ public class CacheOperationSource {
         }
 
         // 2.1 如果不相同，从 method 获取注解。
-        return getCacheOperations(method);
+        return cacheOperations(method, targetClass);
     }
 
-    private Collection<CacheOperation> getCacheOperations(Method method) {
-        return CacheAnnotationParser.parseCacheAnnotations(method);
+    private Collection<CacheOperation> cacheOperations(Method method, Class<?> targetClass) {
+        return CacheAnnotationParser.parseCacheAnnotations(method, targetClass);
     }
 
 }

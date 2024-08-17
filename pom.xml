@@ -36,8 +36,8 @@
         <revision>1.0.0-SNAPSHOT</revision>
 
         <!-- maven plugin start -->
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.version>3.13.0</maven.compiler.version>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <maven.gpg.version>3.2.4</maven.gpg.version>
@@ -56,7 +56,8 @@
         <module>xcache-dependencies</module>
         <module>xcache-core</module>
         <module>xcache-test</module>
-        <module>xcache-store</module>
+        <module>xcache-redis</module>
+        <module>xcache-caffeine</module>
         <module>xcache-annotation</module>
         <module>xcache-extension</module>
         <module>xcache-common</module>

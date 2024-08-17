@@ -29,13 +29,7 @@ public class CacheMethodPointcut extends StaticMethodMatcherPointcut {
      * 判断目标类是否属于指定的包：如果是，则可能是缓存代理对象；如果否，则非缓存代理对象<p/>
      * 即只有 @EnableCache 的 basePackages 指定的包内的缓存注解才生效。
      */
-    private static class CacheOperationSourceClassFilter implements ClassFilter {
-
-        private final String[] basePackages;
-
-        public CacheOperationSourceClassFilter(String[] basePackages) {
-            this.basePackages = basePackages;
-        }
+    private record CacheOperationSourceClassFilter(String[] basePackages) implements ClassFilter {
 
         @Override
         public boolean matches(Class<?> clazz) {
@@ -44,6 +38,7 @@ public class CacheMethodPointcut extends StaticMethodMatcherPointcut {
             if (name.startsWith("java") || name.startsWith("org.springframework")) {
                 return false;
             }
+            // exclude
             if (name.contains("$$EnhancerBySpringCGLIB$$") || name.contains("$$FastClassBySpringCGLIB$$")) {
                 return false;
             }
@@ -55,6 +50,7 @@ public class CacheMethodPointcut extends StaticMethodMatcherPointcut {
             }
             return false;
         }
+
     }
 
 }

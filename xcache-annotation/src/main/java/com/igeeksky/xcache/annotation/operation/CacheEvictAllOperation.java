@@ -12,10 +12,16 @@ public class CacheEvictAllOperation extends CacheOperation {
 
     private final boolean beforeInvocation;
 
+    private final String condition;
+
+    private final String unless;
+
     protected CacheEvictAllOperation(Builder builder) {
         super(builder);
         this.keys = builder.keys;
         this.beforeInvocation = builder.beforeInvocation;
+        this.condition = builder.condition;
+        this.unless = builder.unless;
     }
 
     public String getKeys() {
@@ -24,6 +30,14 @@ public class CacheEvictAllOperation extends CacheOperation {
 
     public boolean isBeforeInvocation() {
         return beforeInvocation;
+    }
+
+    public String getCondition() {
+        return condition;
+    }
+
+    public String getUnless() {
+        return unless;
     }
 
     public static Builder builder() {
@@ -36,6 +50,10 @@ public class CacheEvictAllOperation extends CacheOperation {
 
         private boolean beforeInvocation;
 
+        private String condition;
+
+        private String unless;
+
         public Builder keys(String keys) {
             this.keys = StringUtils.trim(keys);
             return this;
@@ -43,6 +61,16 @@ public class CacheEvictAllOperation extends CacheOperation {
 
         public Builder beforeInvocation(boolean beforeInvocation) {
             this.beforeInvocation = beforeInvocation;
+            return this;
+        }
+
+        public Builder condition(String condition) {
+            this.condition = condition;
+            return this;
+        }
+
+        public Builder unless(String unless) {
+            this.unless = unless;
             return this;
         }
 

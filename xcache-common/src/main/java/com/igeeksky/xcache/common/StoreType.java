@@ -7,18 +7,13 @@ package com.igeeksky.xcache.common;
 public enum StoreType {
 
     /**
-     * 无缓存(空操作)
+     * 内嵌缓存
      */
-    NOOP,
+    EMBED,
 
     /**
-     * 本地缓存
+     * 外部缓存
      */
-    LOCAL,
-
-    /**
-     * 远程缓存
-     */
-    REMOTE
+    EXTRA
 
 }

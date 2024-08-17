@@ -7,11 +7,12 @@ import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.cluster.ClusterClientOptions;
 
 /**
- * 用户可以重写此接口，将该类作为 bean 注入到 Spring 容器中。
+ * 用以实现自定义的客户端选项
  * <p>
- * 此接口用以实现自定义的客户端选项，因为部分客户端选项无法采用配置的方式来处理。
+ * 部分客户端选项无法采用配置的方式来处理，用户可以实现此接口，并将该类作为 bean 注入到 Spring 容器中。
  * <p>
- * 生成 LettuceConnectionFactory 时会先读取配置，再用此自定义类来配置客户端，如果读取的配置和此自定义类有相同配置项，以此自定义类为准。
+ * 生成 LettuceConnectionFactory 时会先读取配置文件，再用此自定义类来配置 RedisClient，
+ * 如果读取的配置文件和此自定义类有相同配置项，将采用此自定义类的配置项。
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-05

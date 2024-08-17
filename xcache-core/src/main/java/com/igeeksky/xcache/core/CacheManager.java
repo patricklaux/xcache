@@ -1,5 +1,7 @@
 package com.igeeksky.xcache.core;
 
+import com.igeeksky.xcache.Cache;
+
 import java.util.Collection;
 
 /**
@@ -7,6 +9,10 @@ import java.util.Collection;
  * @since 0.0.3 2021-06-10
  */
 public interface CacheManager {
+
+    default <K, V> Cache<K, V> getOrCreateCache(String cacheName, Class<K> keyType, Class<V> valueType) {
+        return getOrCreateCache(cacheName, keyType, null, valueType, null);
+    }
 
     /**
      * @param cacheName   缓存名称
@@ -17,7 +23,7 @@ public interface CacheManager {
      * @param <V>         值类型
      * @return 缓存
      */
-    <K, V> Cache<K, V> getOrCreateCache(String cacheName, Class<K> keyType, Class<V> valueType, Class<?>[] valueParams);
+    <K, V> Cache<K, V> getOrCreateCache(String cacheName, Class<K> keyType, Class<?>[] keyParams, Class<V> valueType, Class<?>[] valueParams);
 
     Collection<Cache<?, ?>> getAll();
 

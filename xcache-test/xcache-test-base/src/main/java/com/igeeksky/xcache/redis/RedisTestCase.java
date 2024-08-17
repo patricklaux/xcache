@@ -1,13 +1,16 @@
 package com.igeeksky.xcache.redis;
 
-import com.igeeksky.xcache.common.ExpiryKeyValue;
-import com.igeeksky.xcache.common.KeyValue;
-import com.igeeksky.xcache.extension.serializer.StringSerializer;
+import com.igeeksky.redis.RedisOperator;
 import com.igeeksky.xtool.core.collection.Maps;
+import com.igeeksky.xtool.core.function.tuple.ExpiryKeyValue;
+import com.igeeksky.xtool.core.function.tuple.KeyValue;
 import com.igeeksky.xtool.core.lang.RandomUtils;
+import com.igeeksky.xtool.core.lang.codec.StringCodec;
 import org.junit.jupiter.api.Assertions;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,30 +20,30 @@ import java.util.Map;
  */
 public class RedisTestCase {
 
-    private static final StringSerializer SERIALIZER = StringSerializer.UTF_8;
+    private static final StringCodec CODEC = StringCodec.getInstance(StandardCharsets.UTF_8);
 
-    private final RedisConnection connection;
+    private final RedisOperator redisOperator;
 
-    public RedisTestCase(RedisConnection connection) {
-        this.connection = connection;
+    public RedisTestCase(RedisOperator redisOperator) {
+        this.redisOperator = redisOperator;
     }
 
     public boolean isCluster() {
-        return connection.isCluster();
+        return redisOperator.isCluster();
     }
 
     // String Command --start--
     public void get() {
-        byte[] key = SERIALIZER.serialize("test-get");
+        byte[] key = CODEC.encode("test-get");
 
-        connection.del(key);
-        connection.set(key, key);
+        redisOperator.del(key);
+        redisOperator.set(key, key);
 
-        byte[] result = connection.get(key);
+        byte[] result = redisOperator.get(key);
 
         Assertions.assertArrayEquals(key, result);
 
-        connection.del(key);
+        redisOperator.del(key);
     }
 
     public void mget() {
@@ -50,31 +53,31 @@ public class RedisTestCase {
         byte[][] keyBytes = getBytes(size, keys);
 
         // 删除 redis 中的 key-value
-        connection.del(keyBytes);
+        redisOperator.del(keyBytes);
 
         // 保存 key-value 到 redis
-        connection.mset(getKeyValues(limit, keyBytes));
+        redisOperator.mset(getKeyValues(limit, keyBytes));
 
         // 读取 redis 数据
-        Map<String, String> map = hmgetResultMap(connection.mget(keyBytes));
+        Map<String, String> map = hmgetResultMap(redisOperator.mget(keyBytes));
 
         // 验证读取数据是否正确
         validateValues(keys, map, size, limit);
 
-        connection.del(keyBytes);
+        redisOperator.del(keyBytes);
     }
 
 
     public void set() {
-        byte[] bytes = SERIALIZER.serialize("test-set");
+        byte[] bytes = CODEC.encode("test-set");
 
-        connection.del(bytes);
-        connection.set(bytes, bytes);
+        redisOperator.del(bytes);
+        redisOperator.set(bytes, bytes);
 
-        byte[] result = connection.get(bytes);
+        byte[] result = redisOperator.get(bytes);
         Assertions.assertArrayEquals(bytes, result);
 
-        connection.del(bytes);
+        redisOperator.del(bytes);
     }
 
     /**
@@ -101,8 +104,8 @@ public class RedisTestCase {
         return () -> {
             long start = System.currentTimeMillis();
             for (int i = 0; i < size; i++) {
-                byte[] temp = SERIALIZER.serialize("user:" + RandomUtils.nextString(18));
-                connection.psetex(temp, RandomUtils.nextInt(2000000, 3000000), temp);
+                byte[] temp = CODEC.encode("user:" + RandomUtils.nextString(18));
+                redisOperator.psetex(temp, RandomUtils.nextInt(2000000, 3000000), temp);
             }
             long end = System.currentTimeMillis();
             System.out.println(end - start);
@@ -115,20 +118,20 @@ public class RedisTestCase {
         byte[][] keyBytes = getBytes(size, keys);
 
         // 删除 redis 中的 key-value
-        connection.del(keyBytes);
+        redisOperator.del(keyBytes);
 
         // 保存 key-value 到 redis
-        connection.mset(getKeyValues(size, keyBytes));
+        redisOperator.mset(getKeyValues(size, keyBytes));
 
         // 读取 redis 数据
-        Map<String, String> map = hmgetResultMap(connection.mget(keyBytes));
+        Map<String, String> map = hmgetResultMap(redisOperator.mget(keyBytes));
 
         // 验证读取数据是否正确
         for (String key : keys) {
             Assertions.assertEquals(key, map.get(key));
         }
 
-        connection.del(keyBytes);
+        redisOperator.del(keyBytes);
     }
 
     /**
@@ -158,10 +161,10 @@ public class RedisTestCase {
             Map<byte[], byte[]> keyValues = Maps.newHashMap(50000);
             for (int i = 0; i < size; ) {
                 i++;
-                byte[] temp = SERIALIZER.serialize("test-mset:" + RandomUtils.nextString(18));
+                byte[] temp = CODEC.encode("test-mset:" + RandomUtils.nextString(18));
                 keyValues.put(temp, temp);
                 if (keyValues.size() == 50000 || i == size) {
-                    connection.mset(keyValues);
+                    redisOperator.mset(keyValues);
                     keyValues.clear();
                 }
             }
@@ -190,7 +193,7 @@ public class RedisTestCase {
         byte[][] keyBytes = getBytes(size, keys);
 
         // 删除 redis 中的 key-value
-        connection.del(keyBytes);
+        redisOperator.del(keyBytes);
 
         List<ExpiryKeyValue<byte[], byte[]>> keyValues = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
@@ -198,22 +201,22 @@ public class RedisTestCase {
         }
 
         // 保存 key-value 到 redis
-        connection.mpsetex(keyValues);
+        redisOperator.mpsetex(keyValues);
 
         // 读取 redis 数据
-        Map<String, String> map = hmgetResultMap(connection.mget(keyBytes));
+        Map<String, String> map = hmgetResultMap(redisOperator.mget(keyBytes));
 
         // 验证读取数据是否正确
         for (String key : keys) {
             Assertions.assertEquals(key, map.get(key));
         }
 
-        List<byte[]> matchKeys = connection.keys(SERIALIZER.serialize(prefix + "*"));
+        List<byte[]> matchKeys = redisOperator.keys(CODEC.encode(prefix + "*"));
         Assertions.assertEquals(keys.length, matchKeys.size());
 
-        connection.del(keyBytes);
+        redisOperator.del(keyBytes);
 
-        matchKeys = connection.keys(SERIALIZER.serialize(prefix + "*"));
+        matchKeys = redisOperator.keys(CODEC.encode(prefix + "*"));
         Assertions.assertEquals(0, matchKeys.size());
     }
 
@@ -255,10 +258,10 @@ public class RedisTestCase {
             int capacity = Math.min(50000, size);
             List<ExpiryKeyValue<byte[], byte[]>> keyValues = new ArrayList<>(capacity);
             for (int i = 0; i < size; i++) {
-                byte[] temp = SERIALIZER.serialize("test-mpsetex:" + RandomUtils.nextString(18));
+                byte[] temp = CODEC.encode("test-mpsetex:" + RandomUtils.nextString(18));
                 keyValues.add(new ExpiryKeyValue<>(temp, temp, RandomUtils.nextInt(2000000, 3000000)));
                 if (keyValues.size() == capacity) {
-                    connection.mpsetex(keyValues);
+                    redisOperator.mpsetex(keyValues);
                     keyValues.clear();
                     capacity = Math.min(10000, size - i - 1);
                 }
@@ -281,39 +284,39 @@ public class RedisTestCase {
         String prefix = "test-del-";
         byte[][] keys = new byte[size][];
         for (int i = 0; i < size; i++) {
-            keys[i] = SERIALIZER.serialize(prefix + RandomUtils.nextString(18));
+            keys[i] = CODEC.encode(prefix + RandomUtils.nextString(18));
         }
 
         for (byte[] key : keys) {
-            connection.set(key, key);
+            redisOperator.set(key, key);
         }
 
         for (byte[] key : keys) {
-            Assertions.assertArrayEquals(key, connection.get(key));
+            Assertions.assertArrayEquals(key, redisOperator.get(key));
         }
 
-        connection.del(keys);
+        redisOperator.del(keys);
 
         for (byte[] key : keys) {
-            Assertions.assertNull(connection.get(key));
+            Assertions.assertNull(redisOperator.get(key));
         }
     }
     // String Command --end--
 
     // Hash Command --start--
     public void hget() {
-        byte[] key = SERIALIZER.serialize("test-hget");
-        byte[] field = SERIALIZER.serialize("hget-field-1");
+        byte[] key = CODEC.encode("test-hget");
+        byte[] field = CODEC.encode("hget-field-1");
 
-        connection.del(key);
+        redisOperator.del(key);
 
-        Assertions.assertNull(connection.hget(key, field));
+        Assertions.assertNull(redisOperator.hget(key, field));
 
-        connection.hset(key, field, field);
+        redisOperator.hset(key, field, field);
 
-        Assertions.assertArrayEquals(field, connection.hget(key, field));
+        Assertions.assertArrayEquals(field, redisOperator.hget(key, field));
 
-        connection.del(key);
+        redisOperator.del(key);
     }
 
     public void hset() {
@@ -321,37 +324,57 @@ public class RedisTestCase {
     }
 
     public void hmget() {
-        byte[] key = SERIALIZER.serialize("test-hmget");
+        byte[] key = CODEC.encode("test-hmget");
 
         int size = 8, limit = 5;
         String[] fields = getKeys(size, "test-hmget-");
         byte[][] fieldBytes = getBytes(size, fields);
 
         // 删除 redis 中的 key-value
-        connection.del(key);
+        redisOperator.del(key);
 
         Map<byte[], byte[]> keyValues = getKeyValues(limit, fieldBytes);
 
         // 保存 key-value 到 redis
-        connection.hmset(key, keyValues);
+        redisOperator.hmset(key, keyValues);
 
         // 读取 redis 数据
-        Map<String, String> map = hmgetResultMap(connection.hmget(key, fieldBytes));
+        Map<String, String> map = hmgetResultMap(redisOperator.hmget(key, fieldBytes));
 
         // 验证读取数据是否正确
         validateValues(fields, map, size, limit);
 
-        connection.hdel(key, fieldBytes);
+        redisOperator.hdel(key, fieldBytes);
 
-        Map<String, String> resultMap = hmgetResultMap(connection.hmget(key, fieldBytes));
+        Map<String, String> resultMap = hmgetResultMap(redisOperator.hmget(key, fieldBytes));
         for (int i = 0; i < size; i++) {
             Assertions.assertNull(resultMap.get(fields[i]));
         }
     }
 
-
     public void hmset() {
-        // do nothing
+        int size = 16384, len = 100;
+        Map<byte[], Map<byte[], byte[]>> keyFieldValues = new HashMap<>();
+        for (int i = 0; i < size; i++) {
+            String key = "test-hmset-" + i;
+            Map<byte[], byte[]> fieldValues = new HashMap<>();
+            keyFieldValues.put(CODEC.encode(key), fieldValues);
+            for (int j = 0; j < len; j++) {
+                byte[] field = CODEC.encode("field-" + j);
+                fieldValues.put(field, field);
+            }
+        }
+        redisOperator.hmset(keyFieldValues);
+
+        Map<byte[], List<byte[]>> keyFields = HashMap.newHashMap(size);
+        keyFieldValues.forEach((k, v) -> keyFields.put(k, new ArrayList<>(v.keySet())));
+
+        int total = size * len;
+        List<KeyValue<byte[], byte[]>> keyValues = redisOperator.hmget(keyFields, total);
+        Assertions.assertEquals(total, keyValues.size());
+        keyValues.forEach(kv -> Assertions.assertArrayEquals(kv.getKey(), kv.getValue()));
+
+        redisOperator.del(keyFieldValues.keySet().toArray(new byte[0][]));
     }
 
     public void hdel() {
@@ -362,15 +385,15 @@ public class RedisTestCase {
     public void keys() {
         int size = 10;
         String prefix = "test-clear:";
-        byte[] matches = SERIALIZER.serialize(prefix + "*");
+        byte[] matches = CODEC.encode(prefix + "*");
 
         Map<byte[], byte[]> keyValues = Maps.newHashMap(size);
         for (int i = 0; i < size; i++) {
-            byte[] keyBytes = SERIALIZER.serialize(prefix + i);
+            byte[] keyBytes = CODEC.encode(prefix + i);
             keyValues.put(keyBytes, keyBytes);
         }
 
-        connection.mset(keyValues);
+        redisOperator.mset(keyValues);
 
         Map<String, String> result = getKeysResult(matches);
         for (int i = 0; i < 10; i++) {
@@ -378,7 +401,7 @@ public class RedisTestCase {
             Assertions.assertEquals(key, result.get(key));
         }
 
-        connection.clear(matches);
+        redisOperator.clear(matches);
 
         result = getKeysResult(matches);
         for (int i = 0; i < 10; i++) {
@@ -388,10 +411,10 @@ public class RedisTestCase {
     }
 
     private Map<String, String> getKeysResult(byte[] matches) {
-        List<byte[]> keys = connection.keys(matches);
+        List<byte[]> keys = redisOperator.keys(matches);
         Map<String, String> result = Maps.newHashMap(keys.size());
         for (byte[] keyBytes : keys) {
-            String key = SERIALIZER.deserialize(keyBytes);
+            String key = CODEC.decode(keyBytes);
             result.put(key, key);
         }
         return result;
@@ -399,14 +422,14 @@ public class RedisTestCase {
 
     public void clear(String match) {
         long start = System.currentTimeMillis();
-        connection.clear(SERIALIZER.serialize(match));
+        redisOperator.clear(CODEC.encode(match));
         System.out.println("clear:" + (System.currentTimeMillis() - start));
     }
 
     private static byte[][] getBytes(int size, String[] keys) {
         byte[][] keyBytes = new byte[size][];
         for (int i = 0; i < size; i++) {
-            keyBytes[i] = SERIALIZER.serialize(keys[i]);
+            keyBytes[i] = CODEC.encode(keys[i]);
         }
         return keyBytes;
     }
@@ -422,8 +445,8 @@ public class RedisTestCase {
     private static Map<String, String> hmgetResultMap(List<KeyValue<byte[], byte[]>> keyValues) {
         Map<String, String> map = Maps.newHashMap(keyValues.size());
         keyValues.forEach(keyValue -> {
-            String field = SERIALIZER.deserialize(keyValue.getKey());
-            String value = SERIALIZER.deserialize(keyValue.getValue());
+            String field = CODEC.decode(keyValue.getKey());
+            String value = CODEC.decode(keyValue.getValue());
             map.put(field, value);
         });
         return map;

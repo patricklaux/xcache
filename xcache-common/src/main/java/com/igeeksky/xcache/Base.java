@@ -15,14 +15,23 @@ import java.util.Set;
 public interface Base<K, V> {
 
     /**
-     * 根据键从缓存中读取值
+     * 根据键从缓存中读取值 <p>
+     * <p>
+     * 增加一层 CacheValue 包装，当允许缓存空值时，可以明确判断是缓存无值，还是数据源无值，从而决定是否需要再回源查询
+     * <pre>{@code
+     * if (cacheValue == null) {
+     *     // 未缓存，未知数据源是否有数据
+     * } else {
+     *     if (cacheValue.hasValue()){
+     *         // 已缓存，数据源有数据
+     *     } else {
+     *         // 已缓存，数据源无数据，无需回源（只有允许缓存空值，才会出现这个条件）；
+     *     }
+     * }
+     * }</pre>
      *
      * @param key 键
      * @return CacheValue – 值的包装类
-     * <p>1. CacheValue 为空，表示 key 不存在于缓存中。</p>
-     * <p>2. CacheValue 不为空，表示 key 存在于缓存中：</p>
-     * <p>2.1. CacheValue 内部的 value 不为空，缓存的是正常值；</p>
-     * <p>2.2. CacheValue 内部的 value 为空，缓存的是空值；</p>
      */
     CacheValue<V> get(K key);
 
@@ -30,11 +39,10 @@ public interface Base<K, V> {
      * 根据键集从缓存中读取值
      *
      * @param keys 多个键的集合
-     * @return KeyValue – 键值对的包装类
-     * <p>1. CacheValue 为空，表示 key 不存在于缓存中。</p>
-     * <p>2. CacheValue 不为空，表示 key 存在于缓存中：</p>
-     * <p>2.1. CacheValue 内部的 value 不为空，缓存的是正常值；</p>
-     * <p>2.2. CacheValue 内部的 value 为空，缓存的是空值；</p>
+     * @return KeyValues – 键值对映射 <p>
+     * CacheValue 不为空，表示已缓存： <p>
+     * 1. CacheValue.hasValue() == true，缓存的是正常值； <p>
+     * 2. CacheValue.hasValue() == false，缓存的是空值； <p>
      */
     Map<K, CacheValue<V>> getAll(Set<? extends K> keys);
 

@@ -15,7 +15,7 @@
         <redisson.version>3.15.6</redisson.version>
         <jetbrains.annotations.version>17.0.0</jetbrains.annotations.version>
         <findbugs.version>3.0.2</findbugs.version>
-        <xtool.version>1.0.10</xtool.version>
+        <xtool.version>1.0.14</xtool.version>
     </properties>
 
     <dependencyManagement>
@@ -50,17 +50,6 @@
                 <artifactId>xcache-extension-jackson</artifactId>
                 <version>${revision}</version>
             </dependency>
-
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-store</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-store-common</artifactId>
-                <version>${revision}</version>
-            </dependency>
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-caffeine</artifactId>
@@ -69,6 +58,11 @@
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-redis</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-redis-core</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>

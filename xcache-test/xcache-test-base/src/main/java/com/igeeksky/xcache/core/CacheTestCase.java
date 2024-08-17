@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.core;
 
+import com.igeeksky.xcache.Cache;
 import com.igeeksky.xcache.domain.Key;
 import com.igeeksky.xcache.domain.User;
 import org.junit.jupiter.api.Assertions;

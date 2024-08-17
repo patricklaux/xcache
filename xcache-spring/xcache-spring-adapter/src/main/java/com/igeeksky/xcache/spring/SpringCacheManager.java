@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.spring;
 
-import com.igeeksky.xcache.core.Cache;
+import com.igeeksky.xcache.Cache;
 import com.igeeksky.xcache.core.CacheManager;
 import org.springframework.lang.NonNull;
 
@@ -34,7 +34,7 @@ public class SpringCacheManager implements org.springframework.cache.CacheManage
             return cache;
         }
         return caches.computeIfAbsent(name, nameKey -> {
-            Cache<K, V> kvCache = cacheManager.getOrCreateCache(nameKey, keyType, valueType, null);
+            Cache<K, V> kvCache = cacheManager.getOrCreateCache(nameKey, keyType, null, valueType, null);
             return new SpringCache((Cache<Object, Object>) kvCache);
         });
     }

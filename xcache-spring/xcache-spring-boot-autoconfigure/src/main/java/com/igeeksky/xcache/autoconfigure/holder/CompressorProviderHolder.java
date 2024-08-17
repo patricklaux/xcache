@@ -17,14 +17,13 @@ public class CompressorProviderHolder implements Holder<CompressorProvider> {
 
     @Override
     public void put(String beanId, CompressorProvider provider) {
-        map.put(beanId, provider);
+        CompressorProvider old = map.put(beanId, provider);
+        Assert.isTrue(old == null, () -> "CompressorProvider: [" + beanId + "] duplicate id.");
     }
 
     @Override
     public CompressorProvider get(String beanId) {
-        CompressorProvider provider = map.get(beanId);
-        Assert.notNull(provider, "beanId:[" + beanId + "] CompressorProvider doesn't exit");
-        return provider;
+        return map.get(beanId);
     }
 
     @Override

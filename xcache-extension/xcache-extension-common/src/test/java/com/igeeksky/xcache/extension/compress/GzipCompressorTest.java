@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.extension.compress;
 
 import com.igeeksky.xtool.core.lang.RandomUtils;
+import com.igeeksky.xtool.core.lang.compress.GzipCompressor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
