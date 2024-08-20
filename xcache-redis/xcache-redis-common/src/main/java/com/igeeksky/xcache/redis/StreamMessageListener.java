@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.redis;
 
 import com.igeeksky.redis.stream.StreamMessage;
-import com.igeeksky.xcache.common.MessageListener;
+import com.igeeksky.xcache.core.MessageListener;
 
 import java.util.function.Consumer;
 

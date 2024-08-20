@@ -1,8 +1,8 @@
 package com.igeeksky.xcache.aop;
 
 import com.igeeksky.xcache.annotation.operation.*;
-import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.Cache;
+import com.igeeksky.xcache.core.CacheValue;
+import com.igeeksky.xcache.core.Cache;
 import com.igeeksky.xcache.core.CacheManager;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.collection.Maps;

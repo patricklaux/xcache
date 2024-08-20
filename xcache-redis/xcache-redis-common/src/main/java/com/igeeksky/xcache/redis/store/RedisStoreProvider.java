@@ -2,7 +2,7 @@ package com.igeeksky.xcache.redis.store;
 
 import com.igeeksky.redis.RedisOperator;
 import com.igeeksky.redis.RedisOperatorFactory;
-import com.igeeksky.xcache.Store;
+import com.igeeksky.xcache.core.Store;
 import com.igeeksky.xcache.core.store.StoreConfig;
 import com.igeeksky.xcache.core.store.StoreProvider;
 import com.igeeksky.xcache.props.RedisType;

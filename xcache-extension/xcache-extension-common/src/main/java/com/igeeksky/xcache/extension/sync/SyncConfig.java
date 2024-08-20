@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.extension.sync;
 
 
-import com.igeeksky.xcache.Store;
+import com.igeeksky.xcache.core.Store;
 import com.igeeksky.xcache.props.SyncType;
 import com.igeeksky.xtool.core.lang.StringUtils;
 

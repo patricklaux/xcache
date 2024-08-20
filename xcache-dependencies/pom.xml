@@ -72,7 +72,17 @@
             </dependency>
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-test-domain</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-test-base</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-spring-boot-starter-test</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>

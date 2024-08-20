@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.caffeine;
 
 import com.github.benmanes.caffeine.cache.Expiry;
-import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.core.CacheValue;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.NonNull;
 

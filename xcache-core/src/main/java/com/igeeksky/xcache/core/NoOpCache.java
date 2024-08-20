@@ -1,9 +1,6 @@
 package com.igeeksky.xcache.core;
 
 
-import com.igeeksky.xcache.Cache;
-import com.igeeksky.xcache.CacheLoader;
-import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xtool.core.collection.Maps;
 
 import java.util.Map;

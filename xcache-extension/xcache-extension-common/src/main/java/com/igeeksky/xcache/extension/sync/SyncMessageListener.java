@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.extension.sync;
 
-import com.igeeksky.xcache.Store;
-import com.igeeksky.xcache.common.MessageListener;
+import com.igeeksky.xcache.core.Store;
+import com.igeeksky.xcache.core.MessageListener;
 import com.igeeksky.xcache.props.SyncType;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import org.slf4j.Logger;

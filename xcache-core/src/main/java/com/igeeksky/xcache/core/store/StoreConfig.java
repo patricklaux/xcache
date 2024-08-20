@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.core.store;
 
-import com.igeeksky.xcache.common.ReferenceType;
-import com.igeeksky.xcache.common.StoreType;
+import com.igeeksky.xcache.core.ReferenceType;
+import com.igeeksky.xcache.core.StoreType;
 import com.igeeksky.xcache.props.RedisType;
 import com.igeeksky.xtool.core.lang.codec.Codec;
 import com.igeeksky.xtool.core.lang.compress.Compressor;

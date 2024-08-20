@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.caffeine;
 
-import com.igeeksky.xcache.common.ReferenceType;
+import com.igeeksky.xcache.core.ReferenceType;
 import com.igeeksky.xcache.core.store.StoreConfig;
 import com.igeeksky.xtool.core.lang.codec.Codec;
 import com.igeeksky.xtool.core.lang.compress.Compressor;

@@ -2,7 +2,7 @@ package com.igeeksky.xcache.redis;
 
 import com.igeeksky.redis.RedisOperator;
 import com.igeeksky.redis.stream.AddOptions;
-import com.igeeksky.xcache.common.MessagePublisher;
+import com.igeeksky.xcache.core.MessagePublisher;
 
 import java.util.Map;
 

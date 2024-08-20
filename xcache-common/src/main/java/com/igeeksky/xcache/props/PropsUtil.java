@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.props;
 
-import com.igeeksky.xcache.common.ReferenceType;
-import com.igeeksky.xcache.common.StoreType;
+import com.igeeksky.xcache.core.ReferenceType;
+import com.igeeksky.xcache.core.StoreType;
 import com.igeeksky.xtool.core.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -3,7 +3,7 @@ package com.igeeksky.xcache.redis.store;
 
 import com.igeeksky.redis.CRC16;
 import com.igeeksky.redis.RedisOperator;
-import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.core.CacheValue;
 import com.igeeksky.xcache.core.CacheKeyPrefix;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.collection.Maps;

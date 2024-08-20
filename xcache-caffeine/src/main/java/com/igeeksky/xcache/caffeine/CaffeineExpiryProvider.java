@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.caffeine;
 
 import com.github.benmanes.caffeine.cache.Expiry;
-import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.core.CacheValue;
 
 /**
  * <b>基于时间的驱逐策略提供者</b>

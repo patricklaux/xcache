@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.caffeine;
 
 import com.github.benmanes.caffeine.cache.Weigher;
-import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.core.CacheValue;
 
 /**
  * @author Patrick.Lau

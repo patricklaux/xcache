@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.core.store;
 
-import com.igeeksky.xcache.Store;
-import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.core.Store;
+import com.igeeksky.xcache.core.CacheValue;
 import org.junit.jupiter.api.Assertions;
 
 import java.util.HashMap;

@@ -1,7 +1,5 @@
 package com.igeeksky.xcache.core;
 
-import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.Store;
 import com.igeeksky.xcache.core.store.StoreProxy;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;

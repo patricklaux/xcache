@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.spring;
 
-import com.igeeksky.xcache.Cache;
+import com.igeeksky.xcache.core.Cache;
 import com.igeeksky.xcache.core.CacheManager;
 import org.springframework.lang.NonNull;
 

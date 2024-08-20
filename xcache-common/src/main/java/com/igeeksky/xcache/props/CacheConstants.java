@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.props;
 
 
-import com.igeeksky.xcache.common.ReferenceType;
+import com.igeeksky.xcache.core.ReferenceType;
 
 /**
  * @author Patrick.Lau
