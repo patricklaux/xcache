@@ -19,7 +19,7 @@ public class RedisNode {
 
     public RedisNode(String node) {
         String[] array = node.split(":");
-        Assert.isTrue(array.length == 2, () -> "node:[" + node + "] is not validate.");
+        Assert.isTrue(array.length == 2, () -> "node:[" + node + "] is not valid.");
 
         String first = StringUtils.trimToNull(array[0]);
         if (Objects.equals("socket", first)) {

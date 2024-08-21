@@ -8,9 +8,9 @@ import com.igeeksky.xtool.core.json.SimpleJSON;
  */
 public class Key {
 
-    private int age = 10;
-
     private String name;
+
+    private int age = 10;
 
     public Key() {
     }
@@ -24,20 +24,20 @@ public class Key {
         this.name = name;
     }
 
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
     }
 
     @Override
@@ -60,4 +60,5 @@ public class Key {
     public String toString() {
         return SimpleJSON.toJSONString(this);
     }
+
 }

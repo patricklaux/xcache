@@ -18,7 +18,7 @@ class RedisNodeTest {
             err = e;
         }
         Assertions.assertInstanceOf(IllegalArgumentException.class, err);
-        Assertions.assertEquals(err.getMessage(), "node:[2:0:1] is not validate.");
+        Assertions.assertEquals(err.getMessage(), "node:[2:0:1] is not valid.");
     }
 
     @Test

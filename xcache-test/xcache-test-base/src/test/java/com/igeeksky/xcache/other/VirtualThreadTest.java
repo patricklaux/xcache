@@ -18,23 +18,24 @@ import java.util.concurrent.*;
  */
 public class VirtualThreadTest {
 
+    private static final String URL = "https://www.baidu.com/";
     private static final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
 
     @Test
     void test() throws InterruptedException {
-        int size = 5;
+        int size = 2;
         String[] urls = new String[size];
-        Arrays.fill(urls, "https://milvus.io/");
+        Arrays.fill(urls, URL);
 
         ScheduledFuture<?> scheduledFuture = scheduler.scheduleWithFixedDelay(() -> {
             System.out.println("start:" + System.currentTimeMillis());
             try {
-                int i = 0;
                 Future<?>[] futures = new Future[size];
-                for (String url : urls) {
-                    Future<String> future = executor.submit(() -> {
+                for (int i = 0; i < size; i++) {
+                    String url = urls[i];
+                    futures[i] = executor.submit(() -> {
                         try (HttpClient client = HttpClient.newHttpClient()) {
                             HttpRequest request = HttpRequest.newBuilder(URI.create(url)).GET().build();
                             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -44,7 +45,6 @@ public class VirtualThreadTest {
                         }
                         return null;
                     });
-                    futures[i++] = future;
                 }
 
                 Futures.awaitAll(1000, TimeUnit.MILLISECONDS, 0, futures);
@@ -67,7 +67,7 @@ public class VirtualThreadTest {
     @Test
     void test2() {
         try (HttpClient client = HttpClient.newHttpClient()) {
-            HttpRequest request = HttpRequest.newBuilder(URI.create("https://milvus.io/")).GET().build();
+            HttpRequest request = HttpRequest.newBuilder(URI.create(URL)).GET().build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             System.out.println(response.toString());
             System.out.println(response.body());
@@ -81,7 +81,7 @@ public class VirtualThreadTest {
     void test3() throws ExecutionException, InterruptedException {
         Future<String> future = executor.submit(() -> {
             try (HttpClient client = HttpClient.newHttpClient()) {
-                HttpRequest request = HttpRequest.newBuilder(URI.create("https://milvus.io/")).GET().build();
+                HttpRequest request = HttpRequest.newBuilder(URI.create(URL)).GET().build();
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 return response.toString();
             } catch (IOException | InterruptedException e) {

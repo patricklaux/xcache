@@ -49,7 +49,7 @@ public class RedisAutoConfiguration {
             return holder;
         }
 
-        Map<String, RedisOperatorFactory> map = getOperatorFactoryMap(provider);
+        Map<String, RedisOperatorFactory> map = toOperatorFactoryMap(provider);
 
         for (RedisProperties.StoreOption option : options) {
             String id = StringUtils.trimToNull(option.getId());
@@ -75,7 +75,7 @@ public class RedisAutoConfiguration {
             return holder;
         }
 
-        Map<String, RedisOperatorFactory> map = getOperatorFactoryMap(provider);
+        Map<String, RedisOperatorFactory> map = toOperatorFactoryMap(provider);
 
         for (RedisProperties.ListenerOption option : options) {
             String id = StringUtils.trimToNull(option.getId());
@@ -103,7 +103,7 @@ public class RedisAutoConfiguration {
             return holder;
         }
 
-        Map<String, StreamListenerContainer> map = getListenerContainerMap(provider);
+        Map<String, StreamListenerContainer> map = toListenerContainerMap(provider);
 
         for (RedisProperties.SyncOption option : options) {
             String id = StringUtils.trim(option.getId());
@@ -128,7 +128,7 @@ public class RedisAutoConfiguration {
             return holder;
         }
 
-        Map<String, RedisOperatorFactory> map = getOperatorFactoryMap(provider);
+        Map<String, RedisOperatorFactory> map = toOperatorFactoryMap(provider);
 
         for (RedisProperties.LockOption option : options) {
             String id = StringUtils.trim(option.getId());
@@ -153,7 +153,7 @@ public class RedisAutoConfiguration {
             return holder;
         }
 
-        Map<String, RedisOperatorFactory> map = getOperatorFactoryMap(provider);
+        Map<String, RedisOperatorFactory> map = toOperatorFactoryMap(provider);
 
         for (RedisProperties.RefreshOption option : options) {
             String id = StringUtils.trim(option.getId());
@@ -178,7 +178,7 @@ public class RedisAutoConfiguration {
             return holder;
         }
 
-        Map<String, RedisOperatorFactory> map = getOperatorFactoryMap(provider);
+        Map<String, RedisOperatorFactory> map = toOperatorFactoryMap(provider);
 
         for (RedisProperties.StatOption option : options) {
             String id = StringUtils.trim(option.getId());
@@ -200,7 +200,7 @@ public class RedisAutoConfiguration {
         return holder;
     }
 
-    private static Map<String, RedisOperatorFactory> getOperatorFactoryMap(ObjectProvider<RedisOperatorFactoryHolder> provider) {
+    private static Map<String, RedisOperatorFactory> toOperatorFactoryMap(ObjectProvider<RedisOperatorFactoryHolder> provider) {
         Map<String, RedisOperatorFactory> map = new HashMap<>();
         provider.orderedStream().forEach(factoryHolder -> {
             Map<String, RedisOperatorFactory> factories = factoryHolder.getAll();
@@ -212,7 +212,7 @@ public class RedisAutoConfiguration {
         return map;
     }
 
-    private static Map<String, StreamListenerContainer> getListenerContainerMap(ObjectProvider<ListenerContainerHolder> provider) {
+    private static Map<String, StreamListenerContainer> toListenerContainerMap(ObjectProvider<ListenerContainerHolder> provider) {
         Map<String, StreamListenerContainer> map = new HashMap<>();
         provider.orderedStream().forEach(containerHolder -> {
             Map<String, StreamListenerContainer> containers = containerHolder.getAll();

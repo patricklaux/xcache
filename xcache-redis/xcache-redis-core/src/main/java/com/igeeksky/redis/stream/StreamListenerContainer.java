@@ -37,7 +37,7 @@ public class StreamListenerContainer {
     private final RedisStreamOperator streamOperator;
 
     private final ScheduledExecutorService scheduler;
-    private final ExecutorService executor = executor();
+    private final ExecutorService executor = createExecutor();
 
     private volatile Future<?> future;
     private volatile boolean running;
@@ -148,7 +148,7 @@ public class StreamListenerContainer {
         }
     }
 
-    private static ExecutorService executor() {
+    private static ExecutorService createExecutor() {
         return Executors.newThreadPerTaskExecutor(new VirtualThreadFactory("listener-container-thread-"));
     }
 
