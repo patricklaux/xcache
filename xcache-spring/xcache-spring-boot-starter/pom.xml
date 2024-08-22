@@ -22,10 +22,6 @@
         </dependency>
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-redis-spring-boot-autoconfigure</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.igeeksky.xcache</groupId>
             <artifactId>xcache-lettuce-spring-boot-autoconfigure</artifactId>
         </dependency>
         <dependency>

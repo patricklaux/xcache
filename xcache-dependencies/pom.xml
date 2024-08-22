@@ -12,9 +12,6 @@
     <properties>
         <revision>1.0.0</revision>
         <spring.boot.version>3.2.6</spring.boot.version>
-        <redisson.version>3.15.6</redisson.version>
-        <jetbrains.annotations.version>17.0.0</jetbrains.annotations.version>
-        <findbugs.version>3.0.2</findbugs.version>
         <xtool.version>1.0.14</xtool.version>
     </properties>
 
@@ -35,11 +32,7 @@
                 <artifactId>xcache-annotation</artifactId>
                 <version>${revision}</version>
             </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-extension</artifactId>
-                <version>${revision}</version>
-            </dependency>
+            <!-- xcache-extension -->
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-extension-codec</artifactId>
@@ -55,16 +48,13 @@
                 <artifactId>xcache-extension-jackson</artifactId>
                 <version>${revision}</version>
             </dependency>
+            <!-- xcache-caffeine -->
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-caffeine</artifactId>
                 <version>${revision}</version>
             </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-redis</artifactId>
-                <version>${revision}</version>
-            </dependency>
+            <!-- xcache-redis -->
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-redis-core</artifactId>
@@ -85,29 +75,10 @@
                 <artifactId>xcache-redis-jedis</artifactId>
                 <version>${revision}</version>
             </dependency>
+            <!-- xcache-spring -->
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-test-domain</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-test-base</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-spring-boot-starter-test</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-spring</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-spring-adapter</artifactId>
+                <artifactId>xcache-spring-aop</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
@@ -122,6 +93,11 @@
             </dependency>
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-caffeine-spring-boot-autoconfigure</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-lettuce-spring-boot-autoconfigure</artifactId>
                 <version>${revision}</version>
             </dependency>
@@ -132,17 +108,28 @@
             </dependency>
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-caffeine-spring-boot-autoconfigure</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-spring-boot-starter</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-spring-aop</artifactId>
+                <artifactId>xcache-spring-adapter</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- xcache-test -->
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-test-domain</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-test-base</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-spring-boot-starter-test</artifactId>
                 <version>${revision}</version>
             </dependency>
 
@@ -159,22 +146,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-<!--            <dependency>-->
-<!--                <groupId>org.jetbrains</groupId>-->
-<!--                <artifactId>annotations</artifactId>-->
-<!--                <version>${jetbrains.annotations.version}</version>-->
-<!--                <scope>compile</scope>-->
-<!--            </dependency>-->
-<!--            <dependency>-->
-<!--                <groupId>com.google.code.findbugs</groupId>-->
-<!--                <artifactId>jsr305</artifactId>-->
-<!--                <version>${findbugs.version}</version>-->
-<!--            </dependency>-->
-<!--            <dependency>-->
-<!--                <groupId>org.redisson</groupId>-->
-<!--                <artifactId>redisson</artifactId>-->
-<!--                <version>${redisson.version}</version>-->
-<!--            </dependency>-->
         </dependencies>
     </dependencyManagement>
 
