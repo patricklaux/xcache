@@ -15,6 +15,7 @@
     <modules>
         <module>xcache-extension-jackson</module>
         <module>xcache-extension-common</module>
+        <module>xcache-extension-codec</module>
     </modules>
 
 </project>

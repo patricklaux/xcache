@@ -1,7 +1,8 @@
 package com.igeeksky.xcache.props;
 
-import com.igeeksky.xcache.core.ReferenceType;
-import com.igeeksky.xcache.core.StoreType;
+import com.igeeksky.xcache.common.CacheConfigException;
+import com.igeeksky.xcache.common.ReferenceType;
+import com.igeeksky.xcache.common.StoreType;
 import com.igeeksky.xtool.core.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,21 +116,21 @@ public class PropsUtil {
     }
 
     private static void checkStoreType(StoreProps[] stores) {
-        // 记录 extra 类型缓存的 index
-        int index = -1;
-        // 记录 embed 类型缓存的数量
-        int count = 0;
+        int extraIndex = -1, embedCount = 0;
         for (int i = 0; i < stores.length; i++) {
             StoreType storeType = stores[i].getStoreType();
             if (storeType == StoreType.EXTRA) {
-                index = i;
-            } else if (storeType == StoreType.EMBED) {
-                if (++count > 1) {
-                    log.warn("embed-store more than one.");
-                }
-                if (index >= 0) {
-                    log.warn("Level:{} is extra-store, Level:{} is embed-store.", index + 1, i + 1);
-                }
+                extraIndex = i;
+                continue;
+            }
+            // 内嵌缓存数量大于 1，输出警告日志
+            if (++embedCount > 1) {
+                log.warn("embed-store more than one.");
+            }
+            // 如果外部缓存的级别低于内嵌缓存，抛出异常
+            if (extraIndex >= 0) {
+                String error = String.format("extra-store level [%d] is lower than embed-store level [%d].", extraIndex + 1, i + 1);
+                throw new CacheConfigException(error);
             }
         }
     }

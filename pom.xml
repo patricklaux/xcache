@@ -33,7 +33,7 @@
     </developers>
 
     <properties>
-        <revision>1.0.0-SNAPSHOT</revision>
+        <revision>1.0.0</revision>
 
         <!-- maven plugin start -->
         <maven.compiler.source>21</maven.compiler.source>
@@ -62,7 +62,6 @@
         <module>xcache-extension</module>
         <module>xcache-common</module>
         <module>xcache-spring</module>
-        <module>xcache-aop</module>
     </modules>
 
     <dependencyManagement>

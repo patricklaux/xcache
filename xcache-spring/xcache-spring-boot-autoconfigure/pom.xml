@@ -14,11 +14,12 @@
     <dependencies>
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-aop</artifactId>
+            <artifactId>xcache-core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

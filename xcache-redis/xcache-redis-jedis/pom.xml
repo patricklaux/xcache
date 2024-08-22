@@ -14,17 +14,12 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-redis-core</artifactId>
-        </dependency>
-        <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
+            <groupId>com.igeeksky.xcache</groupId>
+            <artifactId>xcache-redis-common</artifactId>
         </dependency>
     </dependencies>
 

@@ -1,5 +1,9 @@
 package com.igeeksky.xcache.core;
 
+import com.igeeksky.xcache.common.Cache;
+import com.igeeksky.xcache.common.CacheConfigException;
+import com.igeeksky.xcache.common.CacheLoader;
+import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.core.store.StoreConfig;
 import com.igeeksky.xcache.core.store.StoreProvider;
 import com.igeeksky.xcache.extension.codec.CodecConfig;

@@ -2,8 +2,8 @@ package com.igeeksky.xcache;
 
 
 import com.igeeksky.xcache.caffeine.CaffeineStoreProvider;
-import com.igeeksky.xcache.core.Cache;
-import com.igeeksky.xcache.core.CacheValue;
+import com.igeeksky.xcache.common.Cache;
+import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.CacheManagerImpl;
 import com.igeeksky.xcache.core.ComponentRegister;
 import com.igeeksky.xcache.domain.User;

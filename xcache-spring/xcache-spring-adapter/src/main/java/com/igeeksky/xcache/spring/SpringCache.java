@@ -1,9 +1,9 @@
 package com.igeeksky.xcache.spring;
 
-import com.igeeksky.xcache.core.Cache;
-import com.igeeksky.xcache.core.CacheLoader;
-import com.igeeksky.xcache.core.CacheLoaderException;
-import com.igeeksky.xcache.core.CacheValue;
+import com.igeeksky.xcache.common.Cache;
+import com.igeeksky.xcache.common.CacheLoader;
+import com.igeeksky.xcache.common.CacheLoaderException;
+import com.igeeksky.xcache.common.CacheValue;
 import org.springframework.lang.NonNull;
 
 import java.util.concurrent.Callable;

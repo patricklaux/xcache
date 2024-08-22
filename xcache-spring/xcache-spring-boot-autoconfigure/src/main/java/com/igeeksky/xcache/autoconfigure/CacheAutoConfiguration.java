@@ -1,9 +1,8 @@
 package com.igeeksky.xcache.autoconfigure;
 
 
-import com.igeeksky.xcache.aop.ProxyCacheConfiguration;
 import com.igeeksky.xcache.autoconfigure.holder.*;
-import com.igeeksky.xcache.core.CacheConfigException;
+import com.igeeksky.xcache.common.CacheConfigException;
 import com.igeeksky.xcache.core.CacheManager;
 import com.igeeksky.xcache.core.CacheManagerImpl;
 import com.igeeksky.xcache.core.ComponentRegister;
@@ -16,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +30,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * @since 0.0.4 2023-09-29
  */
 @Configuration(proxyBeanMethods = false)
-@AutoConfigureBefore({ProxyCacheConfiguration.class})
+//@AutoConfigureBefore({ProxyCacheConfiguration.class})
 @AutoConfigureAfter({CacheProperties.class, CacheStatProperties.class})
 public class CacheAutoConfiguration {
 
@@ -52,15 +50,15 @@ public class CacheAutoConfiguration {
     @Bean("xcacheManager")
     @ConditionalOnMissingBean(CacheManager.class)
     CacheManager cacheManager(ObjectProvider<StoreProviderHolder> storeHolders,
-                               ObjectProvider<CodecProviderHolder> codecHolders,
-                               ObjectProvider<CacheSyncProviderHolder> syncHolders,
-                               ObjectProvider<CacheStatProviderHolder> statHolders,
-                               ObjectProvider<CacheLockProviderHolder> lockHolders,
-                               ObjectProvider<CacheLoaderHolder> loaderHolders,
-                               ObjectProvider<CacheRefreshProviderHolder> refreshHolders,
-                               ObjectProvider<CompressorProviderHolder> compressorHolders,
-                               ObjectProvider<ContainsPredicateProviderHolder> predicateHolders,
-                               ScheduledExecutorService scheduler) {
+                              ObjectProvider<CodecProviderHolder> codecHolders,
+                              ObjectProvider<CacheSyncProviderHolder> syncHolders,
+                              ObjectProvider<CacheStatProviderHolder> statHolders,
+                              ObjectProvider<CacheLockProviderHolder> lockHolders,
+                              ObjectProvider<CacheLoaderHolder> loaderHolders,
+                              ObjectProvider<CacheRefreshProviderHolder> refreshHolders,
+                              ObjectProvider<CompressorProviderHolder> compressorHolders,
+                              ObjectProvider<ContainsPredicateProviderHolder> predicateHolders,
+                              ScheduledExecutorService scheduler) {
 
         String app = cacheProperties.getApp();
         Map<String, Template> templates = toTemplateMap(cacheProperties.getTemplates());

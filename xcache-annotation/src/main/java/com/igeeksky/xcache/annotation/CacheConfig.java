@@ -1,7 +1,5 @@
 package com.igeeksky.xcache.annotation;
 
-import org.springframework.aot.hint.annotation.Reflective;
-
 import java.lang.annotation.*;
 
 /**
@@ -17,9 +15,7 @@ import java.lang.annotation.*;
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Inherited
 @Documented
-@Reflective
 public @interface CacheConfig {
 
     /**

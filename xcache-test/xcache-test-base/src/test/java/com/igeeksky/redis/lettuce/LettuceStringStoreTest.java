@@ -1,7 +1,7 @@
 package com.igeeksky.redis.lettuce;
 
-import com.igeeksky.xcache.core.Store;
-import com.igeeksky.xcache.core.store.ExtraStoreTestCase;
+import com.igeeksky.xcache.common.Store;
+import com.igeeksky.xcache.common.store.ExtraStoreTestCase;
 import com.igeeksky.xcache.core.store.StoreConfig;
 import com.igeeksky.xcache.props.RedisType;
 import com.igeeksky.xcache.redis.store.RedisStoreProvider;

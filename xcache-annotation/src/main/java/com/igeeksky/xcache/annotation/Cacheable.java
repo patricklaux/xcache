@@ -5,7 +5,6 @@ import org.springframework.aot.hint.annotation.Reflective;
 import java.lang.annotation.*;
 
 /**
- *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-12
  */

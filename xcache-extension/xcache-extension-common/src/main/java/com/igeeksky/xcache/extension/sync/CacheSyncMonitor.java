@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.extension.sync;
 
 
-import com.igeeksky.xcache.core.MessagePublisher;
+import com.igeeksky.xcache.common.MessagePublisher;
 import com.igeeksky.xcache.props.SyncType;
 
 import java.util.Set;

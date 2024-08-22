@@ -1,2 +1,5 @@
-com.igeeksky.redis.autoconfigure.lettuce.LettuceAutoConfiguration
-com.igeeksky.redis.autoconfigure.lettuce.LettuceProperties
+com.igeeksky.xcache.autoconfigure.CacheProperties
+com.igeeksky.xcache.autoconfigure.CacheStatProperties
+com.igeeksky.xcache.autoconfigure.SchedulerProperties
+com.igeeksky.xcache.autoconfigure.CacheAutoConfiguration
+com.igeeksky.xcache.autoconfigure.SchedulerAutoConfiguration

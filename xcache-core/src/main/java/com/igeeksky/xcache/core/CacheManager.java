@@ -1,5 +1,7 @@
 package com.igeeksky.xcache.core;
 
+import com.igeeksky.xcache.common.Cache;
+
 import java.util.Collection;
 
 /**

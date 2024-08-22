@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.core;
 
 
+import com.igeeksky.xcache.common.CacheLoader;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
 import com.igeeksky.xcache.extension.refresh.CacheRefresh;

@@ -44,7 +44,7 @@ public class CacheKeyPrefix {
     }
 
     public String removePrefix(byte[] keyWithPrefixBytes) {
-        return stringCodec.decode(keyWithPrefixBytes, keyPrefixLength, keyWithPrefixBytes.length);
+        return stringCodec.decode(keyWithPrefixBytes, keyPrefixLength, keyWithPrefixBytes.length - keyPrefixLength);
     }
 
 }

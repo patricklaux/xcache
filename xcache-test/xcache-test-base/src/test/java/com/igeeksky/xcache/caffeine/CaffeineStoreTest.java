@@ -3,7 +3,7 @@ package com.igeeksky.xcache.caffeine;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Weigher;
-import com.igeeksky.xcache.core.CacheValue;
+import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.store.StoreConfig;
 import com.igeeksky.xtool.core.lang.codec.StringCodec;
 import org.junit.jupiter.api.Assertions;

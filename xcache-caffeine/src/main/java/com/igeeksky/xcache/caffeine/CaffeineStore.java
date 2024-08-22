@@ -2,7 +2,7 @@ package com.igeeksky.xcache.caffeine;
 
 
 import com.github.benmanes.caffeine.cache.Cache;
-import com.igeeksky.xcache.core.CacheValue;
+import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.store.AbstractEmbedStore;
 import com.igeeksky.xtool.core.collection.Maps;
 

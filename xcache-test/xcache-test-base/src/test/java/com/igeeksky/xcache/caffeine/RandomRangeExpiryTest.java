@@ -2,7 +2,7 @@ package com.igeeksky.xcache.caffeine;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.igeeksky.xcache.core.CacheValue;
+import com.igeeksky.xcache.common.CacheValue;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

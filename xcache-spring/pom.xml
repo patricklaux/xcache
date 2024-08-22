@@ -13,6 +13,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>xcache-spring-aop</module>
         <module>xcache-spring-adapter</module>
         <module>xcache-spring-boot-autoconfigure</module>
         <module>xcache-jackson-spring-boot-autoconfigure</module>

@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.autoconfigure.holder;
 
-import com.igeeksky.xcache.core.CacheLoader;
+import com.igeeksky.xcache.common.CacheLoader;
 import com.igeeksky.xtool.core.lang.Assert;
 
 import java.util.Collections;

@@ -10,7 +10,7 @@
     <version>${revision}</version>
 
     <properties>
-        <revision>1.0.0-SNAPSHOT</revision>
+        <revision>1.0.0</revision>
         <spring.boot.version>3.2.6</spring.boot.version>
         <redisson.version>3.15.6</redisson.version>
         <jetbrains.annotations.version>17.0.0</jetbrains.annotations.version>
@@ -38,6 +38,11 @@
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-extension</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-extension-codec</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
@@ -72,6 +77,16 @@
             </dependency>
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-redis-lettuce</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-redis-jedis</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-test-domain</artifactId>
                 <version>${revision}</version>
             </dependency>
@@ -83,16 +98,6 @@
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-spring-boot-starter-test</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-redis-lettuce</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-redis-jedis</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
@@ -137,7 +142,7 @@
             </dependency>
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-aop</artifactId>
+                <artifactId>xcache-spring-aop</artifactId>
                 <version>${revision}</version>
             </dependency>
 
@@ -154,22 +159,22 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <dependency>
-                <groupId>org.jetbrains</groupId>
-                <artifactId>annotations</artifactId>
-                <version>${jetbrains.annotations.version}</version>
-                <scope>compile</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.google.code.findbugs</groupId>
-                <artifactId>jsr305</artifactId>
-                <version>${findbugs.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.redisson</groupId>
-                <artifactId>redisson</artifactId>
-                <version>${redisson.version}</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>org.jetbrains</groupId>-->
+<!--                <artifactId>annotations</artifactId>-->
+<!--                <version>${jetbrains.annotations.version}</version>-->
+<!--                <scope>compile</scope>-->
+<!--            </dependency>-->
+<!--            <dependency>-->
+<!--                <groupId>com.google.code.findbugs</groupId>-->
+<!--                <artifactId>jsr305</artifactId>-->
+<!--                <version>${findbugs.version}</version>-->
+<!--            </dependency>-->
+<!--            <dependency>-->
+<!--                <groupId>org.redisson</groupId>-->
+<!--                <artifactId>redisson</artifactId>-->
+<!--                <version>${redisson.version}</version>-->
+<!--            </dependency>-->
         </dependencies>
     </dependencyManagement>
 

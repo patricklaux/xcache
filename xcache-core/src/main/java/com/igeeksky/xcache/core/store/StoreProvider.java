@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.core.store;
 
-import com.igeeksky.xcache.core.Store;
+import com.igeeksky.xcache.common.Store;
 
 /**
  * @author Patrick.Lau

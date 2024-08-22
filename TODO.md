@@ -20,4 +20,5 @@
 
 -[ ] 【测试】 Lettuce 配置测试
 -[ ] 【开发】 Lettuce unixSocket
+-[ ] 【文档】 Guide，Reference
 

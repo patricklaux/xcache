@@ -10,7 +10,7 @@ import com.igeeksky.redis.lettuce.config.LettuceStandaloneConfig;
 import com.igeeksky.redis.lettuce.config.props.Lettuce;
 import com.igeeksky.xcache.autoconfigure.redis.RedisOperatorFactoryHolder;
 import com.igeeksky.xcache.autoconfigure.redis.RedisAutoConfiguration;
-import com.igeeksky.xcache.core.CacheConfigException;
+import com.igeeksky.xcache.common.CacheConfigException;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.lang.StringUtils;
 import io.lettuce.core.*;
