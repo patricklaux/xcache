@@ -1,6 +1,6 @@
 package com.igeeksky.redis.lettuce;
 
-import com.igeeksky.xcache.redis.RedisOperatorTestCase;
+import com.igeeksky.redis.RedisOperatorTestCase;
 import org.junit.jupiter.api.*;
 
 /**

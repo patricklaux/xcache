@@ -20,6 +20,7 @@ public interface CacheConstants {
     String CAFFEINE_STORE = "caffeine";
     String JDK_CODEC = "jdk";
     String JACKSON_CODEC = "jackson";
+    String JACKSON_SPRING_CODEC = "jackson-spring";
     String GZIP_COMPRESSOR = "gzip";
     String DEFLATER_COMPRESSOR = "deflate";
     String LOG_CACHE_STAT = "log";

@@ -3,6 +3,7 @@ package com.igeeksky.xcache.extension.contains;
 /**
  * ContainsPredicate 配置
  *
+ * @param <K> 键类型
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/8
  */

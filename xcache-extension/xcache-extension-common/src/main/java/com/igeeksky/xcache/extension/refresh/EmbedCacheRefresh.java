@@ -13,13 +13,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
- * <b>嵌入式缓存刷新</b> <p>
+ * <b>嵌入式缓存刷新</b>
+ * <p>
  * 适用于嵌入式缓存 <p>
  * 1. 每个应用实例缓存均需独立刷新，即使是同一数据，也可能会被不同实例刷新多次。
  * 因此会有较多回源访问次数，数据源需预留好足够的资源余量。<p>
  * 2. 此对象实例内部使用 HashMap 维护所有访问过的 key，因此会占用本机内存空间。
  * <p>
- * 对于外部缓存，如果是 Redis，建议使用 {@link com.igeeksky.xcache.redis.refresh.RedisCacheRefresh}
+ * 对于外部缓存，如果是 Redis，建议使用 { com.igeeksky.xcache.redis.refresh.RedisCacheRefresh }
  *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/23

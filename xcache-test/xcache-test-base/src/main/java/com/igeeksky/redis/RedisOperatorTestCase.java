@@ -1,6 +1,5 @@
-package com.igeeksky.xcache.redis;
+package com.igeeksky.redis;
 
-import com.igeeksky.redis.RedisOperator;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.function.tuple.ExpiryKeyValue;
 import com.igeeksky.xtool.core.function.tuple.KeyValue;

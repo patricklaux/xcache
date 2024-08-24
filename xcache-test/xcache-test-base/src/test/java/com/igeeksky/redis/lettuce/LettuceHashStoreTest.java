@@ -1,6 +1,6 @@
 package com.igeeksky.redis.lettuce;
 
-import com.igeeksky.xcache.common.store.ExtraStoreTestCase;
+import com.igeeksky.xcache.common.StoreTestCase;
 import com.igeeksky.xcache.core.store.StoreConfig;
 import com.igeeksky.xcache.props.RedisType;
 import com.igeeksky.xcache.redis.store.RedisStoreProvider;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
  */
 class LettuceHashStoreTest {
 
-    private static ExtraStoreTestCase extraStoreTestCase;
+    private static StoreTestCase extraStoreTestCase;
 
     @BeforeAll
     public static void beforeAll() {
@@ -21,7 +21,7 @@ class LettuceHashStoreTest {
 
         StoreConfig<String> storeConfig = LettuceTestHelper.createRedisStoreConfig(RedisType.HASH);
 
-        extraStoreTestCase = new ExtraStoreTestCase(provider.getStore(storeConfig));
+        extraStoreTestCase = new StoreTestCase(provider.getStore(storeConfig));
     }
 
     @Test

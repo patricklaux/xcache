@@ -1,7 +1,5 @@
-package com.igeeksky.xcache.common.store;
+package com.igeeksky.xcache.common;
 
-import com.igeeksky.xcache.common.Store;
-import com.igeeksky.xcache.common.CacheValue;
 import org.junit.jupiter.api.Assertions;
 
 import java.util.HashMap;
@@ -11,11 +9,11 @@ import java.util.Map;
  * @author patrick
  * @since 1.0.0 2024/5/30
  */
-public class ExtraStoreTestCase {
+public class StoreTestCase {
 
     private final Store<String> store;
 
-    public ExtraStoreTestCase(Store<String> store) {
+    public StoreTestCase(Store<String> store) {
         this.store = store;
     }
 
