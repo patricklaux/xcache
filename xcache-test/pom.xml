@@ -3,9 +3,10 @@
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
+        <artifactId>xcache-dependencies</artifactId>
         <groupId>com.igeeksky.xcache</groupId>
-        <artifactId>xcache-parent</artifactId>
         <version>${revision}</version>
+        <relativePath>../xcache-dependencies</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -13,6 +14,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>xcache-test-domain</module>
         <module>xcache-test-base</module>
         <module>xcache-spring-boot-starter-test</module>
     </modules>

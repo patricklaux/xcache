@@ -1,5 +1,7 @@
 package com.igeeksky.xcache.extension.sync;
 
+import com.igeeksky.xtool.core.json.SimpleJSON;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.LinkedHashSet;
@@ -37,6 +39,19 @@ public class CacheSyncMessage implements Serializable {
         this.type = type;
     }
 
+    public CacheSyncMessage(String sid, int type, String key) {
+        this.sid = sid;
+        this.type = type;
+        this.keys = new LinkedHashSet<>();
+        this.keys.add(key);
+    }
+
+    public CacheSyncMessage(String sid, int type, Set<String> keys) {
+        this.sid = sid;
+        this.type = type;
+        this.keys = keys;
+    }
+
     public String getSid() {
         return sid;
     }
@@ -57,17 +72,13 @@ public class CacheSyncMessage implements Serializable {
         return keys;
     }
 
-    public CacheSyncMessage setKeys(Set<String> keys) {
+    public void setKeys(Set<String> keys) {
         this.keys = keys;
-        return this;
     }
 
-    public CacheSyncMessage addKey(String key) {
-        if (this.keys == null) {
-            this.keys = new LinkedHashSet<>();
-        }
-        this.keys.add(key);
-        return this;
+    @Override
+    public String toString() {
+        return SimpleJSON.toJSONString(this);
     }
 
 }

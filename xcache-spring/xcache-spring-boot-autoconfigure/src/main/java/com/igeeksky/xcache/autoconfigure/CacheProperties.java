@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.autoconfigure;
 
 import com.igeeksky.xcache.props.CacheProps;
-import com.igeeksky.xcache.props.TemplateProps;
+import com.igeeksky.xcache.props.Template;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,35 +16,40 @@ import java.util.StringJoiner;
 @ConfigurationProperties(prefix = "xcache")
 public class CacheProperties {
 
-    private String application;
+    /**
+     * 应用名称
+     */
+    private String app;
 
     /**
      * 缓存配置：模板
      * <p>
-     * 至少需要配置一个 template-id: t0 的模板
+     * 当某个缓存未配置 template-id，默认采用 id 为 t0 的模板，因此建议将其中一个模板的 id 配置为 t0.
+     * <p>
      */
-    private List<TemplateProps> templates;
+    private List<Template> templates;
 
     /**
-     * 缓存配置：仅需配置缓存名称及与指定模板的差异项。
+     * 缓存配置
      * <p>
-     * 对于代码注解中出现的缓存名称，但在此处未配置的缓存，默认采用 t0模板。
+     * caches 会从 templates 获取与配置的 template-id 对应的模板，
+     * 并复制其中的全部选项，因此仅需配置缓存名称及与指定模板的差异项。
      */
     private List<CacheProps> caches;
 
-    public String getApplication() {
-        return application;
+    public String getApp() {
+        return app;
     }
 
-    public void setApplication(String application) {
-        this.application = application;
+    public void setApp(String app) {
+        this.app = app;
     }
 
-    public List<TemplateProps> getTemplates() {
+    public List<Template> getTemplates() {
         return templates;
     }
 
-    public void setTemplates(List<TemplateProps> templates) {
+    public void setTemplates(List<Template> templates) {
         this.templates = templates;
     }
 
@@ -59,7 +64,7 @@ public class CacheProperties {
     @Override
     public String toString() {
         StringJoiner joiner = new StringJoiner(", ", "{", "}");
-        joiner.add("\"application\":\"" + application + "\"");
+        joiner.add("\"application\":\"" + app + "\"");
         if (templates != null) {
             joiner.add("\"templates\":" + templates);
         }
@@ -68,4 +73,5 @@ public class CacheProperties {
         }
         return joiner.toString();
     }
+
 }

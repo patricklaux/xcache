@@ -1,17 +1,17 @@
 package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.common.StoreType;
-import com.igeeksky.xcache.core.config.CacheConfig;
-import com.igeeksky.xcache.core.store.LocalStore;
-import com.igeeksky.xcache.core.store.RemoteStore;
-import com.igeeksky.xcache.extension.loader.CacheLoader;
-import com.igeeksky.xcache.extension.statistic.CacheStatMonitor;
+import com.igeeksky.xcache.common.Store;
+import com.igeeksky.xcache.core.store.StoreProxy;
+import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
+import com.igeeksky.xcache.props.StoreLevel;
 import com.igeeksky.xtool.core.collection.Maps;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 两级组合缓存
@@ -21,160 +21,113 @@ import java.util.Set;
  */
 public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
 
-    private final LocalStore localStore;
+    private final Store<V> first;
 
-    private final RemoteStore remoteStore;
-
-    private final CacheStatMonitor statMonitor;
+    private final Store<V> second;
 
     private final CacheSyncMonitor syncMonitor;
 
-    public TwoLevelCache(CacheConfig<K, V> config, LocalStore localStore, RemoteStore remoteStore) {
-        super(config);
-        this.localStore = localStore;
-        this.remoteStore = remoteStore;
-        this.statMonitor = config.getStatMonitor();
-        this.syncMonitor = config.getSyncMonitor();
+    public TwoLevelCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend, Store<V>[] stores) {
+        super(config, extend);
+        this.syncMonitor = extend.getSyncMonitor();
+        CacheStatMonitor statMonitor = extend.getStatMonitor();
+        AtomicInteger index = new AtomicInteger(0);
+        this.first = getStore(statMonitor, stores, index);
+        this.second = getStore(statMonitor, stores, index);
+    }
+
+    private Store<V> getStore(CacheStatMonitor statMonitor, Store<V>[] stores, AtomicInteger index) {
+        StoreLevel[] levels = StoreLevel.values();
+        while (index.get() < stores.length) {
+            int i = index.getAndIncrement();
+            if (stores[i] != null) {
+                return new StoreProxy<>(stores[i], levels[i], statMonitor);
+            }
+        }
+        return null;
     }
 
     @Override
     protected CacheValue<V> doGet(String key) {
-        CacheValue<V> cacheValue = this.fromLocalStoreValue(localStore.get(key));
+        CacheValue<V> cacheValue = first.get(key);
         if (cacheValue != null) {
-            statMonitor.incHits(StoreType.LOCAL, 1L);
             return cacheValue;
         }
-        statMonitor.incMisses(StoreType.LOCAL, 1L);
 
-        cacheValue = this.fromRemoteStoreValue(remoteStore.get(key));
+        cacheValue = second.get(key);
         if (cacheValue != null) {
-            localStore.put(key, this.toLocalStoreValue(cacheValue.getValue()));
-
-            statMonitor.incHits(StoreType.REMOTE, 1L);
-            statMonitor.incPuts(StoreType.LOCAL, 1L);
-        } else {
-            statMonitor.incMisses(StoreType.REMOTE, 1L);
+            first.put(key, cacheValue.getValue());
         }
 
         return cacheValue;
     }
 
     @Override
-    protected V doLoad(K key, String storeKey, CacheLoader<K, V> cacheLoader) {
-        V value = cacheLoader.load(key);
-        this.doPut(storeKey, value);
-
-        statMonitor.incLoads();
-        return value;
-    }
-
-    @Override
     protected Map<String, CacheValue<V>> doGetAll(Set<String> keys) {
-        int total = keys.size();
-        Map<String, CacheValue<V>> result = Maps.newHashMap(total);
+        Set<String> cloneKeys = new HashSet<>(keys);
 
-        // 1. 从本地缓存读取数据
-        Map<String, CacheValue<Object>> localGetAll = localStore.getAll(keys);
-        keys.removeAll(localGetAll.keySet());
+        Map<String, CacheValue<V>> result = Maps.newHashMap(cloneKeys.size());
 
-        int localHits = localGetAll.size();
-        statMonitor.incHits(StoreType.LOCAL, localHits);
-        statMonitor.incMisses(StoreType.LOCAL, total - localHits);
+        // 1. 从一级缓存读取数据
+        Map<String, CacheValue<V>> firstGetAll = first.getAll(cloneKeys);
+        if (Maps.isNotEmpty(firstGetAll)) {
+            // 1.1 一级缓存数据存入最终结果
+            result.putAll(firstGetAll);
 
-        localGetAll.forEach((key, value) -> result.put(key, this.fromLocalStoreValue(value)));
-
-        int remoteSize = keys.size();
-        if (remoteSize == 0) {
-            return result;
+            cloneKeys.removeAll(firstGetAll.keySet());
+            if (cloneKeys.isEmpty()) {
+                return result;
+            }
         }
 
-        // 2. 从远程缓存读取未命中数据
-        Map<String, CacheValue<byte[]>> remoteGetAll = remoteStore.getAll(keys);
-        if (remoteGetAll.isEmpty()) {
-            statMonitor.incMisses(StoreType.REMOTE, remoteSize);
-            return result;
+        // 2. 从二级缓存读取未命中数据
+        Map<String, CacheValue<V>> secondGetAll = second.getAll(cloneKeys);
+        if (Maps.isNotEmpty(secondGetAll)) {
+            // 2.1 二级缓存数据存入最终结果
+            result.putAll(secondGetAll);
+
+            // 2.2 二级缓存数据保存到一级缓存
+            Map<String, V> saveToLower = Maps.newHashMap(secondGetAll.size());
+            secondGetAll.forEach((key, cacheValue) -> saveToLower.put(key, cacheValue.getValue()));
+            first.putAll(saveToLower);
         }
-
-        int remoteHits = remoteGetAll.size();
-        statMonitor.incHits(StoreType.REMOTE, remoteHits);
-        statMonitor.incMisses(StoreType.REMOTE, remoteSize - remoteHits);
-
-        // 3. 远程缓存数据保存到本地缓存
-        Map<String, V> saveToLocal = Maps.newHashMap(remoteHits);
-        remoteGetAll.forEach((key, value) -> {
-            CacheValue<V> cacheValue = this.fromRemoteStoreValue(value);
-            result.put(key, cacheValue);
-            saveToLocal.put(key, cacheValue.getValue());
-        });
-
-        localStore.putAll(saveToLocal);
-
-        statMonitor.incPuts(StoreType.LOCAL, saveToLocal.size());
 
         return result;
     }
 
     @Override
     protected void doPut(String key, V value) {
-        remoteStore.put(key, toRemoteStoreValue(value));
-        statMonitor.incPuts(StoreType.REMOTE, 1L);
+        second.put(key, value);
+        first.put(key, value);
         syncMonitor.afterPut(key);
-
-        localStore.put(key, toLocalStoreValue(value));
-        statMonitor.incPuts(StoreType.LOCAL, 1L);
     }
 
     @Override
     protected void doPutAll(Map<String, ? extends V> keyValues) {
-        int size = keyValues.size();
-
-        Map<String, byte[]> remoteKeyValues = Maps.newHashMap(size);
-        keyValues.forEach((k, v) -> remoteKeyValues.put(k, toRemoteStoreValue(v)));
-        remoteStore.putAll(remoteKeyValues);
-
-        statMonitor.incPuts(StoreType.REMOTE, size);
+        second.putAll(keyValues);
+        first.putAll(keyValues);
         syncMonitor.afterPutAll(keyValues.keySet());
-
-        Map<String, Object> localKeyValues = Maps.newHashMap(size);
-        keyValues.forEach((k, v) -> localKeyValues.put(k, toLocalStoreValue(v)));
-        localStore.putAll(localKeyValues);
-
-        statMonitor.incPuts(StoreType.LOCAL, size);
     }
 
     @Override
     protected void doEvict(String key) {
-        remoteStore.evict(key);
-        statMonitor.incRemovals(StoreType.REMOTE, 1L);
-
-        localStore.evict(key);
-
+        second.evict(key);
+        first.evict(key);
         syncMonitor.afterEvict(key);
-        statMonitor.incRemovals(StoreType.LOCAL, 1L);
     }
 
     @Override
     protected void doEvictAll(Set<String> keys) {
-        int size = keys.size();
-
-        remoteStore.evictAll(keys);
-        statMonitor.incRemovals(StoreType.REMOTE, size);
-
-        localStore.evictAll(keys);
-
+        second.evictAll(keys);
+        first.evictAll(keys);
         syncMonitor.afterEvictAll(keys);
-        statMonitor.incRemovals(StoreType.LOCAL, size);
     }
 
     @Override
     public void clear() {
-        remoteStore.clear();
-        statMonitor.incClears(StoreType.REMOTE);
-
-        localStore.clear();
-
+        second.clear();
+        first.clear();
         syncMonitor.afterClear();
-        statMonitor.incClears(StoreType.LOCAL);
     }
 
 }

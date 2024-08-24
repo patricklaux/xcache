@@ -17,14 +17,13 @@ public class ContainsPredicateProviderHolder implements Holder<ContainsPredicate
 
     @Override
     public void put(String beanId, ContainsPredicateProvider provider) {
-        map.put(beanId, provider);
+        ContainsPredicateProvider old = map.put(beanId, provider);
+        Assert.isTrue(old == null, () -> "ContainsPredicateProvider: [" + beanId + "] duplicate id.");
     }
 
     @Override
     public ContainsPredicateProvider get(String beanId) {
-        ContainsPredicateProvider provider = map.get(beanId);
-        Assert.notNull(provider, "beanId:[" + beanId + "] ContainsPredicateProvider doesn't exit");
-        return provider;
+        return map.get(beanId);
     }
 
     @Override

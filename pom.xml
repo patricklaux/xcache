@@ -6,8 +6,9 @@
     <groupId>com.igeeksky.xcache</groupId>
     <artifactId>xcache-parent</artifactId>
     <version>${revision}</version>
-    <name>${project.artifactId}</name>
-    <description>The parent project of xcache</description>
+    <name>xcache parent</name>
+    <description>${project.name}</description>
+    <url>https://github.com/patricklaux/xcache</url>
 
     <licenses>
         <license>
@@ -21,23 +22,25 @@
         <url>https://github.com/patricklaux/xcache</url>
         <connection>scm:git:https://github.com/patricklaux/xcache</connection>
         <developerConnection>scm:git:https://github.com/patricklaux/xcache</developerConnection>
-        <tag>HEAD</tag>
     </scm>
+
+    <issueManagement>
+        <system>Github Issue</system>
+        <url>https://github.com/patricklaux/xcache/issues</url>
+    </issueManagement>
 
     <developers>
         <developer>
             <name>Patrick.Lau</name>
             <email>patricklauxx@gmail.com</email>
-            <url>https://my.oschina.net/xcafe</url>
+            <url>https://www.igeeksky.com</url>
         </developer>
     </developers>
 
     <properties>
-        <revision>1.0.0-SNAPSHOT</revision>
-
-        <!-- maven plugin start -->
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <revision>0.9.9</revision>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.version>3.13.0</maven.compiler.version>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <maven.gpg.version>3.2.4</maven.gpg.version>
@@ -46,8 +49,6 @@
         <maven.flatten.version>1.1.0</maven.flatten.version>
         <jacoco.version>0.8.12</jacoco.version>
         <nexus.staging.version>1.7.0</nexus.staging.version>
-        <!-- maven plugin end -->
-
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
@@ -56,30 +57,18 @@
         <module>xcache-dependencies</module>
         <module>xcache-core</module>
         <module>xcache-test</module>
-        <module>xcache-store</module>
+        <module>xcache-redis</module>
+        <module>xcache-caffeine</module>
         <module>xcache-annotation</module>
         <module>xcache-extension</module>
         <module>xcache-common</module>
         <module>xcache-spring</module>
-        <module>xcache-aop</module>
     </modules>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-dependencies</artifactId>
-                <version>${project.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <build>
         <plugins>
             <plugin>
-                <!-- 主要作用：替换子项目的 reversion -->
+                <!-- 替换子项目 reversion -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
                 <version>${maven.flatten.version}</version>
@@ -105,37 +94,45 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven.compiler.version}</version>
-                <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                    <parameters>true</parameters>
-                    <!--                    <compilerArgs>-->
-                    <!--                        <arg>-parameters</arg>-->
-                    <!--                    </compilerArgs>-->
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>${maven.source.version}</version>
+                <!-- 生成代码覆盖率报告 -->
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
                 <executions>
+                    <!-- Prepares the property pointing to the JaCoCo runtime agent
+                    which is passed as VM argument when Maven the Surefire plugin is executed. -->
                     <execution>
-                        <id>attach-sources</id>
                         <goals>
-                            <goal>jar</goal>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <!-- Ensures that the code coverage report is created after
+                    all tests have been run. -->
+                    <execution>
+                        <id>generate-report</id>
+                        <goals>
+                            <goal>report</goal>
                         </goals>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.version}</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <encoding>${maven.compiler.encoding}</encoding>
+                    <!-- <parameters>true</parameters> -->
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>${maven.javadoc.version}</version>
                 <configuration>
+                    <charset>UTF-8</charset>
                     <encoding>${maven.compiler.encoding}</encoding>
                     <docencoding>${maven.compiler.encoding}</docencoding>
                     <doclint>none</doclint>
@@ -151,5 +148,52 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${maven.source.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven.gpg.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.5.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>false</autoPublish>
+                            <checksums>all</checksums>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

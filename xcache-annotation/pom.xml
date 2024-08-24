@@ -3,13 +3,44 @@
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>xcache-parent</artifactId>
+        <artifactId>xcache-dependencies</artifactId>
         <groupId>com.igeeksky.xcache</groupId>
         <version>${revision}</version>
+        <relativePath>../xcache-dependencies</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>xcache-annotation</artifactId>
+    <name>xcache annotation</name>
+    <description>${project.name}</description>
+    <url>https://github.com/patricklaux/xcache</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/patricklaux/xcache</url>
+        <connection>scm:git:https://github.com/patricklaux/xcache</connection>
+        <developerConnection>scm:git:https://github.com/patricklaux/xcache</developerConnection>
+    </scm>
+
+    <issueManagement>
+        <system>Github Issue</system>
+        <url>https://github.com/patricklaux/xcache/issues</url>
+    </issueManagement>
+
+    <developers>
+        <developer>
+            <name>Patrick.Lau</name>
+            <email>patricklauxx@gmail.com</email>
+            <url>https://www.igeeksky.com</url>
+        </developer>
+    </developers>
 
     <dependencies>
         <dependency>
@@ -18,7 +49,7 @@
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
+            <artifactId>spring-core</artifactId>
             <optional>true</optional>
         </dependency>
     </dependencies>

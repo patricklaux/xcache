@@ -15,9 +15,12 @@
 -[X] 【测试】 Lettuce 哨兵基本测试
 -[X] 【测试】 RedisStringStore 测试
 -[X] 【测试】 RedisHashStore 测试
+-[X] 【测试】 Lettuce 配置测试
+-[X] 【开发】 Lettuce unixSocket
 
 ### 待完成任务
 
--[ ] 【测试】 Lettuce 配置测试
--[ ] 【开发】 Lettuce unixSocket
+-[ ] 【文档】 Guide，Reference
+-[ ] 【开发】 注册 MavenCentral
+-[ ] 【开发】 SpringCacheAdapter
 

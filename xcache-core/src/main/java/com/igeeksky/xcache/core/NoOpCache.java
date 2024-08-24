@@ -1,13 +1,11 @@
 package com.igeeksky.xcache.core;
 
 
+import com.igeeksky.xcache.common.Cache;
+import com.igeeksky.xcache.common.CacheLoader;
 import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.common.StoreType;
-import com.igeeksky.xcache.core.config.CacheConfig;
-import com.igeeksky.xcache.extension.loader.CacheLoader;
-import com.igeeksky.xcache.extension.statistic.CacheStatMonitor;
+import com.igeeksky.xtool.core.collection.Maps;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,57 +15,123 @@ import java.util.Set;
  * @author Patrick.Lau
  * @since 0.0.4 2021-09-19
  */
-public class NoOpCache<K, V> extends AbstractCache<K, V> {
+public class NoOpCache<K, V> implements Cache<K, V> {
 
-    private final CacheStatMonitor statMonitor;
+    private final String name;
+    private final Class<K> keyType;
+    private final Class<?>[] keyParams;
+    private final Class<V> valueType;
+    private final Class<?>[] valueParams;
+    private final CacheLoader<K, V> loader;
 
-    public NoOpCache(CacheConfig<K, V> config) {
-        super(config);
-        this.statMonitor = config.getStatMonitor();
+    private final String message;
+
+    public NoOpCache(CacheConfig<K, V> config, CacheLoader<K, V> loader) {
+        this.name = config.getName();
+        this.keyType = config.getKeyType();
+        this.keyParams = config.getKeyParams();
+        this.valueType = config.getValueType();
+        this.valueParams = config.getValueParams();
+        this.loader = loader;
+        this.message = "Cache:[" + this.name + "], method:[%s], %s";
     }
 
     @Override
-    protected CacheValue<V> doGet(String key) {
-        statMonitor.incMisses(StoreType.NOOP, 1L);
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public Class<K> getKeyType() {
+        return keyType;
+    }
+
+    @Override
+    public Class<?>[] getKeyParams() {
+        return this.keyParams;
+    }
+
+    @Override
+    public Class<?>[] getValueParams() {
+        return this.valueParams;
+    }
+
+    @Override
+    public V getOrLoad(K key) {
+        requireNonNull(key, "getOrLoad", "key must not be null");
+        if (loader != null) {
+            return loader.load(key);
+        }
         return null;
     }
 
     @Override
-    protected V doLoad(K key, String storeKey, CacheLoader<K, V> cacheLoader) {
-        V value = cacheLoader.load(key);
-        statMonitor.incLoads();
-        return value;
+    public Class<V> getValueType() {
+        return valueType;
     }
 
     @Override
-    protected Map<String, CacheValue<V>> doGetAll(Set<String> keys) {
-        statMonitor.incMisses(StoreType.NOOP, keys.size());
-        return Collections.emptyMap();
+    public CacheValue<V> get(K key) {
+        requireNonNull(key, "get", "key must not be null");
+        return null;
     }
 
     @Override
-    protected void doPut(String key, V value) {
-        statMonitor.incPuts(StoreType.NOOP, 1L);
+    public V get(K key, CacheLoader<K, V> cacheLoader) {
+        requireNonNull(key, "get", "key must not be null");
+        requireNonNull(cacheLoader, "get", "cacheLoader must not be null");
+        return cacheLoader.load(key);
     }
 
     @Override
-    protected void doPutAll(Map<String, ? extends V> keyValues) {
-        statMonitor.incPuts(StoreType.NOOP, keyValues.size());
+    public Map<K, V> getOrLoadAll(Set<? extends K> keys) {
+        requireNonNull(keys, "getOrLoadAll", "keys must not be null");
+        if (loader != null) {
+            return loader.loadAll(keys);
+        }
+        return Maps.newHashMap(0);
     }
 
     @Override
-    protected void doEvict(String key) {
-        statMonitor.incRemovals(StoreType.NOOP, 1L);
+    public Map<K, CacheValue<V>> getAll(Set<? extends K> keys) {
+        requireNonNull(keys, "getAll", "keys must not be null");
+        return Maps.newHashMap(0);
     }
 
     @Override
-    protected void doEvictAll(Set<String> keys) {
-        statMonitor.incRemovals(StoreType.NOOP, keys.size());
+    public Map<K, V> getAll(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
+        requireNonNull(keys, "getAll", "keys must not be null");
+        requireNonNull(cacheLoader, "getAll", "cacheLoader must not be null");
+        return cacheLoader.loadAll(keys);
+    }
+
+    @Override
+    public void put(K key, V value) {
+        requireNonNull(key, "put", "key must not be null");
+    }
+
+    @Override
+    public void putAll(Map<? extends K, ? extends V> keyValues) {
+        requireNonNull(keyValues, "putAll", "keyValues must not be null");
+    }
+
+    @Override
+    public void evict(K key) {
+        requireNonNull(key, "evict", "key must not be null");
+    }
+
+    @Override
+    public void evictAll(Set<? extends K> keys) {
+        requireNonNull(keys, "evictAll", "keys must not be null");
     }
 
     @Override
     public void clear() {
-        statMonitor.incClears(StoreType.NOOP);
     }
 
+    protected void requireNonNull(Object obj, String method, String tips) {
+        if (obj == null) {
+            throw new IllegalArgumentException(String.format(message, method, tips));
+        }
+    }
 }

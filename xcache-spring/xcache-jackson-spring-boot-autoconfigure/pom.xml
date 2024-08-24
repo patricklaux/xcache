@@ -11,20 +11,19 @@
 
     <artifactId>xcache-jackson-spring-boot-autoconfigure</artifactId>
 
-    <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
     <dependencies>
+        <dependency>
+            <groupId>com.igeeksky.xcache</groupId>
+            <artifactId>xcache-extension-jackson</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
             <artifactId>xcache-spring-boot-autoconfigure</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-extension-jackson</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 

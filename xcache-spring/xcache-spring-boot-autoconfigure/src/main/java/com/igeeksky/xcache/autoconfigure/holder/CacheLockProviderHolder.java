@@ -17,14 +17,13 @@ public class CacheLockProviderHolder implements Holder<CacheLockProvider> {
 
     @Override
     public void put(String beanId, CacheLockProvider provider) {
-        map.put(beanId, provider);
+        CacheLockProvider old = map.put(beanId, provider);
+        Assert.isTrue(old == null, () -> "CacheLockProvider: [" + beanId + "] duplicate id.");
     }
 
     @Override
     public CacheLockProvider get(String beanId) {
-        CacheLockProvider provider = map.get(beanId);
-        Assert.notNull(provider, "beanId:[" + beanId + "] CacheLockProvider doesn't exit");
-        return provider;
+        return map.get(beanId);
     }
 
     @Override

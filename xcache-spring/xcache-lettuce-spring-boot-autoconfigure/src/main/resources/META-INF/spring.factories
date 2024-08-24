@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.igeeksky.redis.autoconfigure.lettuce.LettuceAutoConfiguration, \
+com.igeeksky.redis.autoconfigure.lettuce.LettuceProperties

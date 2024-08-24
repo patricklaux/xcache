@@ -4,15 +4,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
+        <artifactId>xcache-dependencies</artifactId>
         <groupId>com.igeeksky.xcache</groupId>
-        <artifactId>xcache-parent</artifactId>
         <version>${revision}</version>
+        <relativePath>../xcache-dependencies</relativePath>
     </parent>
 
     <artifactId>xcache-spring</artifactId>
     <packaging>pom</packaging>
 
     <modules>
+        <module>xcache-spring-aop</module>
         <module>xcache-spring-adapter</module>
         <module>xcache-spring-boot-autoconfigure</module>
         <module>xcache-jackson-spring-boot-autoconfigure</module>
@@ -21,11 +23,5 @@
         <module>xcache-lettuce-spring-boot-autoconfigure</module>
         <module>xcache-spring-boot-starter</module>
     </modules>
-
-    <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 
 </project>
