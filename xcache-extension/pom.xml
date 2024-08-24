@@ -11,6 +11,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>xcache-extension</artifactId>
+    <name>xcache extension</name>
+    <description>${project.name}</description>
+
     <packaging>pom</packaging>
 
     <modules>

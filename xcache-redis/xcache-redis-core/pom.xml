@@ -10,6 +10,8 @@
     </parent>
 
     <artifactId>xcache-redis-core</artifactId>
+    <name>xcache redis core</name>
+    <description>${project.name}</description>
 
     <dependencies>
         <dependency>

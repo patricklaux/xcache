@@ -17,10 +17,11 @@
 -[X] 【测试】 RedisHashStore 测试
 -[X] 【测试】 Lettuce 配置测试
 -[X] 【开发】 Lettuce unixSocket
+-[X] 【开发】 注册 MavenCentral
 
 ### 待完成任务
 
 -[ ] 【文档】 Guide，Reference
--[ ] 【开发】 注册 MavenCentral
 -[ ] 【开发】 SpringCacheAdapter
+-[ ] 【开发】 xcache-jedis 项目
 

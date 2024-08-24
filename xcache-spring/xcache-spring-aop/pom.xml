@@ -10,6 +10,8 @@
     </parent>
 
     <artifactId>xcache-spring-aop</artifactId>
+    <name>xcache spring aop</name>
+    <description>${project.name}</description>
 
     <dependencies>
         <dependency>

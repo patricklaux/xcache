@@ -10,6 +10,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>xcache-extension-common</artifactId>
+    <name>xcache extension common</name>
+    <description>${project.name}</description>
 
     <dependencies>
         <dependency>

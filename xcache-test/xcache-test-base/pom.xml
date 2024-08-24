@@ -10,6 +10,8 @@
     </parent>
 
     <artifactId>xcache-test-base</artifactId>
+    <name>xcache test base</name>
+    <description>${project.name}</description>
 
     <dependencies>
         <dependency>

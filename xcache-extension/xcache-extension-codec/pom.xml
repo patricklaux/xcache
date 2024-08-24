@@ -10,6 +10,8 @@
     </parent>
 
     <artifactId>xcache-extension-codec</artifactId>
+    <name>xcache extension codec</name>
+    <description>${project.name}</description>
 
     <dependencies>
         <dependency>

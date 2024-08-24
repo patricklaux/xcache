@@ -10,6 +10,8 @@
     </parent>
 
     <artifactId>xcache-spring-boot-starter</artifactId>
+    <name>xcache spring boot starter</name>
+    <description>${project.name}</description>
 
     <dependencies>
         <dependency>

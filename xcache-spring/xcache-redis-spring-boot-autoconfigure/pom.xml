@@ -10,6 +10,8 @@
     </parent>
 
     <artifactId>xcache-redis-spring-boot-autoconfigure</artifactId>
+    <name>xcache redis spring boot autoconfigure</name>
+    <description>${project.name}</description>
 
     <dependencies>
         <dependency>

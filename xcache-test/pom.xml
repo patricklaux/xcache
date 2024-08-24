@@ -11,6 +11,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>xcache-test</artifactId>
+    <name>xcache test</name>
+    <description>${project.name}</description>
     <packaging>pom</packaging>
 
     <modules>

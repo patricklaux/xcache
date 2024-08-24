@@ -10,6 +10,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>xcache-redis-lettuce</artifactId>
+    <name>xcache redis lettuce</name>
+    <description>${project.name}</description>
 
     <dependencies>
         <dependency>

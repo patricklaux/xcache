@@ -11,6 +11,8 @@
     </parent>
 
     <artifactId>xcache-redis-jedis</artifactId>
+    <name>xcache redis jedis</name>
+    <description>${project.name}</description>
 
     <dependencies>
         <dependency>

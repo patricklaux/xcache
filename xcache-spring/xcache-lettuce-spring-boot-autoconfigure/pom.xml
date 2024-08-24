@@ -10,6 +10,8 @@
     </parent>
 
     <artifactId>xcache-lettuce-spring-boot-autoconfigure</artifactId>
+    <name>xcache lettuce spring boot autoconfigure</name>
+    <description>${project.name}</description>
 
     <dependencies>
         <dependency>
