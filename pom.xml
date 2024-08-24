@@ -6,8 +6,8 @@
     <groupId>com.igeeksky.xcache</groupId>
     <artifactId>xcache-parent</artifactId>
     <version>${revision}</version>
-    <name>${project.artifactId}</name>
-    <description>The parent project of xcache</description>
+    <name>xcache parent</name>
+    <description>${project.name}</description>
     <url>https://github.com/patricklaux/xcache</url>
 
     <licenses>
@@ -22,7 +22,6 @@
         <url>https://github.com/patricklaux/xcache</url>
         <connection>scm:git:https://github.com/patricklaux/xcache</connection>
         <developerConnection>scm:git:https://github.com/patricklaux/xcache</developerConnection>
-        <tag>HEAD</tag>
     </scm>
 
     <issueManagement>
@@ -65,18 +64,6 @@
         <module>xcache-common</module>
         <module>xcache-spring</module>
     </modules>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-dependencies</artifactId>
-                <version>${project.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <build>
         <plugins>
