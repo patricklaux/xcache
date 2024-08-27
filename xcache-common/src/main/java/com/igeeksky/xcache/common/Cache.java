@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * <p>缓存</p>
+ * 缓存接口
  *
  * @author Patrick.Lau
  * @since 0.0.4 2021-09-05

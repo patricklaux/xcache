@@ -12,6 +12,7 @@
     <artifactId>xcache-spring-adapter</artifactId>
     <name>xcache spring adapter</name>
     <description>${project.name}</description>
+    <url>${parent.url}</url>
 
     <dependencies>
         <dependency>

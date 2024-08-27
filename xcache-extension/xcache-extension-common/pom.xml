@@ -12,6 +12,7 @@
     <artifactId>xcache-extension-common</artifactId>
     <name>xcache extension common</name>
     <description>${project.name}</description>
+    <url>${parent.url}</url>
 
     <dependencies>
         <dependency>

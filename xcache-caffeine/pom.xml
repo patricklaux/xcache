@@ -13,6 +13,7 @@
     <artifactId>xcache-caffeine</artifactId>
     <name>xcache caffeine</name>
     <description>${project.name}</description>
+    <url>${parent.url}</url>
 
     <dependencies>
         <dependency>

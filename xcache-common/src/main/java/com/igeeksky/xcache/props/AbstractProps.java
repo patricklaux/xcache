@@ -27,11 +27,11 @@ public abstract class AbstractProps {
     /**
      * <b>数据同步配置</b><p>
      * 只有满足以下两个条件才需配置此选项： <p>
-     * 1. 存在实例内嵌缓存（如 caffeine，guava），
-     * 或存在实例私有访问的外部缓存（如与应用实例部署在同一机器的 redis，且该 redis 不能被其它应用实例访问）<p>
-     * 2. 创建了 {@link com.igeeksky.xcache.extension.sync.CacheSyncProvider} Bean，
+     * 1. 使用内嵌缓存（如 caffeine，guava），
+     * 或应用实例私有访问的外部缓存（如与应用的某个实例部署在同一主机，且不能被其它实例访问的 redis）<p>
+     * 2. 创建了 { com.igeeksky.xcache.extension.sync.CacheSyncProvider} Bean，
      * 如果引入了 xcache-lettuce-spring-boot-autoconfigure 项目，则可以通过配置创建
-     * {@link com.igeeksky.xcache.redis.sync.RedisCacheSyncProvider} <p>
+     * { com.igeeksky.xcache.redis.sync.RedisCacheSyncProvider} <p>
      * 3. 可选条件：最好有两级缓存，如果只有一级缓存，只能处理缓存清空操作（ clear） <p>
      *
      * <b>示例说明 1</b><p>
@@ -73,7 +73,7 @@ public abstract class AbstractProps {
      * <p>
      * {@link CacheConstants#DEFAULT_STAT_PROVIDER} <p>
      * 如果采用默认配置，默认将统计信息输出到日志，日志级别为 info。
-     * 用户可以将 {@link com.igeeksky.xcache.extension.stat.LogCacheStatProvider} 的日志信息单独输出到一个文件。
+     * 用户可以将 { com.igeeksky.xcache.extension.stat.LogCacheStatProvider} 的日志信息单独输出到一个文件。
      */
     private String cacheStat;
 

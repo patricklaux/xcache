@@ -71,7 +71,7 @@ public class CacheOperationSource {
         Method specificMethod = AopUtils.getMostSpecificMethod(method, targetClass);
 
         /*
-         * 缓存注解有可能是在接口方法中声明，而不是在目标实现方法，需要先判断实现方法中是否也有注解
+         * 缓存注解有可能是在接口方法中声明，而不是在目标实现方法，先判断实现方法中是否也有注解
          * 如果实现方法和接口方法都有注解，以实现方法中的注解为准。
          */
         // 1.先从 specificMethod 获取注解

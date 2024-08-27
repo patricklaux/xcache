@@ -42,23 +42,25 @@ public class CacheInterceptor implements MethodInterceptor, Serializable {
 
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
-        // 1. 获取包含缓存注解的方法
+        if (operationSource == null) {
+            return invocation.proceed();
+        }
+
+        // 1. 获取可能存在缓存注解的方法
         Method method = invocation.getMethod();
         Object target = invocation.getThis();
         Assert.notNull(target, "Target must not be null");
 
-        if (operationSource != null) {
-            // 2. 根据注解类型，执行缓存操作
-            Class<?> targetClass = AopProxyUtils.ultimateTargetClass(target);
-            Collection<CacheOperation> cacheOperations = operationSource.getCacheOperations(method, targetClass);
-            if (CollectionUtils.isNotEmpty(cacheOperations)) {
-                CacheOperationContext context = new CacheOperationContext(expressionEvaluator, cacheOperations,
-                        cacheManager, invocation, method, target, targetClass);
-                return context.execute();
-            }
+        // 2. 获取缓存注解的操作类型集合（一个方法可能有多个缓存注解）
+        Class<?> targetClass = AopProxyUtils.ultimateTargetClass(target);
+        Collection<CacheOperation> cacheOperations = operationSource.getCacheOperations(method, targetClass);
+        if (CollectionUtils.isEmpty(cacheOperations)) {
+            return invocation.proceed();
         }
 
-        // 3. 返回缓存对象，或方法执行对象
-        return invocation.proceed();
+        // 3. 执行缓存操作，或反射调用方法，返回具体结果
+        CacheOperationContext context = new CacheOperationContext(expressionEvaluator, cacheOperations,
+                cacheManager, invocation, method, target, targetClass);
+        return context.execute();
     }
 }

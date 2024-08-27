@@ -12,6 +12,7 @@
     <artifactId>xcache-spring-aop</artifactId>
     <name>xcache spring aop</name>
     <description>${project.name}</description>
+    <url>${parent.url}</url>
 
     <dependencies>
         <dependency>

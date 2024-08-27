@@ -14,10 +14,11 @@
     <artifactId>xcache-dependencies</artifactId>
     <name>xcache dependencies</name>
     <description>${project.name}</description>
+    <url>${parent.url}</url>
 
     <properties>
         <spring.boot.version>3.3.2</spring.boot.version>
-        <xtool.version>1.0.14</xtool.version>
+        <xtool.version>1.0.15</xtool.version>
     </properties>
 
     <dependencyManagement>

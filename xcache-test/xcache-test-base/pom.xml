@@ -12,6 +12,7 @@
     <artifactId>xcache-test-base</artifactId>
     <name>xcache test base</name>
     <description>${project.name}</description>
+    <url>${parent.url}</url>
 
     <dependencies>
         <dependency>

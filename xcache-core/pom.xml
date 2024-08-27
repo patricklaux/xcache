@@ -11,6 +11,7 @@
     <artifactId>xcache-core</artifactId>
     <name>xcache core</name>
     <description>xcache core</description>
+    <url>${parent.url}</url>
 
     <dependencies>
         <dependency>

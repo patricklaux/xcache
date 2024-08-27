@@ -13,6 +13,7 @@
     <artifactId>xcache-redis-jedis</artifactId>
     <name>xcache redis jedis</name>
     <description>${project.name}</description>
+    <url>${parent.url}</url>
 
     <dependencies>
         <dependency>

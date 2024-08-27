@@ -13,6 +13,7 @@
     <artifactId>xcache-spring</artifactId>
     <name>xcache spring</name>
     <description>${project.name}</description>
+    <url>${parent.url}</url>
     <packaging>pom</packaging>
 
     <modules>

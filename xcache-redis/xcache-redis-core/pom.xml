@@ -12,6 +12,7 @@
     <artifactId>xcache-redis-core</artifactId>
     <name>xcache redis core</name>
     <description>${project.name}</description>
+    <url>${parent.url}</url>
 
     <dependencies>
         <dependency>

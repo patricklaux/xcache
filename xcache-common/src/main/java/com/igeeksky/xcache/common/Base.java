@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 缓存接口
+ * 缓存基础接口
  *
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-03

@@ -5,10 +5,18 @@ import org.springframework.aot.hint.annotation.Reflective;
 import java.lang.annotation.*;
 
 /**
+ * 缓存注解
+ * <p>
+ * 如果数据未缓存，则反射执行方法并缓存；<p>
+ * 如果数据已缓存，则直接返回缓存的数据。
+ * <p>
+ * 如果同一类中有多个方法使用同一缓存，可以使用 {@link CacheConfig} 在类注解中配置
+ * name, keyType, keyParams, valueType, valueParams，此注解的这五个属性保持默认即可。
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-12
  */
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @Documented
@@ -16,73 +24,57 @@ import java.lang.annotation.*;
 public @interface Cacheable {
 
     /**
-     * SpEL表达式，用于从参数中提取 key，如果为空，则使用被注解方法的第一个参数
+     * SpEL表达式，用于从参数中提取键。
+     * <p>
+     * 如果未配置，采用被注解方法的第一个参数作为键。
      */
     String key() default "";
 
     /**
-     * SpEL表达式，方法执行前：当表达式结果为 true 时，执行缓存方法
+     * SpEL表达式
+     * <p>
+     * 如果 condition 表达式结果为 true，调用被注解方法前执行缓存操作 (get)，<p>
+     * 1. 缓存中有值：不再调用被注解方法，直接返回缓存的值；<p>
+     * 2. 缓存中无值：调用被注解方法，然后判断 unless 表达式是否为 false：<p>
+     * 2.1. 如果 unless 表达式结果为 false，缓存被注解方法执行结果；如果 unless 表达式结果为 true，不缓存。<p>
+     * 2.2. 返回被注解方法执行结果。
+     * <p>
+     * 如果未配置，表达式结果默认为 true
      */
     String condition() default "";
 
     /**
-     * SpEL表达式，方法执行后：当表达式结果为 true 时，不缓存
+     * SpEL表达式
+     * <p>
+     * 当缓存中无值，如果 condition 表达式结果为 true，且 unless 表达式结果为 false，
+     * 调用被注解方法后执行缓存操作 (put)
+     * <p>
+     * 如果未配置，表达式结果默认为 false
      */
     String unless() default "";
 
     /**
      * 缓存名称
-     * <p>
-     * 如果类级别有注解 {@link CacheConfig}，且正是此注解的目标缓存, 则 name 属性无需在此配置；<p>
-     * 如果类级别无注解 {@link CacheConfig}，或并非此注解的目标缓存，则 name 属性必须在此配置。
-     * <b>其它异常情况</b><p>
-     * 当此注解的 name 为空，或与 {@link CacheConfig} 的 name 相同时：
-     * 如果此注解的 keyType, keyParams, valueType, valueParams 存在非默认值，
-     * 且与 类注解 {@link CacheConfig} 中的同名属性不同，将抛出 {@link IllegalArgumentException}
      */
     String name() default "";
 
     /**
      * 键类型
-     * <p>
-     * 如果类级别有注解 {@link CacheConfig}，且正是此注解的目标缓存, 则 keyType 属性无需在此配置；<p>
-     * 如果类级别无注解 {@link CacheConfig}，或并非此注解的目标缓存，则 keyType 属性必须在此配置。
-     * <p>
-     * 如果此注解的 name 为空，或 name 与 {@link CacheConfig} 配置的相同，
-     * 但此属性并非默认值，且与 {@link CacheConfig} 配置的值不同，抛出 {@link IllegalArgumentException}
      */
     Class<?> keyType() default Undefined.class;
 
     /**
-     * 键的泛型参数类型
-     * <p>
-     * 如果未配置，使用 {@link CacheConfig} 中的同名属性。
-     * <p>
-     * <b>其它异常情况</b><p>
-     * 如果 name 为空，或 name 与 {@link CacheConfig} 相同，
-     * 但此属性非默认值且与 {@link CacheConfig} 不同，抛出 {@link IllegalArgumentException}
+     * 键泛型参数
      */
     Class<?>[] keyParams() default {};
 
     /**
      * 值类型
-     * <p>
-     * 如果未配置，使用 {@link CacheConfig} 中的同名属性。
-     * <p>
-     * <b>其它异常情况</b><p>
-     * 如果 name 为空，或 name 与 {@link CacheConfig} 相同，
-     * 但此属性非默认值且与 {@link CacheConfig} 不同，抛出 {@link IllegalArgumentException}
      */
     Class<?> valueType() default Undefined.class;
 
     /**
-     * 值的泛型参数类型
-     * <p>
-     * 如果未配置，使用 {@link CacheConfig} 中的同名属性。
-     * <p>
-     * <b>其它异常情况</b><p>
-     * 如果 name 为空，或 name 与 {@link CacheConfig} 相同，
-     * 但此属性非默认值且与 {@link CacheConfig} 不同，抛出 {@link IllegalArgumentException}
+     * 值泛型参数
      */
     Class<?>[] valueParams() default {};
 

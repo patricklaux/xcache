@@ -13,6 +13,7 @@
     <artifactId>xcache-common</artifactId>
     <name>xcache common</name>
     <description>${project.name}</description>
+    <url>${parent.url}</url>
 
     <dependencies>
         <dependency>

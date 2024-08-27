@@ -12,6 +12,7 @@
     <artifactId>xcache-extension-codec</artifactId>
     <name>xcache extension codec</name>
     <description>${project.name}</description>
+    <url>${parent.url}</url>
 
     <dependencies>
         <dependency>

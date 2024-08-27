@@ -13,6 +13,7 @@
     <artifactId>xcache-redis</artifactId>
     <name>xcache redis</name>
     <description>${project.name}</description>
+    <url>${parent.url}</url>
     <packaging>pom</packaging>
 
     <modules>
