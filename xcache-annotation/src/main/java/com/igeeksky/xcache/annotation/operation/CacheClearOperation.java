@@ -1,6 +1,10 @@
 package com.igeeksky.xcache.annotation.operation;
 
+import com.igeeksky.xcache.annotation.CacheClear;
+
 /**
+ * 记录 {@link CacheClear} 注解信息
+ *
  * @author patrick
  * @since 0.0.4 2024/4/28
  */

@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
+ * 记录缓存注解公共信息
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-13
  */

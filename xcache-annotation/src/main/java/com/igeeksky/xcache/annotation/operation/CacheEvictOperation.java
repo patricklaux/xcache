@@ -1,8 +1,11 @@
 package com.igeeksky.xcache.annotation.operation;
 
+import com.igeeksky.xcache.annotation.CacheEvict;
 import com.igeeksky.xtool.core.lang.StringUtils;
 
 /**
+ * 记录 {@link CacheEvict} 注解信息
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-14
  */
