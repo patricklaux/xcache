@@ -2,6 +2,12 @@ package com.igeeksky.xcache.domain;
 
 import com.igeeksky.xtool.core.json.SimpleJSON;
 
+/**
+ * 用户
+ *
+ * @author patrick
+ * @since 0.0.4 2024/5/12
+ */
 public class User {
 
     private String id;

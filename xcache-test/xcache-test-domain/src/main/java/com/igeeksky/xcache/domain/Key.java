@@ -3,6 +3,8 @@ package com.igeeksky.xcache.domain;
 import com.igeeksky.xtool.core.json.SimpleJSON;
 
 /**
+ * 测试实体类：键
+ *
  * @author patrick
  * @since 0.0.4 2024/5/12
  */

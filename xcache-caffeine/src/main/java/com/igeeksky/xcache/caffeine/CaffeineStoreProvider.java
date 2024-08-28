@@ -3,9 +3,9 @@ package com.igeeksky.xcache.caffeine;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
 import com.github.benmanes.caffeine.cache.Weigher;
+import com.igeeksky.xcache.common.CacheConfigException;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.ReferenceType;
-import com.igeeksky.xcache.common.CacheConfigException;
 import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.core.store.StoreConfig;
 import com.igeeksky.xcache.core.store.StoreProvider;
@@ -15,7 +15,7 @@ import java.time.Duration;
 import java.util.List;
 
 /**
- * Caffeine 本地缓存提供者
+ * Caffeine 缓存提供者
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-13
