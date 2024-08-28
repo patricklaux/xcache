@@ -13,8 +13,11 @@ import java.lang.annotation.*;
  * 如果一个类中使用多个缓存注解，name, keyType, keyParams, valueType, valueParams
  * 这五个公共属性可用类注解 {@link CacheConfig} 配置，此注解保持默认即可。
  * <p>
- * <b>注意</b>：请勿与其它缓存注解用于同一方法！<p>
- * 因为当成功获取缓存数据时，此注解的目标方法将不会被调用。
+ * <b>注意</b>：<p>
+ * 1. 请勿与其它缓存注解用于同一方法！<br>
+ * 因为当成功获取缓存数据时，此注解的目标方法将不会被调用。<p>
+ * 2. 项目编译时必须使用 -parameters 记录方法参数信息，否则无法正确解析 SpEL表达式。<br>
+ * 如使用 maven-compiler-plugin，必须配置：{@code <parameters>true</parameters> }
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-12
