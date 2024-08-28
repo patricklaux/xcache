@@ -9,8 +9,8 @@ import java.lang.annotation.*;
  * <p>
  * 清空指定缓存名称的全部缓存元素。
  * <p>
- * 如果同一类中有多个方法使用同一缓存，则可以使用 {@link CacheConfig} 在类注解中配置
- * name, keyType, keyParams, valueType, valueParams，此注解的这五个属性保持默认即可。
+ * 如果一个类中使用多个缓存注解，name, keyType, keyParams, valueType, valueParams
+ * 这五个公共属性可用类注解 {@link CacheConfig} 配置，此注解保持默认即可。
  * <p>
  * 注意：请勿与 {@link Cacheable} 或 {@link CacheableAll} 注解同时使用。
  *
@@ -27,20 +27,20 @@ public @interface CacheClear {
     /**
      * SpEL表达式
      * <p>
+     * 如果未配置，condition 表达式结果默认为 true。
+     * <p>
      * 如果 condition 表达式结果为 true，beforeInvocation 为 true ，调用被注解方法前执行缓存操作 (clear) ：<p>
      * 如果 condition 表达式结果为 false，无论 unless 表达式结果是否为 false，一定不会执行缓存操作。
-     * <p>
-     * 如果未配置，表达式结果默认为 true
      */
     String condition() default "";
 
     /**
      * SpEL表达式
      * <p>
+     * 如果未配置，unless 表达式结果默认为 false。
+     * <p>
      * 如果 condition 表达式结果为 true，beforeInvocation 为 false，
      * 且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (clear)
-     * <p>
-     * 如果未配置，表达式结果默认为 false
      */
     String unless() default "";
 

@@ -7,11 +7,11 @@ import java.lang.annotation.*;
 /**
  * 缓存注解
  * <p>
- * 如果数据未缓存，则反射执行方法并缓存；<p>
- * 如果数据已缓存，则直接返回缓存的数据。
+ * 如果数据未缓存，则反射执行方法并缓存；
+ * 如果数据已缓存，则直接返回已缓存数据。
  * <p>
- * 如果同一类中有多个方法使用同一缓存，可以使用 {@link CacheConfig} 在类注解中配置
- * name, keyType, keyParams, valueType, valueParams，此注解的这五个属性保持默认即可。
+ * 如果一个类中使用多个缓存注解，name, keyType, keyParams, valueType, valueParams
+ * 这五个公共属性可用类注解 {@link CacheConfig} 配置，此注解保持默认即可。
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-12
@@ -33,23 +33,23 @@ public @interface Cacheable {
     /**
      * SpEL表达式
      * <p>
+     * 如果未配置，condition 表达式结果默认为 true。
+     * <p>
      * 如果 condition 表达式结果为 true，调用被注解方法前执行缓存操作 (get)，<p>
      * 1. 缓存中有值：不再调用被注解方法，直接返回缓存的值；<p>
      * 2. 缓存中无值：调用被注解方法，然后判断 unless 表达式是否为 false：<p>
      * 2.1. 如果 unless 表达式结果为 false，缓存被注解方法执行结果；如果 unless 表达式结果为 true，不缓存。<p>
      * 2.2. 返回被注解方法执行结果。
-     * <p>
-     * 如果未配置，表达式结果默认为 true
      */
     String condition() default "";
 
     /**
      * SpEL表达式
      * <p>
+     * 如果未配置，unless 表达式结果默认为 false。
+     * <p>
      * 当缓存中无值，如果 condition 表达式结果为 true，且 unless 表达式结果为 false，
      * 调用被注解方法后执行缓存操作 (put)
-     * <p>
-     * 如果未配置，表达式结果默认为 false
      */
     String unless() default "";
 

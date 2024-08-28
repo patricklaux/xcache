@@ -9,8 +9,8 @@ import java.lang.annotation.*;
  * <p>
  * 批量更新特定的缓存元素。
  * <p>
- * 如果同一类中有多个方法使用同一缓存，则可以使用 {@link CacheConfig} 在类注解中配置
- * name, keyType, keyParams, valueType, valueParams，此注解的这五个属性保持默认即可。
+ * 如果一个类中使用多个缓存注解，name, keyType, keyParams, valueType, valueParams
+ * 这五个公共属性可用类注解 {@link CacheConfig} 配置，此注解保持默认即可。
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-13
@@ -23,17 +23,27 @@ import java.lang.annotation.*;
 public @interface CachePutAll {
 
     /**
-     * SpEL表达式，用于从参数中提取 Map < Key, value >
+     * SpEL表达式，用于从参数中提取键值对集合 (Map)。
+     * <p>
+     * 如果未配置，采用被注解方法的第一个参数作为键值对集合 (Map)。
      */
     String keyValues() default "";
 
     /**
-     * SpEL表达式，方法执行前：当表达式结果为 true 时，缓存(get and put)
+     * SpEL表达式
+     * <p>
+     * 如果未配置，condition 表达式结果默认为 true。
+     * <p>
+     * 如果 condition 表达式结果为 true，且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (putAll)
      */
     String condition() default "";
 
     /**
-     * SpEL表达式，方法执行后：当表达式结果为 true 时，不缓存
+     * SpEL表达式
+     * <p>
+     * 如果未配置，unless 表达式结果默认为 false。
+     * <p>
+     * 如果 condition 表达式结果为 true，且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (putAll)
      */
     String unless() default "";
 

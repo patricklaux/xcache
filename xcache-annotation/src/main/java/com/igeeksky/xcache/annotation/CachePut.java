@@ -9,8 +9,8 @@ import java.lang.annotation.*;
  * <p>
  * 添加此注解的方法，将更新指定的单个缓存元素。
  * <p>
- * 如果同一类中有多个方法使用同一缓存，则可以使用 {@link CacheConfig} 在类注解中配置
- * name, keyType, keyParams, valueType, valueParams，此注解的这五个属性保持默认即可。
+ * 如果一个类中使用多个缓存注解，name, keyType, keyParams, valueType, valueParams
+ * 这五个公共属性可用类注解 {@link CacheConfig} 配置，此注解保持默认即可。
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-12
@@ -23,7 +23,7 @@ import java.lang.annotation.*;
 public @interface CachePut {
 
     /**
-     * SpEL表达式，用于从参数中提取待缓存的键。
+     * SpEL表达式，用于从参数中提取键。
      * <p>
      * 如果未配置，采用被注解方法的第一个参数作为键。
      */
@@ -31,16 +31,26 @@ public @interface CachePut {
 
     /**
      * SpEL表达式，用于从参数中提取待缓存的值。
+     * <p>
+     * 如果未配置，采用被注解方法的第二个参数作为值。
      */
     String value() default "";
 
     /**
-     * SpEL表达式，方法执行前：当表达式结果为 true 时，缓存(get and put)
+     * SpEL表达式
+     * <p>
+     * 如果未配置，condition 表达式结果默认为 true。
+     * <p>
+     * 如果 condition 表达式结果为 true，且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (put)
      */
     String condition() default "";
 
     /**
-     * SpEL表达式，方法执行后：当表达式结果为 true 时，不缓存
+     * SpEL表达式
+     * <p>
+     * 如果未配置，unless 表达式结果默认为 false。
+     * <p>
+     * 如果 condition 表达式结果为 true，且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (put)
      */
     String unless() default "";
 
