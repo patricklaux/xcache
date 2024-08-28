@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Objects;
 
 /**
- * <p>配置工具类</p>
+ * 配置工具类
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-20

@@ -1,6 +1,8 @@
 package com.igeeksky.xcache.props;
 
 /**
+ * 配置信息抽象类
+ *
  * @author patrick
  * @since 0.0.4 2024/6/3
  */

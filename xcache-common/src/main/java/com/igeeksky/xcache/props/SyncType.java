@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.props;
 
 /**
- * 数据同步通知
+ * 数据同步类型
  *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/11

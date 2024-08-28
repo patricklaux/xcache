@@ -3,6 +3,8 @@ package com.igeeksky.xcache.props;
 import com.igeeksky.xtool.core.json.SimpleJSON;
 
 /**
+ * 缓存模板配置
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-13
  */

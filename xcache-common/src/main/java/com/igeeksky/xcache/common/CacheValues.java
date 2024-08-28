@@ -1,6 +1,8 @@
 package com.igeeksky.xcache.common;
 
 /**
+ * 缓存值包装类的静态工厂
+ *
  * @author Patrick.Lau
  * @since 0.0.3 2021-07-29
  */

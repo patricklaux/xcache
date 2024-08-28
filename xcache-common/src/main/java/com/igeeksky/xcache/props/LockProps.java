@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 锁配置
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/12
  */

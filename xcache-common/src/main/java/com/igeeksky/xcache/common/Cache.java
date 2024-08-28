@@ -6,6 +6,8 @@ import java.util.Set;
 /**
  * 缓存接口
  *
+ * @param <K> 键类型
+ * @param <V> 值类型
  * @author Patrick.Lau
  * @since 0.0.4 2021-09-05
  */

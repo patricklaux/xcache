@@ -5,6 +5,10 @@ import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 
 /**
+ * 空值对象
+ * <p>
+ * 用于序列化，反序列化，缓存中存储空值对象
+ *
  * @author Patrick.Lau
  * @since 0.0.3 2020-12-11
  */

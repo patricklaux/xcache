@@ -4,6 +4,8 @@ package com.igeeksky.xcache.props;
 import com.igeeksky.xcache.common.ReferenceType;
 
 /**
+ * 缓存配置项常量
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-20
  */

@@ -8,12 +8,24 @@ package com.igeeksky.xcache.common;
  */
 public enum ReferenceType {
 
+    /**
+     * 强引用
+     */
     STRONG,
 
+    /**
+     * 弱引用
+     */
     WEAK,
 
+    /**
+     * 软引用
+     */
     SOFT,
 
+    /**
+     * 虚引用
+     */
     PHANTOM
 
 }
