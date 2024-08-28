@@ -7,12 +7,12 @@ import java.lang.annotation.*;
 /**
  * 缓存注解
  * <p>
- * 清空指定缓存名称的全部缓存元素。
+ * 清空指定缓存命名空间的全部缓存元素。
  * <p>
  * 如果一个类中使用多个缓存注解，name, keyType, keyParams, valueType, valueParams
  * 这五个公共属性可用类注解 {@link CacheConfig} 配置，此注解保持默认即可。
  * <p>
- * 注意：请勿与 {@link Cacheable} 或 {@link CacheableAll} 注解同时使用。
+ * <b>注意</b>：请勿与 {@link Cacheable} 或 {@link CacheableAll} 注解用于同一方法。
  *
  * @author patrick
  * @since 0.0.4 2024/4/28

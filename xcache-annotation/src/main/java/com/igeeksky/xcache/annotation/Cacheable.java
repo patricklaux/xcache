@@ -12,6 +12,9 @@ import java.lang.annotation.*;
  * <p>
  * 如果一个类中使用多个缓存注解，name, keyType, keyParams, valueType, valueParams
  * 这五个公共属性可用类注解 {@link CacheConfig} 配置，此注解保持默认即可。
+ * <p>
+ * <b>注意</b>：请勿与其它缓存注解共用于同一方法！<p>
+ * 因为当成功获取缓存数据时，此注解的目标方法不会被调用。
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-12
