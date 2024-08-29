@@ -3,6 +3,9 @@ package com.igeeksky.xcache.extension.codec;
 import java.nio.charset.Charset;
 
 /**
+ * 编解码配置
+ *
+ * @param <T> 需要编解码的对象类型
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/7
  */

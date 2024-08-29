@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * JDK编解码实现类提供者
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-18
  */
