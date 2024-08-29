@@ -10,6 +10,10 @@ import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
 
 /**
+ * 缓存扩展配置，用于扩展缓存能力
+ *
+ * @param <K> 缓存键类型
+ * @param <V> 缓存值类型
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/16
  */

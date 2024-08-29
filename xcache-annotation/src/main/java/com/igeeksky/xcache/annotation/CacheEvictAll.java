@@ -74,6 +74,8 @@ public @interface CacheEvictAll {
 
     /**
      * 键泛型参数
+     * <p>
+     * 用于较复杂的带泛型参数的键类型的序列化处理
      */
     Class<?>[] keyParams() default {};
 
@@ -84,6 +86,8 @@ public @interface CacheEvictAll {
 
     /**
      * 值泛型参数
+     * <p>
+     * 用于较复杂的带泛型参数的值类型的序列化处理
      */
     Class<?>[] valueParams() default {};
 

@@ -17,6 +17,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * 缓存层抽象类
+ *
+ * @param <K> 缓存键类型
+ * @param <V> 缓存值类型
  * @author Patrick.Lau
  * @since 0.0.4 2021-09-19
  */

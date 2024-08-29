@@ -35,6 +35,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
 /**
+ * 缓存管理者实现类
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-13
  */

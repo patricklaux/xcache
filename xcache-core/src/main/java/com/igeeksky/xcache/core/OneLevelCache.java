@@ -11,6 +11,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * 仅有一级缓存时，使用此实现类
+ *
+ * @param <K> 缓存键类型
+ * @param <V> 缓存值类型
  * @author Patrick.Lau
  * @since 0.0.3 2021-08-23
  */

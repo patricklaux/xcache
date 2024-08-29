@@ -11,7 +11,11 @@ import java.util.Set;
 
 /**
  * 无操作缓存
+ * <p>
+ * 当配置禁用缓存时，将使用此缓存实现类，避免改动代码
  *
+ * @param <K> 缓存键类型
+ * @param <V> 缓存值类型
  * @author Patrick.Lau
  * @since 0.0.4 2021-09-19
  */

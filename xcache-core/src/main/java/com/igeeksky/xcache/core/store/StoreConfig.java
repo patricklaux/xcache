@@ -11,6 +11,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 存储层配置类
+ *
+ * @param <V> 缓存值类型
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/13
  */

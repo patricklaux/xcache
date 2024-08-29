@@ -5,7 +5,7 @@ import com.igeeksky.xtool.core.lang.ArrayUtils;
 import com.igeeksky.xtool.core.lang.codec.StringCodec;
 
 /**
- * <p>缓存前缀</p>
+ * 缓存键前缀生成类
  *
  * @author Patrick.Lau
  * @since 0.0.3 2021-08-20

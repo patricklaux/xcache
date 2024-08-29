@@ -15,6 +15,8 @@ import java.util.Set;
 /**
  * 三级组合缓存
  *
+ * @param <K> 缓存键类型
+ * @param <V> 缓存值类型
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-03
  */
