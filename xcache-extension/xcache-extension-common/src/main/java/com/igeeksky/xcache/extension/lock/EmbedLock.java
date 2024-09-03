@@ -4,9 +4,16 @@ package com.igeeksky.xcache.extension.lock;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class EmbedLock extends KeyLock {
+/**
+ * 内嵌缓存锁
+ *
+ * @author Patrick.Lau
+ * @since 0.0.4 2021-06-10
+ */
+public class EmbedLock implements Lock {
 
     /**
      * 申请锁的次数（当计数为 0 时从 map 中删除锁）
@@ -14,13 +21,9 @@ public class EmbedLock extends KeyLock {
     private final AtomicInteger count = new AtomicInteger(1);
 
     /**
-     * 内部锁
+     * 内部锁，用于真正执行锁的逻辑
      */
     private final ReentrantLock innerLock = new ReentrantLock();
-
-    public EmbedLock(String key) {
-        super(key);
-    }
 
     protected int decrementAndGet() {
         return count.decrementAndGet();

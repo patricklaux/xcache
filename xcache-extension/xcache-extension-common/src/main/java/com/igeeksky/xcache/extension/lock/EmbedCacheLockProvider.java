@@ -1,6 +1,8 @@
 package com.igeeksky.xcache.extension.lock;
 
 /**
+ * 内嵌缓存锁工厂类
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2021-06-10
  */

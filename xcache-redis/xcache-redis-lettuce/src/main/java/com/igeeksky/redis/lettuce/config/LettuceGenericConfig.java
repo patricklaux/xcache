@@ -2,9 +2,6 @@ package com.igeeksky.redis.lettuce.config;
 
 import io.lettuce.core.SslVerifyMode;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-
 /**
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-02
@@ -12,8 +9,6 @@ import java.nio.charset.StandardCharsets;
 public class LettuceGenericConfig {
 
     private String id;
-
-    private Charset charset = StandardCharsets.UTF_8;
 
     private int database = 0;
 
@@ -37,14 +32,6 @@ public class LettuceGenericConfig {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public Charset getCharset() {
-        return charset;
-    }
-
-    public void setCharset(Charset charset) {
-        this.charset = charset;
     }
 
     public int getDatabase() {

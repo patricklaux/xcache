@@ -13,7 +13,6 @@ import com.igeeksky.xtool.core.lang.StringUtils;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.SslVerifyMode;
 
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -37,11 +36,6 @@ public class Lettuce {
     private String id = "lettuce";
 
     /**
-     * 字符集
-     */
-    private String charset = "UTF-8";
-
-    /**
      * 集群模式
      */
     private LettuceCluster cluster;
@@ -62,14 +56,6 @@ public class Lettuce {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getCharset() {
-        return charset;
-    }
-
-    public void setCharset(String charset) {
-        this.charset = charset;
     }
 
     public LettuceCluster getCluster() {
@@ -98,7 +84,7 @@ public class Lettuce {
 
     public LettuceStandaloneConfig createStandaloneConfig() {
         LettuceStandaloneConfig config = new LettuceStandaloneConfig();
-        setGeneric(this.id, this.charset, standalone, config);
+        setGeneric(this.id, standalone, config);
 
         String node = StringUtils.trimToNull(standalone.getNode());
         if (node != null) {
@@ -118,7 +104,7 @@ public class Lettuce {
 
     public LettuceSentinelConfig createSentinelConfig() {
         LettuceSentinelConfig config = new LettuceSentinelConfig();
-        setGeneric(this.id, this.charset, sentinel, config);
+        setGeneric(this.id, sentinel, config);
 
         String masterId = StringUtils.trimToNull(sentinel.getMasterId());
         Assert.notNull(masterId, () -> "Id:[" + this.id + "] sentinel:master-id must not be null or empty");
@@ -150,7 +136,7 @@ public class Lettuce {
 
     public LettuceClusterConfig createClusterConfig() {
         LettuceClusterConfig config = new LettuceClusterConfig();
-        setGeneric(this.id, this.charset, cluster, config);
+        setGeneric(this.id, cluster, config);
 
         List<RedisNode> nodes = convertNodes(cluster.getNodes());
         Assert.notEmpty(nodes, () -> "Id:[" + this.id + "] cluster:nodes must not be empty");
@@ -166,16 +152,11 @@ public class Lettuce {
         return config;
     }
 
-    private static void setGeneric(String id, String charset, LettuceGeneric original, LettuceGenericConfig config) {
+    private static void setGeneric(String id, LettuceGeneric original, LettuceGenericConfig config) {
         id = StringUtils.trimToNull(id);
         Assert.notNull(id, "lettuce:connections:id must not be null or empty");
 
         config.setId(id);
-
-        charset = StringUtils.trimToNull(charset);
-        if (charset != null) {
-            config.setCharset(Charset.forName(charset));
-        }
 
         String username = StringUtils.trimToNull(original.getUsername());
         if (username != null) {
@@ -844,10 +825,14 @@ public class Lettuce {
 
     }
 
-
     @Override
     public String toString() {
-        return new StringJoiner(", ", "{", "}").add("\"id\":\"" + id + "\"").add("\"charset\":\"" + charset + "\"").add("\"cluster\":" + cluster).add("\"sentinel\":" + sentinel).add("\"standalone\":" + standalone).toString();
+        return new StringJoiner(", ", "{", "}")
+                .add("\"id\":\"" + id + "\"")
+                .add("\"cluster\":" + cluster)
+                .add("\"sentinel\":" + sentinel)
+                .add("\"standalone\":" + standalone)
+                .toString();
     }
 
 }

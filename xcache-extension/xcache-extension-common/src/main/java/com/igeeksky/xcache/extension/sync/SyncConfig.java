@@ -42,8 +42,6 @@ public class SyncConfig<V> {
 
     private final Store<V> secondStore;
 
-    private final SyncMessageCodec codec;
-
     private final Map<String, Object> params;
 
     public SyncConfig(Builder<V> builder) {
@@ -57,7 +55,6 @@ public class SyncConfig<V> {
         this.second = builder.second;
         this.firstStore = builder.firstStore;
         this.secondStore = builder.secondStore;
-        this.codec = builder.codec;
         this.params = builder.params;
         if (builder.infix != null) {
             if (Objects.equals("none", StringUtils.toLowerCase(builder.infix))) {
@@ -121,10 +118,6 @@ public class SyncConfig<V> {
         return secondStore;
     }
 
-    public SyncMessageCodec getCodec() {
-        return codec;
-    }
-
     public Map<String, Object> getParams() {
         return params;
     }
@@ -145,7 +138,6 @@ public class SyncConfig<V> {
         private SyncType second;
         private final Store<V> firstStore;
         private final Store<V> secondStore;
-        private SyncMessageCodec codec;
         private final Map<String, Object> params = new HashMap<>();
 
         private Builder(Store<V> firstStore, Store<V> secondStore) {
@@ -195,11 +187,6 @@ public class SyncConfig<V> {
 
         public Builder<V> second(SyncType second) {
             this.second = second;
-            return this;
-        }
-
-        public Builder<V> codec(SyncMessageCodec codec) {
-            this.codec = codec;
             return this;
         }
 

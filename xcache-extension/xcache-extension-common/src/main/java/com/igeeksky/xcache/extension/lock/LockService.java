@@ -1,7 +1,11 @@
 package com.igeeksky.xcache.extension.lock;
 
+import java.util.concurrent.locks.Lock;
+
 /**
- * 缓存锁Holder。用于根据Key获取锁，通过锁实现相同key仅允许一个线程回源获取数据
+ * 缓存锁服务
+ * <p>
+ * 用于管理锁对象的申请和释放
  *
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-10
@@ -36,7 +40,7 @@ public interface LockService {
      *
      * @param key 键
      */
-    KeyLock acquire(String key);
+    Lock acquire(String key);
 
     /**
      * 归还锁对象

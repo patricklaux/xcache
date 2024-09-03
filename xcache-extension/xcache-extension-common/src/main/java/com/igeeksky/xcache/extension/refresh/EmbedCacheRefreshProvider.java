@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.extension.refresh;
 
+import com.igeeksky.xcache.common.CacheRefresh;
 import com.igeeksky.xtool.core.concurrent.VirtualThreadFactory;
 
 import java.util.concurrent.ExecutorService;
@@ -7,6 +8,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
+ * 内嵌缓存刷新器提供者
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/28
  */

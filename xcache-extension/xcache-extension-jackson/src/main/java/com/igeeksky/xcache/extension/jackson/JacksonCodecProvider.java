@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igeeksky.xcache.extension.codec.CodecConfig;
 import com.igeeksky.xcache.extension.codec.CodecProvider;
+import com.igeeksky.xtool.core.lang.ArrayUtils;
 import com.igeeksky.xtool.core.lang.codec.Codec;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
 
@@ -59,7 +60,7 @@ public class JacksonCodecProvider implements CodecProvider {
     }
 
     private static <K> JavaType getJavaType(ObjectMapper mapper, Class<K> type, Class<?>[] params) {
-        if (params == null || params.length == 0) {
+        if (ArrayUtils.isEmpty(params)) {
             return mapper.getTypeFactory().constructType(type);
         } else {
             return mapper.getTypeFactory().constructParametricType(type, params);

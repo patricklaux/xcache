@@ -3,10 +3,7 @@ package com.igeeksky.xcache.redis.sync;
 import com.igeeksky.redis.RedisOperator;
 import com.igeeksky.redis.stream.ReadOffset;
 import com.igeeksky.redis.stream.StreamListenerContainer;
-import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
-import com.igeeksky.xcache.extension.sync.CacheSyncProvider;
-import com.igeeksky.xcache.extension.sync.SyncConfig;
-import com.igeeksky.xcache.extension.sync.SyncMessageListener;
+import com.igeeksky.xcache.extension.sync.*;
 import com.igeeksky.xcache.redis.StreamMessageListener;
 import com.igeeksky.xcache.redis.StreamMessagePublisher;
 
@@ -17,11 +14,13 @@ import com.igeeksky.xcache.redis.StreamMessagePublisher;
 public class RedisCacheSyncProvider implements CacheSyncProvider {
 
     private final RedisOperator redisOperator;
+    private final RedisCacheSyncMessageCodec codec;
     private final StreamListenerContainer listenerContainer;
 
-    public RedisCacheSyncProvider(StreamListenerContainer listenerContainer) {
-        this.redisOperator = listenerContainer.getRedisOperator();
+    public RedisCacheSyncProvider(StreamListenerContainer listenerContainer, RedisCacheSyncMessageCodec codec) {
+        this.codec = codec;
         this.listenerContainer = listenerContainer;
+        this.redisOperator = listenerContainer.getRedisOperator();
     }
 
     /**
@@ -32,17 +31,19 @@ public class RedisCacheSyncProvider implements CacheSyncProvider {
      * @param <V>      缓存的值泛型类型
      */
     @Override
-    public <V> void register(byte[] channel, SyncMessageListener<V> listener) {
+    public <V> void register(String channel, SyncMessageListener<V> listener) {
         // 获取 Redis 主机时间作为起始 ID（缓存实际启用是在此方法完成之后，因此不会遗漏消息）
         String startId = this.redisOperator.time() + "-0";
         // 使用获取的起始ID和监听器创建一个消息消费者，并将其注册到监控器中。
-        this.listenerContainer.register(ReadOffset.from(channel, startId), new StreamMessageListener(listener));
+        StreamMessageListener<CacheSyncMessage> streamListener = new StreamMessageListener<>(this.codec, listener);
+        this.listenerContainer.register(ReadOffset.from(this.codec.encodeKey(channel), startId), streamListener);
     }
 
     @Override
     public <V> CacheSyncMonitor getMonitor(SyncConfig<V> config) {
-        StreamMessagePublisher publisher = new StreamMessagePublisher(this.redisOperator, config.getMaxLen());
-        return new CacheSyncMonitor(config, publisher);
+        long maxLen = config.getMaxLen();
+        String channel = config.getChannel();
+        return new CacheSyncMonitor(config, new StreamMessagePublisher<>(this.redisOperator, maxLen, channel, this.codec));
     }
 
 }

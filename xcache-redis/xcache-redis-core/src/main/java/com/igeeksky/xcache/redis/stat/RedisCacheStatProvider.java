@@ -1,8 +1,8 @@
 package com.igeeksky.xcache.redis.stat;
 
+import com.igeeksky.redis.RedisOperator;
 import com.igeeksky.xcache.extension.stat.AbstractCacheStatProvider;
 import com.igeeksky.xcache.extension.stat.CacheStatMessage;
-import com.igeeksky.xcache.extension.stat.StatMessageCodec;
 import com.igeeksky.xcache.redis.StreamMessagePublisher;
 
 import java.util.List;
@@ -14,22 +14,21 @@ import java.util.List;
 public class RedisCacheStatProvider extends AbstractCacheStatProvider {
 
     private static final String PREFIX = "stat:";
-
-    private final StreamMessagePublisher publisher;
-    private final StatMessageCodec codec;
-    private final byte[] channel;
+    private final StreamMessagePublisher<CacheStatMessage> publisher;
 
     public RedisCacheStatProvider(RedisStatConfig config) {
         super(config.getScheduler(), config.getPeriod());
-        this.publisher = new StreamMessagePublisher(config.getOperator(), config.getMaxLen());
-        this.codec = new StatMessageCodec(null);
-        this.channel = this.codec.encode(PREFIX + config.getSuffix());
+        long maxLen = config.getMaxLen();
+        String channel = PREFIX + config.getSuffix();
+        RedisOperator operator = config.getOperator();
+        RedisCacheStatMessageCodec codec = config.getCodec();
+        this.publisher = new StreamMessagePublisher<>(operator, maxLen, channel, codec);
     }
 
     @Override
     public void publish(List<CacheStatMessage> messages) {
         for (CacheStatMessage message : messages) {
-            this.publisher.publish(this.channel, this.codec.encodeMsg(message));
+            this.publisher.publish(message);
         }
     }
 

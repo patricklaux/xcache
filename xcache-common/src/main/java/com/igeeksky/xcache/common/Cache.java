@@ -90,4 +90,8 @@ public interface Cache<K, V> extends Base<K, V> {
      */
     Map<K, V> getAll(Set<? extends K> keys, CacheLoader<K, V> cacheLoader);
 
+    void setCacheLoader(CacheLoader<K, V> cacheLoader);
+
+    void setCacheRefresh(CacheRefresh cacheRefresh, CacheLoader<K, V> cacheLoader);
+
 }

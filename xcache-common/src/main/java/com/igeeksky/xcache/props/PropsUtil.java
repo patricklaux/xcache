@@ -188,11 +188,6 @@ public class PropsUtil {
             to.setProvider(provider);
         }
 
-        String serializer = StringUtils.trimToNull(from.getCodec());
-        if (serializer != null) {
-            to.setCodec(serializer);
-        }
-
         to.setParams(from.getParams());
     }
 
@@ -364,7 +359,6 @@ public class PropsUtil {
         props.setSecond(SyncType.NONE);
         props.setMaxLen(CacheConstants.DEFAULT_SYNC_MAX_LEN);
         props.setProvider(CacheConstants.DEFAULT_SYNC_PROVIDER);
-        props.setCodec(CacheConstants.DEFAULT_SYNC_CODEC);
         return props;
     }
 

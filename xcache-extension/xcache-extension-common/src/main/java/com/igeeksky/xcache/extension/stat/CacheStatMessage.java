@@ -3,7 +3,9 @@ package com.igeeksky.xcache.extension.stat;
 import com.igeeksky.xtool.core.json.SimpleJSON;
 
 /**
- * 缓存统计信息
+ * 缓存统计消息
+ * <p>
+ * 用于发布到日志，或者是汇总到独立的缓存统计服务
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-11

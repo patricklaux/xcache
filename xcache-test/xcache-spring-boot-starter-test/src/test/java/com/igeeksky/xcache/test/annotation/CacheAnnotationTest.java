@@ -27,7 +27,7 @@ public class CacheAnnotationTest {
 
     @AfterAll
     public static void afterAll() throws InterruptedException {
-        Thread.sleep(2000);
+        Thread.sleep(20000);
     }
 
     /**
@@ -142,7 +142,7 @@ public class CacheAnnotationTest {
         keyValues.put(jack07, userJack07);
 
         // 删除缓存元素
-        keyValues.forEach((key, user) -> userService.deleteUserByCache(jack04));
+        keyValues.forEach((key, user) -> userService.deleteUserByCache(key));
 
         System.out.println("保存 2个元素--------------------------");
         userService.saveUser(jack04, userJack04);

@@ -17,11 +17,6 @@ public class CodecConfig<T> {
     private final String name;
 
     /**
-     * CodecProvider - id
-     */
-    private final String provider;
-
-    /**
      * 字符集
      */
     private final Charset charset;
@@ -41,15 +36,10 @@ public class CodecConfig<T> {
         this.type = builder.type;
         this.params = builder.params;
         this.charset = builder.charset;
-        this.provider = builder.provider;
     }
 
     public String getName() {
         return name;
-    }
-
-    public String getProvider() {
-        return provider;
     }
 
     public Charset getCharset() {
@@ -75,7 +65,6 @@ public class CodecConfig<T> {
     public static class Builder<T> {
 
         private String name;
-        private String provider;
         private Charset charset;
         private final Class<T> type;
         private Class<?>[] params;
@@ -91,11 +80,6 @@ public class CodecConfig<T> {
 
         public Builder<T> name(String name) {
             this.name = name;
-            return this;
-        }
-
-        public Builder<T> provider(String provider) {
-            this.provider = provider;
             return this;
         }
 

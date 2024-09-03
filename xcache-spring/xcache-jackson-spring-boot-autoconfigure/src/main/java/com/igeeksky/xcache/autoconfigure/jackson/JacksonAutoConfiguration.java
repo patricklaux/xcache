@@ -21,7 +21,7 @@ public class JacksonAutoConfiguration {
     public static final String JACKSON_SPRING_CODEC_PROVIDER_ID = CacheConstants.JACKSON_SPRING_CODEC;
 
     @Bean
-    CodecProviderHolder serializerProviderHolder() {
+    CodecProviderHolder jacksonCodecProviderHolder() {
         CodecProviderHolder holder = new CodecProviderHolder();
         holder.put(JACKSON_CODEC_PROVIDER_ID, JacksonCodecProvider.getInstance());
         holder.put(JACKSON_SPRING_CODEC_PROVIDER_ID, GenericJacksonCodecProvider.getInstance());

@@ -4,7 +4,7 @@ package com.igeeksky.xcache.core;
 import com.igeeksky.xcache.common.CacheLoader;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
-import com.igeeksky.xcache.extension.refresh.CacheRefresh;
+import com.igeeksky.xcache.common.CacheRefresh;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;

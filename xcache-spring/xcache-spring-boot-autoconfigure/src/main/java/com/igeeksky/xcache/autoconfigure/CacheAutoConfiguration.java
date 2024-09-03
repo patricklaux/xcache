@@ -30,7 +30,6 @@ import java.util.concurrent.ScheduledExecutorService;
  * @since 0.0.4 2023-09-29
  */
 @Configuration(proxyBeanMethods = false)
-//@AutoConfigureBefore({ProxyCacheConfiguration.class})
 @AutoConfigureAfter({CacheProperties.class, CacheStatProperties.class})
 public class CacheAutoConfiguration {
 
@@ -64,15 +63,9 @@ public class CacheAutoConfiguration {
         Map<String, Template> templates = toTemplateMap(cacheProperties.getTemplates());
         Map<String, CacheProps> configs = toCachePropsMap(cacheProperties.getCaches());
 
-        // 集中管理内嵌组件，其中 LogCacheStatProviderHolder 和 CacheRefreshProviderHolder 延迟注册，避免 scheduler 运行无效任务
+        // 管理内嵌组件：LogCacheStatProviderHolder 和 CacheRefreshProviderHolder 延迟注册，避免 scheduler 运行无效任务
         ComponentRegister register = new ComponentRegister(scheduler, statProperties.getPeriod());
-
         CacheManagerImpl cacheManager = new CacheManagerImpl(app, register, templates, configs);
-        register.embedContainsPredicate(cacheManager);
-        register.embedCacheLock(cacheManager);
-        register.deflaterCompressor(cacheManager);
-        register.gzipCompressor(cacheManager);
-        register.jdkCodec(cacheManager);
 
         for (StoreProviderHolder holder : storeHolders) {
             holder.getAll().forEach(cacheManager::addProvider);

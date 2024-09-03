@@ -40,7 +40,6 @@ public class LettuceTestHelper {
         Lettuce lettuce = new Lettuce();
         lettuce.setId("test");
         lettuce.setStandalone(standalone);
-        lettuce.setCharset(StandardCharsets.UTF_8.name());
 
         LettuceStandaloneConfig standaloneConfig = lettuce.createStandaloneConfig();
         ClientOptions options = ClientOptions.builder().build();
@@ -59,7 +58,6 @@ public class LettuceTestHelper {
         Lettuce lettuce = new Lettuce();
         lettuce.setId("lettuceSentinelConnectionFactory");
         lettuce.setSentinel(sentinel);
-        lettuce.setCharset(StandardCharsets.UTF_8.name());
 
         ClientOptions options = ClientOptions.builder().build();
         ClientResources resources = ClientResources.builder().build();
@@ -78,7 +76,6 @@ public class LettuceTestHelper {
         Lettuce lettuce = new Lettuce();
         lettuce.setId("lettuceClusterConnectionFactory");
         lettuce.setCluster(cluster);
-        lettuce.setCharset(StandardCharsets.UTF_8.name());
 
         ClusterClientOptions options = ClusterClientOptions.builder().build();
         ClientResources resources = ClientResources.builder().build();

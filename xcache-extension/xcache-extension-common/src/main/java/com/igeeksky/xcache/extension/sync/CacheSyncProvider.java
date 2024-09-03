@@ -6,7 +6,7 @@ package com.igeeksky.xcache.extension.sync;
  */
 public interface CacheSyncProvider {
 
-    <V> void register(byte[] channel, SyncMessageListener<V> consumer);
+    <V> void register(String channel, SyncMessageListener<V> consumer);
 
     <V> CacheSyncMonitor getMonitor(SyncConfig<V> config);
 

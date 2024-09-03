@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.extension.refresh;
 
 
+import com.igeeksky.xcache.common.CacheRefresh;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

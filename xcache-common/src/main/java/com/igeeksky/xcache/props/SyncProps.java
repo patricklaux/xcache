@@ -74,15 +74,6 @@ public class SyncProps {
     private String provider;
 
     /**
-     * 用于序列化 CacheSyncMessage
-     * <p>
-     * 默认值：jackson
-     * <p>
-     * {@link CacheConstants#DEFAULT_SYNC_CODEC}
-     */
-    private String codec;
-
-    /**
      * 自定义扩展属性
      */
     private final Map<String, Object> params = new HashMap<>();
@@ -125,14 +116,6 @@ public class SyncProps {
 
     public void setProvider(String provider) {
         this.provider = provider;
-    }
-
-    public String getCodec() {
-        return codec;
-    }
-
-    public void setCodec(String serializer) {
-        this.codec = serializer;
     }
 
     public Map<String, Object> getParams() {
