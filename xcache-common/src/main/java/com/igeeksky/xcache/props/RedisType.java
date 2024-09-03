@@ -1,6 +1,8 @@
 package com.igeeksky.xcache.props;
 
 /**
+ * Redis 数据存储类型
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/11
  */

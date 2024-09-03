@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- configuration file for LogBack (slf4J implementation)
 See here for more details: http://gordondickens.com/wordpress/2013/03/27/sawing-through-the-java-loggers/ -->
-<configuration scan="true" scanPeriod="60 seconds" debug="false">
+<configuration scan="true" scanPeriod="10 seconds" debug="false">
 
     <contextName>shop</contextName>
 
-    <property name="LOG_HOME" value="/logdata/flight"/>
-    <property name="MODULE_NAME" value="flight"/>
+    <property name="LOG_HOME" value="/Data/log/shop"/>
+    <property name="MODULE_NAME" value="shop"/>
 
     <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
         <resetJUL>true</resetJUL>

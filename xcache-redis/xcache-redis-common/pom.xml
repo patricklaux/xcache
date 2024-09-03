@@ -10,6 +10,9 @@
     </parent>
 
     <artifactId>xcache-redis-common</artifactId>
+    <name>xcache redis common</name>
+    <description>${project.name}</description>
+    <url>${parent.url}</url>
 
     <dependencies>
         <dependency>

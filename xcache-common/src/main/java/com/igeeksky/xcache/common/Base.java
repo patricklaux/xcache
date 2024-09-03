@@ -5,8 +5,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 缓存接口
+ * 缓存基础接口
  *
+ * @param <K> 键类型
+ * @param <V> 值类型
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-03
  */
@@ -15,7 +17,7 @@ public interface Base<K, V> {
     /**
      * 根据键从缓存中读取值 <p>
      * <p>
-     * 增加一层 CacheValue 包装，当允许缓存空值时，可以明确判断是缓存无值，还是数据源无值，从而决定是否需要再回源查询
+     * 增加一层包装类 CacheValue ，当允许缓存空值时，可以明确判断是缓存无值，还是数据源无值，从而决定是否需要再回源查询
      * <pre>{@code
      * if (cacheValue == null) {
      *     // 未缓存，未知数据源是否有数据

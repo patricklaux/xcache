@@ -18,6 +18,8 @@ import java.util.StringJoiner;
 @ConfigurationProperties(prefix = "xcache.redis")
 public class RedisProperties {
 
+    private String charset;
+
     /**
      * 使用配置的 RedisConnectionFactory，创建 RedisStoreProvider <p>
      * 配置示例：
@@ -95,6 +97,14 @@ public class RedisProperties {
      */
     private List<StatOption> stat;
 
+    public String getCharset() {
+        return charset;
+    }
+
+    public void setCharset(String charset) {
+        this.charset = charset;
+    }
+
     public List<StoreOption> getStore() {
         return store;
     }
@@ -146,6 +156,9 @@ public class RedisProperties {
     @Override
     public String toString() {
         StringJoiner joiner = new StringJoiner(", ", "{", "}");
+        if (charset != null) {
+            joiner.add("\"charset\":\"" + charset + "\"");
+        }
         if (store != null) {
             joiner.add("\"store\":" + store);
         }

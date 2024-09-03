@@ -11,7 +11,6 @@ xcache:
         first: ALL
         second: NONE
         infix:
-        codec: jackson
         max-len: 1000
         provider: lettuce
       cache-stat: lettuce
@@ -97,7 +96,6 @@ xcache:
     lettuce:
       factory:
         - id: lettuce
-          charset: UTF-8
           standalone:
             node: 127.0.0.1:6379
             nodes: socket:/tmp/redis.sock, 127.0.0.1:6380

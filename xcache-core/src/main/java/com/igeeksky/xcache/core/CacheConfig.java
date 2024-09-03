@@ -6,6 +6,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 /**
+ * 缓存配置类
+ *
+ * @param <K> 缓存键类型
+ * @param <V> 缓存值类型
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-09
  */

@@ -2,7 +2,7 @@ package com.igeeksky.xcache.spring;
 
 import com.igeeksky.xcache.common.Cache;
 import com.igeeksky.xcache.common.CacheLoader;
-import com.igeeksky.xcache.common.CacheLoaderException;
+import com.igeeksky.xcache.common.CacheLoadingException;
 import com.igeeksky.xcache.common.CacheValue;
 import org.springframework.lang.NonNull;
 
@@ -84,7 +84,7 @@ public class SpringCache implements org.springframework.cache.Cache {
             try {
                 return valueLoader.call();
             } catch (Exception e) {
-                throw new CacheLoaderException("Key:[" + k + "], " + e.getMessage(), e);
+                throw new CacheLoadingException("Key:[" + k + "], " + e.getMessage(), e);
             }
         }
     }

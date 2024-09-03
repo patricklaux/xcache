@@ -7,6 +7,8 @@ import java.nio.charset.Charset;
 import java.util.Objects;
 
 /**
+ * 刷新配置信息
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/26
  */

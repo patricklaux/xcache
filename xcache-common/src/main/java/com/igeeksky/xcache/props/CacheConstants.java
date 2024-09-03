@@ -4,6 +4,8 @@ package com.igeeksky.xcache.props;
 import com.igeeksky.xcache.common.ReferenceType;
 
 /**
+ * 缓存配置项常量
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-20
  */
@@ -80,7 +82,6 @@ public interface CacheConstants {
     String DEFAULT_PREDICATE_PROVIDER = EMBED_CONTAINS_PREDICATE;
 
     String DEFAULT_SYNC_PROVIDER = LETTUCE;
-    String DEFAULT_SYNC_CODEC = JACKSON_CODEC;
     long DEFAULT_SYNC_MAX_LEN = 10000;
 
     String DEFAULT_STAT_PROVIDER = LOG_CACHE_STAT;

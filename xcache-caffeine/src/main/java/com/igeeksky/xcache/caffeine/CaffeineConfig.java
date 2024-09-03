@@ -7,6 +7,8 @@ import com.igeeksky.xtool.core.lang.compress.Compressor;
 
 
 /**
+ * Caffeine 配置项
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/13
  */

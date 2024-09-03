@@ -10,6 +10,9 @@ import com.igeeksky.xtool.core.lang.compress.Compressor;
 import java.util.Arrays;
 
 /**
+ * 外部缓存抽象类
+ *
+ * @param <V> 缓存值类型
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/13
  */

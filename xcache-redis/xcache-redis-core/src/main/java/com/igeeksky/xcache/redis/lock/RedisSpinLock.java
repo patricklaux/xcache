@@ -2,7 +2,6 @@ package com.igeeksky.xcache.redis.lock;
 
 import com.igeeksky.redis.RedisOperator;
 import com.igeeksky.redis.RedisScript;
-import com.igeeksky.xcache.extension.lock.KeyLock;
 import com.igeeksky.xtool.core.lang.codec.StringCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,9 +12,10 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class RedisSpinLock extends KeyLock {
+public class RedisSpinLock implements Lock {
 
     private static final Logger log = LoggerFactory.getLogger(RedisSpinLock.class);
 
@@ -84,7 +84,6 @@ public class RedisSpinLock extends KeyLock {
      */
     public RedisSpinLock(String key, String sid, long leaseTime, StringCodec codec, RedisOperator operator,
                          ScheduledExecutorService scheduler, ExecutorService executor) {
-        super(key);
         this.executor = executor;
         this.scheduler = scheduler;
         this.leaseTime = leaseTime;
@@ -223,7 +222,7 @@ public class RedisSpinLock extends KeyLock {
         } catch (Throwable e) {
             // 一旦出现异常，则不再续期，避免重入计数永不为 0，导致一直续期
             this.stopExpirationTask();
-            log.error("key:[{}] Unlocking failed, possibly due to redis or network issues.", this.getKey(), e);
+            log.error("Unlocking failed, possibly due to redis or network issues.", e);
         } finally {
             innerLock.unlock();
         }

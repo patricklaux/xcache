@@ -10,6 +10,9 @@
     </parent>
 
     <artifactId>xcache-redis-core</artifactId>
+    <name>xcache redis core</name>
+    <description>${project.name}</description>
+    <url>${parent.url}</url>
 
     <dependencies>
         <dependency>
@@ -19,6 +22,10 @@
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
             <artifactId>xcache-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.igeeksky.xcache</groupId>
+            <artifactId>xcache-extension-jackson</artifactId>
         </dependency>
     </dependencies>
 

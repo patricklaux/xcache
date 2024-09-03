@@ -10,6 +10,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>xcache-extension-jackson</artifactId>
+    <name>xcache extension jackson</name>
+    <description>${project.name}</description>
+    <url>${parent.url}</url>
 
     <dependencies>
         <dependency>

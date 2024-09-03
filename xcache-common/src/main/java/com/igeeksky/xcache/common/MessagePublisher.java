@@ -1,13 +1,16 @@
 package com.igeeksky.xcache.common;
 
-import java.util.Map;
-
 /**
+ * 消息发布者
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-11
  */
-public interface MessagePublisher {
+public interface MessagePublisher<T> {
 
-    void publish(byte[] channel, Map<byte[], byte[]> message);
+    /**
+     * @param message 消息
+     */
+    void publish(T message);
 
 }

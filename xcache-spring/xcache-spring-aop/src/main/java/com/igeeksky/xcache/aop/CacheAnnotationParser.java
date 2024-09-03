@@ -10,6 +10,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ * 解析：缓存注解
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-13
  */
@@ -19,37 +21,75 @@ public class CacheAnnotationParser {
         CacheOperation operation = processCacheConfig(targetClass);
 
         List<CacheOperation> results = new ArrayList<>();
+
+        boolean hasCacheable = false;
         if (method.isAnnotationPresent(Cacheable.class)) {
+            hasCacheable = true;
             Cacheable cacheable = method.getAnnotation(Cacheable.class);
             results.add(processCacheable(cacheable, operation));
         }
 
+        boolean hasCacheableAll = false;
         if (method.isAnnotationPresent(CacheableAll.class)) {
+            if (hasCacheable) {
+                throw new IllegalStateException("@CacheableAll and @Cacheable are mutually exclusive");
+            }
+            hasCacheableAll = true;
             CacheableAll cacheableAll = method.getAnnotation(CacheableAll.class);
             results.add(processCacheableAll(cacheableAll, operation));
         }
 
         if (method.isAnnotationPresent(CachePut.class)) {
+            if (hasCacheable) {
+                throw new IllegalStateException("@CachePut and @Cacheable are mutually exclusive");
+            }
+            if (hasCacheableAll) {
+                throw new IllegalStateException("@CachePut and @CacheableAll are mutually exclusive");
+            }
             CachePut cachePut = method.getAnnotation(CachePut.class);
             results.add(processCachePut(cachePut, operation));
         }
 
         if (method.isAnnotationPresent(CachePutAll.class)) {
+            if (hasCacheable) {
+                throw new IllegalStateException("@CachePutAll and @Cacheable are mutually exclusive");
+            }
+            if (hasCacheableAll) {
+                throw new IllegalStateException("@CachePutAll and @CacheableAll are mutually exclusive");
+            }
             CachePutAll cachePutAll = method.getAnnotation(CachePutAll.class);
             results.add(processCachePutAll(cachePutAll, operation));
         }
 
         if (method.isAnnotationPresent(CacheEvict.class)) {
+            if (hasCacheable) {
+                throw new IllegalStateException("@CacheEvict and @Cacheable are mutually exclusive");
+            }
+            if (hasCacheableAll) {
+                throw new IllegalStateException("@CacheEvict and @CacheableAll are mutually exclusive");
+            }
             CacheEvict cacheEvict = method.getAnnotation(CacheEvict.class);
             results.add(processCacheEvict(cacheEvict, operation));
         }
 
         if (method.isAnnotationPresent(CacheEvictAll.class)) {
+            if (hasCacheable) {
+                throw new IllegalStateException("@CacheEvictAll and @Cacheable are mutually exclusive");
+            }
+            if (hasCacheableAll) {
+                throw new IllegalStateException("@CacheEvictAll and @CacheableAll are mutually exclusive");
+            }
             CacheEvictAll cacheEvictAll = method.getAnnotation(CacheEvictAll.class);
             results.add(processCacheEvictAll(cacheEvictAll, operation));
         }
 
         if (method.isAnnotationPresent(CacheClear.class)) {
+            if (hasCacheable) {
+                throw new IllegalStateException("@CacheClear and @Cacheable are mutually exclusive");
+            }
+            if (hasCacheableAll) {
+                throw new IllegalStateException("@CacheClear and @CacheableAll are mutually exclusive");
+            }
             CacheClear cacheClear = method.getAnnotation(CacheClear.class);
             results.add(processCacheClear(cacheClear, operation));
         }

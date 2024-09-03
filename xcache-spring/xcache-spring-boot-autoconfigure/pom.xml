@@ -10,6 +10,9 @@
     </parent>
 
     <artifactId>xcache-spring-boot-autoconfigure</artifactId>
+    <name>xcache spring boot autoconfigure</name>
+    <description>${project.name}</description>
+    <url>${parent.url}</url>
 
     <dependencies>
         <dependency>

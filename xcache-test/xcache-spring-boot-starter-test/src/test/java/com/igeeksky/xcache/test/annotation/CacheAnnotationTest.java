@@ -1,8 +1,8 @@
 package com.igeeksky.xcache.test.annotation;
 
-import com.igeeksky.xcache.test.UserService;
 import com.igeeksky.xcache.domain.Key;
 import com.igeeksky.xcache.domain.User;
+import com.igeeksky.xcache.test.UserService;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -27,7 +27,7 @@ public class CacheAnnotationTest {
 
     @AfterAll
     public static void afterAll() throws InterruptedException {
-        Thread.sleep(10000);
+        Thread.sleep(20000);
     }
 
     /**
@@ -90,20 +90,20 @@ public class CacheAnnotationTest {
         userService.deleteUserByCache(jack02);
 
         // 第一次调用时, condition 为 true，调用方法，并缓存数据
-        User result1 = userService.getUserByKeyCondition(jack02, 0);
-        System.out.println(result1);
-        Assertions.assertEquals(userJack02, result1);
+        User result0 = userService.getUserByKeyCondition(jack02, 0);
+        System.out.println("0: " + result0);
+        Assertions.assertEquals(userJack02, result0);
 
         // 第二次调用时, condition 为 true，不调用方法，读取缓存
-        User result2 = userService.getUserByKeyCondition(jack02, 1);
-        System.out.println(result2);
-        Assertions.assertEquals(userJack02, result2);
+        User result1 = userService.getUserByKeyCondition(jack02, 1);
+        System.out.println("1: " + result1);
+        Assertions.assertEquals(userJack02, result1);
 
         // 第三次调用时, condition 为 false，调用方法，不读取缓存
-        User result3 = userService.getUserByKeyCondition(jack02, 2);
-        System.out.println(result2);
+        User result2 = userService.getUserByKeyCondition(jack02, 2);
+        System.out.println("2: " + result2);
         userJack02.setId("2");
-        Assertions.assertEquals(userJack02, result3);
+        Assertions.assertEquals(userJack02, result2);
     }
 
     @Test
@@ -142,7 +142,7 @@ public class CacheAnnotationTest {
         keyValues.put(jack07, userJack07);
 
         // 删除缓存元素
-        keyValues.forEach((key, user) -> userService.deleteUserByCache(jack04));
+        keyValues.forEach((key, user) -> userService.deleteUserByCache(key));
 
         System.out.println("保存 2个元素--------------------------");
         userService.saveUser(jack04, userJack04);

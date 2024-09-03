@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Objects;
 
 /**
- * <p>配置工具类</p>
+ * 配置工具类
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-20
@@ -188,11 +188,6 @@ public class PropsUtil {
             to.setProvider(provider);
         }
 
-        String serializer = StringUtils.trimToNull(from.getCodec());
-        if (serializer != null) {
-            to.setCodec(serializer);
-        }
-
         to.setParams(from.getParams());
     }
 
@@ -364,7 +359,6 @@ public class PropsUtil {
         props.setSecond(SyncType.NONE);
         props.setMaxLen(CacheConstants.DEFAULT_SYNC_MAX_LEN);
         props.setProvider(CacheConstants.DEFAULT_SYNC_PROVIDER);
-        props.setCodec(CacheConstants.DEFAULT_SYNC_CODEC);
         return props;
     }
 

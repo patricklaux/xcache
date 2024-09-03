@@ -15,23 +15,13 @@ import java.util.Set;
 public class CacheSyncMonitor {
 
     private final String sid;
-
-    /**
-     * sync-channel:cache-name
-     */
-    private final byte[] channel;
-
-    private final SyncMessageCodec codec;
-
-    private final MessagePublisher publisher;
+    private final MessagePublisher<CacheSyncMessage> publisher;
 
     private boolean remove = false;
     private boolean clear = false;
 
-    public CacheSyncMonitor(SyncConfig<?> config, MessagePublisher publisher) {
+    public CacheSyncMonitor(SyncConfig<?> config, MessagePublisher<CacheSyncMessage> publisher) {
         this.sid = config.getSid();
-        this.codec = config.getCodec();
-        this.channel = this.codec.encode(config.getChannel());
         this.publisher = publisher;
         SyncType first = config.getFirst();
         SyncType second = config.getSecond();
@@ -80,7 +70,7 @@ public class CacheSyncMonitor {
     }
 
     public void sendMessage(CacheSyncMessage message) {
-        publisher.publish(channel, codec.encodeMsg(message));
+        publisher.publish(message);
     }
 
 }

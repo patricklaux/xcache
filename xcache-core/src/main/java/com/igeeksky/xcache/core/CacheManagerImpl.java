@@ -15,13 +15,16 @@ import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.contains.ContainsPredicateProvider;
 import com.igeeksky.xcache.extension.contains.EmbedContainsPredicate;
 import com.igeeksky.xcache.extension.lock.*;
-import com.igeeksky.xcache.extension.refresh.CacheRefresh;
+import com.igeeksky.xcache.common.CacheRefresh;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xcache.extension.stat.CacheStatProvider;
 import com.igeeksky.xcache.extension.stat.StatConfig;
-import com.igeeksky.xcache.extension.sync.*;
+import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
+import com.igeeksky.xcache.extension.sync.CacheSyncProvider;
+import com.igeeksky.xcache.extension.sync.SyncConfig;
+import com.igeeksky.xcache.extension.sync.SyncMessageListener;
 import com.igeeksky.xcache.props.*;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.lang.StringUtils;
@@ -35,6 +38,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
 /**
+ * 缓存管理者实现类
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-13
  */
@@ -122,13 +127,13 @@ public class CacheManagerImpl implements CacheManager {
         LockService cacheLock = this.getCacheLock(lockConfig);
 
         StatConfig statConfig = this.buildStatConfig(cacheProps.getCacheStat(), cacheConfig);
-        CodecConfig<K> keyCodecConfig = this.buildKeyCodecConfig(cacheProps.getKeyCodec(), cacheConfig);
+        CodecConfig<K> keyCodecConfig = this.buildKeyCodecConfig(cacheConfig);
         ContainsConfig<K> containsConfig = this.buildContainsConfig(cacheProps.getContainsPredicate(), cacheConfig);
         RefreshConfig refreshConfig = this.buildRefreshConfig(cacheProps.getCacheRefresh(), cacheLock, cacheConfig);
         SyncConfig<V> syncConfig = this.buildSyncConfig(cacheProps.getCacheSync(), stores[0], stores[1], cacheConfig);
 
         ExtendConfig<K, V> extend = ExtendConfig.builder(cacheLoader).cacheLock(cacheLock)
-                .keyCodec(this.getKeyCodec(keyCodecConfig))
+                .keyCodec(this.getKeyCodec(cacheProps.getKeyCodec(), keyCodecConfig))
                 .statMonitor(this.getStatMonitor(statConfig))
                 .syncMonitor(this.getSyncMonitor(syncConfig))
                 .containsPredicate(this.getContainsPredicate(containsConfig))
@@ -278,8 +283,7 @@ public class CacheManagerImpl implements CacheManager {
         CacheSyncProvider provider = syncProviders.get(beanId);
         requireNonNull(provider, () -> "CacheSyncProvider:[" + beanId + "] is undefined");
 
-        String channel = config.getChannel();
-        provider.register(config.getCodec().encode(channel), new SyncMessageListener<>(config));
+        provider.register(config.getChannel(), new SyncMessageListener<>(config));
 
         CacheSyncMonitor monitor = provider.getMonitor(config);
         requireNonNull(monitor, () -> "Unable to get monitor from provider:[" + beanId + "].");
@@ -304,10 +308,8 @@ public class CacheManagerImpl implements CacheManager {
         return store;
     }
 
-    private <K> KeyCodec<K> getKeyCodec(CodecConfig<K> config) {
+    private <K> KeyCodec<K> getKeyCodec(String beanId, CodecConfig<K> config) {
         String name = config.getName();
-        String beanId = config.getProvider();
-
         CodecProvider provider = codecProviders.get(beanId);
         requireNonNull(provider, () -> "Cache:[" + name + "], CodecProvider:[" + beanId + "] is undefined.");
 
@@ -317,22 +319,8 @@ public class CacheManagerImpl implements CacheManager {
         return keyCodec;
     }
 
-    private <V> Codec<Set<V>> getSetCodec(CodecConfig<V> config) {
+    private <V> Codec<V> getCodec(String beanId, CodecConfig<V> config) {
         String name = config.getName();
-        String beanId = config.getProvider();
-
-        CodecProvider provider = codecProviders.get(beanId);
-        requireNonNull(provider, () -> "Cache:[" + name + "], CodecProvider:[" + beanId + "] is undefined.");
-
-        Codec<Set<V>> codec = provider.getSetCodec(config.getCharset(), config.getType());
-        requireNonNull(codec, () -> "Cache:[" + name + "], unable to get codec from provider:[" + beanId + "].");
-
-        return codec;
-    }
-
-    private <V> Codec<V> getCodec(CodecConfig<V> config) {
-        String name = config.getName();
-        String beanId = config.getProvider();
 
         CodecProvider provider = codecProviders.get(beanId);
         requireNonNull(provider, () -> "Cache:[" + name + "], CodecProvider:[" + beanId + "] is undefined.");
@@ -343,11 +331,10 @@ public class CacheManagerImpl implements CacheManager {
         return codec;
     }
 
-    private <K, V> CodecConfig<K> buildKeyCodecConfig(String provider, CacheConfig<K, V> config) {
+    private <K, V> CodecConfig<K> buildKeyCodecConfig(CacheConfig<K, V> config) {
         return CodecConfig.builder(config.getKeyType(), config.getKeyParams())
                 .name(config.getName())
                 .charset(config.getCharset())
-                .provider(provider)
                 .build();
     }
 
@@ -393,18 +380,8 @@ public class CacheManagerImpl implements CacheManager {
     }
 
     private <K, V> SyncConfig<V> buildSyncConfig(SyncProps props, Store<V> first, Store<V> second, CacheConfig<K, V> config) {
-        String name = config.getName();
-        String codec = props.getCodec();
-        requireNonNull(codec, () -> "Cache:[" + name + "], cache-sync:codec must not be null or empty.");
-
-        CodecConfig<String> codecConfig = CodecConfig.builder(String.class)
-                .name(config.getName())
-                .charset(config.getCharset())
-                .provider(codec)
-                .build();
-
         return SyncConfig.builder(first, second)
-                .name(name)
+                .name(config.getName())
                 .application(config.getApp())
                 .sid(config.getSid())
                 .charset(config.getCharset())
@@ -413,10 +390,10 @@ public class CacheManagerImpl implements CacheManager {
                 .provider(props.getProvider())
                 .maxLen(props.getMaxLen())
                 .infix(props.getInfix())
-                .codec(new SyncMessageCodec(this.getSetCodec(codecConfig), codecConfig.getCharset()))
                 .params(props.getParams())
                 .build();
     }
+
 
     private <K, V> StoreConfig<V> buildStoreConfig(StoreProps storeProps, CacheConfig<K, V> config) {
         String provider = storeProps.getProvider();
@@ -453,12 +430,11 @@ public class CacheManagerImpl implements CacheManager {
         }
 
         CodecConfig<V> codecConfig = CodecConfig.builder(config.getValueType(), config.getValueParams())
-                .provider(provider)
                 .name(config.getName())
                 .charset(config.getCharset())
                 .build();
 
-        return this.getCodec(codecConfig);
+        return this.getCodec(provider, codecConfig);
     }
 
     private Compressor getCompressor(CompressProps props) {

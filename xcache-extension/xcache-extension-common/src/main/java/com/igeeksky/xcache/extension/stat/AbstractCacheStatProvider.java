@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 /**
- * 缓存指标采集
+ * 缓存指标采集统计抽象类
  *
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-25

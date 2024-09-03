@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * 缓存统计指标
+ * 缓存指标采集类
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-11

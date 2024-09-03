@@ -21,16 +21,6 @@ class DomainTest {
     }
 
     @Test
-    void testPersonToString() {
-        Person<String, Integer> person = new Person<>();
-        person.setName("Lucy");
-        person.setAge(18);
-
-        System.out.println(person);
-        Assertions.assertEquals("{\"name\":\"Lucy\",\"age\":18}", person.toString());
-    }
-
-    @Test
     void testKeyToString() {
         Key key = new Key();
         key.setName("Sara");

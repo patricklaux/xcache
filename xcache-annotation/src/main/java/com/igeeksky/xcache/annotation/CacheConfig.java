@@ -5,10 +5,7 @@ import java.lang.annotation.*;
 /**
  * 缓存公共配置
  * <p>
- * 同一个类中，大多数情况下不同方法会使用同一个缓存，
- * 为了避免在多个方法级注解中重复配置相同参数，可以采用此注解。
- * <p>
- * 如果方法注解使用的缓存与此注解配置的相同，则方法级注解的所有同名属性保持默认即可，无需再配置。
+ * 如果一个类的多个方法使用同一缓存，可用此注解配置公共属性，方法级注解的所有同名属性保持默认即可。
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-12
@@ -21,25 +18,29 @@ public @interface CacheConfig {
     /**
      * 缓存名称
      */
-    String name();
+    String name() default "";
 
     /**
-     * 键的类型
+     * 键类型
      */
-    Class<?> keyType();
+    Class<?> keyType() default Undefined.class;
 
     /**
-     * 键的泛型参数类型
+     * 键泛型参数
+     * <p>
+     * 用于较复杂的带泛型参数的键类型的序列化处理
      */
     Class<?>[] keyParams() default {};
 
     /**
-     * 值的类型
+     * 值类型
      */
-    Class<?> valueType();
+    Class<?> valueType() default Undefined.class;
 
     /**
-     * 值的泛型的类型
+     * 值泛型参数
+     * <p>
+     * 用于较复杂的带泛型参数的值类型的序列化处理
      */
     Class<?>[] valueParams() default {};
 

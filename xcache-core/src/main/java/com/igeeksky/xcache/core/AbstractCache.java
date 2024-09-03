@@ -2,21 +2,26 @@ package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.common.Cache;
 import com.igeeksky.xcache.common.CacheLoader;
+import com.igeeksky.xcache.common.CacheRefresh;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
-import com.igeeksky.xcache.extension.lock.KeyLock;
 import com.igeeksky.xcache.extension.lock.LockService;
-import com.igeeksky.xcache.extension.refresh.CacheRefresh;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.collection.Sets;
+import com.igeeksky.xtool.core.lang.Assert;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
 
 /**
+ * 缓存层抽象类
+ *
+ * @param <K> 缓存键类型
+ * @param <V> 缓存值类型
  * @author Patrick.Lau
  * @since 0.0.4 2021-09-19
  */
@@ -31,8 +36,8 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     private final KeyCodec<K> keyCodec;
     private final CacheStatMonitor statMonitor;
 
-    private final CacheRefresh cacheRefresh;
-    private final CacheLoader<K, V> cacheLoader;
+    private CacheRefresh cacheRefresh;
+    private CacheLoader<K, V> cacheLoader;
     private final LockService lockService;
     private final ContainsPredicate<K> containsPredicate;
 
@@ -51,9 +56,20 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
         this.lockService = extend.getCacheLock();
         this.containsPredicate = extend.getContainsPredicate();
-        this.cacheLoader = extend.getCacheLoader();
-        this.cacheRefresh = extend.getCacheRefresh();
+        setCacheRefresh(extend.getCacheRefresh(), extend.getCacheLoader());
+    }
+
+    @Override
+    public void setCacheLoader(CacheLoader<K, V> cacheLoader) {
+        this.cacheLoader = cacheLoader;
+    }
+
+    @Override
+    public void setCacheRefresh(CacheRefresh cacheRefresh, CacheLoader<K, V> cacheLoader) {
+        this.cacheLoader = cacheLoader;
+        this.cacheRefresh = cacheRefresh;
         if (this.cacheRefresh != null) {
+            Assert.notNull(this.cacheLoader, "Cache refresh depends on the cache loader, cacheLoader must not be null");
             this.cacheRefresh.setConsumer(this::consume);
         }
     }
@@ -64,7 +80,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             this.doPut(storeKey, null);
             return;
         }
-        KeyLock lock = this.lockService.acquire(storeKey);
+        Lock lock = this.lockService.acquire(storeKey);
         try {
             if (lock.tryLock()) {
                 try {
@@ -151,7 +167,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     private V load(K key, String storeKey, CacheLoader<K, V> cacheLoader) {
-        KeyLock lock = this.lockService.acquire(storeKey);
+        Lock lock = this.lockService.acquire(storeKey);
         try {
             lock.lock();
             try {

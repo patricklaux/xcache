@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.redis.refresh;
 
 import com.igeeksky.redis.RedisOperator;
-import com.igeeksky.xcache.extension.refresh.CacheRefresh;
+import com.igeeksky.xcache.common.CacheRefresh;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xtool.core.concurrent.VirtualThreadFactory;

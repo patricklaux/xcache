@@ -1,6 +1,8 @@
-package com.igeeksky.xcache.extension.sync;
+package com.igeeksky.xcache.redis.sync;
 
 
+import com.igeeksky.xcache.extension.sync.CacheSyncMessage;
+import com.igeeksky.xcache.redis.StreamMessageCodec;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.lang.ArrayUtils;
 import com.igeeksky.xtool.core.lang.ByteArray;
@@ -13,31 +15,37 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * 缓存数据同步广播消息编解码
+ * <p>
+ * 字段名和字段值分别编解码，转换成键值对形式存入 map
+ * <p>
+ * 主要用于适配 RedisStream 数据结构，便于在可视化界面查看
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/22
  */
-public class SyncMessageCodec {
+public class RedisCacheSyncMessageCodec implements StreamMessageCodec<CacheSyncMessage> {
 
     private final StringCodec stringCodec;
-    private final Codec<Set<String>> codec;
+    private final Codec<Set<String>> setCodec;
 
     private final ByteArray sid;
     private final ByteArray type;
     private final ByteArray keys;
 
-    public SyncMessageCodec(Codec<Set<String>> codec, Charset charset) {
-        this.codec = codec;
-        this.stringCodec = StringCodec.getInstance(charset);
+    public RedisCacheSyncMessageCodec(Codec<Set<String>> setCodec, StringCodec stringCodec) {
+        this.setCodec = setCodec;
+        this.stringCodec = stringCodec;
         this.sid = ByteArray.of(stringCodec.encode("sid"));
         this.type = ByteArray.of(stringCodec.encode("type"));
         this.keys = ByteArray.of(stringCodec.encode("keys"));
     }
 
-    public byte[] encode(String key) {
+    public byte[] encodeKey(String key) {
         return stringCodec.encode(key);
     }
 
-    public String decode(byte[] key) {
+    public String decodeKey(byte[] key) {
         return stringCodec.decode(key);
     }
 
@@ -47,7 +55,7 @@ public class SyncMessageCodec {
         body.put(type.getValue(), stringCodec.encode(Integer.toString(message.getType())));
         Set<String> keys = message.getKeys();
         if (CollectionUtils.isNotEmpty(keys)) {
-            body.put(this.keys.getValue(), codec.encode(keys));
+            body.put(this.keys.getValue(), setCodec.encode(keys));
         }
         return body;
     }
@@ -67,7 +75,7 @@ public class SyncMessageCodec {
         }
         byte[] keysBytes = temp.get(keys);
         if (ArrayUtils.isNotEmpty(keysBytes)) {
-            Set<String> keys = codec.decode(keysBytes);
+            Set<String> keys = setCodec.decode(keysBytes);
             message.setKeys(keys);
         }
         return message;

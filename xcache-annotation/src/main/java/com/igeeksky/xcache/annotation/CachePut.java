@@ -5,13 +5,22 @@ import org.springframework.aot.hint.annotation.Reflective;
 import java.lang.annotation.*;
 
 /**
- * <p>更新源数据后需更新缓存数据，此时使用 CachePut 注解。</p>
- * 使用此注解的方法总会被调用，方法返回结果会被放入缓存（更新缓存数据）。
+ * 缓存数据更新注解
+ * <p>
+ * 添加此注解的方法，将更新指定的单个缓存元素。
+ * <p>
+ * 如果一个类中使用多个缓存注解，name, keyType, keyParams, valueType, valueParams
+ * 这五个公共属性可用类注解 {@link CacheConfig} 配置，此注解保持默认即可。
+ * <p>
+ * <b>注意</b>：<p>
+ * 1. 请勿与 {@link Cacheable} 或 {@link CacheableAll} 注解用于同一方法。<p>
+ * 2. 项目编译时必须使用 -parameters 记录方法参数信息，否则无法正确解析 SpEL表达式。<br>
+ * 如使用 maven-compiler-plugin，必须配置：{@code <parameters>true</parameters> }
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-12
  */
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @Documented
@@ -19,77 +28,63 @@ import java.lang.annotation.*;
 public @interface CachePut {
 
     /**
-     * SpEL表达式，用于从参数中提取 key
+     * SpEL表达式，用于从参数中提取键。
+     * <p>
+     * 如果未配置，采用被注解方法的第一个参数作为键。
      */
     String key() default "";
 
     /**
-     * SpEL表达式，用于从参数中提取 value
+     * SpEL表达式，用于从参数中提取待缓存的值。
+     * <p>
+     * 如果未配置，采用被注解方法的第二个参数作为值。
      */
     String value() default "";
 
     /**
-     * SpEL表达式，方法执行前：当表达式结果为 true 时，缓存(get and put)
+     * SpEL表达式
+     * <p>
+     * 如果未配置，condition 表达式结果默认为 true。
+     * <p>
+     * 如果 condition 表达式结果为 true，且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (put)
      */
     String condition() default "";
 
     /**
-     * SpEL表达式，方法执行后：当表达式结果为 true 时，不缓存
+     * SpEL表达式
+     * <p>
+     * 如果未配置，unless 表达式结果默认为 false。
+     * <p>
+     * 如果 condition 表达式结果为 true，且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (put)
      */
     String unless() default "";
 
     /**
      * 缓存名称
-     * <p>
-     * 如果类级别已注解 {@link CacheConfig}，name, keyType, keyParams, valueType, valueParams
-     * 这五个属性无需再在此配置，将使用 {@link CacheConfig} 中的所有同名属性。<p>
-     * 如果类级别未注解 {@link CacheConfig} ，或此方法的 name 与 {@link CacheConfig} 的不同，
-     * 则至少需配置 name, keyType, valueType 这三个属性，否则将抛出 {@link IllegalArgumentException}
-     * <p>
-     * <b>其它异常情况</b><p>
-     * 当此注解的 name 为空，或与 {@link CacheConfig} 的 name 相同时：
-     * 如果此注解的 keyType, keyParams, valueType, valueParams 存在非默认值，
-     * 且与 类注解 {@link CacheConfig} 中的同名属性不同，将抛出 {@link IllegalArgumentException}
      */
     String name() default "";
 
     /**
      * 键类型
-     * <p>
-     * 如果未配置，使用 {@link CacheConfig} 中的同名属性。
      */
     Class<?> keyType() default Undefined.class;
 
     /**
-     * 键的泛型参数类型
+     * 键泛型参数
      * <p>
-     * 如果未配置，使用 {@link CacheConfig} 中的同名属性。
-     * <p>
-     * <b>其它异常情况</b><p>
-     * 如果 name 为空，或 name 与 {@link CacheConfig} 相同，
-     * 但此属性非默认值且与 {@link CacheConfig} 不同，抛出 {@link IllegalArgumentException}
+     * 用于较复杂的带泛型参数的键类型的序列化处理
      */
     Class<?>[] keyParams() default {};
 
     /**
      * 值类型
-     * <p>
-     * 如果未配置，使用 {@link CacheConfig} 中的同名属性。
-     * <p>
-     * <b>其它异常情况</b><p>
-     * 如果 name 为空，或 name 与 {@link CacheConfig} 相同，
-     * 但此属性非默认值且与 {@link CacheConfig} 不同，抛出 {@link IllegalArgumentException}
      */
     Class<?> valueType() default Undefined.class;
 
     /**
-     * 值的泛型参数类型
+     * 值泛型参数
      * <p>
-     * 如果未配置，使用 {@link CacheConfig} 中的同名属性。
-     * <p>
-     * <b>其它异常情况</b><p>
-     * 如果 name 为空，或 name 与 {@link CacheConfig} 相同，
-     * 但此属性非默认值且与 {@link CacheConfig} 不同，抛出 {@link IllegalArgumentException}
+     * 用于较复杂的带泛型参数的值类型的序列化处理
      */
     Class<?>[] valueParams() default {};
 

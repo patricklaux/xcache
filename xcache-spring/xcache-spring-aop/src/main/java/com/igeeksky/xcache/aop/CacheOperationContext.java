@@ -1,8 +1,8 @@
 package com.igeeksky.xcache.aop;
 
 import com.igeeksky.xcache.annotation.operation.*;
-import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.Cache;
+import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.CacheManager;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.collection.Maps;
@@ -19,6 +19,10 @@ import java.util.*;
 
 
 /**
+ * 缓存操作上下文
+ * <p>
+ * 根据缓存注解，执行具体的缓存操作（或调用目标方法），并返回最终结果
+ *
  * @author patrick
  * @since 0.0.4 2024/2/22
  */
@@ -65,90 +69,94 @@ public class CacheOperationContext {
     }
 
     public Object execute() throws Throwable {
-        List<Runnable> afterInvokeRunners = new LinkedList<>();
         CacheableOperation cacheableOperation = (CacheableOperation) operations.get(CacheableOperation.class);
         if (cacheableOperation != null) {
-            processCacheable(cacheableOperation, afterInvokeRunners);
+            this.processCacheable(cacheableOperation);
+            return this.result;
         }
 
         CacheableAllOperation cacheableAllOperation = (CacheableAllOperation) operations.get(CacheableAllOperation.class);
         if (cacheableAllOperation != null) {
-            processCacheableAll(cacheableAllOperation, afterInvokeRunners);
+            this.processCacheableAll(cacheableAllOperation);
+            return this.result;
         }
 
+        List<Runnable> afterInvokeRunners = new ArrayList<>();
         CachePutOperation cachePutOperation = (CachePutOperation) operations.get(CachePutOperation.class);
         if (cachePutOperation != null) {
-            processCachePut(cachePutOperation, afterInvokeRunners);
+            this.processCachePut(cachePutOperation, afterInvokeRunners);
         }
 
         CachePutAllOperation cachePutAllOperation = (CachePutAllOperation) operations.get(CachePutAllOperation.class);
         if (cachePutAllOperation != null) {
-            processCachePutAll(cachePutAllOperation, afterInvokeRunners);
+            this.processCachePutAll(cachePutAllOperation, afterInvokeRunners);
         }
 
         CacheEvictOperation cacheEvictOperation = (CacheEvictOperation) operations.get(CacheEvictOperation.class);
         if (cacheEvictOperation != null) {
-            processCacheEvict(cacheEvictOperation, afterInvokeRunners);
+            this.processCacheEvict(cacheEvictOperation, afterInvokeRunners);
         }
 
         CacheEvictAllOperation cacheEvictAllOperation = (CacheEvictAllOperation) operations.get(CacheEvictAllOperation.class);
         if (cacheEvictAllOperation != null) {
-            processCacheEvictAll(cacheEvictAllOperation, afterInvokeRunners);
+            this.processCacheEvictAll(cacheEvictAllOperation, afterInvokeRunners);
         }
 
         CacheClearOperation cacheClearOperation = (CacheClearOperation) operations.get(CacheClearOperation.class);
         if (cacheClearOperation != null) {
-            processCacheClear(cacheClearOperation, afterInvokeRunners);
+            this.processCacheClear(cacheClearOperation, afterInvokeRunners);
         }
 
-        proceed();
+        this.proceed();
 
         afterInvokeRunners.forEach(Runnable::run);
 
-        return result;
+        return this.result;
     }
 
-    private void processCacheable(CacheableOperation operation, List<Runnable> afterInvokeRunners) {
+    private void processCacheable(CacheableOperation operation) throws Throwable {
         // 提取 Key
-        Object key = getKey(operation.getCondition(), operation.getKey());
+        Object key = this.getKey(operation.getCondition(), operation.getKey());
         if (key == null) {
+            this.proceed();
             return;
         }
 
         // 根据注解获取 cache 实例
-        Cache<Object, Object> cache = getOrCreateCache(operation);
+        Cache<Object, Object> cache = this.getOrCreateCache(operation);
 
         // 读取缓存，然后判断是否已缓存值
         CacheValue<Object> cacheValue = cache.get(key);
         if (cacheValue != null) {
-            result = cacheValue.getValue();
-            proceed = true;
+            this.result = cacheValue.getValue();
             return;
         }
 
-        afterInvokeRunners.add(() -> {
-            // 根据注解 unless 判断方法执行结果是否缓存
-            if (unlessPassing(operation.getUnless())) {
-                cache.put(key, result);
-            }
-        });
+        this.proceed();
+
+        // 根据注解 unless 判断方法执行结果是否缓存
+        if (this.unlessPassing(operation.getUnless())) {
+            cache.put(key, this.result);
+        }
     }
 
-    private void processCacheableAll(CacheableAllOperation operation, List<Runnable> afterInvokeRunners) {
+    private void processCacheableAll(CacheableAllOperation operation) throws Throwable {
         // 使用 SpEL 获取 keys 集合
-        Set<Object> keys = (Set<Object>) getKey(operation.getCondition(), operation.getKeys());
+        Set<Object> keys = (Set<Object>) this.getKey(operation.getCondition(), operation.getKeys());
         if (CollectionUtils.isEmpty(keys)) {
+            this.proceed();
             return;
         }
 
         // 根据注解获取对应的 cache 实例，并从缓存读取数据
-        Cache<Object, Object> cache = getOrCreateCache(operation);
+        Cache<Object, Object> cache = this.getOrCreateCache(operation);
         Map<Object, CacheValue<Object>> cachedKeyValues = cache.getAll(keys);
 
         // 移除已缓存的键，然后再从数据源查询数据
         keys.removeAll(cachedKeyValues.keySet());
 
-        Map<Object, Object> temp = new HashMap<>(cachedKeyValues.size() / 3 * 4 + 1);
+        // 将缓存数据添加到临时 Map 中
+        Map<Object, Object> temp = Maps.newHashMap(cachedKeyValues.size());
         cachedKeyValues.forEach((k, cv) -> {
             if (cv.hasValue()) {
                 temp.put(k, cv.getValue());
@@ -156,67 +164,80 @@ public class CacheOperationContext {
         });
 
         if (keys.isEmpty()) {
-            result = temp;
-            proceed = true;
+            this.result = temp;
+            return;
+        }
+
+        this.proceed();
+
+        // 根据注解 unless 判断是否缓存方法执行结果
+        Map<Object, Object> resultMap = ((Map<Object, Object>) this.result);
+        if (Maps.isEmpty(resultMap)) {
+            this.result = temp;
+            return;
+        }
+
+        if (this.unlessPassing(operation.getUnless())) {
+            cache.putAll(resultMap);
+        }
+
+        // 缓存数据添加到最终结果
+        if (!temp.isEmpty()) {
+            resultMap.putAll(temp);
+        }
+    }
+
+    private void processCachePut(CachePutOperation operation, List<Runnable> afterInvokeRunners) {
+        if (!this.conditionPassing(operation.getCondition())) {
             return;
         }
 
         afterInvokeRunners.add(() -> {
-            // 根据注解 unless 判断是否缓存方法执行结果
-            Map<Object, Object> resultMap = ((Map<Object, Object>) result);
-            if (Maps.isNotEmpty(resultMap)) {
-                if (unlessPassing(operation.getUnless())) {
-                    cache.putAll(resultMap);
-                }
-                if (!temp.isEmpty()) {
-                    resultMap.putAll(temp);
-                }
-            } else {
-                result = temp;
+            if (!this.unlessPassing(operation.getUnless())) {
+                return;
             }
+            Object key = this.generateKey(operation.getKey());
+            if (key == null) {
+                return;
+            }
+            Cache<Object, Object> cache = this.getOrCreateCache(operation);
+            cache.put(key, this.computeValue(operation.getValue()));
         });
     }
 
-    private void processCachePut(CachePutOperation operation, List<Runnable> afterInvokeRunners) {
-        if (conditionPassing(operation.getCondition())) {
-            afterInvokeRunners.add(() -> {
-                if (unlessPassing(operation.getUnless())) {
-                    Object key = generateKey(operation.getKey());
-                    Object value = computeValue(operation.getValue());
-                    Cache<Object, Object> cache = getOrCreateCache(operation);
-                    cache.put(key, value);
-                }
-            });
-        }
-    }
-
     private void processCachePutAll(CachePutAllOperation operation, List<Runnable> afterInvokeRunners) {
-        if (conditionPassing(operation.getCondition())) {
-            afterInvokeRunners.add(() -> {
-                if (unlessPassing(operation.getUnless())) {
-                    Map<Object, Object> keyValues = (Map<Object, Object>) generateKey(operation.getKeyValues());
-                    Cache<Object, Object> cache = getOrCreateCache(operation);
-                    cache.putAll(keyValues);
-                }
-            });
+        if (!this.conditionPassing(operation.getCondition())) {
+            return;
         }
+
+        afterInvokeRunners.add(() -> {
+            if (!this.unlessPassing(operation.getUnless())) {
+                return;
+            }
+            Map<Object, Object> keyValues = (Map<Object, Object>) this.generateKey(operation.getKeyValues());
+            if (Maps.isEmpty(keyValues)) {
+                return;
+            }
+            Cache<Object, Object> cache = this.getOrCreateCache(operation);
+            cache.putAll(keyValues);
+        });
     }
 
     private void processCacheEvict(CacheEvictOperation operation, List<Runnable> afterInvokeRunners) {
-        Object key = getKey(operation.getCondition(), operation.getKey());
+        Object key = this.getKey(operation.getCondition(), operation.getKey());
         if (key == null) {
             return;
         }
 
-        Cache<Object, Object> cache = getOrCreateCache(operation);
-
         if (operation.isBeforeInvocation()) {
+            Cache<Object, Object> cache = this.getOrCreateCache(operation);
             cache.evict(key);
             return;
         }
 
         afterInvokeRunners.add(() -> {
-            if (unlessPassing(operation.getUnless())) {
+            if (this.unlessPassing(operation.getUnless())) {
+                Cache<Object, Object> cache = this.getOrCreateCache(operation);
                 cache.evict(key);
             }
         });
@@ -224,20 +245,20 @@ public class CacheOperationContext {
 
     private void processCacheEvictAll(CacheEvictAllOperation operation, List<Runnable> afterInvokeRunners) {
         // 使用 SpEL 提取 keys 集合
-        Set<Object> keys = (Set<Object>) getKey(operation.getCondition(), operation.getKeys());
+        Set<Object> keys = (Set<Object>) this.getKey(operation.getCondition(), operation.getKeys());
         if (CollectionUtils.isEmpty(keys)) {
             return;
         }
 
-        Cache<Object, Object> cache = getOrCreateCache(operation);
-
         if (operation.isBeforeInvocation()) {
+            Cache<Object, Object> cache = this.getOrCreateCache(operation);
             cache.evictAll(keys);
             return;
         }
 
         afterInvokeRunners.add(() -> {
-            if (unlessPassing(operation.getUnless())) {
+            if (this.unlessPassing(operation.getUnless())) {
+                Cache<Object, Object> cache = this.getOrCreateCache(operation);
                 cache.evictAll(keys);
             }
         });
@@ -245,20 +266,22 @@ public class CacheOperationContext {
 
 
     private void processCacheClear(CacheClearOperation operation, List<Runnable> afterInvokeRunners) {
-        if (conditionPassing(operation.getCondition())) {
-            Cache<Object, Object> cache = getOrCreateCache(operation);
-
-            if (operation.isBeforeInvocation()) {
-                cache.clear();
-                return;
-            }
-
-            afterInvokeRunners.add(() -> {
-                if (unlessPassing(operation.getUnless())) {
-                    cache.clear();
-                }
-            });
+        if (!this.conditionPassing(operation.getCondition())) {
+            return;
         }
+
+        if (operation.isBeforeInvocation()) {
+            Cache<Object, Object> cache = this.getOrCreateCache(operation);
+            cache.clear();
+            return;
+        }
+
+        afterInvokeRunners.add(() -> {
+            if (this.unlessPassing(operation.getUnless())) {
+                Cache<Object, Object> cache = this.getOrCreateCache(operation);
+                cache.clear();
+            }
+        });
     }
 
     private Object getKey(String condition, String key) {
@@ -268,28 +291,33 @@ public class CacheOperationContext {
         return null;
     }
 
-
+    /**
+     * 根据表达式生成一个唯一键
+     *
+     * @param expression 表达式如果为空或无文本内容，则返回方法参数中的第一个对象
+     * @return 如果无法根据表达式生成键，则返回参数中的第一个对象
+     */
     private Object generateKey(String expression) {
+        // 检查表达式是否有文本内容
         if (StringUtils.hasText(expression)) {
-            MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(target, method, args, parameterNameDiscoverer);
-            return expressionEvaluator.key(expression, methodKey, context);
+            // 创建一个基于方法的评估上下文，用于解析表达式
+            MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(this.target, this.method,
+                    this.args, this.parameterNameDiscoverer);
+            // 使用表达式评估器生成键
+            return this.expressionEvaluator.key(expression, this.methodKey, context);
         }
-        if (args.length > 0) {
-            return args[0];
-        }
-        return null;
+        // 如果表达式为空或无文本内容，直接返回参数中的第一个对象
+        return this.args[0];
     }
 
     private Object computeValue(String expression) {
         if (StringUtils.hasText(expression)) {
-            MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(target, method, args, parameterNameDiscoverer);
-            context.setVariable("result", result);
-            return expressionEvaluator.value(expression, methodKey, context);
+            MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(this.target, this.method,
+                    this.args, this.parameterNameDiscoverer);
+            context.setVariable("result", this.result);
+            return this.expressionEvaluator.value(expression, this.methodKey, context);
         }
-        if (args.length > 1) {
-            return args[1];
-        }
-        return null;
+        return this.args[1];
     }
 
     /**
@@ -297,30 +325,37 @@ public class CacheOperationContext {
      */
     private boolean conditionPassing(String expression) {
         if (StringUtils.hasText(expression)) {
-            MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(target, method, args, parameterNameDiscoverer);
-            return expressionEvaluator.condition(expression, methodKey, context);
+            MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(this.target, this.method,
+                    this.args, this.parameterNameDiscoverer);
+            return this.expressionEvaluator.condition(expression, this.methodKey, context);
         }
         return true;
     }
 
     private boolean unlessPassing(String expression) {
         if (StringUtils.hasText(expression)) {
-            MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(target, method, args, parameterNameDiscoverer);
-            context.setVariable("result", result);
-            return !expressionEvaluator.unless(expression, methodKey, context);
+            MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(this.target, this.method,
+                    this.args, this.parameterNameDiscoverer);
+            context.setVariable("result", this.result);
+            return !this.expressionEvaluator.unless(expression, this.methodKey, context);
         }
         return true;
     }
 
+    /**
+     * 执行被注解方法
+     *
+     * @throws Throwable 被注解方法执行过程中可能抛出的异常
+     */
     private void proceed() throws Throwable {
-        if (!proceed) {
-            result = invocation.proceed();
-            proceed = true;
+        if (!this.proceed) {
+            this.result = this.invocation.proceed();
+            this.proceed = true;
         }
     }
 
     private Cache<Object, Object> getOrCreateCache(CacheOperation operation) {
-        return (Cache<Object, Object>) cacheManager.getOrCreateCache(operation.getName(),
+        return (Cache<Object, Object>) this.cacheManager.getOrCreateCache(operation.getName(),
                 operation.getKeyType(), operation.getKeyParams(),
                 operation.getValueType(), operation.getValueParams());
     }

@@ -1,13 +1,12 @@
 package com.igeeksky.xcache.extension.sync;
 
-import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.common.MessageListener;
+import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.props.SyncType;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -18,7 +17,7 @@ import java.util.Set;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-11
  */
-public class SyncMessageListener<V> implements MessageListener {
+public class SyncMessageListener<V> implements MessageListener<CacheSyncMessage> {
 
     private static final Logger log = LoggerFactory.getLogger(SyncMessageListener.class);
 
@@ -32,13 +31,11 @@ public class SyncMessageListener<V> implements MessageListener {
     private final boolean secondClear;
     private final boolean firstRemove;
     private final boolean secondRemove;
-    private final SyncMessageCodec codec;
 
     public SyncMessageListener(SyncConfig<V> config) {
         this.sid = config.getSid();
         this.first = config.getFirstStore();
         this.second = config.getSecondStore();
-        this.codec = config.getCodec();
         this.firstClear = isClear(first, config.getFirst());
         this.secondClear = isClear(second, config.getSecond());
         this.firstRemove = isRemove(first, config.getFirst());
@@ -46,15 +43,13 @@ public class SyncMessageListener<V> implements MessageListener {
         this.sync = firstClear || secondClear;
     }
 
-    @Override
-    public void onMessage(Map<byte[], byte[]> source) {
+    public void onMessage(CacheSyncMessage message) {
         if (log.isDebugEnabled()) {
-            log.debug("onMessage: {}", codec.decodeMsg(source));
+            log.debug("onMessage: {}", message);
         }
 
         if (!sync) return;
 
-        CacheSyncMessage message = codec.decodeMsg(source);
         String sourceId = message.getSid();
         if (Objects.equals(sid, sourceId)) {
             return;

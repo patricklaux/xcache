@@ -11,6 +11,8 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class RedisStatConfig {
 
+    private final RedisCacheStatMessageCodec codec;
+
     private final long maxLen;
 
     private final long period;
@@ -22,11 +24,16 @@ public class RedisStatConfig {
     private final ScheduledExecutorService scheduler;
 
     private RedisStatConfig(Builder builder) {
+        this.codec = builder.codec;
         this.maxLen = builder.maxLen;
         this.period = builder.period;
         this.suffix = builder.suffix;
         this.operator = builder.operator;
         this.scheduler = builder.scheduler;
+    }
+
+    public RedisCacheStatMessageCodec getCodec() {
+        return codec;
     }
 
     public long getPeriod() {
@@ -58,10 +65,14 @@ public class RedisStatConfig {
         private long period = 60000;
         private String suffix;
         private RedisOperator operator;
+        private RedisCacheStatMessageCodec codec;
         private ScheduledExecutorService scheduler;
+
+
 
         public Builder maxLen(Long maxLen) {
             if (maxLen != null) {
+                Assert.isTrue(maxLen > 0L, "maxLen must be greater than 0");
                 this.maxLen = maxLen;
             }
             return this;
@@ -69,6 +80,7 @@ public class RedisStatConfig {
 
         public Builder period(Long period) {
             if (period != null) {
+                Assert.isTrue(period > 0L, "period must be greater than 0");
                 this.period = period;
             }
             return this;
@@ -83,6 +95,12 @@ public class RedisStatConfig {
         public Builder operator(RedisOperator operator) {
             Assert.notNull(operator, "RedisOperator must not be null");
             this.operator = operator;
+            return this;
+        }
+
+        public Builder codec(RedisCacheStatMessageCodec codec) {
+            Assert.notNull(codec, "Codec must not be null");
+            this.codec = codec;
             return this;
         }
 

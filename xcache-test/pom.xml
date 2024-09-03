@@ -11,6 +11,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>xcache-test</artifactId>
+    <name>xcache test</name>
+    <description>${project.name}</description>
+    <url>${parent.url}</url>
     <packaging>pom</packaging>
 
     <modules>
@@ -18,5 +21,22 @@
         <module>xcache-test-base</module>
         <module>xcache-spring-boot-starter-test</module>
     </modules>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.version}</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <encoding>${maven.compiler.encoding}</encoding>
+                    <parameters>true</parameters>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

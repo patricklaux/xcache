@@ -1,6 +1,9 @@
 package com.igeeksky.xcache.common;
 
 /**
+ * 具有过期信息的缓存值包装类
+ *
+ * @param <V> 缓存值类型
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-16
  */

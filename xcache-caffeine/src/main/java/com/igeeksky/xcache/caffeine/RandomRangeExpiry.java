@@ -9,7 +9,7 @@ import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * <p><b>存活时间随机策略</b></p>
+ * <p><b>随机存活时间策略</b></p>
  * <p>创建（更新）后的最大存活时间：expireAfterCreate 的设定值</p>
  * <p>创建（更新）后的最小存活时间：expireAfterCreate * 0.8</p>
  * <p>访问后的存活时间：expiresAfterAccess 与 当前剩余存活时间 两者的大值，</p>

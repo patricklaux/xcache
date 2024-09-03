@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 缓存存储配置
+ * 存储层配置（用于接收用户配置文件）
  *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/11

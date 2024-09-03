@@ -1,9 +1,8 @@
 package com.igeeksky.xcache.redis.refresh;
 
 import com.igeeksky.redis.RedisOperator;
-import com.igeeksky.xcache.extension.lock.KeyLock;
 import com.igeeksky.xcache.extension.lock.LockService;
-import com.igeeksky.xcache.extension.refresh.CacheRefresh;
+import com.igeeksky.xcache.common.CacheRefresh;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.extension.refresh.RefreshTask;
 import com.igeeksky.xtool.core.collection.ConcurrentHashSet;
@@ -15,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 
 /**
@@ -34,7 +34,7 @@ public class RedisCacheRefresh implements CacheRefresh {
     private final byte[] refreshPeriodKey;
     private final String refreshLockKey;
 
-    private final LockService cacheLock;
+    private final LockService lockService;
     private Consumer<String> consumer;
 
     private final StringCodec stringCodec;
@@ -53,7 +53,7 @@ public class RedisCacheRefresh implements CacheRefresh {
         this.name = config.getName();
         this.stringCodec = StringCodec.getInstance(config.getCharset());
         this.period = config.getPeriod();
-        this.cacheLock = config.getCacheLock();
+        this.lockService = config.getCacheLock();
         this.refreshKey = stringCodec.encode(config.getRefreshKey());
         this.refreshLockKey = config.getRefreshLockKey();
         this.refreshPeriodKey = stringCodec.encode(config.getRefreshPeriodKey());
@@ -167,48 +167,52 @@ public class RedisCacheRefresh implements CacheRefresh {
                 return;
             }
 
-            KeyLock lock = cacheLock.acquire(this.refreshLockKey);
-            if (lock.tryLock()) {
-                try {
-                    // 2. 如未到达刷新周期，结束此次任务
-                    if (!isTimeToRefresh()) return;
+            Lock lock = lockService.acquire(this.refreshLockKey);
+            try {
+                if (lock.tryLock()) {
+                    try {
+                        // 2. 如未到达刷新周期，结束此次任务
+                        if (!isTimeToRefresh()) return;
 
-                    // 3. 从 Redis 获取全部访问记录
-                    Map<byte[], byte[]> hgetall = connection.hgetall(refreshKey);
-                    if (Maps.isEmpty(hgetall)) {
-                        return;
-                    }
-
-                    // 保存超过最大访问时限的键集
-                    Set<byte[]> deleted = new HashSet<>();
-
-                    // 保存提交的数据刷新任务
-                    List<Future<?>> tasks = new ArrayList<>(hgetall.size());
-
-                    // 4. 提交回源查询任务
-                    long now = System.currentTimeMillis();
-                    for (Map.Entry<byte[], byte[]> entry : hgetall.entrySet()) {
-                        long ttl = Long.parseLong(stringCodec.decode(entry.getValue()));
-                        if (now > ttl) {
-                            deleted.add(entry.getKey());
-                            continue;
+                        // 3. 从 Redis 获取全部访问记录
+                        Map<byte[], byte[]> hgetall = connection.hgetall(refreshKey);
+                        if (Maps.isEmpty(hgetall)) {
+                            return;
                         }
-                        RefreshTask task = new RefreshTask(stringCodec.decode(entry.getKey()), this.consumer);
-                        tasks.add(this.executor.submit(task));
+
+                        // 保存超过最大访问时限的键集
+                        Set<byte[]> deleted = new HashSet<>();
+
+                        // 保存提交的数据刷新任务
+                        List<Future<?>> tasks = new ArrayList<>(hgetall.size());
+
+                        // 4. 提交回源查询任务
+                        long now = System.currentTimeMillis();
+                        for (Map.Entry<byte[], byte[]> entry : hgetall.entrySet()) {
+                            long ttl = Long.parseLong(stringCodec.decode(entry.getValue()));
+                            if (now > ttl) {
+                                deleted.add(entry.getKey());
+                                continue;
+                            }
+                            RefreshTask task = new RefreshTask(stringCodec.decode(entry.getKey()), this.consumer);
+                            tasks.add(this.executor.submit(task));
+                        }
+
+                        futuresRef.set(tasks.toArray(new Future[0]));
+
+                        // 5. 删除已超过最大访问时限的键集
+                        if (!deleted.isEmpty()) {
+                            connection.hdel(refreshKey, deleted.toArray(new byte[deleted.size()][]));
+                        }
+
+                        // 6. 更新下次数据刷新时间，避免其它应用实例重复执行
+                        updateRefreshTime();
+                    } finally {
+                        lock.unlock();
                     }
-
-                    futuresRef.set(tasks.toArray(new Future[0]));
-
-                    // 5. 删除已超过最大访问时限的键集
-                    if (!deleted.isEmpty()) {
-                        connection.hdel(refreshKey, deleted.toArray(new byte[deleted.size()][]));
-                    }
-
-                    // 6. 更新下次数据刷新时间，避免其它应用实例重复执行
-                    updateRefreshTime();
-                } finally {
-                    lock.unlock();
                 }
+            } finally {
+                lockService.release(this.refreshLockKey);
             }
         } catch (Throwable e) {
             log.error("Cache:[{}] syncDataSource has error. {}", name, e.getMessage());

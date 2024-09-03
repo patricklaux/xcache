@@ -1,9 +1,7 @@
 package com.igeeksky.xcache.core;
 
 
-import com.igeeksky.xcache.common.Cache;
-import com.igeeksky.xcache.common.CacheLoader;
-import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.common.*;
 import com.igeeksky.xtool.core.collection.Maps;
 
 import java.util.Map;
@@ -11,7 +9,11 @@ import java.util.Set;
 
 /**
  * 无操作缓存
+ * <p>
+ * 当配置禁用缓存时，将使用此缓存实现类，避免改动代码
  *
+ * @param <K> 缓存键类型
+ * @param <V> 缓存值类型
  * @author Patrick.Lau
  * @since 0.0.4 2021-09-19
  */
@@ -22,17 +24,18 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     private final Class<?>[] keyParams;
     private final Class<V> valueType;
     private final Class<?>[] valueParams;
-    private final CacheLoader<K, V> loader;
+    private CacheLoader<K, V> cacheLoader;
+    private CacheWriter<K, V> cacheWriter;
 
     private final String message;
 
-    public NoOpCache(CacheConfig<K, V> config, CacheLoader<K, V> loader) {
+    public NoOpCache(CacheConfig<K, V> config, CacheLoader<K, V> cacheLoader) {
         this.name = config.getName();
         this.keyType = config.getKeyType();
         this.keyParams = config.getKeyParams();
         this.valueType = config.getValueType();
         this.valueParams = config.getValueParams();
-        this.loader = loader;
+        this.cacheLoader = cacheLoader;
         this.message = "Cache:[" + this.name + "], method:[%s], %s";
     }
 
@@ -59,8 +62,8 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     @Override
     public V getOrLoad(K key) {
         requireNonNull(key, "getOrLoad", "key must not be null");
-        if (loader != null) {
-            return loader.load(key);
+        if (cacheLoader != null) {
+            return cacheLoader.load(key);
         }
         return null;
     }
@@ -86,8 +89,8 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     @Override
     public Map<K, V> getOrLoadAll(Set<? extends K> keys) {
         requireNonNull(keys, "getOrLoadAll", "keys must not be null");
-        if (loader != null) {
-            return loader.loadAll(keys);
+        if (cacheLoader != null) {
+            return cacheLoader.loadAll(keys);
         }
         return Maps.newHashMap(0);
     }
@@ -106,23 +109,45 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
+    public void setCacheLoader(CacheLoader<K, V> cacheLoader) {
+        this.cacheLoader = cacheLoader;
+    }
+
+    @Override
+    public void setCacheRefresh(CacheRefresh cacheRefresh, CacheLoader<K, V> cacheLoader) {
+        this.cacheLoader = cacheLoader;
+    }
+
+    @Override
     public void put(K key, V value) {
         requireNonNull(key, "put", "key must not be null");
+        if (cacheWriter != null && value != null) {
+            cacheWriter.write(key, value);
+        }
     }
 
     @Override
     public void putAll(Map<? extends K, ? extends V> keyValues) {
         requireNonNull(keyValues, "putAll", "keyValues must not be null");
+        if (cacheWriter != null && !keyValues.isEmpty()) {
+            cacheWriter.writeAll(keyValues);
+        }
     }
 
     @Override
     public void evict(K key) {
         requireNonNull(key, "evict", "key must not be null");
+        if (cacheWriter != null) {
+            cacheWriter.delete(key);
+        }
     }
 
     @Override
     public void evictAll(Set<? extends K> keys) {
         requireNonNull(keys, "evictAll", "keys must not be null");
+        if (cacheWriter != null && !keys.isEmpty()) {
+            cacheWriter.deleteAll(keys);
+        }
     }
 
     @Override

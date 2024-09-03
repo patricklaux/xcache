@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Caffeine 作为内嵌缓存
+ * Caffeine 作为存储层
  *
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-22
