@@ -38,7 +38,7 @@ public class SpringCache implements org.springframework.cache.Cache {
 
     @Override
     public ValueWrapper get(@NonNull Object key) {
-        return toValueWrapper(cache.get(key));
+        return this.toValueWrapper(cache.get(key));
     }
 
     private ValueWrapper toValueWrapper(CacheValue<Object> wrapper) {
@@ -47,7 +47,7 @@ public class SpringCache implements org.springframework.cache.Cache {
 
     @Override
     public <V> V get(@NonNull Object key, Class<V> type) {
-        return fromStoreValue(cache.get(key));
+        return this.fromStoreValue(cache.get(key));
     }
 
     @Override

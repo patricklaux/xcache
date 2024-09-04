@@ -9,12 +9,15 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+import java.util.Set;
+
 /**
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/28
  */
 @Service
-public class UserLoaderService {
+public class UserLoaderWriterService {
 
     private Cache<Key, User> cache;
 
@@ -26,16 +29,36 @@ public class UserLoaderService {
         cache = cacheManager.getOrCreateCache("user", Key.class, User.class);
     }
 
-    public void delete(Key key) {
-        cache.evict(key);
-    }
-
     public CacheValue<User> get(Key key) {
         return cache.get(key);
     }
 
     public User getOrLoad(Key key) {
         return cache.getOrLoad(key);
+    }
+
+    public void put(Key key, User value) {
+        cache.put(key, value);
+    }
+
+    public void putAll(Map<Key, User> keyValues) {
+        cache.putAll(keyValues);
+    }
+
+    public Map<Key, CacheValue<User>> getAll(Set<Key> keys) {
+        return cache.getAll(keys);
+    }
+
+    public Map<Key, User> getOrLoadAll(Set<Key> keys) {
+        return cache.getOrLoadAll(keys);
+    }
+
+    public void delete(Key key) {
+        cache.evict(key);
+    }
+
+    public void deleteAll(Set<Key> keys) {
+        cache.evictAll(keys);
     }
 
 }

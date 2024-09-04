@@ -92,6 +92,8 @@ public interface Cache<K, V> extends Base<K, V> {
 
     void setCacheLoader(CacheLoader<K, V> cacheLoader);
 
+    void setCacheWriter(CacheWriter<K, V> cacheWriter);
+
     void setCacheRefresh(CacheRefresh cacheRefresh, CacheLoader<K, V> cacheLoader);
 
 }

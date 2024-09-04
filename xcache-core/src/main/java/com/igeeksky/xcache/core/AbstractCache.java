@@ -1,15 +1,11 @@
 package com.igeeksky.xcache.core;
 
-import com.igeeksky.xcache.common.Cache;
-import com.igeeksky.xcache.common.CacheLoader;
-import com.igeeksky.xcache.common.CacheRefresh;
-import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.common.*;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.collection.Sets;
-import com.igeeksky.xtool.core.lang.Assert;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
 
 import java.util.HashSet;
@@ -38,6 +34,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
     private CacheRefresh cacheRefresh;
     private CacheLoader<K, V> cacheLoader;
+    private CacheWriter<K, V> cacheWriter;
     private final LockService lockService;
     private final ContainsPredicate<K> containsPredicate;
 
@@ -56,6 +53,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
         this.lockService = extend.getCacheLock();
         this.containsPredicate = extend.getContainsPredicate();
+        setCacheWriter(extend.getCacheWriter());
         setCacheRefresh(extend.getCacheRefresh(), extend.getCacheLoader());
     }
 
@@ -65,33 +63,56 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public void setCacheRefresh(CacheRefresh cacheRefresh, CacheLoader<K, V> cacheLoader) {
-        this.cacheLoader = cacheLoader;
-        this.cacheRefresh = cacheRefresh;
-        if (this.cacheRefresh != null) {
-            Assert.notNull(this.cacheLoader, "Cache refresh depends on the cache loader, cacheLoader must not be null");
-            this.cacheRefresh.setConsumer(this::consume);
-        }
+    public void setCacheWriter(CacheWriter<K, V> cacheWriter) {
+        this.cacheWriter = new CacheWriterProxy<>(cacheWriter);
     }
 
+    @Override
+    public void setCacheRefresh(CacheRefresh cacheRefresh, CacheLoader<K, V> cacheLoader) {
+        if (cacheRefresh != null) {
+            requireNonNull(cacheLoader, "setCacheRefresh",
+                    "Cache refresh depends on the cache loader, cacheLoader must not be null");
+        }
+        this.cacheLoader = cacheLoader;
+        this.cacheRefresh = new CacheRefreshProxy(cacheRefresh, this::consume);
+    }
+
+    /**
+     * 缓存刷新任务处理
+     * <p>
+     * 根据传入的 key，回源查询并存入缓存
+     *
+     * @param storeKey 缓存的键，用于标识缓存项
+     */
     private void consume(String storeKey) {
+        // 从storeKey中恢复出缓存键
         K key = this.fromStoreKey(storeKey);
+
+        // 如果缓存项不满足预定义的包含条件，则执行放入操作
         if (!this.containsPredicate.test(this.name, key)) {
             this.doPut(storeKey, null);
             return;
         }
+
+        // 获取锁服务以确保并发控制
         Lock lock = this.lockService.acquire(storeKey);
         try {
+            // 尝试获取锁，以确保在并发环境下只有一个线程能加载数据
             if (lock.tryLock()) {
                 try {
+                    // 调用缓存加载器加载数据
                     V value = this.cacheLoader.load(key);
+                    // 将加载的数据放入缓存
                     this.doPut(storeKey, value);
+                    // 更新统计信息
                     this.statMonitor.incLoads(value);
                 } finally {
+                    // 释放锁
                     lock.unlock();
                 }
             }
         } finally {
+            // 释放锁服务
             this.lockService.release(storeKey);
         }
     }
@@ -125,8 +146,8 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     public CacheValue<V> get(K key) {
         requireNonNull(key, "get", "key must not be null.");
 
-        String storeKey = toStoreKey(key);
-        recordAccess(storeKey);
+        String storeKey = this.toStoreKey(key);
+        this.cacheRefresh.access(storeKey);
         return this.doGet(storeKey);
     }
 
@@ -136,7 +157,12 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     public V getOrLoad(K key) {
         requireNonNull(key, "getOrLoad", "key must not be null.");
 
-        return this.doGetOrLoad(key, toStoreKey(key), cacheLoader);
+        if (this.cacheLoader == null) {
+            CacheValue<V> cacheValue = this.get(key);
+            return (cacheValue != null) ? cacheValue.getValue() : null;
+        }
+
+        return this.doGetOrLoad(key, this.cacheLoader);
     }
 
     @Override
@@ -144,26 +170,24 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         requireNonNull(key, "get", "key must not be null.");
         requireNonNull(cacheLoader, "get", "cacheLoader must not be null");
 
-        return this.doGetOrLoad(key, toStoreKey(key), cacheLoader);
+        return this.doGetOrLoad(key, cacheLoader);
     }
 
-    private V doGetOrLoad(K key, String storeKey, CacheLoader<K, V> cacheLoader) {
-        recordAccess(storeKey);
+    private V doGetOrLoad(K key, CacheLoader<K, V> cacheLoader) {
+        String storeKey = this.toStoreKey(key);
+        this.cacheRefresh.access(storeKey);
 
         CacheValue<V> cacheValue = this.doGet(storeKey);
         if (cacheValue != null) {
             return cacheValue.getValue();
         }
 
-        if (cacheLoader != null) {
-            if (!this.containsPredicate.test(this.name, key)) {
-                this.doPut(storeKey, null);
-                return null;
-            }
-            return this.load(key, storeKey, cacheLoader);
+        if (!this.containsPredicate.test(this.name, key)) {
+            this.doPut(storeKey, null);
+            return null;
         }
 
-        return null;
+        return this.load(key, storeKey, cacheLoader);
     }
 
     private V load(K key, String storeKey, CacheLoader<K, V> cacheLoader) {
@@ -184,12 +208,6 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             }
         } finally {
             this.lockService.release(storeKey);
-        }
-    }
-
-    private void recordAccess(String storeKey) {
-        if (cacheRefresh != null) {
-            cacheRefresh.access(storeKey);
         }
     }
 
@@ -275,10 +293,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             keyMapping.put(toStoreKey(key), key);
         }
 
-        if (cacheRefresh != null) {
-            cacheRefresh.accessAll(keyMapping.keySet());
-        }
-
+        this.cacheRefresh.accessAll(keyMapping.keySet());
         return keyMapping;
     }
 
@@ -302,6 +317,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     @Override
     public void put(K key, V value) {
         requireNonNull(key, "put", "key must not be null.");
+        this.cacheWriter.write(key, value);
         this.doPut(toStoreKey(key), value);
     }
 
@@ -320,6 +336,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             kvs.put(toStoreKey(key), value);
         });
 
+        this.cacheWriter.writeAll(keyValues);
         this.doPutAll(kvs);
     }
 
@@ -328,13 +345,11 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     @Override
     public void evict(K key) {
         requireNonNull(key, "evict", "key must not be null.");
-
         String storeKey = toStoreKey(key);
-        this.doEvict(storeKey);
 
-        if (cacheRefresh != null) {
-            cacheRefresh.remove(storeKey);
-        }
+        this.cacheWriter.delete(key);
+        this.doEvict(storeKey);
+        this.cacheRefresh.remove(storeKey);
     }
 
     protected abstract void doEvict(String key);
@@ -352,26 +367,24 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             set.add(toStoreKey(key));
         }
 
+        this.cacheWriter.deleteAll(keys);
         this.doEvictAll(set);
-
-        if (cacheRefresh != null) {
-            cacheRefresh.removeAll(set);
-        }
+        this.cacheRefresh.removeAll(set);
     }
 
     protected abstract void doEvictAll(Set<String> keys);
 
     protected String toStoreKey(K key) {
-        return keyCodec.encode(key);
+        return this.keyCodec.encode(key);
     }
 
     protected K fromStoreKey(String storeKey) {
-        return keyCodec.decode(storeKey);
+        return this.keyCodec.decode(storeKey);
     }
 
     protected void requireNonNull(Object obj, String method, String tips) {
         if (obj == null) {
-            throw new IllegalArgumentException(String.format(message, method, tips));
+            throw new IllegalArgumentException(String.format(this.message, method, tips));
         }
     }
 

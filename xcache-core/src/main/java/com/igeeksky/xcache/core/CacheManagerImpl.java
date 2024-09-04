@@ -1,9 +1,6 @@
 package com.igeeksky.xcache.core;
 
-import com.igeeksky.xcache.common.Cache;
-import com.igeeksky.xcache.common.CacheConfigException;
-import com.igeeksky.xcache.common.CacheLoader;
-import com.igeeksky.xcache.common.Store;
+import com.igeeksky.xcache.common.*;
 import com.igeeksky.xcache.core.store.StoreConfig;
 import com.igeeksky.xcache.core.store.StoreProvider;
 import com.igeeksky.xcache.extension.codec.CodecConfig;
@@ -15,7 +12,6 @@ import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.contains.ContainsPredicateProvider;
 import com.igeeksky.xcache.extension.contains.EmbedContainsPredicate;
 import com.igeeksky.xcache.extension.lock.*;
-import com.igeeksky.xcache.common.CacheRefresh;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
@@ -57,6 +53,7 @@ public class CacheManagerImpl implements CacheManager {
     private final ConcurrentMap<String, Cache<?, ?>> cached = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<String, CacheLoader<?, ?>> loaders = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, CacheWriter<?, ?>> writers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, StoreProvider> storeProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CacheSyncProvider> syncProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CacheRefreshProvider> refreshProviders = new ConcurrentHashMap<>();
@@ -117,10 +114,11 @@ public class CacheManagerImpl implements CacheManager {
         stores[2] = this.getStore(this.buildStoreConfig(cacheProps.getThird(), cacheConfig));
 
         CacheLoader<K, V> cacheLoader = this.getCacheLoader(name);
+        CacheWriter<K, V> cacheWriter = this.getCacheWriter(name);
 
         int count = count(stores);
         if (count == 0) {
-            return new NoOpCache<>(cacheConfig, cacheLoader);
+            return new NoOpCache<>(cacheConfig, cacheLoader, cacheWriter);
         }
 
         LockConfig lockConfig = this.buildLockConfig(cacheProps.getCacheLock(), cacheConfig);
@@ -132,16 +130,19 @@ public class CacheManagerImpl implements CacheManager {
         RefreshConfig refreshConfig = this.buildRefreshConfig(cacheProps.getCacheRefresh(), cacheLock, cacheConfig);
         SyncConfig<V> syncConfig = this.buildSyncConfig(cacheProps.getCacheSync(), stores[0], stores[1], cacheConfig);
 
-        ExtendConfig<K, V> extend = ExtendConfig.builder(cacheLoader).cacheLock(cacheLock)
+        ExtendConfig<K, V> extend = ExtendConfig.builder(cacheLoader)
+                .cacheWriter(cacheWriter)
+                .cacheLock(cacheLock)
                 .keyCodec(this.getKeyCodec(cacheProps.getKeyCodec(), keyCodecConfig))
                 .statMonitor(this.getStatMonitor(statConfig))
                 .syncMonitor(this.getSyncMonitor(syncConfig))
                 .containsPredicate(this.getContainsPredicate(containsConfig))
-                .cacheRefresh((cacheLoader != null) ? this.getCacheRefresh(refreshConfig) : null)
+                .cacheRefresh(this.getCacheRefresh(refreshConfig))
                 .build();
 
         return buildCache(cacheConfig, extend, stores, count);
     }
+
 
     private static <K, V> Cache<K, V> buildCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend,
                                                  Store<V>[] stores, int count) {
@@ -257,6 +258,10 @@ public class CacheManagerImpl implements CacheManager {
 
     private <K, V> CacheLoader<K, V> getCacheLoader(String name) {
         return (CacheLoader<K, V>) loaders.get(name);
+    }
+
+    private <K, V> CacheWriter<K, V> getCacheWriter(String name) {
+        return (CacheWriter<K, V>) writers.get(name);
     }
 
     private CacheRefresh getCacheRefresh(RefreshConfig config) {
@@ -504,6 +509,10 @@ public class CacheManagerImpl implements CacheManager {
 
     public void addCacheLoader(String beanId, CacheLoader<?, ?> loader) {
         this.loaders.put(beanId, loader);
+    }
+
+    public void addCacheWriter(String beanId, CacheWriter<?, ?> writer) {
+        this.writers.put(beanId, writer);
     }
 
     public void addProvider(String beanId, CacheRefreshProvider provider) {

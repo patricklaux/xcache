@@ -1,8 +1,8 @@
 package com.igeeksky.xcache.redis.refresh;
 
 import com.igeeksky.redis.RedisOperator;
-import com.igeeksky.xcache.extension.lock.LockService;
 import com.igeeksky.xcache.common.CacheRefresh;
+import com.igeeksky.xcache.extension.lock.LockService;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.extension.refresh.RefreshTask;
 import com.igeeksky.xtool.core.collection.ConcurrentHashSet;
@@ -66,13 +66,18 @@ public class RedisCacheRefresh implements CacheRefresh {
     @Override
     public void access(String key) {
         this.activeAccessed.get().put(key, getTtl());
+        this.activeDeleted.get().remove(key);
     }
 
     @Override
     public void accessAll(Set<String> keys) {
         long ttl = getTtl();
+        Set<String> deleted = this.activeDeleted.get();
         Map<String, Long> accessed = this.activeAccessed.get();
-        keys.forEach(key -> accessed.put(key, ttl));
+        for (String key : keys) {
+            accessed.put(key, ttl);
+            deleted.remove(key);
+        }
     }
 
     private long getTtl() {

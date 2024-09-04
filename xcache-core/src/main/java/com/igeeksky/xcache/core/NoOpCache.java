@@ -29,13 +29,14 @@ public class NoOpCache<K, V> implements Cache<K, V> {
 
     private final String message;
 
-    public NoOpCache(CacheConfig<K, V> config, CacheLoader<K, V> cacheLoader) {
+    public NoOpCache(CacheConfig<K, V> config, CacheLoader<K, V> cacheLoader, CacheWriter<K, V> cacheWriter) {
         this.name = config.getName();
         this.keyType = config.getKeyType();
         this.keyParams = config.getKeyParams();
         this.valueType = config.getValueType();
         this.valueParams = config.getValueParams();
-        this.cacheLoader = cacheLoader;
+        this.setCacheLoader(cacheLoader);
+        this.setCacheWriter(cacheWriter);
         this.message = "Cache:[" + this.name + "], method:[%s], %s";
     }
 
@@ -60,12 +61,18 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public V getOrLoad(K key) {
-        requireNonNull(key, "getOrLoad", "key must not be null");
-        if (cacheLoader != null) {
-            return cacheLoader.load(key);
-        }
-        return null;
+    public void setCacheLoader(CacheLoader<K, V> cacheLoader) {
+        this.cacheLoader = cacheLoader;
+    }
+
+    @Override
+    public void setCacheWriter(CacheWriter<K, V> cacheWriter) {
+        this.cacheWriter = new CacheWriterProxy<>(cacheWriter);
+    }
+
+    @Override
+    public void setCacheRefresh(CacheRefresh cacheRefresh, CacheLoader<K, V> cacheLoader) {
+        this.cacheLoader = cacheLoader;
     }
 
     @Override
@@ -80,10 +87,25 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
+    public V getOrLoad(K key) {
+        requireNonNull(key, "getOrLoad", "key must not be null");
+        if (cacheLoader != null) {
+            return cacheLoader.load(key);
+        }
+        return null;
+    }
+
+    @Override
     public V get(K key, CacheLoader<K, V> cacheLoader) {
         requireNonNull(key, "get", "key must not be null");
         requireNonNull(cacheLoader, "get", "cacheLoader must not be null");
         return cacheLoader.load(key);
+    }
+
+    @Override
+    public Map<K, CacheValue<V>> getAll(Set<? extends K> keys) {
+        requireNonNull(keys, "getAll", "keys must not be null");
+        return Maps.newHashMap(0);
     }
 
     @Override
@@ -96,12 +118,6 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public Map<K, CacheValue<V>> getAll(Set<? extends K> keys) {
-        requireNonNull(keys, "getAll", "keys must not be null");
-        return Maps.newHashMap(0);
-    }
-
-    @Override
     public Map<K, V> getAll(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
         requireNonNull(keys, "getAll", "keys must not be null");
         requireNonNull(cacheLoader, "getAll", "cacheLoader must not be null");
@@ -109,45 +125,27 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public void setCacheLoader(CacheLoader<K, V> cacheLoader) {
-        this.cacheLoader = cacheLoader;
-    }
-
-    @Override
-    public void setCacheRefresh(CacheRefresh cacheRefresh, CacheLoader<K, V> cacheLoader) {
-        this.cacheLoader = cacheLoader;
-    }
-
-    @Override
     public void put(K key, V value) {
         requireNonNull(key, "put", "key must not be null");
-        if (cacheWriter != null && value != null) {
-            cacheWriter.write(key, value);
-        }
+        cacheWriter.write(key, value);
     }
 
     @Override
     public void putAll(Map<? extends K, ? extends V> keyValues) {
         requireNonNull(keyValues, "putAll", "keyValues must not be null");
-        if (cacheWriter != null && !keyValues.isEmpty()) {
-            cacheWriter.writeAll(keyValues);
-        }
+        cacheWriter.writeAll(keyValues);
     }
 
     @Override
     public void evict(K key) {
         requireNonNull(key, "evict", "key must not be null");
-        if (cacheWriter != null) {
-            cacheWriter.delete(key);
-        }
+        cacheWriter.delete(key);
     }
 
     @Override
     public void evictAll(Set<? extends K> keys) {
         requireNonNull(keys, "evictAll", "keys must not be null");
-        if (cacheWriter != null && !keys.isEmpty()) {
-            cacheWriter.deleteAll(keys);
-        }
+        cacheWriter.deleteAll(keys);
     }
 
     @Override
@@ -159,4 +157,5 @@ public class NoOpCache<K, V> implements Cache<K, V> {
             throw new IllegalArgumentException(String.format(message, method, tips));
         }
     }
+
 }
