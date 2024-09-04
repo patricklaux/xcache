@@ -18,6 +18,7 @@
 -[X] 【测试】 Lettuce 配置测试
 -[X] 【开发】 Lettuce unixSocket
 -[X] 【开发】 注册 MavenCentral
+-[X] 【开发】 CacheBuilder 构造 Cache 实例
 
 ### 待完成任务
 
@@ -25,7 +26,6 @@
 -[ ] 【文档】 Guide，Reference
 -[ ] 【开发】 SpringCacheAdapter
 -[ ] 【开发】 xcache-jedis 项目
--[ ] 【开发】 CacheBuilder 构造 Cache 实例
 -[ ] 【开发】 cacheable & cacheableAll 不能与其它注解共同用于同一个方法 
 
 '''

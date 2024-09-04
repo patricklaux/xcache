@@ -116,7 +116,7 @@ public class CacheManagerImpl implements CacheManager {
         CacheLoader<K, V> cacheLoader = this.getCacheLoader(name);
         CacheWriter<K, V> cacheWriter = this.getCacheWriter(name);
 
-        int count = count(stores);
+        int count = CacheBuilder.count(stores);
         if (count == 0) {
             return new NoOpCache<>(cacheConfig, cacheLoader, cacheWriter);
         }
@@ -130,7 +130,7 @@ public class CacheManagerImpl implements CacheManager {
         RefreshConfig refreshConfig = this.buildRefreshConfig(cacheProps.getCacheRefresh(), cacheLock, cacheConfig);
         SyncConfig<V> syncConfig = this.buildSyncConfig(cacheProps.getCacheSync(), stores[0], stores[1], cacheConfig);
 
-        ExtendConfig<K, V> extend = ExtendConfig.builder(cacheLoader)
+        ExtendConfig<K, V> extendConfig = ExtendConfig.builder(cacheLoader)
                 .cacheWriter(cacheWriter)
                 .cacheLock(cacheLock)
                 .keyCodec(this.getKeyCodec(cacheProps.getKeyCodec(), keyCodecConfig))
@@ -140,29 +140,12 @@ public class CacheManagerImpl implements CacheManager {
                 .cacheRefresh(this.getCacheRefresh(refreshConfig))
                 .build();
 
-        return buildCache(cacheConfig, extend, stores, count);
-    }
-
-
-    private static <K, V> Cache<K, V> buildCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend,
-                                                 Store<V>[] stores, int count) {
-        if (count == 1) {
-            return new OneLevelCache<>(config, extend, stores);
-        } else if (count == 2) {
-            return new TwoLevelCache<>(config, extend, stores);
-        } else {
-            return new ThreeLevelCache<>(config, extend, stores);
-        }
-    }
-
-    private static <V> int count(Store<V>[] stores) {
-        int count = 0;
-        for (Store<V> store : stores) {
-            if (store != null) {
-                count++;
-            }
-        }
-        return count;
+        return CacheBuilder.builder(cacheConfig)
+                .extendConfig(extendConfig)
+                .firstStore(stores[0])
+                .secondStore(stores[1])
+                .thirdStore(stores[2])
+                .build();
     }
 
     /**
@@ -387,7 +370,7 @@ public class CacheManagerImpl implements CacheManager {
     private <K, V> SyncConfig<V> buildSyncConfig(SyncProps props, Store<V> first, Store<V> second, CacheConfig<K, V> config) {
         return SyncConfig.builder(first, second)
                 .name(config.getName())
-                .application(config.getApp())
+                .app(config.getApp())
                 .sid(config.getSid())
                 .charset(config.getCharset())
                 .first(props.getFirst())
