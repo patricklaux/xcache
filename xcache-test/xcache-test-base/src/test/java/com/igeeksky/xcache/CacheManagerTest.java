@@ -7,7 +7,12 @@ import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.CacheManagerImpl;
 import com.igeeksky.xcache.core.ComponentRegister;
 import com.igeeksky.xcache.domain.User;
+import com.igeeksky.xcache.extension.codec.JdkCodecProvider;
+import com.igeeksky.xcache.extension.compress.DeflaterCompressorProvider;
+import com.igeeksky.xcache.extension.compress.GzipCompressorProvider;
+import com.igeeksky.xcache.extension.contains.EmbedContainsPredicateProvider;
 import com.igeeksky.xcache.extension.jackson.JacksonCodecProvider;
+import com.igeeksky.xcache.extension.lock.EmbedCacheLockProvider;
 import com.igeeksky.xcache.props.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,17 +67,11 @@ class CacheManagerTest {
         ComponentRegister register = new ComponentRegister(scheduler, 4000L);
 
         cacheManager = new CacheManagerImpl(application, register, templatesMap, propsMap);
-
-        register.embedContainsPredicate(cacheManager);
-        register.embedCacheLock(cacheManager);
-        register.deflaterCompressor(cacheManager);
-        register.gzipCompressor(cacheManager);
-        register.jdkCodec(cacheManager);
-
-        // cacheManager.addProvider("lettuceCacheSyncManager", new LettuceCacheSyncManager());
-        // cacheManager.addProvider("lettuceCacheStoreProvider", new LettuceCacheStoreProvider());
-
-
+        cacheManager.addProvider(CacheConstants.DEFAULT_PREDICATE_PROVIDER, EmbedContainsPredicateProvider.getInstance());
+        cacheManager.addProvider(CacheConstants.DEFAULT_LOCK_PROVIDER, EmbedCacheLockProvider.getInstance());
+        cacheManager.addProvider(CacheConstants.DEFLATER_COMPRESSOR, DeflaterCompressorProvider.getInstance());
+        cacheManager.addProvider(CacheConstants.GZIP_COMPRESSOR, GzipCompressorProvider.getInstance());
+        cacheManager.addProvider(CacheConstants.JDK_CODEC, JdkCodecProvider.getInstance());
         cacheManager.addProvider(CacheConstants.JACKSON_CODEC, JacksonCodecProvider.getInstance());
         cacheManager.addProvider(CacheConstants.CAFFEINE_STORE, new CaffeineStoreProvider(null, null));
 

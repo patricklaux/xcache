@@ -25,6 +25,7 @@
         <module>xcache-redis-spring-boot-autoconfigure</module>
         <module>xcache-lettuce-spring-boot-autoconfigure</module>
         <module>xcache-spring-boot-starter</module>
+        <module>xcache-spring-adapter-autoconfigure</module>
     </modules>
 
 </project>

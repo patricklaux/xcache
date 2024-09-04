@@ -31,59 +31,59 @@ public class CacheLoaderTest {
         Key key = new Key(10, "Lucy001");
         User user = new User("Lucy001", "Lucy001", 10);
 
-        // 0. Ê×ÏÈÉ¾³ı»º´æ¼°Êı¾İÔ´Êı¾İ£¬±ÜÃâÓ°Ïì²âÊÔ
+        // 0. é¦–å…ˆåˆ é™¤ç¼“å­˜åŠæ•°æ®æºæ•°æ®ï¼Œé¿å…å½±å“æµ‹è¯•
         loaderWriterService.delete(key);
 
-        // 1. ½ö±£´æµ½Êı¾İÔ´
+        // 1. ä»…ä¿å­˜åˆ°æ•°æ®æº
         database.put(key, user);
 
-        // 1.1 Êı¾İÔ´²»Îª¿Õ
+        // 1.1 æ•°æ®æºä¸ä¸ºç©º
         Assertions.assertEquals(user, database.get(key));
 
-        // 1.2 ½ö¶ÁÈ¡»º´æ£¬»º´æÎŞÊı¾İ£¬²»Ö´ĞĞ CacheLoader£¬·µ»Ø¿Õ
+        // 1.2 ä»…è¯»å–ç¼“å­˜ï¼Œç¼“å­˜æ— æ•°æ®ï¼Œä¸æ‰§è¡Œ CacheLoaderï¼Œè¿”å›ç©º
         CacheValue<User> cacheValue = loaderWriterService.get(key);
         Assertions.assertNull(cacheValue);
 
-        // 1.3 ¶ÁÈ¡»º´æ£¬»º´æÎŞÊı¾İ£¬Ö´ĞĞ CacheLoader ¶ÁÈ¡Êı¾İÔ´
+        // 1.3 è¯»å–ç¼“å­˜ï¼Œç¼“å­˜æ— æ•°æ®ï¼Œæ‰§è¡Œ CacheLoader è¯»å–æ•°æ®æº
         User load = loaderWriterService.getOrLoad(key);
         Assertions.assertEquals(user, load);
 
-        // 1.4 ¶ÁÈ¡»º´æ£¬»º´æÓĞÊı¾İ£¬Ö±½Ó·µ»Ø»º´æÊı¾İ
+        // 1.4 è¯»å–ç¼“å­˜ï¼Œç¼“å­˜æœ‰æ•°æ®ï¼Œç›´æ¥è¿”å›ç¼“å­˜æ•°æ®
         cacheValue = loaderWriterService.get(key);
         Assertions.assertEquals(user, cacheValue.getValue());
 
 
-        // 2. »º´æ ºÍ Êı¾İÔ´ ¾ùÉ¾³ı
+        // 2. ç¼“å­˜ å’Œ æ•°æ®æº å‡åˆ é™¤
         loaderWriterService.delete(key);
 
-        // 2.1 Êı¾İÔ´ÎŞÊı¾İ
+        // 2.1 æ•°æ®æºæ— æ•°æ®
         Assertions.assertNull(database.get(key));
 
-        // 2.2 »º´æÎŞÊı¾İ£¬²»Ö´ĞĞ CacheLoader£¬·µ»Ø¿Õ
+        // 2.2 ç¼“å­˜æ— æ•°æ®ï¼Œä¸æ‰§è¡Œ CacheLoaderï¼Œè¿”å›ç©º
         cacheValue = loaderWriterService.get(key);
         Assertions.assertNull(cacheValue);
 
-        // 2.3 »º´æÎŞÊı¾İ£¬Ö´ĞĞ CacheLoader ¶ÁÈ¡Êı¾İÔ´£¬Êı¾İÔ´ÎŞÊı¾İ£¬»º´æ´æÈë¿ÕÖµ£¬×îºó·µ»Ø¿Õ
+        // 2.3 ç¼“å­˜æ— æ•°æ®ï¼Œæ‰§è¡Œ CacheLoader è¯»å–æ•°æ®æºï¼Œæ•°æ®æºæ— æ•°æ®ï¼Œç¼“å­˜å­˜å…¥ç©ºå€¼ï¼Œæœ€åè¿”å›ç©º
         load = loaderWriterService.getOrLoad(key);
         Assertions.assertNull(load);
 
-        // 2.4 »º´æÓĞ¿ÕÖµ£¬²»Ö´ĞĞ CacheLoader£¬Ö±½Ó·µ»Ø¿ÕÖµ
+        // 2.4 ç¼“å­˜æœ‰ç©ºå€¼ï¼Œä¸æ‰§è¡Œ CacheLoaderï¼Œç›´æ¥è¿”å›ç©ºå€¼
         cacheValue = loaderWriterService.get(key);
         Assertions.assertNotNull(cacheValue);
         Assertions.assertNull(cacheValue.getValue());
 
 
-        // 3. ±£´æµ½ »º´æ£¬²¢ÓÉ CacheWriter Í¬²½Ğ´ÈëÊı¾İÔ´
+        // 3. ä¿å­˜åˆ° ç¼“å­˜ï¼Œå¹¶ç”± CacheWriter åŒæ­¥å†™å…¥æ•°æ®æº
         loaderWriterService.put(key, user);
 
-        // 3.1 Êı¾İÔ´ÓĞÊı¾İ
+        // 3.1 æ•°æ®æºæœ‰æ•°æ®
         Assertions.assertNotNull(database.get(key));
 
-        // 3.2 ¶ÁÈ¡»º´æ£¬»º´æÓĞÊı¾İ£¬Ö±½Ó·µ»Ø»º´æÊı¾İ
+        // 3.2 è¯»å–ç¼“å­˜ï¼Œç¼“å­˜æœ‰æ•°æ®ï¼Œç›´æ¥è¿”å›ç¼“å­˜æ•°æ®
         cacheValue = loaderWriterService.get(key);
         Assertions.assertEquals(user, cacheValue.getValue());
 
-        // 3.3 ¶ÁÈ¡»º´æ£¬»º´æÓĞÊı¾İ£¬Ö±½Ó·µ»Ø»º´æÊı¾İ
+        // 3.3 è¯»å–ç¼“å­˜ï¼Œç¼“å­˜æœ‰æ•°æ®ï¼Œç›´æ¥è¿”å›ç¼“å­˜æ•°æ®
         load = loaderWriterService.getOrLoad(key);
         Assertions.assertEquals(user, load);
     }
@@ -100,62 +100,62 @@ public class CacheLoaderTest {
         Map<Key, User> keyValues = Map.of(key1, user1, key2, user2, key3, user3);
         Set<Key> keys = new HashSet<>(keyValues.keySet());
 
-        // 0. Ê×ÏÈÉ¾³ı»º´æ¼°Êı¾İÔ´Êı¾İ£¬±ÜÃâÓ°Ïì²âÊÔ
+        // 0. é¦–å…ˆåˆ é™¤ç¼“å­˜åŠæ•°æ®æºæ•°æ®ï¼Œé¿å…å½±å“æµ‹è¯•
         loaderWriterService.deleteAll(keys);
 
-        // 1. ½ö±£´æµ½Êı¾İÔ´
+        // 1. ä»…ä¿å­˜åˆ°æ•°æ®æº
         database.putAll(keyValues);
 
-        // 1.1 Êı¾İÔ´²»Îª¿Õ
+        // 1.1 æ•°æ®æºä¸ä¸ºç©º
         keyValues.forEach((key, user) -> Assertions.assertEquals(user, database.get(key)));
 
-        // 1.2 ½ö¶ÁÈ¡»º´æ£¬»º´æÎŞÊı¾İ£¬²»Ö´ĞĞ CacheLoader£¬·µ»Ø¿Õ¼¯
+        // 1.2 ä»…è¯»å–ç¼“å­˜ï¼Œç¼“å­˜æ— æ•°æ®ï¼Œä¸æ‰§è¡Œ CacheLoaderï¼Œè¿”å›ç©ºé›†
         Map<Key, CacheValue<User>> all = loaderWriterService.getAll(keys);
         Assertions.assertTrue(all.isEmpty());
 
-        // 1.3 ¶ÁÈ¡»º´æ£¬»º´æÎŞÊı¾İ£¬Ö´ĞĞ CacheLoader ¶ÁÈ¡Êı¾İÔ´
+        // 1.3 è¯»å–ç¼“å­˜ï¼Œç¼“å­˜æ— æ•°æ®ï¼Œæ‰§è¡Œ CacheLoader è¯»å–æ•°æ®æº
         Map<Key, User> loadAll = loaderWriterService.getOrLoadAll(keys);
         Assertions.assertFalse(loadAll.isEmpty());
         loadAll.forEach((key, user) -> Assertions.assertEquals(keyValues.get(key), user));
 
-        // 1.4 ¶ÁÈ¡»º´æ£¬»º´æÓĞÊı¾İ£¬Ö±½Ó·µ»Ø»º´æÊı¾İ
+        // 1.4 è¯»å–ç¼“å­˜ï¼Œç¼“å­˜æœ‰æ•°æ®ï¼Œç›´æ¥è¿”å›ç¼“å­˜æ•°æ®
         all = loaderWriterService.getAll(keys);
         Assertions.assertFalse(all.isEmpty());
         all.forEach((key, cacheValue) -> Assertions.assertEquals(keyValues.get(key), cacheValue.getValue()));
 
 
-        // 2. »º´æ ºÍ Êı¾İÔ´ ¾ùÉ¾³ı
+        // 2. ç¼“å­˜ å’Œ æ•°æ®æº å‡åˆ é™¤
         loaderWriterService.deleteAll(keys);
 
-        // 2.1 Êı¾İÔ´ÎŞÊı¾İ
+        // 2.1 æ•°æ®æºæ— æ•°æ®
         keyValues.forEach((key, user) -> Assertions.assertNull(database.get(key)));
 
-        // 2.2 »º´æÎŞÊı¾İ£¬²»Ö´ĞĞ CacheLoader£¬·µ»Ø¿Õ
+        // 2.2 ç¼“å­˜æ— æ•°æ®ï¼Œä¸æ‰§è¡Œ CacheLoaderï¼Œè¿”å›ç©º
         all = loaderWriterService.getAll(keys);
         Assertions.assertTrue(all.isEmpty());
 
-        // 2.3 »º´æÎŞÊı¾İ£¬Ö´ĞĞ CacheLoader ¶ÁÈ¡Êı¾İÔ´£¬Êı¾İÔ´ÎŞÊı¾İ£¬»º´æ´æÈë¿ÕÖµ£¬×îºó·µ»Ø¿Õ
+        // 2.3 ç¼“å­˜æ— æ•°æ®ï¼Œæ‰§è¡Œ CacheLoader è¯»å–æ•°æ®æºï¼Œæ•°æ®æºæ— æ•°æ®ï¼Œç¼“å­˜å­˜å…¥ç©ºå€¼ï¼Œæœ€åè¿”å›ç©º
         loadAll = loaderWriterService.getOrLoadAll(keys);
         Assertions.assertTrue(loadAll.isEmpty());
 
-        // 2.4 »º´æÓĞ¿ÕÖµ£¬²»Ö´ĞĞ CacheLoader£¬Ö±½Ó·µ»Ø¿ÕÖµ
+        // 2.4 ç¼“å­˜æœ‰ç©ºå€¼ï¼Œä¸æ‰§è¡Œ CacheLoaderï¼Œç›´æ¥è¿”å›ç©ºå€¼
         all = loaderWriterService.getAll(keys);
         Assertions.assertFalse(all.isEmpty());
         all.forEach((key, cacheValue) -> Assertions.assertNull(cacheValue.getValue()));
 
 
-        // 3. ±£´æµ½ »º´æ£¬²¢ÓÉ CacheWriter Í¬²½Ğ´ÈëÊı¾İÔ´
+        // 3. ä¿å­˜åˆ° ç¼“å­˜ï¼Œå¹¶ç”± CacheWriter åŒæ­¥å†™å…¥æ•°æ®æº
         loaderWriterService.putAll(keyValues);
 
-        // 3.1 Êı¾İÔ´ÓĞÊı¾İ
+        // 3.1 æ•°æ®æºæœ‰æ•°æ®
         keyValues.forEach((key, user) -> Assertions.assertNotNull(database.get(key)));
 
-        // 3.2 ¶ÁÈ¡»º´æ£¬»º´æÓĞÊı¾İ£¬Ö±½Ó·µ»Ø»º´æÊı¾İ
+        // 3.2 è¯»å–ç¼“å­˜ï¼Œç¼“å­˜æœ‰æ•°æ®ï¼Œç›´æ¥è¿”å›ç¼“å­˜æ•°æ®
         all = loaderWriterService.getAll(keys);
         Assertions.assertFalse(all.isEmpty());
         all.forEach((key, cacheValue) -> Assertions.assertEquals(keyValues.get(key), cacheValue.getValue()));
 
-        // 3.3 ¶ÁÈ¡»º´æ£¬»º´æÓĞÊı¾İ£¬Ö±½Ó·µ»Ø»º´æÊı¾İ
+        // 3.3 è¯»å–ç¼“å­˜ï¼Œç¼“å­˜æœ‰æ•°æ®ï¼Œç›´æ¥è¿”å›ç¼“å­˜æ•°æ®
         loadAll = loaderWriterService.getOrLoadAll(keys);
         Assertions.assertFalse(loadAll.isEmpty());
         loadAll.forEach((key, user) -> Assertions.assertEquals(keyValues.get(key), user));

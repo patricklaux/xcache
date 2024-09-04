@@ -10,6 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
+ * Spring CacheManager 实现类
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2021-09-20
  */
@@ -29,13 +31,13 @@ public class SpringCacheManager implements org.springframework.cache.CacheManage
 
     @SuppressWarnings("unchecked")
     public <K, V> org.springframework.cache.Cache getCache(String name, Class<K> keyType, Class<V> valueType) {
-        SpringCache cache = caches.get(name);
-        if (null != cache) {
-            return cache;
+        SpringCache springCache = caches.get(name);
+        if (null != springCache) {
+            return springCache;
         }
         return caches.computeIfAbsent(name, nameKey -> {
-            Cache<K, V> kvCache = cacheManager.getOrCreateCache(nameKey, keyType, null, valueType, null);
-            return new SpringCache((Cache<Object, Object>) kvCache);
+            Cache<K, V> cache = cacheManager.getOrCreateCache(nameKey, keyType, valueType);
+            return new SpringCache((Cache<Object, Object>) cache);
         });
     }
 
