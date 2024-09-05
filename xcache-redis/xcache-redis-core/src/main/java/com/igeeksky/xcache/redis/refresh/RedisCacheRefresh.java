@@ -186,7 +186,7 @@ public class RedisCacheRefresh implements CacheRefresh {
                         }
 
                         // 保存超过最大访问时限的键集
-                        Set<byte[]> deleted = new HashSet<>();
+                        Set<byte[]> expired = new HashSet<>();
 
                         // 保存提交的数据刷新任务
                         List<Future<?>> tasks = new ArrayList<>(hgetall.size());
@@ -196,7 +196,7 @@ public class RedisCacheRefresh implements CacheRefresh {
                         for (Map.Entry<byte[], byte[]> entry : hgetall.entrySet()) {
                             long ttl = Long.parseLong(stringCodec.decode(entry.getValue()));
                             if (now > ttl) {
-                                deleted.add(entry.getKey());
+                                expired.add(entry.getKey());
                                 continue;
                             }
                             RefreshTask task = new RefreshTask(stringCodec.decode(entry.getKey()), this.consumer);
@@ -206,8 +206,8 @@ public class RedisCacheRefresh implements CacheRefresh {
                         futuresRef.set(tasks.toArray(new Future[0]));
 
                         // 5. 删除已超过最大访问时限的键集
-                        if (!deleted.isEmpty()) {
-                            connection.hdel(refreshKey, deleted.toArray(new byte[deleted.size()][]));
+                        if (!expired.isEmpty()) {
+                            connection.hdel(refreshKey, expired.toArray(new byte[expired.size()][]));
                         }
 
                         // 6. 更新下次数据刷新时间，避免其它应用实例重复执行
