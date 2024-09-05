@@ -38,7 +38,7 @@
     </developers>
 
     <properties>
-        <revision>0.9.13</revision>
+        <revision>0.9.14</revision>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.version>3.13.0</maven.compiler.version>
@@ -194,6 +194,7 @@
                                 <excludeArtifact>xcache-spring-boot-starter-test</excludeArtifact>
                                 <excludeArtifact>xcache-test-base</excludeArtifact>
                                 <excludeArtifact>xcache-test-domain</excludeArtifact>
+                                <excludeArtifact>xcache-redis-jedis</excludeArtifact>
                             </excludeArtifacts>
                         </configuration>
                     </plugin>
