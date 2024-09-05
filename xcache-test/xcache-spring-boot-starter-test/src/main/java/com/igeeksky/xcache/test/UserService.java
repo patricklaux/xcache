@@ -73,13 +73,15 @@ public class UserService {
     }
 
     @CachePut
-    public void saveUser(Key key, User user) {
+    public User saveUser(Key key, User user) {
         System.out.println("saveUser:" + key + ":" + user);
+        return user;
     }
 
     @CachePutAll
-    public void saveUsers(Map<Key, User> users) {
+    public Map<Key, User> saveUsers(Map<Key, User> users) {
         users.forEach((key, name) -> System.out.println("saveUser:" + key + ":" + name));
+        return users;
     }
 
     @CacheEvictAll
