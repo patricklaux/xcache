@@ -188,6 +188,28 @@
                             <publishingServerId>central</publishingServerId>
                             <autoPublish>false</autoPublish>
                             <checksums>all</checksums>
+                            <excludeArtifacts>
+                                <excludeArtifact>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>xcache-test</artifactId>
+                                </excludeArtifact>
+                                <excludeArtifact>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>xcache-spring-adapter-test</artifactId>
+                                </excludeArtifact>
+                                <excludeArtifact>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>xcache-spring-boot-starter-test</artifactId>
+                                </excludeArtifact>
+                                <excludeArtifact>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>xcache-test-base</artifactId>
+                                </excludeArtifact>
+                                <excludeArtifact>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>xcache-test-domain</artifactId>
+                                </excludeArtifact>
+                            </excludeArtifacts>
                         </configuration>
                     </plugin>
                 </plugins>

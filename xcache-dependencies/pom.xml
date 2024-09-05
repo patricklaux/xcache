@@ -143,6 +143,11 @@
                 <artifactId>xcache-spring-boot-starter-test</artifactId>
                 <version>${revision}</version>
             </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-spring-adapter-test</artifactId>
+                <version>${revision}</version>
+            </dependency>
 
             <!-- ThirdParty -->
             <dependency>

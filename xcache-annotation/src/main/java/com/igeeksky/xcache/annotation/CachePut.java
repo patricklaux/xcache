@@ -37,7 +37,7 @@ public @interface CachePut {
     /**
      * SpEL表达式，用于从参数中提取待缓存的值。
      * <p>
-     * 如果未配置，采用被注解方法的第二个参数作为值。
+     * 如果未配置，默认采用方法返回值作为缓存值。
      */
     String value() default "";
 

@@ -5,30 +5,39 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.igeeksky.xcache</groupId>
-        <artifactId>xcache-spring</artifactId>
+        <artifactId>xcache-test</artifactId>
         <version>${revision}</version>
     </parent>
 
-    <artifactId>xcache-spring-adapter-autoconfigure</artifactId>
+    <artifactId>xcache-spring-adapter-test</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-spring-adapter</artifactId>
+            <artifactId>xcache-test-domain</artifactId>
         </dependency>
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-spring-boot-autoconfigure</artifactId>
+            <artifactId>xcache-spring-boot-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-extension-jackson</artifactId>
-            <optional>true</optional>
+            <artifactId>xcache-spring-adapter-autoconfigure</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
-            <optional>true</optional>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.vaadin.external.google</groupId>
+                    <artifactId>android-json</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 

@@ -20,6 +20,7 @@
         <module>xcache-test-domain</module>
         <module>xcache-test-base</module>
         <module>xcache-spring-boot-starter-test</module>
+        <module>xcache-spring-adapter-test</module>
     </modules>
 
 
