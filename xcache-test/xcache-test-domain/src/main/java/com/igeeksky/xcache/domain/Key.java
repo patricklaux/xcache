@@ -2,13 +2,15 @@ package com.igeeksky.xcache.domain;
 
 import com.igeeksky.xtool.core.json.SimpleJSON;
 
+import java.io.Serializable;
+
 /**
  * 测试实体类：键
  *
  * @author patrick
  * @since 0.0.4 2024/5/12
  */
-public class Key {
+public class Key implements Serializable {
 
     private String name;
 

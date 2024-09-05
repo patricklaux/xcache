@@ -152,7 +152,8 @@ public class CacheAnnotationParser {
         return builder.value(cachePut.value())
                 .condition(cachePut.condition())
                 .unless(cachePut.unless())
-                .key(cachePut.key()).build();
+                .key(cachePut.key())
+                .build();
     }
 
     private static CachePutAllOperation processCachePutAll(CachePutAll cachePutAll, CacheOperation operation) {

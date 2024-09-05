@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping;
 import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
@@ -45,6 +46,10 @@ public class GenericJacksonKeyCodec implements KeyCodec<Object> {
 
     public static GenericJacksonKeyCodec getInstance() {
         return INSTANCE;
+    }
+
+    public void registerModule(Module module) {
+        this.mapper.registerModule(module);
     }
 
     @Override

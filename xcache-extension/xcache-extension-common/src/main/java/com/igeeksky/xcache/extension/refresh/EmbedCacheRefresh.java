@@ -49,7 +49,7 @@ public class EmbedCacheRefresh implements CacheRefresh {
     private final ExecutorService executor;
     private final ScheduledExecutorService scheduler;
 
-    private final ConcurrentHashMap<String, Long> accessed = new ConcurrentHashMap<>(128);
+    private final Map<String, Long> accessed = new ConcurrentHashMap<>(128);
 
     private final AtomicReference<Future<?>[]> futuresRef = new AtomicReference<>();
 
@@ -112,7 +112,7 @@ public class EmbedCacheRefresh implements CacheRefresh {
         try {
             // 1. 执行新任务之前，先判断上次的任务队列是否已经执行完毕
             // 如果未完成则退出当前任务（数据源压力过大，再执行刷新任务只会堵塞更严重，甚至可能会导致进程崩溃）
-            if (!checkRefreshTasks(futuresRef, period)) {
+            if (!this.checkRefreshTasks(futuresRef, period)) {
                 log.error("Cache:[{}], Timed out waiting for refreshTasks to complete", name);
                 return;
             }

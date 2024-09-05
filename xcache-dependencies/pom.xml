@@ -122,6 +122,11 @@
                 <artifactId>xcache-spring-adapter</artifactId>
                 <version>${revision}</version>
             </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-spring-adapter-autoconfigure</artifactId>
+                <version>${revision}</version>
+            </dependency>
             <!-- xcache-test -->
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
@@ -136,6 +141,11 @@
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-spring-boot-starter-test</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.igeeksky.xcache</groupId>
+                <artifactId>xcache-spring-adapter-test</artifactId>
                 <version>${revision}</version>
             </dependency>
 

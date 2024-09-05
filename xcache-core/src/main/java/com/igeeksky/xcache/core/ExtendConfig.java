@@ -2,9 +2,10 @@ package com.igeeksky.xcache.core;
 
 
 import com.igeeksky.xcache.common.CacheLoader;
+import com.igeeksky.xcache.common.CacheRefresh;
+import com.igeeksky.xcache.common.CacheWriter;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
-import com.igeeksky.xcache.common.CacheRefresh;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
@@ -31,6 +32,8 @@ public class ExtendConfig<K, V> {
 
     private final CacheLoader<K, V> cacheLoader;
 
+    private final CacheWriter<K, V> cacheWriter;
+
     private final ContainsPredicate<K> containsPredicate;
 
     public ExtendConfig(Builder<K, V> builder) {
@@ -39,6 +42,7 @@ public class ExtendConfig<K, V> {
         this.statMonitor = builder.statMonitor;
         this.syncMonitor = builder.syncMonitor;
         this.cacheLoader = builder.cacheLoader;
+        this.cacheWriter = builder.cacheWriter;
         this.cacheRefresh = builder.cacheRefresh;
         this.containsPredicate = builder.containsPredicate;
     }
@@ -67,6 +71,10 @@ public class ExtendConfig<K, V> {
         return cacheLoader;
     }
 
+    public CacheWriter<K, V> getCacheWriter() {
+        return cacheWriter;
+    }
+
     public ContainsPredicate<K> getContainsPredicate() {
         return containsPredicate;
     }
@@ -87,12 +95,19 @@ public class ExtendConfig<K, V> {
 
         private final CacheLoader<K, V> cacheLoader;
 
+        private CacheWriter<K, V> cacheWriter;
+
         private ContainsPredicate<K> containsPredicate;
 
         private CacheRefresh cacheRefresh;
 
         private Builder(CacheLoader<K, V> cacheLoader) {
             this.cacheLoader = cacheLoader;
+        }
+
+        public Builder<K, V> cacheWriter(CacheWriter<K, V> cacheWriter) {
+            this.cacheWriter = cacheWriter;
+            return this;
         }
 
         public Builder<K, V> cacheLock(LockService cacheLock) {

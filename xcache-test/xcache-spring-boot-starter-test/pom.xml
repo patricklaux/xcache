@@ -25,6 +25,10 @@
         </dependency>
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
+            <artifactId>xcache-spring-adapter-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.igeeksky.xcache</groupId>
             <artifactId>xcache-spring-aop</artifactId>
         </dependency>
         <dependency>

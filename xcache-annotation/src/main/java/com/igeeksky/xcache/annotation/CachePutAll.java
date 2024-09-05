@@ -30,7 +30,7 @@ public @interface CachePutAll {
     /**
      * SpEL表达式，用于从参数中提取键值对集合 (Map)。
      * <p>
-     * 如果未配置，采用被注解方法的第一个参数作为键值对集合 (Map)。
+     * 如果未配置，默认采用方法返回值作为缓存键值对集合 (Map)。
      */
     String keyValues() default "";
 

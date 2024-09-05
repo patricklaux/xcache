@@ -22,7 +22,7 @@ public class SyncConfig<V> {
 
     private final String name;
 
-    private final String application;
+    private final String app;
 
     private final String infix;
 
@@ -47,7 +47,7 @@ public class SyncConfig<V> {
     public SyncConfig(Builder<V> builder) {
         this.sid = builder.sid;
         this.name = builder.name;
-        this.application = builder.application;
+        this.app = builder.app;
         this.maxLen = builder.maxLen;
         this.provider = builder.provider;
         this.charset = builder.charset;
@@ -65,7 +65,7 @@ public class SyncConfig<V> {
                 this.channel = PREFIX + this.infix + ":" + this.name;
             }
         } else {
-            this.infix = this.application;
+            this.infix = this.app;
             this.channel = PREFIX + this.infix + ":" + this.name;
         }
     }
@@ -78,8 +78,8 @@ public class SyncConfig<V> {
         return name;
     }
 
-    public String getApplication() {
-        return application;
+    public String getApp() {
+        return app;
     }
 
     public String getInfix() {
@@ -129,7 +129,7 @@ public class SyncConfig<V> {
     public static class Builder<V> {
         private String sid;
         private String name;
-        private String application;
+        private String app;
         private String infix;
         private long maxLen;
         private String provider;
@@ -155,8 +155,8 @@ public class SyncConfig<V> {
             return this;
         }
 
-        public Builder<V> application(String application) {
-            this.application = application;
+        public Builder<V> app(String app) {
+            this.app = app;
             return this;
         }
 

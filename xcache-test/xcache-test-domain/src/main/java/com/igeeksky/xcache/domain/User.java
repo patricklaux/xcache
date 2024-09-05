@@ -2,13 +2,15 @@ package com.igeeksky.xcache.domain;
 
 import com.igeeksky.xtool.core.json.SimpleJSON;
 
+import java.io.Serializable;
+
 /**
  * 用户
  *
  * @author patrick
  * @since 0.0.4 2024/5/12
  */
-public class User {
+public class User implements Serializable {
 
     private String id;
     private String name;

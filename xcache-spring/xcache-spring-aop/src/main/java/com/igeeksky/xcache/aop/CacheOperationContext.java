@@ -214,7 +214,7 @@ public class CacheOperationContext {
             if (!this.unlessPassing(operation.getUnless())) {
                 return;
             }
-            Map<Object, Object> keyValues = (Map<Object, Object>) this.generateKey(operation.getKeyValues());
+            Map<Object, Object> keyValues = (Map<Object, Object>) this.computeValue(operation.getKeyValues());
             if (Maps.isEmpty(keyValues)) {
                 return;
             }
@@ -317,7 +317,7 @@ public class CacheOperationContext {
             context.setVariable("result", this.result);
             return this.expressionEvaluator.value(expression, this.methodKey, context);
         }
-        return this.args[1];
+        return result;
     }
 
     /**
