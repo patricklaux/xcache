@@ -55,16 +55,6 @@ public @interface CacheableAll {
     String condition() default "";
 
     /**
-     * SpEL表达式
-     * <p>
-     * 如果未配置，unless 表达式结果默认为 false。
-     * <p>
-     * 当缓存中无值或仅有部分值，如果 condition 表达式结果为 true，且 unless 表达式结果为 false，
-     * 调用被注解方法后执行缓存操作 (putAll)
-     */
-    String unless() default "";
-
-    /**
      * 缓存名称
      */
     String name() default "";

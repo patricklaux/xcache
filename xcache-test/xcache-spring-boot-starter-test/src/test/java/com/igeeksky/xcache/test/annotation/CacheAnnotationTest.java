@@ -31,52 +31,23 @@ public class CacheAnnotationTest {
     }
 
     /**
-     * unless 为 true，不缓存数据
-     */
-    @Test
-    public void cacheableUnless1() {
-        Key jack00 = new Key("jack00");
-        User userJack00 = new User("0", jack00.getName(), jack00.getAge());
-
-        // 1. 删除缓存元素
-        userService.deleteUserByCache(jack00);
-
-        // 2. unless 为 true，调用方法，且不缓存元素
-        User result0 = userService.getUserByKeyUnless(jack00, 0);
-        System.out.println(result0);
-        Assertions.assertEquals(userJack00, result0);
-
-        // 3. unless 为 false，调用方法，并缓存元素
-        User result1 = userService.getUserByKeyUnless(jack00, 1);
-        System.out.println(result1);
-        userJack00.setId("1");
-        Assertions.assertEquals(userJack00, result1);
-
-        // 3. unless 为 false，不调用方法，读取缓存
-        User result2 = userService.getUserByKeyUnless(jack00, 0);
-        System.out.println(result2);
-        Assertions.assertEquals(userJack00, result2);
-    }
-
-
-    /**
      * unless 为 false，缓存数据
      */
     @Test
-    public void cacheableUnless2() {
+    public void cacheable() {
         Key jack01 = new Key("jack01");
         User userJack01 = new User("2", jack01.getName(), jack01.getAge());
 
         // 1. 删除缓存元素
         userService.deleteUserByCache(jack01);
 
-        // 2. 第一次：unless 为 false，调用方法，并缓存元素
-        User result1 = userService.getUserByKeyUnless(jack01, 2);
+        // 2. 第一次：调用方法，并缓存元素
+        User result1 = userService.getUser(jack01, 2);
         System.out.println(result1);
         Assertions.assertEquals(userJack01, result1);
 
-        // 3. 第二次：unless 为 false，不调用方法，读取缓存
-        User result2 = userService.getUserByKeyUnless(jack01, 3);
+        // 3. 第二次：不调用方法，读取缓存
+        User result2 = userService.getUser(jack01, 3);
         System.out.println(result2);
         Assertions.assertEquals(userJack01, result2);
     }

@@ -69,6 +69,7 @@ public interface Cache<K, V> extends Base<K, V> {
      */
     V get(K key, CacheLoader<K, V> cacheLoader);
 
+
     /**
      * 先从缓存取值，如果缓存无值，但配置了 CacheLoader，则通过 cacheLoader 回源取值
      * <p>

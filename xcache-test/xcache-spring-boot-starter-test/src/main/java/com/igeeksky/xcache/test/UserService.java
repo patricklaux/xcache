@@ -52,8 +52,8 @@ public class UserService {
         System.out.println("deleteByKey:" + key);
     }
 
-    @Cacheable(unless = "#result.id == '0'")
-    public User getUserByKeyUnless(Key key, int times) {
+    @Cacheable
+    public User getUser(Key key, int times) {
         System.out.println("getUserByIdUnless:" + times);
         return new User(Integer.toString(times), key.getName(), key.getAge());
     }
