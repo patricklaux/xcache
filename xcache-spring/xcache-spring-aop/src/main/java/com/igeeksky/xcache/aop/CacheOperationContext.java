@@ -2,6 +2,7 @@ package com.igeeksky.xcache.aop;
 
 import com.igeeksky.xcache.annotation.operation.*;
 import com.igeeksky.xcache.common.Cache;
+import com.igeeksky.xcache.common.CacheLoadingException;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.CacheManager;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
@@ -126,18 +127,13 @@ public class CacheOperationContext {
         Cache<Object, Object> cache = this.getOrCreateCache(operation);
 
         // 读取缓存，然后判断是否已缓存值
-        CacheValue<Object> cacheValue = cache.get(key);
-        if (cacheValue != null) {
-            this.result = cacheValue.getValue();
-            return;
-        }
-
-        this.proceed();
-
-        // 根据注解 unless 判断方法执行结果是否缓存
-        if (this.unlessPassing(operation.getUnless())) {
-            cache.put(key, this.result);
-        }
+        this.result = cache.get(key, k -> {
+            try {
+                return this.invocation.proceed();
+            } catch (Throwable e) {
+                throw new CacheLoadingException(e);
+            }
+        });
     }
 
     private void processCacheableAll(CacheableAllOperation operation) throws Throwable {
@@ -177,9 +173,7 @@ public class CacheOperationContext {
             return;
         }
 
-        if (this.unlessPassing(operation.getUnless())) {
-            cache.putAll(resultMap);
-        }
+        cache.putAll(resultMap);
 
         // 缓存数据添加到最终结果
         if (!temp.isEmpty()) {

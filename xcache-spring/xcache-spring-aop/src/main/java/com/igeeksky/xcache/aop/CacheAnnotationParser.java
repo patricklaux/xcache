@@ -120,7 +120,6 @@ public class CacheAnnotationParser {
                 .valueParams(cacheable.valueParams())
                 .cacheOperation(operation);
         return builder.condition(cacheable.condition())
-                .unless(cacheable.unless())
                 .key(cacheable.key())
                 .build();
     }
@@ -135,7 +134,6 @@ public class CacheAnnotationParser {
                 .cacheOperation(operation);
 
         return builder.condition(cacheableAll.condition())
-                .unless(cacheableAll.unless())
                 .keys(cacheableAll.keys())
                 .build();
     }

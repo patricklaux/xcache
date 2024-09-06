@@ -15,13 +15,10 @@ public class CacheableAllOperation extends CacheOperation {
 
     private final String condition;
 
-    private final String unless;
-
     protected CacheableAllOperation(Builder builder) {
         super(builder);
         this.keys = builder.keys;
         this.condition = builder.condition;
-        this.unless = builder.unless;
     }
 
     public String getKeys() {
@@ -30,10 +27,6 @@ public class CacheableAllOperation extends CacheOperation {
 
     public String getCondition() {
         return condition;
-    }
-
-    public String getUnless() {
-        return unless;
     }
 
     public static Builder builder() {
@@ -46,8 +39,6 @@ public class CacheableAllOperation extends CacheOperation {
 
         private String condition;
 
-        private String unless;
-
         public Builder keys(String keys) {
             this.keys = StringUtils.trim(keys);
             return this;
@@ -55,11 +46,6 @@ public class CacheableAllOperation extends CacheOperation {
 
         public Builder condition(String condition) {
             this.condition = condition;
-            return this;
-        }
-
-        public Builder unless(String unless) {
-            this.unless = unless;
             return this;
         }
 
