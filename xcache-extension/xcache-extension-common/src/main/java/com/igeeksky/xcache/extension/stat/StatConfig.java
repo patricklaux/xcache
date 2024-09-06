@@ -8,24 +8,24 @@ package com.igeeksky.xcache.extension.stat;
  */
 public class StatConfig {
 
-    private final String name;
+    private final String app;
 
-    private final String application;
+    private final String name;
 
     private final String provider;
 
     private StatConfig(Builder builder) {
+        this.app = builder.app;
         this.name = builder.name;
-        this.application = builder.application;
         this.provider = builder.provider;
+    }
+
+    public String getApp() {
+        return app;
     }
 
     public String getName() {
         return name;
-    }
-
-    public String getApplication() {
-        return application;
     }
 
     public String getProvider() {
@@ -38,22 +38,22 @@ public class StatConfig {
 
     public static class Builder {
 
-        private String name;
+        private String app;
 
-        private String application;
+        private String name;
 
         private String provider;
 
         private Builder() {
         }
 
-        public Builder name(String name) {
-            this.name = name;
+        public Builder app(String app) {
+            this.app = app;
             return this;
         }
 
-        public Builder application(String application) {
-            this.application = application;
+        public Builder name(String name) {
+            this.name = name;
             return this;
         }
 

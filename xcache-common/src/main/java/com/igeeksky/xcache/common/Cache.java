@@ -69,11 +69,11 @@ public interface Cache<K, V> extends Base<K, V> {
      */
     V get(K key, CacheLoader<K, V> cacheLoader);
 
-
     /**
      * 先从缓存取值，如果缓存无值，但配置了 CacheLoader，则通过 cacheLoader 回源取值
      * <p>
-     * 注意：为避免死锁，批量回源取值时不加锁
+     * <b>注意</b>：<p>
+     * 批量回源取值不加锁，如希望加锁，请循环调用 {@link #getOrLoad(Object)}
      *
      * @param keys 键集
      * @return 键值对集合
@@ -83,7 +83,8 @@ public interface Cache<K, V> extends Base<K, V> {
     /**
      * 先从缓存取值，如果缓存无值，则通过 cacheLoader 回源取值
      * <p>
-     * 注意：为避免死锁，批量回源取值不加锁
+     * <b>注意</b>：<p>
+     * 批量回源取值不加锁，如希望加锁，请循环调用 {@link #get(Object, CacheLoader)}
      *
      * @param keys        键集
      * @param cacheLoader 回源函数

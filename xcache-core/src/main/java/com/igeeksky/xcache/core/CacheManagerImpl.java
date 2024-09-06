@@ -329,7 +329,7 @@ public class CacheManagerImpl implements CacheManager {
     private <K, V> StatConfig buildStatConfig(String provider, CacheConfig<K, V> config) {
         return StatConfig.builder()
                 .name(config.getName())
-                .application(config.getApp())
+                .app(config.getApp())
                 .provider(provider)
                 .build();
     }

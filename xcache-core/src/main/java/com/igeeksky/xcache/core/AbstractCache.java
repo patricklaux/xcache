@@ -105,7 +105,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
                     // 将加载的数据放入缓存
                     this.doPut(storeKey, value);
                     // 更新统计信息
-                    this.statMonitor.incLoads(value);
+                    this.incLoads(value);
                 } finally {
                     // 释放锁
                     lock.unlock();
@@ -201,13 +201,21 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
                 }
                 V value = cacheLoader.load(key);
                 this.doPut(storeKey, value);
-                this.statMonitor.incLoads(value);
+                this.incLoads(value);
                 return value;
             } finally {
                 lock.unlock();
             }
         } finally {
             this.lockService.release(storeKey);
+        }
+    }
+
+    private void incLoads(V value) {
+        if (value != null) {
+            this.statMonitor.incHitLoads(1);
+        } else {
+            this.statMonitor.incMissLoads(1);
         }
     }
 
@@ -240,7 +248,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     public Map<K, V> getOrLoadAll(Set<? extends K> keys) {
         requireNonNull(keys, "getOrLoadAll", "keys must not be null.");
 
-        return (keys.isEmpty()) ? Maps.newHashMap(0) : this.doGetOrLoadAll(keys, this.cacheLoader);
+        return this.doGetOrLoadAll(keys, this.cacheLoader);
     }
 
     @Override
@@ -248,17 +256,22 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         requireNonNull(keys, "getAll", "keys must not be null.");
         requireNonNull(cacheLoader, "getAll", "cacheLoader must not be null.");
 
-        return (keys.isEmpty()) ? Maps.newHashMap(0) : this.doGetOrLoadAll(keys, cacheLoader);
+        return this.doGetOrLoadAll(keys, cacheLoader);
     }
 
     private Map<K, V> doGetOrLoadAll(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
+        int size = keys.size();
+        if (size == 0) {
+            return Maps.newHashMap(0);
+        }
+
         // 1. 建立原生Key 和 缓存Key 之间的映射
         Map<String, K> keyMapping = this.createKeyMapping(keys);
 
         // 2. 从缓存中获取缓存值
         Map<String, CacheValue<V>> cacheValues = this.doGetAll(keyMapping.keySet());
 
-        Map<K, V> result = Maps.newHashMap((cacheLoader == null) ? cacheValues.size() : keys.size());
+        Map<K, V> result = Maps.newHashMap((cacheLoader == null) ? cacheValues.size() : size);
 
         // 3. 原生Key 替换 缓存Key，并过滤掉无缓存的结果
         cacheValues.forEach((storeKey, cacheValue) -> {
@@ -272,16 +285,22 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         }
 
         // 4. 未从缓存中读取到值的 key，使用 cacheLoader 回源取值
+        int hitLoads = 0, loadsCount = keyMapping.size();
         Map<K, V> loads = this.loadAll(keyMapping, cacheLoader);
         Map<String, V> puts = Maps.newHashMap(keyMapping.size());
-        keyMapping.forEach((storeKey, key) -> {
+        for (Map.Entry<String, K> entry : keyMapping.entrySet()) {
+            String storeKey = entry.getKey();
+            K key = entry.getValue();
             V value = loads.get(key);
             if (value != null) {
                 result.put(key, value);
+                ++hitLoads;
             }
             puts.put(storeKey, value);
-        });
+        }
         this.doPutAll(puts);
+        this.statMonitor.incHitLoads(hitLoads);
+        this.statMonitor.incMissLoads(loadsCount - hitLoads);
 
         return result;
     }
@@ -299,7 +318,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
     private Map<K, V> loadAll(Map<String, K> keyMapping, CacheLoader<K, V> cacheLoader) {
         Set<K> keys = Sets.newHashSet(keyMapping.size());
-        keyMapping.forEach((key1, key) -> {
+        keyMapping.forEach((storeKey, key) -> {
             if (containsPredicate.test(name, key)) {
                 keys.add(key);
             }

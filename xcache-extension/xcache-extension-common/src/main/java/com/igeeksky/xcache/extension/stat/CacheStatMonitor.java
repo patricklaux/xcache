@@ -2,8 +2,8 @@ package com.igeeksky.xcache.extension.stat;
 
 import com.igeeksky.xcache.props.StoreLevel;
 
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.atomic.LongAdder;
 
 /**
  * 缓存指标采集类
@@ -16,8 +16,8 @@ public class CacheStatMonitor {
     private final String name;
     private final String application;
 
-    private final AtomicReference<LongAdder> missLoads = new AtomicReference<>(new LongAdder());
-    private final AtomicReference<LongAdder> hitLoads = new AtomicReference<>(new LongAdder());
+    private final AtomicLong hitLoads = new AtomicLong();
+    private final AtomicLong missLoads = new AtomicLong();
     private AtomicReference<CacheStatCounter> noop = null;
     private AtomicReference<CacheStatCounter> first = null;
     private AtomicReference<CacheStatCounter> second = null;
@@ -25,43 +25,43 @@ public class CacheStatMonitor {
 
     public CacheStatMonitor(StatConfig config) {
         this.name = config.getName();
-        this.application = config.getApplication();
+        this.application = config.getApp();
     }
 
     public void incHits(StoreLevel level, long times) {
-        if (times == 0) {
-            return;
+        if (times > 0) {
+            getCounter(level).incHits(times);
         }
-        getCounter(level).incHits(times);
     }
 
     public void incMisses(StoreLevel level, long times) {
-        if (times == 0) {
-            return;
+        if (times > 0) {
+            getCounter(level).incMisses(times);
         }
-        getCounter(level).incMisses(times);
     }
 
     public void incPuts(StoreLevel level, long times) {
-        if (times == 0) {
-            return;
+        if (times > 0) {
+            getCounter(level).incPuts(times);
         }
-        getCounter(level).incPuts(times);
     }
 
-    public void incLoads(Object val) {
-        if (val == null) {
-            missLoads.get().increment();
-        } else {
-            hitLoads.get().increment();
+    public void incHitLoads(long times) {
+        if (times > 0) {
+            hitLoads.getAndAdd(times);
+        }
+    }
+
+    public void incMissLoads(long times) {
+        if (times > 0) {
+            missLoads.getAndAdd(times);
         }
     }
 
     public void incRemovals(StoreLevel level, long times) {
-        if (times == 0) {
-            return;
+        if (times > 0) {
+            getCounter(level).incRemovals(times);
         }
-        getCounter(level).incRemovals(times);
     }
 
     public void incClears(StoreLevel level) {
@@ -75,8 +75,8 @@ public class CacheStatMonitor {
      */
     public CacheStatMessage collect() {
         CacheStatMessage message = new CacheStatMessage(name, application);
-        message.setHitLoads(this.hitLoads.getAndSet(new LongAdder()).sum());
-        message.setMissLoads(this.missLoads.getAndSet(new LongAdder()).sum());
+        message.setHitLoads(this.hitLoads.getAndSet(0));
+        message.setMissLoads(this.missLoads.getAndSet(0));
 
         if (noop != null) {
             CacheStatCounter counter = noop.getAndSet(new CacheStatCounter());
