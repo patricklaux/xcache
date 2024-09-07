@@ -5,12 +5,12 @@ import com.igeeksky.xcache.core.store.StoreConfig;
 import com.igeeksky.xcache.core.store.StoreProvider;
 import com.igeeksky.xcache.extension.codec.CodecConfig;
 import com.igeeksky.xcache.extension.codec.CodecProvider;
+import com.igeeksky.xcache.extension.codec.JdkCodecProvider;
 import com.igeeksky.xcache.extension.compress.CompressConfig;
 import com.igeeksky.xcache.extension.compress.CompressorProvider;
-import com.igeeksky.xcache.extension.contains.ContainsConfig;
-import com.igeeksky.xcache.extension.contains.ContainsPredicate;
-import com.igeeksky.xcache.extension.contains.ContainsPredicateProvider;
-import com.igeeksky.xcache.extension.contains.EmbedContainsPredicate;
+import com.igeeksky.xcache.extension.compress.DeflaterCompressorProvider;
+import com.igeeksky.xcache.extension.compress.GzipCompressorProvider;
+import com.igeeksky.xcache.extension.contains.*;
 import com.igeeksky.xcache.extension.lock.*;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
@@ -75,6 +75,12 @@ public class CacheManagerImpl implements CacheManager {
         });
 
         this.caches.putAll(managerConfig.getCaches());
+
+        this.addProvider(CacheConstants.DEFLATER_COMPRESSOR, DeflaterCompressorProvider.getInstance());
+        this.addProvider(CacheConstants.GZIP_COMPRESSOR, GzipCompressorProvider.getInstance());
+        this.addProvider(CacheConstants.EMBED_CACHE_LOCK, EmbedCacheLockProvider.getInstance());
+        this.addProvider(CacheConstants.EMBED_CONTAINS_PREDICATE, EmbedContainsPredicateProvider.getInstance());
+        this.addProvider(CacheConstants.JDK_CODEC, JdkCodecProvider.getInstance());
     }
 
     @Override
