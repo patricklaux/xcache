@@ -2,15 +2,9 @@ package com.igeeksky.xcache.autoconfigure;
 
 
 import com.igeeksky.xcache.autoconfigure.holder.*;
-import com.igeeksky.xcache.common.CacheConfigException;
 import com.igeeksky.xcache.core.CacheManager;
+import com.igeeksky.xcache.core.CacheManagerConfig;
 import com.igeeksky.xcache.core.CacheManagerImpl;
-import com.igeeksky.xcache.core.ComponentRegister;
-import com.igeeksky.xcache.props.CacheProps;
-import com.igeeksky.xcache.props.Template;
-import com.igeeksky.xtool.core.collection.CollectionUtils;
-import com.igeeksky.xtool.core.collection.Maps;
-import com.igeeksky.xtool.core.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -19,8 +13,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -60,13 +52,15 @@ public class CacheAutoConfiguration {
                               ObjectProvider<ContainsPredicateProviderHolder> predicateHolders,
                               ScheduledExecutorService scheduler) {
 
-        String app = cacheProperties.getApp();
-        Map<String, Template> templates = toTemplateMap(cacheProperties.getTemplates());
-        Map<String, CacheProps> configs = toCachePropsMap(cacheProperties.getCaches());
+        CacheManagerConfig managerConfig = CacheManagerConfig.builder()
+                .app(cacheProperties.getApp())
+                .statPeriod(statProperties.getPeriod())
+                .scheduler(scheduler)
+                .templates(cacheProperties.getTemplates())
+                .caches(cacheProperties.getCaches())
+                .build();
 
-        // 管理内嵌组件：LogCacheStatProvider 和 CacheRefreshProvider 延迟注册，避免 scheduler 运行无效任务
-        ComponentRegister register = new ComponentRegister(scheduler, statProperties.getPeriod());
-        CacheManagerImpl cacheManager = new CacheManagerImpl(app, register, templates, configs);
+        CacheManager cacheManager = new CacheManagerImpl(managerConfig);
 
         for (StoreProviderHolder holder : storeHolders) {
             holder.getAll().forEach(cacheManager::addProvider);
@@ -109,46 +103,6 @@ public class CacheAutoConfiguration {
         }
 
         return cacheManager;
-    }
-
-    private static Map<String, Template> toTemplateMap(List<Template> templates) {
-        if (CollectionUtils.isEmpty(templates)) {
-            throw new CacheConfigException("Cache-config: No templates found.");
-        }
-
-        Map<String, Template> map = Maps.newHashMap(templates.size());
-        for (Template template : templates) {
-            String id = StringUtils.trimToNull(template.getId());
-            requireNonNull(id, "Cache-config: id must not be null or empty.");
-
-            if (map.put(id, template) != null) {
-                throw new CacheConfigException("Cache-config: duplicate template: " + id);
-            }
-        }
-        return map;
-    }
-
-    private static Map<String, CacheProps> toCachePropsMap(List<CacheProps> caches) {
-        if (CollectionUtils.isEmpty(caches)) {
-            return Maps.newHashMap(0);
-        }
-
-        Map<String, CacheProps> map = Maps.newHashMap(caches.size());
-        for (CacheProps props : caches) {
-            String name = StringUtils.trimToNull(props.getName());
-            requireNonNull(name, "Cache-config: name must not be null or empty");
-
-            if (map.put(name, props) != null) {
-                throw new CacheConfigException("Cache-config: duplicate cache: " + name);
-            }
-        }
-        return map;
-    }
-
-    private static void requireNonNull(Object obj, String errMsg) {
-        if (obj == null) {
-            throw new CacheConfigException(errMsg);
-        }
     }
 
 }

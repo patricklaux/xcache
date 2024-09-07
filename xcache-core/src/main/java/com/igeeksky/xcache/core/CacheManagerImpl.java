@@ -22,13 +22,15 @@ import com.igeeksky.xcache.extension.sync.CacheSyncProvider;
 import com.igeeksky.xcache.extension.sync.SyncConfig;
 import com.igeeksky.xcache.extension.sync.SyncMessageListener;
 import com.igeeksky.xcache.props.*;
-import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.lang.StringUtils;
 import com.igeeksky.xtool.core.lang.codec.Codec;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
 import com.igeeksky.xtool.core.lang.compress.Compressor;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
@@ -63,25 +65,16 @@ public class CacheManagerImpl implements CacheManager {
     private final ConcurrentMap<String, CompressorProvider> compressorProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, ContainsPredicateProvider> predicateProviders = new ConcurrentHashMap<>();
 
-    public CacheManagerImpl(String app, ComponentRegister register, Map<String, Template> templates, Map<String, CacheProps> caches) {
-        this.app = StringUtils.trimToNull(app);
-        requireNonNull(this.app, () -> "app must not be null or empty");
+    public CacheManagerImpl(CacheManagerConfig managerConfig) {
+        this.app = managerConfig.getApp();
+        this.register = new ComponentRegister(managerConfig.getScheduler(), managerConfig.getStatPeriod());
 
-        this.register = register;
-        requireNonNull(this.register, () -> "register must not be null");
-
-        if (Maps.isEmpty(templates)) {
-            throw new CacheConfigException("templates must not be null or empty");
-        }
-
-        templates.forEach((id, template) -> {
+        managerConfig.getTemplates().forEach((id, template) -> {
             Template finalTemplate = PropsUtil.replaceTemplate(template, PropsUtil.defaultTemplate(id));
             this.templates.put(id, finalTemplate);
         });
 
-        if (Maps.isNotEmpty(caches)) {
-            this.caches.putAll(caches);
-        }
+        this.caches.putAll(managerConfig.getCaches());
     }
 
     @Override

@@ -333,7 +333,11 @@ public class PropsUtil {
 
         props.setFirst(defaultEmbedStoreProps());
         props.setSecond(defaultExtraStoreProps());
-        props.setThird(defaultExtraStoreProps());
+
+        StoreProps third = defaultExtraStoreProps();
+        third.setProvider(CacheConstants.NONE);
+        props.setThird(third);
+
         return props;
     }
 

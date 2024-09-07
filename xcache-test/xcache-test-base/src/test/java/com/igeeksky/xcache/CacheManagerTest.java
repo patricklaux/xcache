@@ -4,8 +4,9 @@ package com.igeeksky.xcache;
 import com.igeeksky.xcache.caffeine.CaffeineStoreProvider;
 import com.igeeksky.xcache.common.Cache;
 import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.core.CacheManager;
+import com.igeeksky.xcache.core.CacheManagerConfig;
 import com.igeeksky.xcache.core.CacheManagerImpl;
-import com.igeeksky.xcache.core.ComponentRegister;
 import com.igeeksky.xcache.domain.User;
 import com.igeeksky.xcache.extension.codec.JdkCodecProvider;
 import com.igeeksky.xcache.extension.compress.DeflaterCompressorProvider;
@@ -18,10 +19,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * @author Patrick.Lau
@@ -30,18 +28,15 @@ import java.util.concurrent.ScheduledExecutorService;
 class CacheManagerTest {
 
     private Cache<String, User> cache;
-    private CacheManagerImpl cacheManager;
 
     @BeforeEach
     void setUp() {
         String name = "user";
-        String application = "shop";
+        String app = "shop";
 
-        String id = CacheConstants.DEFAULT_TEMPLATE_ID;
-        Template t0 = PropsUtil.defaultTemplate(id);
+        Template t0 = PropsUtil.defaultTemplate(CacheConstants.DEFAULT_TEMPLATE_ID);
 
-        SyncProps cacheSync = t0.getCacheSync();
-        cacheSync.setProvider(CacheConstants.NONE);
+        t0.getCacheSync().setProvider(CacheConstants.NONE);
 
         CompressProps compress = new CompressProps();
         compress.setProvider(CacheConstants.DEFLATER_COMPRESSOR);
@@ -57,16 +52,14 @@ class CacheManagerTest {
         t0.getSecond().setProvider(CacheConstants.NONE);
         t0.getThird().setProvider(CacheConstants.NONE);
 
-        Map<String, Template> templatesMap = new HashMap<>();
-        templatesMap.put(id, t0);
+        CacheManagerConfig managerConfig = CacheManagerConfig.builder()
+                .app(app)
+                .statPeriod(4000L)
+                .scheduler(Executors.newSingleThreadScheduledExecutor())
+                .template(t0)
+                .build();
 
-        Map<String, CacheProps> propsMap = new HashMap<>();
-        // propsMap.put(name, t0);
-
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        ComponentRegister register = new ComponentRegister(scheduler, 4000L);
-
-        cacheManager = new CacheManagerImpl(application, register, templatesMap, propsMap);
+        CacheManager cacheManager = new CacheManagerImpl(managerConfig);
         cacheManager.addProvider(CacheConstants.DEFAULT_PREDICATE_PROVIDER, EmbedContainsPredicateProvider.getInstance());
         cacheManager.addProvider(CacheConstants.DEFAULT_LOCK_PROVIDER, EmbedCacheLockProvider.getInstance());
         cacheManager.addProvider(CacheConstants.DEFLATER_COMPRESSOR, DeflaterCompressorProvider.getInstance());
@@ -75,7 +68,7 @@ class CacheManagerTest {
         cacheManager.addProvider(CacheConstants.JACKSON_CODEC, JacksonCodecProvider.getInstance());
         cacheManager.addProvider(CacheConstants.CAFFEINE_STORE, new CaffeineStoreProvider(null, null));
 
-        cache = cacheManager.getOrCreateCache(name, String.class, null, User.class, null);
+        cache = cacheManager.getOrCreateCache(name, String.class, User.class);
     }
 
     @Test
