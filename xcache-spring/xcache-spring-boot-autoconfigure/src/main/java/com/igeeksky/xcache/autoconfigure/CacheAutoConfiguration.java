@@ -64,7 +64,7 @@ public class CacheAutoConfiguration {
         Map<String, Template> templates = toTemplateMap(cacheProperties.getTemplates());
         Map<String, CacheProps> configs = toCachePropsMap(cacheProperties.getCaches());
 
-        // 管理内嵌组件：LogCacheStatProviderHolder 和 CacheRefreshProviderHolder 延迟注册，避免 scheduler 运行无效任务
+        // 管理内嵌组件：LogCacheStatProvider 和 CacheRefreshProvider 延迟注册，避免 scheduler 运行无效任务
         ComponentRegister register = new ComponentRegister(scheduler, statProperties.getPeriod());
         CacheManagerImpl cacheManager = new CacheManagerImpl(app, register, templates, configs);
 

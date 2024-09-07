@@ -61,11 +61,11 @@ public interface Cache<K, V> extends Base<K, V> {
     /**
      * 先从缓存取值，如果缓存无值，则通过 cacheLoader 回源取值
      * <p>
-     * 注意：为减少回源次数，回源时加锁执行
+     * 注意：回源时加锁，避免多个线程同时回源，导致缓存击穿
      *
      * @param key         键
      * @param cacheLoader 回源函数
-     * @return CacheValue – 值的包装类
+     * @return 值
      */
     V get(K key, CacheLoader<K, V> cacheLoader);
 

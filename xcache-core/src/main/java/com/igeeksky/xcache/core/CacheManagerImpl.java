@@ -65,10 +65,10 @@ public class CacheManagerImpl implements CacheManager {
 
     public CacheManagerImpl(String app, ComponentRegister register, Map<String, Template> templates, Map<String, CacheProps> caches) {
         this.app = StringUtils.trimToNull(app);
-        requireNonNull(this.app, () -> "application must not be null or empty");
+        requireNonNull(this.app, () -> "app must not be null or empty");
 
         this.register = register;
-        requireNonNull(register, () -> "register must not be null");
+        requireNonNull(this.register, () -> "register must not be null");
 
         if (Maps.isEmpty(templates)) {
             throw new CacheConfigException("templates must not be null or empty");
@@ -462,42 +462,52 @@ public class CacheManagerImpl implements CacheManager {
         return Collections.unmodifiableCollection(cached.keySet());
     }
 
+    @Override
     public void addProvider(String beanId, CodecProvider provider) {
         this.codecProviders.put(beanId, provider);
     }
 
+    @Override
     public void addProvider(String beanId, CompressorProvider provider) {
         this.compressorProviders.put(beanId, provider);
     }
 
+    @Override
     public void addProvider(String beanId, CacheSyncProvider provider) {
         this.syncProviders.put(beanId, provider);
     }
 
+    @Override
     public void addProvider(String beanId, CacheStatProvider provider) {
         this.statProviders.put(beanId, provider);
     }
 
+    @Override
     public void addProvider(String beanId, CacheLockProvider provider) {
         this.lockProviders.put(beanId, provider);
     }
 
+    @Override
     public void addProvider(String beanId, ContainsPredicateProvider provider) {
         this.predicateProviders.put(beanId, provider);
     }
 
+    @Override
     public void addProvider(String beanId, StoreProvider provider) {
         this.storeProviders.put(beanId, provider);
     }
 
+    @Override
     public void addCacheLoader(String beanId, CacheLoader<?, ?> loader) {
         this.loaders.put(beanId, loader);
     }
 
+    @Override
     public void addCacheWriter(String beanId, CacheWriter<?, ?> writer) {
         this.writers.put(beanId, writer);
     }
 
+    @Override
     public void addProvider(String beanId, CacheRefreshProvider provider) {
         this.refreshProviders.put(beanId, provider);
     }

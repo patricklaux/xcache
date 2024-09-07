@@ -48,13 +48,16 @@ public class CacheBuilder<K, V> {
 
     public Cache<K, V> build() {
         int count = count(stores);
-        if (count == 1) {
-            return new OneLevelCache<>(cacheConfig, extendConfig, stores);
-        } else if (count == 2) {
-            return new TwoLevelCache<>(cacheConfig, extendConfig, stores);
-        } else {
+        if (count == 3) {
             return new ThreeLevelCache<>(cacheConfig, extendConfig, stores);
         }
+        if (count == 2) {
+            return new TwoLevelCache<>(cacheConfig, extendConfig, stores);
+        }
+        if (count == 1) {
+            return new OneLevelCache<>(cacheConfig, extendConfig, stores);
+        }
+        return new NoOpCache<>(cacheConfig, extendConfig.getCacheLoader(), extendConfig.getCacheWriter());
     }
 
     public static int count(Store<?>[] stores) {

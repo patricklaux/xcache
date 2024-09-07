@@ -6,8 +6,6 @@ import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.CacheManager;
 import com.igeeksky.xcache.domain.Key;
 import com.igeeksky.xcache.domain.User;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -22,14 +20,10 @@ import java.util.Set;
 @CacheConfig(name = "user", keyType = Key.class, valueType = User.class)
 public class UserService {
 
-    private Cache<Key, User> cache;
+    private final Cache<Key, User> cache;
 
-    @Resource(name = "xcacheManager")
-    private CacheManager cacheManager;
-
-    @PostConstruct
-    public void init() {
-        cache = cacheManager.getOrCreateCache("user", Key.class, User.class);
+    public UserService(CacheManager cacheManager) {
+        this.cache = cacheManager.getOrCreateCache("user", Key.class, User.class);
     }
 
     public void deleteUserByCache(Key key) {
@@ -39,7 +33,7 @@ public class UserService {
     public User getUserByCache(Key key) {
         System.out.println("getUserByCache: " + key);
         CacheValue<User> cacheValue = cache.get(key);
-        return cacheValue != null ? cacheValue.getValue() : null;
+        return (cacheValue != null) ? cacheValue.getValue() : null;
     }
 
     public void saveUsersToCache(Map<Key, User> keyValues) {

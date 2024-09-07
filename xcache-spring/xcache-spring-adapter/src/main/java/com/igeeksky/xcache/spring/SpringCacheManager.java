@@ -32,13 +32,11 @@ public class SpringCacheManager implements org.springframework.cache.CacheManage
     @SuppressWarnings("unchecked")
     public <K, V> org.springframework.cache.Cache getCache(String name, Class<K> keyType, Class<V> valueType) {
         SpringCache springCache = caches.get(name);
-        if (null != springCache) {
-            return springCache;
-        }
-        return caches.computeIfAbsent(name, nameKey -> {
-            Cache<K, V> cache = cacheManager.getOrCreateCache(nameKey, keyType, valueType);
-            return new SpringCache((Cache<Object, Object>) cache);
-        });
+        return (null != springCache) ? springCache :
+                caches.computeIfAbsent(name, nameKey -> {
+                    Cache<K, V> cache = cacheManager.getOrCreateCache(nameKey, keyType, valueType);
+                    return new SpringCache((Cache<Object, Object>) cache);
+                });
     }
 
     @Override

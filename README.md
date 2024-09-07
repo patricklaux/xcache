@@ -18,17 +18,35 @@ Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架�
 - 支持缓存自动刷新：自动刷新缓存数据，避免慢查询导致应用响应缓慢。
 - 支持数据回源加锁：加锁确保相同的键同时仅有一个线程回源查询，降低回源次数，减轻数据源压力。
 - 支持缓存数据压缩：通过压缩数据，降低内存消耗。
-- 支持数据存在断言：通过实现数据存在断言接口，避免回源查询不存在的值，减轻数据源压力。
 - 支持多级缓存实现：内嵌缓存采用 Caffeine，外部缓存采用 Redis，并可通过实现 Store 接口扩展缓存能力，最多可支持三级缓存。
-- 适配 SpringCache：适配 Spring Cache，无需修改代码，引入 Xcache 依赖，即可支持更多缓存功能配置。
+- 适配 SpringCache：无需修改现有代码，引入 Xcache 依赖，即可支持更多缓存功能配置。
 - 更强大的缓存注解：Cacheable，CacheableAll，CachePut，CachePutAll，CacheEvict，CacheEvictAll，CacheClear
-- 支持虚拟线程特性：存在加锁执行或 IO 等待的定时任务，采用虚拟线程进行优化，降低平台线程资源占用。
+- 数据存在断言：通过实现数据存在断言接口，譬如 Bloom Filter，避免回源查询。
+- 支持缓存空值：当数据源确定无数据时，可缓存空值，避免缓存穿透。
+- 虚拟线程优化：需要加锁执行或 IO 等待的定时任务，采用虚拟线程执行，降低平台线程资源占用。
 
 ## 使用
 
+### 运行环境
+
+SpringBoot：[3.3.0, )
+JDK：21
+
+### 参考项目
+
+使用 Xcache 注解：
+
+https://github.com/patricklaux/xcache/tree/main/xcache-test/xcache-spring-boot-starter-test
+
+使用 SpringCache 注解：
+
+https://github.com/patricklaux/xcache/tree/main/xcache-test/xcache-spring-adapter-test
+
 ### 基本使用
 
-#### 引入依赖
+#### Maven
+
+如果不使用缓存注解，直接通过代码调用的方式操作缓存，可以采用此依赖配置。
 
 ```xml
 <dependencies>
@@ -41,7 +59,64 @@ Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架�
 </dependencies>
 ```
 
+**配置说明**
+
+- 使用 Caffeine 作为内嵌缓存
+- 使用 Lettuce 操作 Redis
+- 使用 Jackson 序列化数据
+
+#### 代码示例
+
+```java
+@Service
+public class UserService {
+    private final UserDao userDao;
+    private final Cache<Long, User> cache;
+
+    public UserService(CacheManager cacheManager, UserDao userDao) {
+        this.cache = cacheManager.getOrCreateCache("user", Long.class, User.class);
+        this.userDao = userDao;
+    }
+
+    public User getUser(Long id) {
+        // 1. 从缓存查询数据：
+        // 2. 如果缓存有数据，返回缓存数据；
+        // 3. 如果缓存无数据，调用 userDao.findUser(id) 方法，并将查询结果存入缓存
+        return cache.get(key, userDao::findUser);
+    }
+
+    public User saveUser(User user) {
+        userDao.saveUser(user);
+        return cache.put(user.getId, user);
+    }
+
+    public void saveUsers(List<User> users) {
+        userDao.saveUsers(users);
+        Map<Long, User> keyValues = Maps.newHashMap(users.size());
+        users.forEach(user-> keyValues.put(user.getId, user));
+        cache.putAll(keyValues);
+    }
+
+    public void deleteUser(Long id) {
+        userDao.deleteById(id);
+        cache.evict(id);
+    }
+
+    public void deleteUsers(Set<Long> ids) {
+        userDao.deleteUsrs(ids);
+        cache.evictAll(ids);
+    }
+
+}
+```
+
+
+
 ### 使用 xcache 注解
+
+#### Maven
+
+如果希望使用 xcache 自定义注解，那么可以使用以下配置。
 
 ```xml
 <dependencies>
@@ -61,7 +136,11 @@ Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架�
 
 
 
-### 使用 Spring Cache 注解
+### 适配 Spring Cache 
+
+#### Maven
+
+如果希望使用 Spring Cache 及其注解，那么可以采用以下配置。
 
 ```xml
 <dependencies>
@@ -72,12 +151,14 @@ Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架�
     </dependency>
     <dependency>
         <groupId>com.igeeksky.xcache</groupId>
-        <artifactId>xcache-spring-adapter</artifactId>
+        <artifactId>xcache-spring-adapter-autoconfigure</artifactId>
         <version>1.0.0</version>
     </dependency>
     <!-- ... other ... -->
 </dependencies>
 ```
+
+### 配置选项
 
 
 
