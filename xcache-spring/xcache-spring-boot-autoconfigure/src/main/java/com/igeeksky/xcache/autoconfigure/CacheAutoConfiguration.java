@@ -2,9 +2,7 @@ package com.igeeksky.xcache.autoconfigure;
 
 
 import com.igeeksky.xcache.autoconfigure.holder.*;
-import com.igeeksky.xcache.core.CacheManager;
-import com.igeeksky.xcache.core.CacheManagerConfig;
-import com.igeeksky.xcache.core.CacheManagerImpl;
+import com.igeeksky.xcache.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -52,57 +50,56 @@ public class CacheAutoConfiguration {
                               ObjectProvider<ContainsPredicateProviderHolder> predicateHolders,
                               ScheduledExecutorService scheduler) {
 
+        ComponentManager componentManager = new ComponentManagerImpl(scheduler, statProperties.getPeriod());
+
+        for (StoreProviderHolder holder : storeHolders) {
+            holder.getAll().forEach(componentManager::addProvider);
+        }
+
+        for (CodecProviderHolder holder : codecHolders) {
+            holder.getAll().forEach(componentManager::addProvider);
+        }
+
+        for (CacheSyncProviderHolder holder : syncHolders) {
+            holder.getAll().forEach(componentManager::addProvider);
+        }
+
+        for (CacheStatProviderHolder holder : statHolders) {
+            holder.getAll().forEach(componentManager::addProvider);
+        }
+
+        for (CacheLockProviderHolder holder : lockHolders) {
+            holder.getAll().forEach(componentManager::addProvider);
+        }
+
+        for (CacheLoaderHolder holder : loaderHolders) {
+            holder.getAll().forEach(componentManager::addCacheLoader);
+        }
+
+        for (CacheWriterHolder holder : writerHolders) {
+            holder.getAll().forEach(componentManager::addCacheWriter);
+        }
+
+        for (CacheRefreshProviderHolder holder : refreshHolders) {
+            holder.getAll().forEach(componentManager::addProvider);
+        }
+
+        for (CompressorProviderHolder holder : compressorHolders) {
+            holder.getAll().forEach(componentManager::addProvider);
+        }
+
+        for (ContainsPredicateProviderHolder holder : predicateHolders) {
+            holder.getAll().forEach(componentManager::addProvider);
+        }
+
         CacheManagerConfig managerConfig = CacheManagerConfig.builder()
                 .app(cacheProperties.getApp())
-                .statPeriod(statProperties.getPeriod())
-                .scheduler(scheduler)
+                .componentManager(componentManager)
                 .templates(cacheProperties.getTemplates())
                 .caches(cacheProperties.getCaches())
                 .build();
 
-        CacheManager cacheManager = new CacheManagerImpl(managerConfig);
-
-        for (StoreProviderHolder holder : storeHolders) {
-            holder.getAll().forEach(cacheManager::addProvider);
-        }
-
-        for (CodecProviderHolder holder : codecHolders) {
-            holder.getAll().forEach(cacheManager::addProvider);
-        }
-
-        for (CacheSyncProviderHolder holder : syncHolders) {
-            holder.getAll().forEach(cacheManager::addProvider);
-        }
-
-        for (CacheStatProviderHolder holder : statHolders) {
-            holder.getAll().forEach(cacheManager::addProvider);
-        }
-
-        for (CacheLockProviderHolder holder : lockHolders) {
-            holder.getAll().forEach(cacheManager::addProvider);
-        }
-
-        for (CacheLoaderHolder holder : loaderHolders) {
-            holder.getAll().forEach(cacheManager::addCacheLoader);
-        }
-
-        for (CacheWriterHolder holder : writerHolders) {
-            holder.getAll().forEach(cacheManager::addCacheWriter);
-        }
-
-        for (CacheRefreshProviderHolder holder : refreshHolders) {
-            holder.getAll().forEach(cacheManager::addProvider);
-        }
-
-        for (CompressorProviderHolder holder : compressorHolders) {
-            holder.getAll().forEach(cacheManager::addProvider);
-        }
-
-        for (ContainsPredicateProviderHolder holder : predicateHolders) {
-            holder.getAll().forEach(cacheManager::addProvider);
-        }
-
-        return cacheManager;
+        return new CacheManagerImpl(managerConfig);
     }
 
 }

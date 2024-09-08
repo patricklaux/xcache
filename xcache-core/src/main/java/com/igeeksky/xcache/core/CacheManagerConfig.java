@@ -1,17 +1,14 @@
 package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.common.CacheConfigException;
-import com.igeeksky.xcache.props.CacheConstants;
 import com.igeeksky.xcache.props.CacheProps;
 import com.igeeksky.xcache.props.Template;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
-import com.igeeksky.xtool.core.lang.Assert;
 import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * @author Patrick.Lau
@@ -21,28 +18,21 @@ public class CacheManagerConfig {
 
     private final String app;
 
-    private final Long statPeriod;
-
     private final Map<String, CacheProps> caches;
 
     private final Map<String, Template> templates;
 
-    private final ScheduledExecutorService scheduler;
+    private final ComponentManager componentManager;
 
     private CacheManagerConfig(Builder builder) {
         this.app = builder.app;
-        this.statPeriod = builder.statPeriod;
-        this.scheduler = builder.scheduler;
+        this.componentManager = builder.componentManager;
         this.templates = builder.templates;
         this.caches = builder.caches;
     }
 
     public String getApp() {
         return app;
-    }
-
-    public Long getStatPeriod() {
-        return statPeriod;
     }
 
     public Map<String, CacheProps> getCaches() {
@@ -53,8 +43,8 @@ public class CacheManagerConfig {
         return templates;
     }
 
-    public ScheduledExecutorService getScheduler() {
-        return scheduler;
+    public ComponentManager getComponentManager() {
+        return componentManager;
     }
 
     public static Builder builder() {
@@ -65,9 +55,7 @@ public class CacheManagerConfig {
 
         private String app;
 
-        private long statPeriod = CacheConstants.DEFAULT_STAT_PERIOD;
-
-        private ScheduledExecutorService scheduler;
+        private ComponentManager componentManager;
 
         private final Map<String, Template> templates = new HashMap<>();
 
@@ -78,16 +66,9 @@ public class CacheManagerConfig {
             return this;
         }
 
-        public Builder statPeriod(Long statPeriod) {
-            if (statPeriod != null) {
-                Assert.isTrue(statPeriod > 0L, "statPeriod must be greater than 0");
-                this.statPeriod = statPeriod;
-            }
-            return this;
-        }
-
-        public Builder scheduler(ScheduledExecutorService scheduler) {
-            this.scheduler = scheduler;
+        public Builder componentManager(ComponentManager componentManager) {
+            requireTrue(componentManager != null, "Cache-config: componentManager must not be null");
+            this.componentManager = componentManager;
             return this;
         }
 
@@ -125,7 +106,6 @@ public class CacheManagerConfig {
         public CacheManagerConfig build() {
             requireTrue(app != null, "Cache-config: app must not be null");
             requireTrue(!templates.isEmpty(), "Cache-config: templates must not be empty.");
-            requireTrue(scheduler != null, "Cache-config: scheduler must not be null");
             return new CacheManagerConfig(this);
         }
 

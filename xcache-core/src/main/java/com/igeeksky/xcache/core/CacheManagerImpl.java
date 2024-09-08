@@ -5,12 +5,12 @@ import com.igeeksky.xcache.core.store.StoreConfig;
 import com.igeeksky.xcache.core.store.StoreProvider;
 import com.igeeksky.xcache.extension.codec.CodecConfig;
 import com.igeeksky.xcache.extension.codec.CodecProvider;
-import com.igeeksky.xcache.extension.codec.JdkCodecProvider;
 import com.igeeksky.xcache.extension.compress.CompressConfig;
 import com.igeeksky.xcache.extension.compress.CompressorProvider;
-import com.igeeksky.xcache.extension.compress.DeflaterCompressorProvider;
-import com.igeeksky.xcache.extension.compress.GzipCompressorProvider;
-import com.igeeksky.xcache.extension.contains.*;
+import com.igeeksky.xcache.extension.contains.ContainsConfig;
+import com.igeeksky.xcache.extension.contains.ContainsPredicate;
+import com.igeeksky.xcache.extension.contains.ContainsPredicateProvider;
+import com.igeeksky.xcache.extension.contains.EmbedContainsPredicate;
 import com.igeeksky.xcache.extension.lock.*;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
@@ -47,27 +47,16 @@ public class CacheManagerImpl implements CacheManager {
     private final String app;
     private final String sid = UUID.randomUUID().toString();
 
-    private final ComponentRegister register;
+    private final ComponentManager componentManager;
 
     private final ConcurrentMap<String, CacheProps> caches = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Template> templates = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<String, Cache<?, ?>> cached = new ConcurrentHashMap<>();
 
-    private final ConcurrentMap<String, CacheLoader<?, ?>> loaders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CacheWriter<?, ?>> writers = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, StoreProvider> storeProviders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CacheSyncProvider> syncProviders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CacheRefreshProvider> refreshProviders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CacheStatProvider> statProviders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CacheLockProvider> lockProviders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CodecProvider> codecProviders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CompressorProvider> compressorProviders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, ContainsPredicateProvider> predicateProviders = new ConcurrentHashMap<>();
-
     public CacheManagerImpl(CacheManagerConfig managerConfig) {
         this.app = managerConfig.getApp();
-        this.register = new ComponentRegister(managerConfig.getScheduler(), managerConfig.getStatPeriod());
+        this.componentManager = managerConfig.getComponentManager();
 
         managerConfig.getTemplates().forEach((id, template) -> {
             Template finalTemplate = PropsUtil.replaceTemplate(template, PropsUtil.defaultTemplate(id));
@@ -75,12 +64,6 @@ public class CacheManagerImpl implements CacheManager {
         });
 
         this.caches.putAll(managerConfig.getCaches());
-
-        this.addProvider(CacheConstants.DEFLATER_COMPRESSOR, DeflaterCompressorProvider.getInstance());
-        this.addProvider(CacheConstants.GZIP_COMPRESSOR, GzipCompressorProvider.getInstance());
-        this.addProvider(CacheConstants.EMBED_CACHE_LOCK, EmbedCacheLockProvider.getInstance());
-        this.addProvider(CacheConstants.EMBED_CONTAINS_PREDICATE, EmbedContainsPredicateProvider.getInstance());
-        this.addProvider(CacheConstants.JDK_CODEC, JdkCodecProvider.getInstance());
     }
 
     @Override
@@ -112,8 +95,8 @@ public class CacheManagerImpl implements CacheManager {
         stores[1] = this.getStore(this.buildStoreConfig(cacheProps.getSecond(), cacheConfig));
         stores[2] = this.getStore(this.buildStoreConfig(cacheProps.getThird(), cacheConfig));
 
-        CacheLoader<K, V> cacheLoader = this.getCacheLoader(name);
-        CacheWriter<K, V> cacheWriter = this.getCacheWriter(name);
+        CacheLoader<K, V> cacheLoader = componentManager.getCacheLoader(name);
+        CacheWriter<K, V> cacheWriter = componentManager.getCacheWriter(name);
 
         int count = CacheBuilder.count(stores);
         if (count == 0) {
@@ -193,7 +176,7 @@ public class CacheManagerImpl implements CacheManager {
             return EmbedCacheLockProvider.getInstance().get(config);
         }
 
-        CacheLockProvider provider = lockProviders.get(beanId);
+        CacheLockProvider provider = componentManager.getLockProvider(beanId);
         requireNonNull(provider, () -> "CacheLockProvider:[" + beanId + "] is undefined.");
 
         LockService cacheLock = provider.get(config);
@@ -205,16 +188,16 @@ public class CacheManagerImpl implements CacheManager {
     /**
      * @param config 配置
      * @param <K>    键泛型参数
-     * @return 如果未配置，或配置为 "NONE"，返回默认的 {@link EmbedContainsPredicate}。 <p>
+     * @return 如果未配置，返回默认的 {@link EmbedContainsPredicate}。 <p>
      * 如果有配置：配置正确，返回配置的 {@link ContainsPredicate}；配置错误，抛出异常 {@link CacheConfigException}
      */
     private <K> ContainsPredicate<K> getContainsPredicate(ContainsConfig<K> config) {
-        String beanId = StringUtils.trimToNull(config.getProvider());
+        String beanId = config.getProvider();
         if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
             return EmbedContainsPredicate.getInstance();
         }
 
-        ContainsPredicateProvider provider = predicateProviders.get(beanId);
+        ContainsPredicateProvider provider = componentManager.getPredicateProvider(beanId);
         requireNonNull(provider, () -> "ContainsPredicateProvider:[" + beanId + "] is undefined.");
 
         ContainsPredicate<K> predicate = provider.get(config);
@@ -229,21 +212,13 @@ public class CacheManagerImpl implements CacheManager {
             return null;
         }
 
-        CacheStatProvider provider = statProviders.get(beanId);
+        CacheStatProvider provider = componentManager.getStatProvider(beanId);
         if (provider == null) {
-            provider = register.logCacheStat(beanId, this);
+            provider = componentManager.getStatProvider(beanId);
             requireNonNull(provider, () -> "CacheStatProvider:[" + beanId + "] is undefined.");
         }
 
         return provider.getMonitor(config);
-    }
-
-    private <K, V> CacheLoader<K, V> getCacheLoader(String name) {
-        return (CacheLoader<K, V>) loaders.get(name);
-    }
-
-    private <K, V> CacheWriter<K, V> getCacheWriter(String name) {
-        return (CacheWriter<K, V>) writers.get(name);
     }
 
     private CacheRefresh getCacheRefresh(RefreshConfig config) {
@@ -252,11 +227,8 @@ public class CacheManagerImpl implements CacheManager {
             return null;
         }
 
-        CacheRefreshProvider provider = refreshProviders.get(beanId);
-        if (provider == null) {
-            provider = register.embedCacheRefresh(beanId, this);
-            requireNonNull(provider, () -> "RefreshProvider:[" + beanId + "] is undefined.");
-        }
+        CacheRefreshProvider provider = componentManager.getRefreshProvider(beanId);
+        requireNonNull(provider, () -> "RefreshProvider:[" + beanId + "] is undefined.");
 
         return provider.getCacheRefresh(config);
     }
@@ -267,7 +239,7 @@ public class CacheManagerImpl implements CacheManager {
             return new CacheSyncMonitor(config, null);
         }
 
-        CacheSyncProvider provider = syncProviders.get(beanId);
+        CacheSyncProvider provider = componentManager.getSyncProvider(beanId);
         requireNonNull(provider, () -> "CacheSyncProvider:[" + beanId + "] is undefined");
 
         provider.register(config.getChannel(), new SyncMessageListener<>(config));
@@ -286,7 +258,7 @@ public class CacheManagerImpl implements CacheManager {
             return null;
         }
 
-        StoreProvider provider = storeProviders.get(beanId);
+        StoreProvider provider = componentManager.getStoreProvider(beanId);
         requireNonNull(provider, () -> "Cache:[" + name + "], CacheStoreProvider:[" + beanId + "] is undefined.");
 
         Store<V> store = provider.getStore(config);
@@ -297,7 +269,7 @@ public class CacheManagerImpl implements CacheManager {
 
     private <K> KeyCodec<K> getKeyCodec(String beanId, CodecConfig<K> config) {
         String name = config.getName();
-        CodecProvider provider = codecProviders.get(beanId);
+        CodecProvider provider = componentManager.getCodecProvider(beanId);
         requireNonNull(provider, () -> "Cache:[" + name + "], CodecProvider:[" + beanId + "] is undefined.");
 
         KeyCodec<K> keyCodec = provider.getKeyCodec(config);
@@ -309,7 +281,7 @@ public class CacheManagerImpl implements CacheManager {
     private <V> Codec<V> getCodec(String beanId, CodecConfig<V> config) {
         String name = config.getName();
 
-        CodecProvider provider = codecProviders.get(beanId);
+        CodecProvider provider = componentManager.getCodecProvider(beanId);
         requireNonNull(provider, () -> "Cache:[" + name + "], CodecProvider:[" + beanId + "] is undefined.");
 
         Codec<V> codec = provider.getCodec(config);
@@ -442,7 +414,7 @@ public class CacheManagerImpl implements CacheManager {
     private Compressor getCompressor(CompressConfig config) {
         String beanId = config.getProvider();
 
-        CompressorProvider provider = compressorProviders.get(beanId);
+        CompressorProvider provider = componentManager.getCompressorProvider(beanId);
         requireNonNull(provider, () -> "CompressorProvider:[" + beanId + "] is undefined.");
 
         Compressor compressor = provider.get(config);
@@ -459,56 +431,6 @@ public class CacheManagerImpl implements CacheManager {
     @Override
     public Collection<String> getAllCacheNames() {
         return Collections.unmodifiableCollection(cached.keySet());
-    }
-
-    @Override
-    public void addProvider(String beanId, CodecProvider provider) {
-        this.codecProviders.put(beanId, provider);
-    }
-
-    @Override
-    public void addProvider(String beanId, CompressorProvider provider) {
-        this.compressorProviders.put(beanId, provider);
-    }
-
-    @Override
-    public void addProvider(String beanId, CacheSyncProvider provider) {
-        this.syncProviders.put(beanId, provider);
-    }
-
-    @Override
-    public void addProvider(String beanId, CacheStatProvider provider) {
-        this.statProviders.put(beanId, provider);
-    }
-
-    @Override
-    public void addProvider(String beanId, CacheLockProvider provider) {
-        this.lockProviders.put(beanId, provider);
-    }
-
-    @Override
-    public void addProvider(String beanId, ContainsPredicateProvider provider) {
-        this.predicateProviders.put(beanId, provider);
-    }
-
-    @Override
-    public void addProvider(String beanId, StoreProvider provider) {
-        this.storeProviders.put(beanId, provider);
-    }
-
-    @Override
-    public void addCacheLoader(String beanId, CacheLoader<?, ?> loader) {
-        this.loaders.put(beanId, loader);
-    }
-
-    @Override
-    public void addCacheWriter(String beanId, CacheWriter<?, ?> writer) {
-        this.writers.put(beanId, writer);
-    }
-
-    @Override
-    public void addProvider(String beanId, CacheRefreshProvider provider) {
-        this.refreshProviders.put(beanId, provider);
     }
 
     private static void requireNonNull(Object obj, Supplier<String> errMsg) {

@@ -1,16 +1,6 @@
 package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.common.Cache;
-import com.igeeksky.xcache.common.CacheLoader;
-import com.igeeksky.xcache.common.CacheWriter;
-import com.igeeksky.xcache.core.store.StoreProvider;
-import com.igeeksky.xcache.extension.codec.CodecProvider;
-import com.igeeksky.xcache.extension.compress.CompressorProvider;
-import com.igeeksky.xcache.extension.contains.ContainsPredicateProvider;
-import com.igeeksky.xcache.extension.lock.CacheLockProvider;
-import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
-import com.igeeksky.xcache.extension.stat.CacheStatProvider;
-import com.igeeksky.xcache.extension.sync.CacheSyncProvider;
 
 import java.util.Collection;
 
@@ -66,85 +56,5 @@ public interface CacheManager {
      * @return 所有缓存名称
      */
     Collection<String> getAllCacheNames();
-
-    /**
-     * 添加编解码器提供者
-     *
-     * @param beanId   编解码器提供者的唯一标识
-     * @param provider 编解码器提供者
-     */
-    void addProvider(String beanId, CodecProvider provider);
-
-    /**
-     * 添加压缩器提供者
-     *
-     * @param beanId   压缩器提供者的唯一标识
-     * @param provider 压缩器提供者
-     */
-    void addProvider(String beanId, CompressorProvider provider);
-
-    /**
-     * 添加缓存数据同步提供者
-     *
-     * @param beanId   缓存数据同步提供者的唯一标识
-     * @param provider 缓存数据同步提供者
-     */
-    void addProvider(String beanId, CacheSyncProvider provider);
-
-    /**
-     * 添加缓存统计提供者
-     *
-     * @param beanId   缓存统计提供者的唯一标识
-     * @param provider 缓存统计提供者
-     */
-    void addProvider(String beanId, CacheStatProvider provider);
-
-    /**
-     * 添加缓存锁提供者
-     *
-     * @param beanId   缓存锁提供者的唯一标识
-     * @param provider 缓存锁提供者
-     */
-    void addProvider(String beanId, CacheLockProvider provider);
-
-    /**
-     * 添加缓存键值存在断言提供者
-     *
-     * @param beanId   缓存键值存在断言提供者的唯一标识
-     * @param provider 缓存键值存在断言提供者
-     */
-    void addProvider(String beanId, ContainsPredicateProvider provider);
-
-    /**
-     * 添加缓存存储提供者
-     *
-     * @param beanId   缓存存储提供者的唯一标识
-     * @param provider 缓存存储提供者
-     */
-    void addProvider(String beanId, StoreProvider provider);
-
-    /**
-     * 添加缓存加载器
-     *
-     * @param beanId   缓存加载器的唯一标识
-     * @param loader   缓存加载器
-     */
-    void addCacheLoader(String beanId, CacheLoader<?, ?> loader);
-
-    /**
-     * 添加缓存写入器
-     *
-     * @param beanId   缓存写入器的唯一标识
-     * @param writer   缓存写入器
-     */
-    void addCacheWriter(String beanId, CacheWriter<?, ?> writer);
-
-    /**
-     * 添加缓存刷新提供者
-     *
-     * @param beanId   缓存刷新提供者的唯一标识
-     * @param provider 缓存刷新提供者
-     */
-    void addProvider(String beanId, CacheRefreshProvider provider);
 
 }

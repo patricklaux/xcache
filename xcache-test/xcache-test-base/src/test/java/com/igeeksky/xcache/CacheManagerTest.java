@@ -4,16 +4,11 @@ package com.igeeksky.xcache;
 import com.igeeksky.xcache.caffeine.CaffeineStoreProvider;
 import com.igeeksky.xcache.common.Cache;
 import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.core.CacheManager;
 import com.igeeksky.xcache.core.CacheManagerConfig;
 import com.igeeksky.xcache.core.CacheManagerImpl;
+import com.igeeksky.xcache.core.ComponentManagerImpl;
 import com.igeeksky.xcache.domain.User;
-import com.igeeksky.xcache.extension.codec.JdkCodecProvider;
-import com.igeeksky.xcache.extension.compress.DeflaterCompressorProvider;
-import com.igeeksky.xcache.extension.compress.GzipCompressorProvider;
-import com.igeeksky.xcache.extension.contains.EmbedContainsPredicateProvider;
 import com.igeeksky.xcache.extension.jackson.JacksonCodecProvider;
-import com.igeeksky.xcache.extension.lock.EmbedCacheLockProvider;
 import com.igeeksky.xcache.props.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,23 +47,17 @@ class CacheManagerTest {
         t0.getSecond().setProvider(CacheConstants.NONE);
         t0.getThird().setProvider(CacheConstants.NONE);
 
+        ComponentManagerImpl componentManager = new ComponentManagerImpl(Executors.newSingleThreadScheduledExecutor(), 4000L);
+        componentManager.addProvider(CacheConstants.JACKSON_CODEC, JacksonCodecProvider.getInstance());
+        componentManager.addProvider(CacheConstants.CAFFEINE_STORE, new CaffeineStoreProvider(null, null));
+
         CacheManagerConfig managerConfig = CacheManagerConfig.builder()
                 .app(app)
-                .statPeriod(4000L)
-                .scheduler(Executors.newSingleThreadScheduledExecutor())
+                .componentManager(componentManager)
                 .template(t0)
                 .build();
 
-        CacheManager cacheManager = new CacheManagerImpl(managerConfig);
-        cacheManager.addProvider(CacheConstants.DEFAULT_PREDICATE_PROVIDER, EmbedContainsPredicateProvider.getInstance());
-        cacheManager.addProvider(CacheConstants.DEFAULT_LOCK_PROVIDER, EmbedCacheLockProvider.getInstance());
-        cacheManager.addProvider(CacheConstants.DEFLATER_COMPRESSOR, DeflaterCompressorProvider.getInstance());
-        cacheManager.addProvider(CacheConstants.GZIP_COMPRESSOR, GzipCompressorProvider.getInstance());
-        cacheManager.addProvider(CacheConstants.JDK_CODEC, JdkCodecProvider.getInstance());
-        cacheManager.addProvider(CacheConstants.JACKSON_CODEC, JacksonCodecProvider.getInstance());
-        cacheManager.addProvider(CacheConstants.CAFFEINE_STORE, new CaffeineStoreProvider(null, null));
-
-        cache = cacheManager.getOrCreateCache(name, String.class, User.class);
+        cache = new CacheManagerImpl(managerConfig).getOrCreateCache(name, String.class, User.class);
     }
 
     @Test
