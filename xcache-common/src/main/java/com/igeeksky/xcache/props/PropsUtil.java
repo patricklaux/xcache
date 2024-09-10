@@ -325,6 +325,7 @@ public class PropsUtil {
         props.setCharset(CacheConstants.DEFAULT_CHARSET_NAME);
         props.setKeyCodec(CacheConstants.DEFAULT_KEY_CODEC_PROVIDER);
         props.setCacheStat(CacheConstants.DEFAULT_STAT_PROVIDER);
+        props.setContainsPredicate(CacheConstants.DEFAULT_PREDICATE_PROVIDER);
 
         props.setCacheLock(defaultLockProps());
         props.setCacheSync(defaultSyncProps());

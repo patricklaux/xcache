@@ -65,9 +65,12 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected Map<String, CacheValue<V>> doGetAll(Set<String> keys) {
+        // 复制键集
         Set<String> cloneKeys = new HashSet<>(keys);
+        // 最终结果集
         Map<String, CacheValue<V>> result = Maps.newHashMap(keys.size());
 
+        // 从一级缓存查询数据
         Map<String, CacheValue<V>> firstAll = first.getAll(cloneKeys);
         if (Maps.isNotEmpty(firstAll)) {
             firstAll.forEach((key, cacheValue) -> {
@@ -82,6 +85,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
             }
         }
 
+        // 从二级缓存查询数据
         Map<String, CacheValue<V>> secondAll = second.getAll(cloneKeys);
         if (Maps.isNotEmpty(secondAll)) {
             Map<String, V> saveToLower = Maps.newHashMap(secondAll.size());
@@ -91,11 +95,13 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
                     saveToLower.put(key, cacheValue.getValue());
                 }
             });
+            // 二级缓存数据保存到一级缓存
             if (Maps.isNotEmpty(saveToLower)) {
                 first.putAll(saveToLower);
             }
         }
 
+        // 返回最终结果集
         return result;
     }
 

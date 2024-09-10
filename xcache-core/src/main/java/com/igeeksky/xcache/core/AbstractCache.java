@@ -221,14 +221,15 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
     @Override
     public Map<K, CacheValue<V>> getAll(Set<? extends K> keys) {
-        requireNonNull(keys, "getAll", "keys must not be null.");
+        String method = "getAll";
+        requireNonNull(keys, method, "keys must not be null.");
 
         if (keys.isEmpty()) {
             return Maps.newHashMap(0);
         }
 
         // 1. 建立原生Key 和 缓存Key 之间的映射
-        Map<String, K> keyMapping = this.createKeyMapping(keys);
+        Map<String, K> keyMapping = this.createKeyMapping(keys, method);
 
         // 2. 从缓存中获取缓存值
         Map<String, CacheValue<V>> cacheValues = this.doGetAll(keyMapping.keySet());
@@ -246,20 +247,30 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
     @Override
     public Map<K, V> getOrLoadAll(Set<? extends K> keys) {
-        requireNonNull(keys, "getOrLoadAll", "keys must not be null.");
+        String method = "getOrLoadAll";
+        requireNonNull(keys, method, "keys must not be null.");
 
-        return this.doGetOrLoadAll(keys, this.cacheLoader);
+        return this.doGetOrLoadAll(keys, this.cacheLoader, method);
     }
 
     @Override
     public Map<K, V> getAll(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
-        requireNonNull(keys, "getAll", "keys must not be null.");
-        requireNonNull(cacheLoader, "getAll", "cacheLoader must not be null.");
+        String method = "getAll";
+        requireNonNull(keys, method, "keys must not be null.");
+        requireNonNull(cacheLoader, method, "cacheLoader must not be null.");
 
-        return this.doGetOrLoadAll(keys, cacheLoader);
+        return this.doGetOrLoadAll(keys, cacheLoader, method);
     }
 
-    private Map<K, V> doGetOrLoadAll(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
+    /**
+     * 从缓存中获取或加载给定键集合对应的值映射。
+     * 此方法主要用于批量获取数据，如果缓存中数据不存在，则通过缓存加载器加载数据。
+     *
+     * @param keys        缓存键的集合，不能为空。
+     * @param cacheLoader 缓存键对应数据的加载器，可以为空。
+     * @return 包含所有请求键对应值的映射，如果无值，则返回空映射。
+     */
+    private Map<K, V> doGetOrLoadAll(Set<? extends K> keys, CacheLoader<K, V> cacheLoader, String method) {
         int size = keys.size();
         if (size == 0) {
             return Maps.newHashMap(0);
@@ -276,12 +287,13 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         }
 
         // 1. 建立原生键 和 缓存键 的映射
-        Map<String, K> keyMapping = this.createKeyMapping(keys);
+        Map<String, K> keyMapping = this.createKeyMapping(keys, method);
 
         // 2. 缓存取值
         boolean hasLoader = (cacheLoader != null);
         Map<K, V> result = this.getAll(keyMapping, hasLoader);
 
+        // 如果没有缓存加载器或所有键均已从缓存取值，直接返回从缓存中获取的结果
         if (!hasLoader || keyMapping.isEmpty()) {
             return result;
         }
@@ -308,7 +320,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         // 5. 缓存回源取值结果
         this.doPutAll(puts);
 
-        // 6. 统计
+        // 6. 记录回源成功/失败次数
         this.statMonitor.incHitLoads(hitLoads);
         this.statMonitor.incMissLoads(totalLoads - hitLoads);
 
@@ -324,10 +336,10 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
      * @param keys 输入的键集合
      * @return 返回一个 Map对象，其键为缓存键，值为原始键
      */
-    private Map<String, K> createKeyMapping(Set<? extends K> keys) {
+    private Map<String, K> createKeyMapping(Set<? extends K> keys, String method) {
         Map<String, K> keyMapping = Maps.newHashMap(keys.size());
         for (K key : keys) {
-            requireNonNull(key, "getAll", "keys has null element.");
+            requireNonNull(key, method, "keys has null element.");
             keyMapping.put(toStoreKey(key), key);
         }
         this.cacheRefresh.accessAll(keyMapping.keySet());
