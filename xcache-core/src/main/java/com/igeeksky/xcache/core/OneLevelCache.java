@@ -27,10 +27,10 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     public OneLevelCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend, Store<V>[] stores) {
         super(config, extend);
         this.syncMonitor = extend.getSyncMonitor();
-        store = getStore(extend.getStatMonitor(), stores);
+        this.store = getStore(stores, extend.getStatMonitor());
     }
 
-    private Store<V> getStore(CacheStatMonitor statMonitor, Store<V>[] stores) {
+    private static <V> Store<V> getStore(Store<V>[] stores, CacheStatMonitor statMonitor) {
         StoreLevel[] levels = StoreLevel.values();
         for (int i = 0; i < stores.length; i++) {
             if (stores[i] != null) {

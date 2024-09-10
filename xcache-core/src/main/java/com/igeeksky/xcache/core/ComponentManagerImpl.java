@@ -9,7 +9,6 @@ import com.igeeksky.xcache.extension.compress.CompressorProvider;
 import com.igeeksky.xcache.extension.compress.DeflaterCompressorProvider;
 import com.igeeksky.xcache.extension.compress.GzipCompressorProvider;
 import com.igeeksky.xcache.extension.contains.ContainsPredicateProvider;
-import com.igeeksky.xcache.extension.contains.EmbedContainsPredicateProvider;
 import com.igeeksky.xcache.extension.lock.CacheLockProvider;
 import com.igeeksky.xcache.extension.lock.EmbedCacheLockProvider;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
@@ -36,6 +35,8 @@ import java.util.concurrent.locks.ReentrantLock;
 @SuppressWarnings("unchecked")
 public class ComponentManagerImpl implements ComponentManager {
 
+    private final Lock lock = new ReentrantLock();
+
     private final ConcurrentMap<String, CacheLoader<?, ?>> loaders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CacheWriter<?, ?>> writers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, StoreProvider> stores = new ConcurrentHashMap<>();
@@ -47,13 +48,10 @@ public class ComponentManagerImpl implements ComponentManager {
     private final ConcurrentMap<String, CompressorProvider> compressors = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, ContainsPredicateProvider> predicates = new ConcurrentHashMap<>();
 
-    private final Lock lock = new ReentrantLock();
-
     private final long statPeriod;
     private final ScheduledExecutorService scheduler;
 
     private volatile LogCacheStatProvider logCacheStatProvider;
-    private volatile EmbedCacheRefreshProvider embedCacheRefreshProvider;
 
     public ComponentManagerImpl(ScheduledExecutorService scheduler, Long statPeriod) {
         this.scheduler = scheduler;
@@ -63,7 +61,7 @@ public class ComponentManagerImpl implements ComponentManager {
         this.addProvider(CacheConstants.DEFLATER_COMPRESSOR, DeflaterCompressorProvider.getInstance());
         this.addProvider(CacheConstants.GZIP_COMPRESSOR, GzipCompressorProvider.getInstance());
         this.addProvider(CacheConstants.EMBED_CACHE_LOCK, EmbedCacheLockProvider.getInstance());
-        this.addProvider(CacheConstants.EMBED_CONTAINS_PREDICATE, EmbedContainsPredicateProvider.getInstance());
+        this.addProvider(CacheConstants.EMBED_CACHE_REFRESH, new EmbedCacheRefreshProvider(scheduler));
     }
 
     @Override
@@ -113,8 +111,7 @@ public class ComponentManagerImpl implements ComponentManager {
 
     @Override
     public CacheRefreshProvider getRefreshProvider(String beanId) {
-        CacheRefreshProvider provider = this.refreshes.get(beanId);
-        return (provider != null) ? provider : this.embedCacheRefresh(beanId);
+        return this.refreshes.get(beanId);
     }
 
     @Override
@@ -169,44 +166,15 @@ public class ComponentManagerImpl implements ComponentManager {
     }
 
     /**
-     * 添加 EmbedCacheRefreshProvider 到缓存管理器
+     * 根据 beanId 创建或获取日志缓存统计提供者
      * <p>
-     * 本方法的目的是为了启用内嵌的缓存刷新机制。它通过创建一个 EmbedCacheRefreshProvider 实例，
-     * 并将其注册到缓存管理器中，使得缓存管理器能够管理和调度缓存的刷新任务。
+     * 缓存指标采集会执行定时任务，为避免不必要的线程消耗，只有确定需要日志缓存统计时才创建 LogCacheStatProvider
      *
-     * @param beanId 用于检查是否与预定义标识符匹配
-     * @return EmbedCacheRefreshProvider 实例，如果 beanId 与 {@link CacheConstants#EMBED_CACHE_REFRESH} 匹配，则返回注册的实例，否则返回 null。
+     * @param beanId bean的标识符，用于确定是否创建日志缓存统计提供者
+     * @return LogCacheStatProvider 返回日志缓存统计提供者实例，如果beanId不匹配则返回null
      */
-    private EmbedCacheRefreshProvider embedCacheRefresh(String beanId) {
-        if (!Objects.equals(CacheConstants.EMBED_CACHE_REFRESH, StringUtils.toLowerCase(beanId))) {
-            return null;
-        }
-        if (this.embedCacheRefreshProvider == null) {
-            lock.lock();
-            try {
-                if (this.embedCacheRefreshProvider == null) {
-                    this.embedCacheRefreshProvider = new EmbedCacheRefreshProvider(scheduler);
-                    this.addProvider(CacheConstants.EMBED_CACHE_REFRESH, this.embedCacheRefreshProvider);
-                }
-            } finally {
-                lock.unlock();
-            }
-        }
-        return this.embedCacheRefreshProvider;
-    }
-
-    /**
-     * 添加 LogCacheStatProvider 到缓存管理器
-     * 该方法用于将日志缓存统计提供者绑定到指定的缓存管理器上。
-     * 如果 beanId 指定的是日志方式的缓存统计，则会尝试创建并注册 LogCacheStatProvider 实例，
-     * 并将该实例添加到缓存管理器中。
-     * <p>
-     * 此方法确保了 LogCacheStatProvider 的单例性质，多次调用添加的是同一实例。
-     *
-     * @param beanId bean 标识符，用于判断是否为日志缓存统计。
-     * @return 如果成功注册了LogCacheStatProvider，则返回该实例；否则返回null。
-     */
-    public LogCacheStatProvider logCacheStat(String beanId) {
+    private LogCacheStatProvider logCacheStat(String beanId) {
+        // 检查 beanId 是否匹配日志缓存统计的标识符，忽略大小写
         if (!Objects.equals(CacheConstants.LOG_CACHE_STAT, StringUtils.toLowerCase(beanId))) {
             return null;
         }
@@ -215,6 +183,7 @@ public class ComponentManagerImpl implements ComponentManager {
             lock.lock();
             try {
                 if (this.logCacheStatProvider == null) {
+                    // 实例化并注册 LogCacheStatProvider
                     this.logCacheStatProvider = new LogCacheStatProvider(scheduler, statPeriod);
                     this.addProvider(CacheConstants.LOG_CACHE_STAT, this.logCacheStatProvider);
                 }
@@ -222,6 +191,7 @@ public class ComponentManagerImpl implements ComponentManager {
                 lock.unlock();
             }
         }
+
         return this.logCacheStatProvider;
     }
 

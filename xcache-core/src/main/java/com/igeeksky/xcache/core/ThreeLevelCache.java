@@ -3,7 +3,6 @@ package com.igeeksky.xcache.core;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.core.store.StoreProxy;
-import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xcache.props.StoreLevel;
 import com.igeeksky.xtool.core.collection.Maps;
@@ -33,10 +32,9 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     public ThreeLevelCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend, Store<V>[] stores) {
         super(config, extend);
         this.syncMonitor = extend.getSyncMonitor();
-        CacheStatMonitor statMonitor = extend.getStatMonitor();
-        this.first = new StoreProxy<>(stores[0], StoreLevel.FIRST, statMonitor);
-        this.second = new StoreProxy<>(stores[1], StoreLevel.SECOND, statMonitor);
-        this.third = new StoreProxy<>(stores[2], StoreLevel.THIRD, statMonitor);
+        this.first = new StoreProxy<>(stores[0], StoreLevel.FIRST, extend.getStatMonitor());
+        this.second = new StoreProxy<>(stores[1], StoreLevel.SECOND, extend.getStatMonitor());
+        this.third = new StoreProxy<>(stores[2], StoreLevel.THIRD, extend.getStatMonitor());
     }
 
     @Override
@@ -63,52 +61,54 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected Map<String, CacheValue<V>> doGetAll(Set<String> keys) {
-        Set<String> tempKeys = new HashSet<>(keys);
+        Set<String> cloneKeys = new HashSet<>(keys);
+        Map<String, CacheValue<V>> result = Maps.newHashMap(keys.size());
 
-        Map<String, CacheValue<V>> result = Maps.newHashMap(tempKeys.size());
-
-        // 1. 从一级缓存读取数据
-        Map<String, CacheValue<V>> firstGetAll = first.getAll(tempKeys);
-        if (Maps.isNotEmpty(firstGetAll)) {
-            // 1.1 一级缓存数据存入最终结果
-            result.putAll(firstGetAll);
-
-            tempKeys.removeAll(firstGetAll.keySet());
-            if (tempKeys.isEmpty()) {
-                return result;
-            }
-        }
-
-        // 2. 从二级缓存读取未命中数据
-        Map<String, CacheValue<V>> secondGetAll = second.getAll(tempKeys);
-        if (Maps.isNotEmpty(secondGetAll)) {
-            // 2.1 二级缓存数据存入最终结果
-            result.putAll(secondGetAll);
-
-            // 2.2 二级缓存数据保存到一级缓存
-            Map<String, V> saveToLower = Maps.newHashMap(secondGetAll.size());
-            secondGetAll.forEach((key, cacheValue) -> {
-                tempKeys.remove(key);
-                saveToLower.put(key, cacheValue.getValue());
+        Map<String, CacheValue<V>> firstAll = first.getAll(cloneKeys);
+        if (Maps.isNotEmpty(firstAll)) {
+            firstAll.forEach((key, cacheValue) -> {
+                if (cacheValue != null) {
+                    result.put(key, cacheValue);
+                    cloneKeys.remove(key);
+                }
             });
-            first.putAll(saveToLower);
 
-            if (tempKeys.isEmpty()) {
+            if (cloneKeys.isEmpty()) {
                 return result;
             }
         }
 
-        // 3. 从三级缓存读取未命中数据
-        Map<String, CacheValue<V>> thirdGetAll = third.getAll(tempKeys);
-        if (Maps.isNotEmpty(thirdGetAll)) {
-            // 3.1 三级缓存数据存入最终结果
-            result.putAll(thirdGetAll);
+        Map<String, CacheValue<V>> secondAll = second.getAll(cloneKeys);
+        if (Maps.isNotEmpty(secondAll)) {
+            Map<String, V> saveToLower = Maps.newHashMap(secondAll.size());
+            secondAll.forEach((key, cacheValue) -> {
+                if (cacheValue != null) {
+                    result.put(key, cacheValue);
+                    saveToLower.put(key, cacheValue.getValue());
+                    cloneKeys.remove(key);
+                }
+            });
+            if (Maps.isNotEmpty(saveToLower)) {
+                first.putAll(saveToLower);
+            }
+            if (cloneKeys.isEmpty()) {
+                return result;
+            }
+        }
 
-            // 3.2 三级缓存数据保存到一、二级缓存
-            Map<String, V> saveToLower = Maps.newHashMap(thirdGetAll.size());
-            secondGetAll.forEach((key, cacheValue) -> saveToLower.put(key, cacheValue.getValue()));
-            second.putAll(saveToLower);
-            first.putAll(saveToLower);
+        Map<String, CacheValue<V>> thirdAll = third.getAll(cloneKeys);
+        if (Maps.isNotEmpty(thirdAll)) {
+            Map<String, V> saveToLower = Maps.newHashMap(thirdAll.size());
+            thirdAll.forEach((key, cacheValue) -> {
+                if (cacheValue != null) {
+                    result.put(key, cacheValue);
+                    saveToLower.put(key, cacheValue.getValue());
+                }
+            });
+            if (Maps.isNotEmpty(saveToLower)) {
+                second.putAll(saveToLower);
+                first.putAll(saveToLower);
+            }
         }
 
         return result;

@@ -7,7 +7,7 @@ package com.igeeksky.xcache.extension.contains;
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/8
  */
-public class ContainsConfig<K> {
+public class PredicateConfig<K> {
 
     private final String name;
 
@@ -19,7 +19,7 @@ public class ContainsConfig<K> {
 
     private final Class<?>[] keyParams;
 
-    private ContainsConfig(Builder<K> builder) {
+    private PredicateConfig(Builder<K> builder) {
         this.name = builder.name;
         this.application = builder.application;
         this.provider = builder.provider;
@@ -79,8 +79,8 @@ public class ContainsConfig<K> {
             return this;
         }
 
-        public ContainsConfig<K> build() {
-            return new ContainsConfig<>(this);
+        public PredicateConfig<K> build() {
+            return new PredicateConfig<>(this);
         }
 
     }

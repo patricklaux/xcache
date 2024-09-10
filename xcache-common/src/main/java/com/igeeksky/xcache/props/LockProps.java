@@ -16,7 +16,7 @@ public class LockProps {
     /**
      * LockProvider - id
      * <p>
-     * 默认值：localCacheLockProvider
+     * 默认值：embed
      * <p>
      * {@link CacheConstants#DEFAULT_LOCK_PROVIDER}
      */

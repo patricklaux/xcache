@@ -43,7 +43,7 @@ public class RedisCacheSyncProvider implements CacheSyncProvider {
     public <V> CacheSyncMonitor getMonitor(SyncConfig<V> config) {
         long maxLen = config.getMaxLen();
         String channel = config.getChannel();
-        return new CacheSyncMonitor(config, new StreamMessagePublisher<>(this.redisOperator, maxLen, channel, this.codec));
+        return new CacheSyncMonitorImpl(config, new StreamMessagePublisher<>(this.redisOperator, maxLen, channel, this.codec));
     }
 
 }

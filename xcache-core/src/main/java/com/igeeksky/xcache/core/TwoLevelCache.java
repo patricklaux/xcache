@@ -32,13 +32,12 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     public TwoLevelCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend, Store<V>[] stores) {
         super(config, extend);
         this.syncMonitor = extend.getSyncMonitor();
-        CacheStatMonitor statMonitor = extend.getStatMonitor();
         AtomicInteger index = new AtomicInteger(0);
-        this.first = getStore(statMonitor, stores, index);
-        this.second = getStore(statMonitor, stores, index);
+        this.first = getStore(stores, index, extend.getStatMonitor());
+        this.second = getStore(stores, index, extend.getStatMonitor());
     }
 
-    private Store<V> getStore(CacheStatMonitor statMonitor, Store<V>[] stores, AtomicInteger index) {
+    private static <V> Store<V> getStore(Store<V>[] stores, AtomicInteger index, CacheStatMonitor statMonitor) {
         StoreLevel[] levels = StoreLevel.values();
         while (index.get() < stores.length) {
             int i = index.getAndIncrement();
@@ -67,31 +66,34 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     @Override
     protected Map<String, CacheValue<V>> doGetAll(Set<String> keys) {
         Set<String> cloneKeys = new HashSet<>(keys);
+        Map<String, CacheValue<V>> result = Maps.newHashMap(keys.size());
 
-        Map<String, CacheValue<V>> result = Maps.newHashMap(cloneKeys.size());
+        Map<String, CacheValue<V>> firstAll = first.getAll(cloneKeys);
+        if (Maps.isNotEmpty(firstAll)) {
+            firstAll.forEach((key, cacheValue) -> {
+                if (cacheValue != null) {
+                    result.put(key, cacheValue);
+                    cloneKeys.remove(key);
+                }
+            });
 
-        // 1. 从一级缓存读取数据
-        Map<String, CacheValue<V>> firstGetAll = first.getAll(cloneKeys);
-        if (Maps.isNotEmpty(firstGetAll)) {
-            // 1.1 一级缓存数据存入最终结果
-            result.putAll(firstGetAll);
-
-            cloneKeys.removeAll(firstGetAll.keySet());
             if (cloneKeys.isEmpty()) {
                 return result;
             }
         }
 
-        // 2. 从二级缓存读取未命中数据
-        Map<String, CacheValue<V>> secondGetAll = second.getAll(cloneKeys);
-        if (Maps.isNotEmpty(secondGetAll)) {
-            // 2.1 二级缓存数据存入最终结果
-            result.putAll(secondGetAll);
-
-            // 2.2 二级缓存数据保存到一级缓存
-            Map<String, V> saveToLower = Maps.newHashMap(secondGetAll.size());
-            secondGetAll.forEach((key, cacheValue) -> saveToLower.put(key, cacheValue.getValue()));
-            first.putAll(saveToLower);
+        Map<String, CacheValue<V>> secondAll = second.getAll(cloneKeys);
+        if (Maps.isNotEmpty(secondAll)) {
+            Map<String, V> saveToLower = Maps.newHashMap(secondAll.size());
+            secondAll.forEach((key, cacheValue) -> {
+                if (cacheValue != null) {
+                    result.put(key, cacheValue);
+                    saveToLower.put(key, cacheValue.getValue());
+                }
+            });
+            if (Maps.isNotEmpty(saveToLower)) {
+                first.putAll(saveToLower);
+            }
         }
 
         return result;

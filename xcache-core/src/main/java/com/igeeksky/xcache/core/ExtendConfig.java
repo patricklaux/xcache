@@ -5,9 +5,13 @@ import com.igeeksky.xcache.common.CacheLoader;
 import com.igeeksky.xcache.common.CacheRefresh;
 import com.igeeksky.xcache.common.CacheWriter;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
+import com.igeeksky.xcache.extension.contains.NoopContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
+import com.igeeksky.xcache.extension.stat.NoopCacheStatMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
+import com.igeeksky.xcache.extension.sync.NoopCacheSyncMonitor;
+import com.igeeksky.xtool.core.lang.Assert;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
 
 /**
@@ -20,15 +24,15 @@ import com.igeeksky.xtool.core.lang.codec.KeyCodec;
  */
 public class ExtendConfig<K, V> {
 
+    private final KeyCodec<K> keyCodec;
+
     private final LockService cacheLock;
 
-    private final KeyCodec<K> keyCodec;
+    private final CacheRefresh cacheRefresh;
 
     private final CacheStatMonitor statMonitor;
 
     private final CacheSyncMonitor syncMonitor;
-
-    private final CacheRefresh cacheRefresh;
 
     private final CacheLoader<K, V> cacheLoader;
 
@@ -37,8 +41,8 @@ public class ExtendConfig<K, V> {
     private final ContainsPredicate<K> containsPredicate;
 
     public ExtendConfig(Builder<K, V> builder) {
-        this.cacheLock = builder.cacheLock;
         this.keyCodec = builder.keyCodec;
+        this.cacheLock = builder.cacheLock;
         this.statMonitor = builder.statMonitor;
         this.syncMonitor = builder.syncMonitor;
         this.cacheLoader = builder.cacheLoader;
@@ -47,62 +51,115 @@ public class ExtendConfig<K, V> {
         this.containsPredicate = builder.containsPredicate;
     }
 
-    public static <K, V> Builder<K, V> builder(CacheLoader<K, V> cacheLoader) {
-        return new Builder<>(cacheLoader);
+    public static <K, V> Builder<K, V> builder() {
+        return new Builder<>();
     }
 
+    /**
+     * 缓存锁服务，用于控制并发访问数据源，如：分布式环境下，防止缓存击穿
+     *
+     * @return LockService 缓存锁服务，不为空
+     */
     public LockService getCacheLock() {
         return cacheLock;
     }
 
+    /**
+     * 键编码器，用于将键转换为字符串
+     *
+     * @return KeyCodec 键编码器，不为空
+     */
     public KeyCodec<K> getKeyCodec() {
         return keyCodec;
     }
 
-    public CacheStatMonitor getStatMonitor() {
-        return statMonitor;
-    }
-
-    public CacheSyncMonitor getSyncMonitor() {
-        return syncMonitor;
-    }
-
+    /**
+     * 缓存加载器，用于从数据源加载数据到缓存
+     *
+     * @return 如果有配置，返回配置的加载器；否则返回 null
+     */
     public CacheLoader<K, V> getCacheLoader() {
         return cacheLoader;
     }
 
+    /**
+     * 缓存写入器，用于将数据写入到数据源
+     *
+     * @return 如果有配置，返回配置的写入器；否则返回 null
+     */
     public CacheWriter<K, V> getCacheWriter() {
         return cacheWriter;
     }
 
-    public ContainsPredicate<K> getContainsPredicate() {
-        return containsPredicate;
-    }
-
+    /**
+     * 缓存刷新器，用于定时刷新缓存数据，如：从数据库中加载数据到缓存中
+     *
+     * @return 如果有配置，返回配置的刷新器；否则返回 null
+     */
     public CacheRefresh getCacheRefresh() {
         return cacheRefresh;
     }
 
+    /**
+     * 缓存统计监视器，用于统计缓存命中率、缓存命中次数等
+     *
+     * @return 如果有配置，返回配置的监视器；否则返回无操作监视器 {@link NoopCacheStatMonitor}
+     */
+    public CacheStatMonitor getStatMonitor() {
+        if (statMonitor == null) {
+            return NoopCacheStatMonitor.getInstance();
+        }
+        return statMonitor;
+    }
+
+    /**
+     * 缓存同步监视器，用于在分布式环境下，同步缓存数据
+     *
+     * @return 如果有配置，返回配置的监视器；否则返回无操作监视器 {@link NoopCacheSyncMonitor}
+     */
+    public CacheSyncMonitor getSyncMonitor() {
+        if (syncMonitor == null) {
+            return NoopCacheSyncMonitor.getInstance();
+        }
+        return syncMonitor;
+    }
+
+    /**
+     * 存在断言，用于判断数据源是否包含某个键
+     *
+     * @return 如果有配置，返回配置的断言；否则返回无操作断言 {@link NoopContainsPredicate}
+     */
+    public ContainsPredicate<K> getContainsPredicate() {
+        if (containsPredicate == null) {
+            return NoopContainsPredicate.getInstance();
+        }
+        return containsPredicate;
+    }
+
     public static class Builder<K, V> {
+
+        private KeyCodec<K> keyCodec;
 
         private LockService cacheLock;
 
-        private KeyCodec<K> keyCodec;
+        private CacheRefresh cacheRefresh;
 
         private CacheStatMonitor statMonitor;
 
         private CacheSyncMonitor syncMonitor;
 
-        private final CacheLoader<K, V> cacheLoader;
+        private CacheLoader<K, V> cacheLoader;
 
         private CacheWriter<K, V> cacheWriter;
 
         private ContainsPredicate<K> containsPredicate;
 
-        private CacheRefresh cacheRefresh;
+        private Builder() {
+        }
 
-        private Builder(CacheLoader<K, V> cacheLoader) {
+        public Builder<K, V> cacheLoader(CacheLoader<K, V> cacheLoader) {
             this.cacheLoader = cacheLoader;
+            return this;
         }
 
         public Builder<K, V> cacheWriter(CacheWriter<K, V> cacheWriter) {
@@ -141,6 +198,8 @@ public class ExtendConfig<K, V> {
         }
 
         public ExtendConfig<K, V> build() {
+            Assert.notNull(this.keyCodec, "keyCodec must not be null");
+            Assert.notNull(this.cacheLock, "cacheLock must not be null");
             return new ExtendConfig<>(this);
         }
 

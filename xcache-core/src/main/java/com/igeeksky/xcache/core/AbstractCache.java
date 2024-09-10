@@ -1,13 +1,16 @@
 package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.common.*;
+import com.igeeksky.xcache.extension.NoopCacheWriter;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
+import com.igeeksky.xcache.extension.refresh.NoopCacheRefresh;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.collection.Sets;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -53,28 +56,25 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
         this.lockService = extend.getCacheLock();
         this.containsPredicate = extend.getContainsPredicate();
-        setCacheWriter(extend.getCacheWriter());
-        setCacheRefresh(extend.getCacheRefresh(), extend.getCacheLoader());
+
+        this.setCacheWriter(extend.getCacheWriter());
+        this.setCacheRefresh(extend.getCacheRefresh(), extend.getCacheLoader());
     }
 
-    @Override
-    public void setCacheLoader(CacheLoader<K, V> cacheLoader) {
-        this.cacheLoader = cacheLoader;
+    private void setCacheWriter(CacheWriter<K, V> cacheWriter) {
+        this.cacheWriter = cacheWriter != null ? cacheWriter : NoopCacheWriter.getInstance();
     }
 
-    @Override
-    public void setCacheWriter(CacheWriter<K, V> cacheWriter) {
-        this.cacheWriter = new CacheWriterProxy<>(cacheWriter);
-    }
-
-    @Override
-    public void setCacheRefresh(CacheRefresh cacheRefresh, CacheLoader<K, V> cacheLoader) {
+    private void setCacheRefresh(CacheRefresh cacheRefresh, CacheLoader<K, V> cacheLoader) {
         if (cacheRefresh != null) {
             requireNonNull(cacheLoader, "setCacheRefresh",
                     "Cache refresh depends on the cache loader, cacheLoader must not be null");
         }
+        // 此抽象类的 cacheLoader 在 getOrLoad 和 getOrLoadAll 方法中需要根据是否为空来判断是否加锁数据回源
+        // 因此当 cacheLoader 为空时，不能赋值 为 NoopCacheLoader
         this.cacheLoader = cacheLoader;
-        this.cacheRefresh = new CacheRefreshProxy(cacheRefresh, this::consume);
+        this.cacheRefresh = cacheRefresh != null ? cacheRefresh : NoopCacheRefresh.getInstance();
+        this.cacheRefresh.setConsumer(this::consume);
     }
 
     /**
@@ -88,7 +88,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         // 从storeKey中恢复出缓存键
         K key = this.fromStoreKey(storeKey);
 
-        // 如果缓存项不满足预定义的包含条件，则执行放入操作
+        // 如果断言执行发现数据源不存在数据，则存入空值
         if (!this.containsPredicate.test(this.name, key)) {
             this.doPut(storeKey, null);
             return;
@@ -265,55 +265,101 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             return Maps.newHashMap(0);
         }
 
-        // 1. 建立原生Key 和 缓存Key 之间的映射
-        Map<String, K> keyMapping = this.createKeyMapping(keys);
-
-        // 2. 从缓存中获取缓存值
-        Map<String, CacheValue<V>> cacheValues = this.doGetAll(keyMapping.keySet());
-
-        Map<K, V> result = Maps.newHashMap((cacheLoader == null) ? cacheValues.size() : size);
-
-        // 3. 原生Key 替换 缓存Key，并过滤掉无缓存的结果
-        cacheValues.forEach((storeKey, cacheValue) -> {
-            if (cacheValue != null && cacheValue.hasValue()) {
-                result.put(keyMapping.remove(storeKey), cacheValue.getValue());
+        if (size == 1) {
+            HashMap<K, V> result = Maps.newHashMap(1);
+            K key = keys.iterator().next();
+            V val = this.getOrLoad(key);
+            if (val != null) {
+                result.put(key, val);
             }
-        });
-
-        if (cacheLoader == null || keyMapping.isEmpty()) {
             return result;
         }
 
-        // 4. 未从缓存中读取到值的 key，使用 cacheLoader 回源取值
-        int hitLoads = 0, loadsCount = keyMapping.size();
+        // 1. 建立原生键 和 缓存键 的映射
+        Map<String, K> keyMapping = this.createKeyMapping(keys);
+
+        // 2. 缓存取值
+        boolean hasLoader = (cacheLoader != null);
+        Map<K, V> result = this.getAll(keyMapping, hasLoader);
+
+        if (!hasLoader || keyMapping.isEmpty()) {
+            return result;
+        }
+
+        // 3. 回源取值
+        int totalLoads = keyMapping.size(), hitLoads = 0;
         Map<K, V> loads = this.loadAll(keyMapping, cacheLoader);
-        Map<String, V> puts = Maps.newHashMap(keyMapping.size());
+
+        // 用于将回源取值结果保存到缓存
+        Map<String, V> puts = Maps.newHashMap(totalLoads);
+
+        // 4. 回源取值结果存入最终结果集
         for (Map.Entry<String, K> entry : keyMapping.entrySet()) {
             String storeKey = entry.getKey();
             K key = entry.getValue();
-            V value = loads.get(key);
-            if (value != null) {
-                result.put(key, value);
+            V val = loads.get(key);
+            if (val != null) {
+                result.put(key, val);
                 ++hitLoads;
             }
-            puts.put(storeKey, value);
+            puts.put(storeKey, val);
         }
-        this.doPutAll(puts);
-        this.statMonitor.incHitLoads(hitLoads);
-        this.statMonitor.incMissLoads(loadsCount - hitLoads);
 
+        // 5. 缓存回源取值结果
+        this.doPutAll(puts);
+
+        // 6. 统计
+        this.statMonitor.incHitLoads(hitLoads);
+        this.statMonitor.incMissLoads(totalLoads - hitLoads);
+
+        // 7. 返回最终结果集
         return result;
     }
 
+
+    /**
+     * 1. 创建 “原生键” 与 “缓存键” 的映射；<p>
+     * 2. 保存访问记录，用于缓存数据刷新。
+     *
+     * @param keys 输入的键集合
+     * @return 返回一个 Map对象，其键为缓存键，值为原始键
+     */
     private Map<String, K> createKeyMapping(Set<? extends K> keys) {
         Map<String, K> keyMapping = Maps.newHashMap(keys.size());
         for (K key : keys) {
             requireNonNull(key, "getAll", "keys has null element.");
             keyMapping.put(toStoreKey(key), key);
         }
-
         this.cacheRefresh.accessAll(keyMapping.keySet());
         return keyMapping;
+    }
+
+    /**
+     * 1. 从缓存获取缓存值；<p>
+     * 2. 删除已缓存的键集。
+     *
+     * @param keyMapping 原生键 与 缓存键 之间的映射
+     * @return 缓存结果集
+     */
+    private Map<K, V> getAll(Map<String, K> keyMapping, boolean hasLoader) {
+        // 1. 缓存取值
+        Map<String, CacheValue<V>> cacheValues = this.doGetAll(keyMapping.keySet());
+
+        // 2. 创建 键值对集合：如果有 cacheLoader，集合大小为原生键集合大小；否则为缓存取值结果集大小
+        Map<K, V> result = Maps.newHashMap(hasLoader ? keyMapping.size() : cacheValues.size());
+
+        // 3. 缓存结果集存入最终结果集，并从键映射中移除已缓存的键
+        cacheValues.forEach((storeKey, cacheValue) -> {
+            if (cacheValue != null) {
+                K key = keyMapping.remove(storeKey);
+                if (cacheValue.hasValue()) {
+                    result.put(key, cacheValue.getValue());
+                }
+            }
+        });
+
+        // 4. 返回缓存结果集
+        return result;
     }
 
     private Map<K, V> loadAll(Map<String, K> keyMapping, CacheLoader<K, V> cacheLoader) {

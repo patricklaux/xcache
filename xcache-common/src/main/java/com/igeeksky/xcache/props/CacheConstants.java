@@ -28,8 +28,6 @@ public interface CacheConstants {
     String LOG_CACHE_STAT = "log";
     String EMBED_CACHE_LOCK = "embed";
     String EMBED_CACHE_REFRESH = "embed";
-    String EMBED_CONTAINS_PREDICATE = "embed";
-
 
     // 默认配置 start
     String DEFAULT_TEMPLATE_ID = "t0";
@@ -78,8 +76,6 @@ public interface CacheConstants {
     String DEFAULT_REFRESH_PROVIDER = NONE;
     long DEFAULT_REFRESH_PERIOD = 1800000;
     long DEFAULT_REFRESH_STOP_AFTER_ACCESS = 7200000;
-
-    String DEFAULT_PREDICATE_PROVIDER = EMBED_CONTAINS_PREDICATE;
 
     String DEFAULT_SYNC_PROVIDER = LETTUCE;
     long DEFAULT_SYNC_MAX_LEN = 10000;

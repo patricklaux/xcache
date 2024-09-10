@@ -29,16 +29,11 @@ public class StoreProxy<V> implements Store<V> {
         this.store = store;
         this.level = level;
         this.statMonitor = statMonitor;
-        if (this.store != null) {
-            this.statMonitor.setCounter(level);
-        }
+        this.statMonitor.setCounter(level);
     }
 
     @Override
     public CacheValue<V> get(String key) {
-        if (store == null) {
-            return null;
-        }
         CacheValue<V> value = store.get(key);
         if (value != null) {
             statMonitor.incHits(level, 1L);
@@ -50,9 +45,6 @@ public class StoreProxy<V> implements Store<V> {
 
     @Override
     public Map<String, CacheValue<V>> getAll(Set<? extends String> keys) {
-        if (store == null) {
-            return null;
-        }
         int total = keys.size();
         Map<String, CacheValue<V>> result = store.getAll(keys);
 
@@ -70,18 +62,12 @@ public class StoreProxy<V> implements Store<V> {
 
     @Override
     public void put(String key, V value) {
-        if (store == null) {
-            return;
-        }
         store.put(key, value);
         statMonitor.incPuts(level, 1L);
     }
 
     @Override
     public void putAll(Map<? extends String, ? extends V> keyValues) {
-        if (store == null) {
-            return;
-        }
         int size = keyValues.size();
         store.putAll(keyValues);
         if (size > 0) {
@@ -91,18 +77,12 @@ public class StoreProxy<V> implements Store<V> {
 
     @Override
     public void evict(String key) {
-        if (store == null) {
-            return;
-        }
         store.evict(key);
         statMonitor.incRemovals(level, 1L);
     }
 
     @Override
     public void evictAll(Set<? extends String> keys) {
-        if (store == null) {
-            return;
-        }
         int size = keys.size();
         store.evictAll(keys);
         statMonitor.incRemovals(level, size);
@@ -110,10 +90,8 @@ public class StoreProxy<V> implements Store<V> {
 
     @Override
     public void clear() {
-        if (store == null) {
-            return;
-        }
         store.clear();
         statMonitor.incClears(level);
     }
+
 }
