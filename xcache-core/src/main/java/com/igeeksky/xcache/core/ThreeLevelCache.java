@@ -3,6 +3,7 @@ package com.igeeksky.xcache.core;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.core.store.StoreProxy;
+import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xcache.props.StoreLevel;
 import com.igeeksky.xtool.core.collection.Maps;
@@ -19,44 +20,39 @@ import java.util.Set;
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-03
  */
+@SuppressWarnings("unchecked")
 public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
 
-    private final Store<V> first;
-
-    private final Store<V> second;
-
-    private final Store<V> third;
+    private static final int LIMIT = 2;
+    private static final int LENGTH = 3;
 
     private final CacheSyncMonitor syncMonitor;
+    private final Store<V>[] stores = new Store[LENGTH];
 
     public ThreeLevelCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend, Store<V>[] stores) {
         super(config, extend);
         this.syncMonitor = extend.getSyncMonitor();
-        this.first = new StoreProxy<>(stores[0], StoreLevel.FIRST, extend.getStatMonitor());
-        this.second = new StoreProxy<>(stores[1], StoreLevel.SECOND, extend.getStatMonitor());
-        this.third = new StoreProxy<>(stores[2], StoreLevel.THIRD, extend.getStatMonitor());
+        CacheStatMonitor statMonitor = extend.getStatMonitor();
+        StoreLevel[] levels = StoreLevel.values();
+        for (int i = 0; i < LENGTH; i++) {
+            this.stores[i] = new StoreProxy<>(stores[i], levels[i], statMonitor);
+        }
     }
 
     @Override
     protected CacheValue<V> doGet(String key) {
-        CacheValue<V> cacheValue = first.get(key);
-        if (cacheValue != null) {
-            return cacheValue;
+        for (int i = 0; i < LENGTH; i++) {
+            CacheValue<V> cacheValue = stores[i].get(key);
+            if (cacheValue != null) {
+                if (i > 0) {
+                    for (int j = i - 1; j >= 0; j--) {
+                        stores[j].put(key, cacheValue.getValue());
+                    }
+                }
+                return cacheValue;
+            }
         }
-
-        cacheValue = second.get(key);
-        if (cacheValue != null) {
-            first.put(key, cacheValue.getValue());
-            return cacheValue;
-        }
-
-        cacheValue = third.get(key);
-        if (cacheValue != null) {
-            second.put(key, cacheValue.getValue());
-            first.put(key, cacheValue.getValue());
-        }
-
-        return cacheValue;
+        return null;
     }
 
     @Override
@@ -64,50 +60,38 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
         Set<String> cloneKeys = new HashSet<>(keys);
         Map<String, CacheValue<V>> result = Maps.newHashMap(keys.size());
 
-        Map<String, CacheValue<V>> firstAll = first.getAll(cloneKeys);
-        if (Maps.isNotEmpty(firstAll)) {
-            firstAll.forEach((key, cacheValue) -> {
+        Map<String, V> saveToLower = null;
+        for (int i = 0; i < LENGTH; i++) {
+            Store<V> store = stores[i];
+            Map<String, CacheValue<V>> cacheValues = store.getAll(cloneKeys);
+            if (Maps.isEmpty(cacheValues)) {
+                continue;
+            }
+
+            if (i > 0) {
+                saveToLower = Maps.newHashMap(cacheValues.size());
+            }
+            for (Map.Entry<String, CacheValue<V>> entry : cacheValues.entrySet()) {
+                String key = entry.getKey();
+                CacheValue<V> cacheValue = entry.getValue();
                 if (cacheValue != null) {
                     result.put(key, cacheValue);
                     cloneKeys.remove(key);
+                    if (saveToLower != null) {
+                        saveToLower.put(key, cacheValue.getValue());
+                    }
                 }
-            });
+            }
+
+            if (saveToLower != null) {
+                for (int j = i - 1; j >= 0; j--) {
+                    stores[j].putAll(saveToLower);
+                }
+                saveToLower = null;
+            }
 
             if (cloneKeys.isEmpty()) {
                 return result;
-            }
-        }
-
-        Map<String, CacheValue<V>> secondAll = second.getAll(cloneKeys);
-        if (Maps.isNotEmpty(secondAll)) {
-            Map<String, V> saveToLower = Maps.newHashMap(secondAll.size());
-            secondAll.forEach((key, cacheValue) -> {
-                if (cacheValue != null) {
-                    result.put(key, cacheValue);
-                    saveToLower.put(key, cacheValue.getValue());
-                    cloneKeys.remove(key);
-                }
-            });
-            if (Maps.isNotEmpty(saveToLower)) {
-                first.putAll(saveToLower);
-            }
-            if (cloneKeys.isEmpty()) {
-                return result;
-            }
-        }
-
-        Map<String, CacheValue<V>> thirdAll = third.getAll(cloneKeys);
-        if (Maps.isNotEmpty(thirdAll)) {
-            Map<String, V> saveToLower = Maps.newHashMap(thirdAll.size());
-            thirdAll.forEach((key, cacheValue) -> {
-                if (cacheValue != null) {
-                    result.put(key, cacheValue);
-                    saveToLower.put(key, cacheValue.getValue());
-                }
-            });
-            if (Maps.isNotEmpty(saveToLower)) {
-                second.putAll(saveToLower);
-                first.putAll(saveToLower);
             }
         }
 
@@ -116,41 +100,41 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected void doPut(String key, V value) {
-        third.put(key, value);
-        second.put(key, value);
-        first.put(key, value);
+        for (int j = LIMIT; j >= 0; j--) {
+            stores[j].put(key, value);
+        }
         syncMonitor.afterPut(key);
     }
 
     @Override
     protected void doPutAll(Map<String, ? extends V> keyValues) {
-        third.putAll(keyValues);
-        second.putAll(keyValues);
-        first.putAll(keyValues);
+        for (int j = LIMIT; j >= 0; j--) {
+            stores[j].putAll(keyValues);
+        }
         syncMonitor.afterPutAll(keyValues.keySet());
     }
 
     @Override
     protected void doEvict(String key) {
-        third.evict(key);
-        second.evict(key);
-        first.evict(key);
+        for (int j = LIMIT; j >= 0; j--) {
+            stores[j].evict(key);
+        }
         syncMonitor.afterEvict(key);
     }
 
     @Override
     protected void doEvictAll(Set<String> keys) {
-        third.evictAll(keys);
-        second.evictAll(keys);
-        first.evictAll(keys);
+        for (int j = LIMIT; j >= 0; j--) {
+            stores[j].evictAll(keys);
+        }
         syncMonitor.afterEvictAll(keys);
     }
 
     @Override
     public void clear() {
-        third.clear();
-        second.clear();
-        first.clear();
+        for (int j = LIMIT; j >= 0; j--) {
+            stores[j].clear();
+        }
         syncMonitor.afterClear();
     }
 

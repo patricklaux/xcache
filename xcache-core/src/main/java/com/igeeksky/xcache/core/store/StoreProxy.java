@@ -49,13 +49,8 @@ public class StoreProxy<V> implements Store<V> {
         Map<String, CacheValue<V>> result = store.getAll(keys);
 
         int hits = result.size();
-        if (hits > 0) {
-            statMonitor.incHits(level, hits);
-        }
-        int misses = total - hits;
-        if (misses > 0) {
-            statMonitor.incMisses(level, total - hits);
-        }
+        statMonitor.incHits(level, hits);
+        statMonitor.incMisses(level, total - hits);
 
         return result;
     }
@@ -70,9 +65,7 @@ public class StoreProxy<V> implements Store<V> {
     public void putAll(Map<? extends String, ? extends V> keyValues) {
         int size = keyValues.size();
         store.putAll(keyValues);
-        if (size > 0) {
-            statMonitor.incPuts(level, size);
-        }
+        statMonitor.incPuts(level, size);
     }
 
     @Override
