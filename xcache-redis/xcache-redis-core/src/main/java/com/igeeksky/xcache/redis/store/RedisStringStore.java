@@ -6,13 +6,13 @@ import com.igeeksky.xcache.core.CacheKeyPrefix;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.function.tuple.ExpiryKeyValue;
 import com.igeeksky.xtool.core.function.tuple.KeyValue;
+import com.igeeksky.xtool.core.lang.RandomUtils;
 import com.igeeksky.xtool.core.lang.codec.StringCodec;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author Patrick.Lau
@@ -148,8 +148,7 @@ public class RedisStringStore<V> extends AbstractRedisStore<V> {
      */
     private long timeToLive() {
         if (enableRandomTtl) {
-            ThreadLocalRandom random = ThreadLocalRandom.current();
-            return random.nextLong(expireAfterWriteMin, expireAfterWrite);
+            return RandomUtils.nextLong(expireAfterWriteMin, expireAfterWrite);
         }
         return expireAfterWrite;
     }

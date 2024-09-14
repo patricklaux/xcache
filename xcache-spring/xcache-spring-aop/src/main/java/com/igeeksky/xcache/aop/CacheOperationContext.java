@@ -14,6 +14,7 @@ import org.springframework.context.expression.MethodBasedEvaluationContext;
 import org.springframework.core.BridgeMethodResolver;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
+import org.springframework.util.ObjectUtils;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -49,13 +50,15 @@ public class CacheOperationContext {
     private final Object[] args;
 
     /**
-     * 记录方法是否已执行，避免重复执行方法：代理的方法仅能执行一次
+     * 记录方法是否已执行，避免重复执行方法：代理方法最多只能执行一次
      */
     private boolean proceed = false;
 
     private Object result;
 
-    public CacheOperationContext(CacheOperationExpressionEvaluator expressionEvaluator, Collection<CacheOperation> cacheOperations, CacheManager cacheManager, MethodInvocation invocation, Method method, Object target, Class<?> targetClass) {
+    public CacheOperationContext(CacheOperationExpressionEvaluator expressionEvaluator,
+                                 Collection<CacheOperation> cacheOperations, CacheManager cacheManager,
+                                 MethodInvocation invocation, Method method, Object target, Class<?> targetClass) {
         this.expressionEvaluator = expressionEvaluator;
         this.operations = new HashMap<>(cacheOperations.size());
         for (CacheOperation cacheOperation : cacheOperations) {
@@ -116,8 +119,14 @@ public class CacheOperationContext {
     }
 
     private void processCacheable(CacheableOperation operation) throws Throwable {
-        // 提取 Key
-        Object key = this.getKey(operation.getCondition(), operation.getKey());
+        // 使用 SpEL 判断是否满足条件
+        if (!conditionPassing(operation.getCondition())) {
+            this.proceed();
+            return;
+        }
+
+        // 使用 SpEL 获取 key
+        Object key = this.generateKey(operation.getKey());
         if (key == null) {
             this.proceed();
             return;
@@ -127,13 +136,18 @@ public class CacheOperationContext {
         Cache<Object, Object> cache = this.getOrCreateCache(operation);
 
         // 读取缓存，然后判断是否已缓存值
-        this.result = cache.get(key, k -> {
+        Object value = cache.get(key, k -> {
             try {
-                return this.invocation.proceed();
+                this.proceed();
+                return this.unwrapReturnType(this.result);
             } catch (Throwable e) {
                 throw new CacheLoadingException(e);
             }
         });
+
+        if (!this.proceed) {
+            this.result = this.wrapReturnType(this.method.getReturnType(), value);
+        }
     }
 
     private void processCacheableAll(CacheableAllOperation operation) throws Throwable {
@@ -144,41 +158,84 @@ public class CacheOperationContext {
             return;
         }
 
-        // 根据注解获取对应的 cache 实例，并从缓存读取数据
+        // 根据注解获取对应的缓存实例，并从缓存读取数据
         Cache<Object, Object> cache = this.getOrCreateCache(operation);
-        Map<Object, CacheValue<Object>> cachedKeyValues = cache.getAll(keys);
+        Map<Object, CacheValue<Object>> cacheHits = cache.getAll(keys);
 
-        // 移除已缓存的键，然后再从数据源查询数据
-        keys.removeAll(cachedKeyValues.keySet());
+        // 移除已缓存的键
+        keys.removeAll(cacheHits.keySet());
+        // 如果集合为空，说明所有数据均已缓存，不执行方法，直接将缓存结果集作为最终结果并返回
+        if (keys.isEmpty()) {
+            this.result = wrapReturnType(this.method.getReturnType(), toCachedResult(cacheHits));
+            return;
+        }
 
-        // 将缓存数据添加到临时 Map 中
-        Map<Object, Object> temp = Maps.newHashMap(cachedKeyValues.size());
-        cachedKeyValues.forEach((k, cv) -> {
+        // 预创建待缓存数据集
+        Map<Object, Object> cachePuts = createNullValueCachePuts(keys);
+        // 执行方法
+        this.proceed();
+        Map<Object, Object> resultMap = (Map<Object, Object>) unwrapReturnType(this.result);
+        // 方法结果集替换原有空值，并存入到缓存
+        saveToCache(cache, cachePuts, resultMap);
+
+        // 如果缓存命中数据为空，直接返回方法结果集
+        if (Maps.isEmpty(cacheHits)) {
+            return;
+        }
+
+        // 如果方法结果集为空，直接返回缓存命中数据
+        Map<Object, Object> cachedResult = toCachedResult(cacheHits);
+        if (Maps.isEmpty(resultMap)) {
+            this.result = wrapReturnType(this.method.getReturnType(), cachedResult);
+            return;
+        }
+
+        // 合并缓存结果集和方法结果集，形成最终结果集
+        resultMap.putAll(cachedResult);
+    }
+
+    /**
+     * 将含值的缓存数据转换为缓存结果集
+     *
+     * @param cacheHits 缓存命中的数据
+     * @return 缓存结果集
+     */
+    private static Map<Object, Object> toCachedResult(Map<Object, CacheValue<Object>> cacheHits) {
+        Map<Object, Object> cachedResult = Maps.newHashMap(cacheHits.size());
+        cacheHits.forEach((k, cv) -> {
             if (cv.hasValue()) {
-                temp.put(k, cv.getValue());
+                cachedResult.put(k, cv.getValue());
             }
         });
+        return cachedResult;
+    }
 
-        if (keys.isEmpty()) {
-            this.result = temp;
-            return;
+    /**
+     * 为了避免执行方法时删除键，先将所有待存入缓存的值都预设为空
+     *
+     * @param keys 待存入缓存的键集合
+     * @return 预设为空的键值对集合
+     */
+    private static Map<Object, Object> createNullValueCachePuts(Set<Object> keys) {
+        Map<Object, Object> cachePuts = Maps.newHashMap(keys.size());
+        keys.forEach(k -> cachePuts.put(k, null));
+        return cachePuts;
+    }
+
+    /**
+     * 将待存入缓存的数据批量写入缓存
+     * <p>
+     * 如果方法执行结果不为空，替换对应空值
+     *
+     * @param cache     缓存实例
+     * @param cachePuts 待存入缓存的数据（值为空）
+     * @param result    方法执行结果
+     */
+    private static void saveToCache(Cache<Object, Object> cache, Map<Object, Object> cachePuts, Map<Object, Object> result) {
+        if (Maps.isNotEmpty(result)) {
+            cachePuts.putAll(result);
         }
-
-        this.proceed();
-
-        // 根据注解 unless 判断是否缓存方法执行结果
-        Map<Object, Object> resultMap = ((Map<Object, Object>) this.result);
-        if (Maps.isEmpty(resultMap)) {
-            this.result = temp;
-            return;
-        }
-
-        cache.putAll(resultMap);
-
-        // 缓存数据添加到最终结果
-        if (!temp.isEmpty()) {
-            resultMap.putAll(temp);
-        }
+        cache.putAll(cachePuts);
     }
 
     private void processCachePut(CachePutOperation operation, List<Runnable> afterInvokeRunners) {
@@ -279,8 +336,8 @@ public class CacheOperationContext {
     }
 
     private Object getKey(String condition, String key) {
-        if (conditionPassing(condition)) {
-            return generateKey(key);
+        if (this.conditionPassing(condition)) {
+            return this.generateKey(key);
         }
         return null;
     }
@@ -297,6 +354,7 @@ public class CacheOperationContext {
             // 创建一个基于方法的评估上下文，用于解析表达式
             MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(this.target, this.method,
                     this.args, this.parameterNameDiscoverer);
+            context.setVariable("result", this.result);
             // 使用表达式评估器生成键
             return this.expressionEvaluator.key(expression, this.methodKey, context);
         }
@@ -346,6 +404,17 @@ public class CacheOperationContext {
             this.result = this.invocation.proceed();
             this.proceed = true;
         }
+    }
+
+    private Object unwrapReturnType(Object returnValue) {
+        return ObjectUtils.unwrapOptional(returnValue);
+    }
+
+    private Object wrapReturnType(Class<?> returnType, Object cacheHitValue) {
+        if (returnType.isAssignableFrom(Optional.class)) {
+            return Optional.ofNullable(cacheHitValue);
+        }
+        return cacheHitValue;
     }
 
     private Cache<Object, Object> getOrCreateCache(CacheOperation operation) {
