@@ -3,9 +3,11 @@ package com.igeeksky.xcache.aop;
 import org.springframework.context.expression.AnnotatedElementKey;
 import org.springframework.context.expression.CachedExpressionEvaluator;
 import org.springframework.context.expression.MethodBasedEvaluationContext;
+import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.lang.NonNull;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,6 +26,12 @@ public class CacheOperationExpressionEvaluator extends CachedExpressionEvaluator
 
     public CacheOperationExpressionEvaluator(SpelExpressionParser parser) {
         super(parser);
+    }
+
+    @NonNull
+    @Override
+    public ParameterNameDiscoverer getParameterNameDiscoverer() {
+        return super.getParameterNameDiscoverer();
     }
 
     public Object key(String keyExpression, AnnotatedElementKey methodKey, EvaluationContext evalContext) {

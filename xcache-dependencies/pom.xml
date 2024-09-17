@@ -17,8 +17,8 @@
     <url>${parent.url}</url>
 
     <properties>
-        <spring.boot.version>3.3.2</spring.boot.version>
-        <xtool.version>1.0.17</xtool.version>
+        <spring.boot.version>3.3.3</spring.boot.version>
+        <xtool.version>1.0.19</xtool.version>
     </properties>
 
     <dependencyManagement>

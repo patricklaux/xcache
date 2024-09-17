@@ -8,6 +8,7 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.lang.NonNull;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
@@ -41,7 +42,7 @@ public class CacheInterceptor implements MethodInterceptor, Serializable {
     }
 
     @Override
-    public Object invoke(MethodInvocation invocation) throws Throwable {
+    public Object invoke(@NonNull MethodInvocation invocation) throws Throwable {
         if (operationSource == null) {
             return invocation.proceed();
         }

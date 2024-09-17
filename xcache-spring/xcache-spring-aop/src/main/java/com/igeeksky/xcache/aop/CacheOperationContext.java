@@ -12,8 +12,8 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.context.expression.AnnotatedElementKey;
 import org.springframework.context.expression.MethodBasedEvaluationContext;
 import org.springframework.core.BridgeMethodResolver;
-import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
+import org.springframework.lang.NonNull;
 import org.springframework.util.ObjectUtils;
 
 import java.lang.reflect.Method;
@@ -31,7 +31,7 @@ import java.util.*;
 @SuppressWarnings("unchecked")
 public class CacheOperationContext {
 
-    private final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
+    private final ParameterNameDiscoverer parameterNameDiscoverer;
 
     private final Map<Class<? extends CacheOperation>, CacheOperation> operations;
 
@@ -56,11 +56,14 @@ public class CacheOperationContext {
 
     private Object result;
 
+    private MethodBasedEvaluationContext context;
+
     public CacheOperationContext(CacheOperationExpressionEvaluator expressionEvaluator,
                                  Collection<CacheOperation> cacheOperations, CacheManager cacheManager,
                                  MethodInvocation invocation, Method method, Object target, Class<?> targetClass) {
         this.expressionEvaluator = expressionEvaluator;
-        this.operations = new HashMap<>(cacheOperations.size());
+        this.parameterNameDiscoverer = this.expressionEvaluator.getParameterNameDiscoverer();
+        this.operations = Maps.newHashMap(cacheOperations.size());
         for (CacheOperation cacheOperation : cacheOperations) {
             this.operations.put(cacheOperation.getClass(), cacheOperation);
         }
@@ -352,8 +355,7 @@ public class CacheOperationContext {
         // 检查表达式是否有文本内容
         if (StringUtils.hasText(expression)) {
             // 创建一个基于方法的评估上下文，用于解析表达式
-            MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(this.target, this.method,
-                    this.args, this.parameterNameDiscoverer);
+            MethodBasedEvaluationContext context = this.createEvaluationContext();
             context.setVariable("result", this.result);
             // 使用表达式评估器生成键
             return this.expressionEvaluator.key(expression, this.methodKey, context);
@@ -364,8 +366,7 @@ public class CacheOperationContext {
 
     private Object computeValue(String expression) {
         if (StringUtils.hasText(expression)) {
-            MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(this.target, this.method,
-                    this.args, this.parameterNameDiscoverer);
+            MethodBasedEvaluationContext context = this.createEvaluationContext();
             context.setVariable("result", this.result);
             return this.expressionEvaluator.value(expression, this.methodKey, context);
         }
@@ -377,8 +378,7 @@ public class CacheOperationContext {
      */
     private boolean conditionPassing(String expression) {
         if (StringUtils.hasText(expression)) {
-            MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(this.target, this.method,
-                    this.args, this.parameterNameDiscoverer);
+            MethodBasedEvaluationContext context = createEvaluationContext();
             return this.expressionEvaluator.condition(expression, this.methodKey, context);
         }
         return true;
@@ -386,12 +386,20 @@ public class CacheOperationContext {
 
     private boolean unlessPassing(String expression) {
         if (StringUtils.hasText(expression)) {
-            MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(this.target, this.method,
-                    this.args, this.parameterNameDiscoverer);
+            MethodBasedEvaluationContext context = createEvaluationContext();
             context.setVariable("result", this.result);
             return !this.expressionEvaluator.unless(expression, this.methodKey, context);
         }
         return true;
+    }
+
+    @NonNull
+    private MethodBasedEvaluationContext createEvaluationContext() {
+        if (this.context == null) {
+            this.context = new MethodBasedEvaluationContext(this.target, this.method,
+                    this.args, this.parameterNameDiscoverer);
+        }
+        return this.context;
     }
 
     /**
@@ -411,7 +419,7 @@ public class CacheOperationContext {
     }
 
     private Object wrapReturnType(Class<?> returnType, Object cacheHitValue) {
-        if (returnType.isAssignableFrom(Optional.class)) {
+        if (Optional.class.isAssignableFrom(returnType)) {
             return Optional.ofNullable(cacheHitValue);
         }
         return cacheHitValue;
