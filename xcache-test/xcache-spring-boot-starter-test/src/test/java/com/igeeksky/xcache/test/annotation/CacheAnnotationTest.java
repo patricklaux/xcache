@@ -27,7 +27,7 @@ public class CacheAnnotationTest {
 
     @AfterAll
     public static void afterAll() throws InterruptedException {
-        Thread.sleep(20000);
+        Thread.sleep(5000);
     }
 
     /**
