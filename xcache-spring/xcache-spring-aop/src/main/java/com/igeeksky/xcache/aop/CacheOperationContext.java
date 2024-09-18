@@ -18,6 +18,8 @@ import org.springframework.util.ObjectUtils;
 
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 
 /**
@@ -122,14 +124,8 @@ public class CacheOperationContext {
     }
 
     private void processCacheable(CacheableOperation operation) throws Throwable {
-        // 使用 SpEL 判断是否满足条件
-        if (!conditionPassing(operation.getCondition())) {
-            this.proceed();
-            return;
-        }
-
         // 使用 SpEL 获取 key
-        Object key = this.generateKey(operation.getKey());
+        Object key = this.getKey(operation.getKey(), operation.getCondition());
         if (key == null) {
             this.proceed();
             return;
@@ -414,11 +410,20 @@ public class CacheOperationContext {
         }
     }
 
-    private Object unwrapReturnType(Object returnValue) {
+    private Object unwrapReturnType(Object returnValue) throws ExecutionException, InterruptedException {
+        if (returnValue == null) {
+            return null;
+        }
+        if (returnValue instanceof CompletableFuture) {
+            return ((CompletableFuture<?>) returnValue).get();
+        }
         return ObjectUtils.unwrapOptional(returnValue);
     }
 
     private Object wrapReturnType(Class<?> returnType, Object cacheHitValue) {
+        if (CompletableFuture.class.isAssignableFrom(returnType)) {
+            return CompletableFuture.completedFuture(cacheHitValue);
+        }
         if (Optional.class.isAssignableFrom(returnType)) {
             return Optional.ofNullable(cacheHitValue);
         }

@@ -1,7 +1,6 @@
-package com.igeeksky.xcache.core.store;
+package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.NullValue;
-import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.CacheValues;
 import com.igeeksky.xtool.core.lang.codec.Codec;
@@ -10,34 +9,32 @@ import com.igeeksky.xtool.core.lang.compress.Compressor;
 import java.util.Arrays;
 
 /**
- * 外部缓存抽象类
+ * 外部缓存值转换器
  *
- * @param <V> 缓存值类型
  * @author Patrick.Lau
- * @since 1.0.0 2024/6/13
+ * @since 1.0.0 2024/9/18
  */
-public abstract class AbstractExtraStore<V> implements Store<V> {
+public class ExtraStoreValueConvertor<V> {
 
     private final boolean enableNullValue;
 
     private final boolean enableCompressValue;
 
-    private final Compressor valueCompressor;
-
-    private final Codec<V> valueCodec;
+    private final Compressor compressor;
+    private final Codec<V> codec;
 
     private final byte[] null_bytes;
 
-    public AbstractExtraStore(boolean enableNullValue, boolean enableCompressValue,
-                              Compressor valueCompressor, Codec<V> valueCodec) {
+    public ExtraStoreValueConvertor(boolean enableNullValue, boolean enableCompressValue,
+                                    Codec<V> codec, Compressor compressor) {
         this.enableCompressValue = enableCompressValue;
         this.enableNullValue = enableNullValue;
-        this.valueCompressor = valueCompressor;
-        this.valueCodec = valueCodec;
-        this.null_bytes = enableCompressValue ? valueCompressor.compress(NullValue.INSTANCE_BYTES) : NullValue.INSTANCE_BYTES;
+        this.compressor = compressor;
+        this.codec = codec;
+        this.null_bytes = enableCompressValue ? this.compressor.compress(NullValue.INSTANCE_BYTES) : NullValue.INSTANCE_BYTES;
     }
 
-    protected byte[] toExtraStoreValue(V value) {
+    public byte[] toExtraStoreValue(V value) {
         if (null == value) {
             if (enableNullValue) {
                 return null_bytes;
@@ -45,15 +42,15 @@ public abstract class AbstractExtraStore<V> implements Store<V> {
             return null;
         }
 
-        byte[] storeValue = valueCodec.encode(value);
+        byte[] storeValue = codec.encode(value);
         if (enableCompressValue) {
-            return valueCompressor.compress(storeValue);
+            return compressor.compress(storeValue);
         }
 
         return storeValue;
     }
 
-    protected CacheValue<V> fromExtraStoreValue(byte[] storeValue) {
+    public CacheValue<V> fromExtraStoreValue(byte[] storeValue) {
         if (storeValue == null) {
             return null;
         }
@@ -65,10 +62,10 @@ public abstract class AbstractExtraStore<V> implements Store<V> {
         }
 
         if (enableCompressValue) {
-            storeValue = valueCompressor.decompress(storeValue);
+            storeValue = compressor.decompress(storeValue);
         }
 
-        return CacheValues.newCacheValue(valueCodec.decode(storeValue));
+        return CacheValues.newCacheValue(codec.decode(storeValue));
     }
 
 }

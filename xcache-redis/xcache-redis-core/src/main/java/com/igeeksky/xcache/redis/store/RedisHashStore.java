@@ -5,6 +5,7 @@ import com.igeeksky.redis.CRC16;
 import com.igeeksky.redis.RedisOperator;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.CacheKeyPrefix;
+import com.igeeksky.xcache.core.ExtraStoreValueConvertor;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.function.tuple.KeyValue;
@@ -25,7 +26,7 @@ import java.util.*;
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-03
  */
-public class RedisHashStore<V> extends AbstractRedisStore<V> {
+public class RedisHashStore<V> implements RedisStore<V> {
 
     private final byte[] name;
 
@@ -35,23 +36,25 @@ public class RedisHashStore<V> extends AbstractRedisStore<V> {
 
     private final StringCodec stringCodec;
 
+    private final ExtraStoreValueConvertor<V> convertor;
+
     public RedisHashStore(RedisOperator connection, RedisStoreConfig<V> config) {
-        super(config.isEnableNullValue(), config.isEnableCompressValue(),
-                config.getValueCompressor(), config.getValueCodec());
         this.connection = connection;
         this.stringCodec = StringCodec.getInstance(config.getCharset());
         this.name = stringCodec.encode(config.getName());
         CacheKeyPrefix cacheKeyPrefix = new CacheKeyPrefix(config.getName(), stringCodec);
         this.redisHashKeys = (connection.isCluster()) ? initHashKeys(cacheKeyPrefix) : null;
+        this.convertor = new ExtraStoreValueConvertor<>(config.isEnableNullValue(), config.isEnableCompressValue(),
+                config.getValueCodec(), config.getValueCompressor());
     }
 
     @Override
     public CacheValue<V> get(String field) {
         byte[] storeField = this.toStoreField(field);
         if (connection.isCluster()) {
-            return fromExtraStoreValue(connection.hget(selectStoreKey(storeField), storeField));
+            return this.convertor.fromExtraStoreValue(connection.hget(selectStoreKey(storeField), storeField));
         } else {
-            return fromExtraStoreValue(connection.hget(name, storeField));
+            return this.convertor.fromExtraStoreValue(connection.hget(name, storeField));
         }
     }
 
@@ -74,7 +77,7 @@ public class RedisHashStore<V> extends AbstractRedisStore<V> {
     @Override
     public void put(String field, V value) {
         byte[] storeField = toStoreField(field);
-        byte[] storeValue = toExtraStoreValue(value);
+        byte[] storeValue = this.convertor.toExtraStoreValue(value);
         if (storeValue == null) {
             return;
         }
@@ -97,7 +100,7 @@ public class RedisHashStore<V> extends AbstractRedisStore<V> {
                 byte[] storeField = toStoreField(field);
                 // 根据 field 分配到不同的的哈希表
                 byte[] storeKey = selectStoreKey(storeField);
-                byte[] storeValue = toExtraStoreValue(value);
+                byte[] storeValue = this.convertor.toExtraStoreValue(value);
                 if (storeValue != null) {
                     Map<byte[], byte[]> fieldMap = keyFieldValues.computeIfAbsent(storeKey, k -> new HashMap<>());
                     fieldMap.put(storeField, storeValue);
@@ -110,7 +113,7 @@ public class RedisHashStore<V> extends AbstractRedisStore<V> {
 
         Map<byte[], byte[]> fieldValues = Maps.newHashMap(keyValues.size());
         keyValues.forEach((field, value) -> {
-            byte[] storeValue = toExtraStoreValue(value);
+            byte[] storeValue = this.convertor.toExtraStoreValue(value);
             if (storeValue != null) {
                 fieldValues.put(toStoreField(field), storeValue);
             }
@@ -191,7 +194,7 @@ public class RedisHashStore<V> extends AbstractRedisStore<V> {
         Map<String, CacheValue<V>> result = HashMap.newHashMap(keyValues.size());
         for (KeyValue<byte[], byte[]> keyValue : keyValues) {
             if (keyValue.hasValue()) {
-                CacheValue<V> cacheValue = fromExtraStoreValue(keyValue.getValue());
+                CacheValue<V> cacheValue = this.convertor.fromExtraStoreValue(keyValue.getValue());
                 if (cacheValue != null) {
                     result.put(fromStoreField(keyValue.getKey()), cacheValue);
                 }

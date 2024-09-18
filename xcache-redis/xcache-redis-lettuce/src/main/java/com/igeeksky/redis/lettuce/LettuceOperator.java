@@ -5,7 +5,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 /**
  * 单机 Redis 或 主从/哨兵 Redis 连接
  * <p>
- * 特别说明：因为不执行事务和阻塞命令，无需连接池
+ * 特别说明：无事务和阻塞命令，因此无需连接池
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-01

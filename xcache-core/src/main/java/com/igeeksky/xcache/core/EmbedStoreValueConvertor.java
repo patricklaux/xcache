@@ -1,20 +1,17 @@
-package com.igeeksky.xcache.core.store;
+package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.CacheValues;
-import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xtool.core.lang.codec.Codec;
 import com.igeeksky.xtool.core.lang.compress.Compressor;
 
-
 /**
- * 内嵌缓存抽象类
+ * 内嵌缓存值转换器
  *
- * @param <V> 缓存值类型
  * @author Patrick.Lau
- * @since 1.0.0 2024/6/13
+ * @since 1.0.0 2024/9/18
  */
-public abstract class AbstractEmbedStore<V> implements Store<V> {
+public class EmbedStoreValueConvertor<V> {
 
     private final boolean enableNullValue;
     private final boolean enableCompressValue;
@@ -23,8 +20,8 @@ public abstract class AbstractEmbedStore<V> implements Store<V> {
     private final Codec<V> codec;
     private final Compressor compressor;
 
-    public AbstractEmbedStore(boolean enableNullValue, boolean enableCompressValue, boolean enableSerializeValue,
-                              Compressor compressor, Codec<V> codec) {
+    public EmbedStoreValueConvertor(boolean enableNullValue, boolean enableCompressValue,
+                                    boolean enableSerializeValue, Codec<V> codec, Compressor compressor) {
         this.enableNullValue = enableNullValue;
         this.enableCompressValue = enableCompressValue;
         this.enableSerializeValue = enableSerializeValue;
@@ -32,7 +29,7 @@ public abstract class AbstractEmbedStore<V> implements Store<V> {
         this.codec = codec;
     }
 
-    protected CacheValue<Object> toStoreValue(V value) {
+    public CacheValue<Object> toStoreValue(V value) {
         if (null == value) {
             if (enableNullValue) {
                 return CacheValues.emptyCacheValue();
@@ -50,7 +47,7 @@ public abstract class AbstractEmbedStore<V> implements Store<V> {
     }
 
     @SuppressWarnings("unchecked")
-    protected CacheValue<V> fromStoreValue(CacheValue<Object> storeValue) {
+    public CacheValue<V> fromStoreValue(CacheValue<Object> storeValue) {
         if (storeValue == null) {
             return null;
         }

@@ -3,6 +3,7 @@ package com.igeeksky.xcache.redis.store;
 import com.igeeksky.redis.RedisOperator;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.CacheKeyPrefix;
+import com.igeeksky.xcache.core.ExtraStoreValueConvertor;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.function.tuple.ExpiryKeyValue;
 import com.igeeksky.xtool.core.function.tuple.KeyValue;
@@ -18,7 +19,7 @@ import java.util.Set;
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/13
  */
-public class RedisStringStore<V> extends AbstractRedisStore<V> {
+public class RedisStringStore<V> implements RedisStore<V> {
 
     private final RedisOperator connection;
 
@@ -34,9 +35,10 @@ public class RedisStringStore<V> extends AbstractRedisStore<V> {
 
     private final CacheKeyPrefix cacheKeyPrefix;
 
+    private final ExtraStoreValueConvertor<V> convertor;
+
     public RedisStringStore(RedisOperator connection, RedisStoreConfig<V> config) {
-        super(config.isEnableNullValue(), config.isEnableCompressValue(),
-                config.getValueCompressor(), config.getValueCodec());
+
         this.connection = connection;
         this.enableKeyPrefix = config.isEnableKeyPrefix();
         this.enableRandomTtl = config.isEnableRandomTtl();
@@ -44,11 +46,13 @@ public class RedisStringStore<V> extends AbstractRedisStore<V> {
         this.expireAfterWriteMin = (long) (expireAfterWrite * 0.8);
         this.stringCodec = StringCodec.getInstance(config.getCharset());
         this.cacheKeyPrefix = new CacheKeyPrefix(config.getName(), stringCodec);
+        this.convertor = new ExtraStoreValueConvertor<>(config.isEnableNullValue(), config.isEnableCompressValue(),
+                config.getValueCodec(), config.getValueCompressor());
     }
 
     @Override
     public CacheValue<V> get(String key) {
-        return fromExtraStoreValue(connection.get(toStoreKey(key)));
+        return this.convertor.fromExtraStoreValue(connection.get(toStoreKey(key)));
     }
 
     @Override
@@ -57,7 +61,7 @@ public class RedisStringStore<V> extends AbstractRedisStore<V> {
 
         Map<String, CacheValue<V>> result = Maps.newLinkedHashMap(keyValues.size());
         for (KeyValue<byte[], byte[]> kv : keyValues) {
-            CacheValue<V> cacheValue = fromExtraStoreValue(kv.getValue());
+            CacheValue<V> cacheValue = this.convertor.fromExtraStoreValue(kv.getValue());
             if (cacheValue != null) {
                 result.put(fromStoreKey(kv.getKey()), cacheValue);
             }
@@ -68,7 +72,7 @@ public class RedisStringStore<V> extends AbstractRedisStore<V> {
 
     @Override
     public void put(String key, V value) {
-        byte[] storeValue = toExtraStoreValue(value);
+        byte[] storeValue = this.convertor.toExtraStoreValue(value);
         if (storeValue != null) {
             if (expireAfterWrite <= 0) {
                 checkResult(connection.set(toStoreKey(key), storeValue), "put", key, value);
@@ -83,7 +87,7 @@ public class RedisStringStore<V> extends AbstractRedisStore<V> {
         if (expireAfterWrite <= 0) {
             Map<byte[], byte[]> map = Maps.newHashMap(keyValues.size());
             keyValues.forEach((k, v) -> {
-                byte[] storeValue = toExtraStoreValue(v);
+                byte[] storeValue = this.convertor.toExtraStoreValue(v);
                 if (storeValue != null) {
                     map.put(toStoreKey(k), storeValue);
                 }
@@ -94,7 +98,7 @@ public class RedisStringStore<V> extends AbstractRedisStore<V> {
 
         List<ExpiryKeyValue<byte[], byte[]>> expiryKeyValues = new ArrayList<>(keyValues.size());
         keyValues.forEach((k, v) -> {
-            byte[] storeValue = toExtraStoreValue(v);
+            byte[] storeValue = this.convertor.toExtraStoreValue(v);
             if (storeValue != null) {
                 expiryKeyValues.add(new ExpiryKeyValue<>(toStoreKey(k), storeValue, timeToLive()));
             }
