@@ -367,6 +367,7 @@ public class CacheManagerImpl implements CacheManager {
                 .provider(props.getProvider())
                 .period(props.getPeriod())
                 .stopAfterAccess(props.getStopAfterAccess())
+                .params(props.getParams())
                 .cacheLock(lock)
                 .build();
     }

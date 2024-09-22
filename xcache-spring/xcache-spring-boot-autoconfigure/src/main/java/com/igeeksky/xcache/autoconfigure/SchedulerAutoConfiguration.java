@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.autoconfigure;
 
 import com.igeeksky.xtool.core.concurrent.PlatformThreadFactory;
+import com.igeeksky.xtool.core.lang.Assert;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +13,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
+ * 定时任务调度器自动配置
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/17
  */
@@ -22,14 +25,19 @@ public class SchedulerAutoConfiguration {
 
     private final SchedulerProperties schedulerProperties;
 
+    /**
+     * 构造函数，接收一个 SchedulerProperties 对象作为参数。
+     *
+     * @param schedulerProperties 调度器配置项
+     */
     public SchedulerAutoConfiguration(SchedulerProperties schedulerProperties) {
         this.schedulerProperties = schedulerProperties;
     }
 
     /**
-     * 创建一个 ScheduledExecutorService 实例，用于执行定时任务。<p>
+     * 创建一个 ScheduledExecutorService 实例，用于执行定时任务。
      *
-     * @return ScheduledExecutorService 用于执行定时任务。
+     * @return ScheduledExecutorService – 调度器
      */
     @Bean
     public ScheduledExecutorService scheduler() {
@@ -43,9 +51,10 @@ public class SchedulerAutoConfiguration {
     }
 
     private int getCorePoolSize(Integer corePoolSize) {
-        if (corePoolSize == null || corePoolSize <= 0) {
+        if (corePoolSize == null) {
             return Math.max(1, Runtime.getRuntime().availableProcessors() / 8);
         }
+        Assert.isTrue(corePoolSize > 0, "corePoolSize must be greater than 0");
         return corePoolSize;
     }
 

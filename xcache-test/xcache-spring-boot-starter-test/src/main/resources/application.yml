@@ -7,6 +7,8 @@ xcache:
         initial-capacity: 128
         lease-time: 1000
         provider: lettuce
+        infix:
+        params:
       cache-sync:
         first: ALL
         second: NONE

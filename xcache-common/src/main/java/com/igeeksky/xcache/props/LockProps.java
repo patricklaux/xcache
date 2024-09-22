@@ -13,19 +13,37 @@ import java.util.Map;
  */
 public class LockProps {
 
+    private String provider;
+
+    private String infix;
+
+    private Integer initialCapacity;
+
+    private Long leaseTime;
+
+    private final Map<String, Object> params = new HashMap<>();
+
     /**
-     * LockProvider - id
+     * LockProviderId
      * <p>
      * 默认值：embed
      * <p>
      * {@link CacheConstants#DEFAULT_LOCK_PROVIDER}
+     *
+     * @return String - LockProviderId
      */
-    private String provider;
+    public String getProvider() {
+        return provider;
+    }
+
+    public void setProvider(String provider) {
+        this.provider = provider;
+    }
 
     /**
      * 中缀
      * <p>
-     * 如果是分布式锁，不同应用不同缓存的锁需要通过前缀加以区分，前缀通过中缀生成，代码如下：
+     * 分布式锁，不同应用的缓存锁需要通过中缀加以区分，代码如下：
      * <pre>{@code
      * if (infix == null) {
      *     prefix = "lock:" + application + ":" + cacheName + ":";
@@ -37,38 +55,9 @@ public class LockProps {
      *     }
      * }
      * }</pre>
+     *
+     * @return String - 中缀
      */
-    private String infix;
-
-    /**
-     * 本机缓存锁使用 HashMap 来存储锁，初始的 HashMap 大小
-     * <p>
-     * {@link CacheConstants#DEFAULT_LOCK_INITIAL_CAPACITY}
-     */
-    private Integer initialCapacity;
-
-    /**
-     * 锁最长租用时间
-     * <p>
-     * 默认值：1000  单位：毫秒
-     * <p>
-     * {@link CacheConstants#DEFAULT_LOCK_LEASE_TIME}
-     */
-    private Long leaseTime;
-
-    /**
-     * 自定义扩展属性
-     */
-    private final Map<String, Object> params = new HashMap<>();
-
-    public String getProvider() {
-        return provider;
-    }
-
-    public void setProvider(String provider) {
-        this.provider = provider;
-    }
-
     public String getInfix() {
         return infix;
     }
@@ -77,6 +66,15 @@ public class LockProps {
         this.infix = infix;
     }
 
+    /**
+     * Xcache 使用 HashMap 维护缓存锁对象，因此可定义初始的 HashMap 大小
+     * <p>
+     * 默认值：256
+     * <p>
+     * {@link CacheConstants#DEFAULT_LOCK_INITIAL_CAPACITY}
+     *
+     * @return Integer - 初始的 HashMap 大小
+     */
     public Integer getInitialCapacity() {
         return initialCapacity;
     }
@@ -85,6 +83,17 @@ public class LockProps {
         this.initialCapacity = initialCapacity;
     }
 
+    /**
+     * 锁租用时间
+     * <p>
+     * 默认值：1000  单位：毫秒
+     * <p>
+     * {@link CacheConstants#DEFAULT_LOCK_LEASE_TIME}
+     * <p>
+     * 既知 {@code RedisSpinLock} 有用此配置，{@code EmbedLock} 无需此配置
+     *
+     * @return Long - 锁租用时间
+     */
     public Long getLeaseTime() {
         return leaseTime;
     }
@@ -93,6 +102,11 @@ public class LockProps {
         this.leaseTime = leaseTime;
     }
 
+    /**
+     * 扩展参数
+     *
+     * @return {@code Map<String, Object>} - 扩展参数
+     */
     public Map<String, Object> getParams() {
         return params;
     }

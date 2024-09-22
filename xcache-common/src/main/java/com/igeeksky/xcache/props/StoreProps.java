@@ -28,17 +28,6 @@ public class StoreProps {
      */
     private StoreType storeType;
 
-    /**
-     * <b>缓存工厂 id </b>
-     * <p>
-     * 内嵌缓存默认值：caffeineCacheStoreProvider
-     * <p>
-     * {@link CacheConstants#DEFAULT_EMBED_STORE_PROVIDER}
-     * <p>
-     * 外部缓存默认值：lettuceCacheStoreProvider
-     * <p>
-     * {@link CacheConstants#DEFAULT_EXTRA_STORE_PROVIDER}
-     */
     private String provider;
 
     /**
@@ -235,6 +224,21 @@ public class StoreProps {
         this.storeType = storeType;
     }
 
+    /**
+     * <b>缓存工厂 id </b>
+     * <p>
+     * 一级缓存默认值：caffeine
+     * <p>
+     * {@link CacheConstants#DEFAULT_EMBED_STORE_PROVIDER}
+     * <p>
+     * 二级缓存默认值：lettuce
+     * <p>
+     * {@link CacheConstants#DEFAULT_EXTRA_STORE_PROVIDER}
+     * <p>
+     * 三级缓存默认值：none
+     *
+     * @return String – 缓存工厂 id
+     */
     public String getProvider() {
         return provider;
     }

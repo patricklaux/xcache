@@ -4,6 +4,8 @@ import com.igeeksky.xcache.extension.lock.LockService;
 import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -48,6 +50,8 @@ public class RefreshConfig {
      */
     private final long stopAfterAccess;
 
+    private final Map<String, Object> params;
+
     public RefreshConfig(Builder builder) {
         this.name = builder.name;
         this.app = builder.app;
@@ -56,6 +60,7 @@ public class RefreshConfig {
         this.cacheLock = builder.cacheLock;
         this.period = builder.period;
         this.stopAfterAccess = builder.stopAfterAccess;
+        this.params = builder.params;
         if (builder.infix != null) {
             if (Objects.equals("none", StringUtils.toLowerCase(builder.infix))) {
                 this.infix = null;
@@ -117,6 +122,10 @@ public class RefreshConfig {
         return stopAfterAccess;
     }
 
+    public Map<String, Object> getParams() {
+        return params;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -147,6 +156,8 @@ public class RefreshConfig {
          * 停止刷新时间
          */
         private long stopAfterAccess;
+
+        private final Map<String, Object> params = new HashMap<>();
 
         public Builder name(String name) {
             this.name = name;
@@ -185,6 +196,13 @@ public class RefreshConfig {
 
         public Builder cacheLock(LockService cacheLock) {
             this.cacheLock = cacheLock;
+            return this;
+        }
+
+        public Builder params(Map<String, Object> params) {
+            if (params != null) {
+                this.params.putAll(params);
+            }
             return this;
         }
 

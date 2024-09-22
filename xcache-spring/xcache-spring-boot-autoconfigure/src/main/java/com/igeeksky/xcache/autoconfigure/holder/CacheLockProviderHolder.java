@@ -8,12 +8,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 用于向 CacheManager 注册 CacheLockProvider
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-02
  */
 public class CacheLockProviderHolder implements Holder<CacheLockProvider> {
 
     private final Map<String, CacheLockProvider> map = new HashMap<>();
+
+    /**
+     * 默认构造函数
+     * <p>
+     * 对象初始化时内部会自动创建一个 map ，用于存放 CacheLockProvider
+     */
+    public CacheLockProviderHolder() {
+    }
 
     @Override
     public void put(String beanId, CacheLockProvider provider) {

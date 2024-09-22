@@ -8,12 +8,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 用于向 CacheManager 注册 CompressorProvider
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-02
  */
 public class CompressorProviderHolder implements Holder<CompressorProvider> {
 
     private final Map<String, CompressorProvider> map = new HashMap<>();
+
+    /**
+     * 默认构造函数
+     * <p>
+     * 对象初始化时内部会自动创建一个 map ，用于存放 CompressorProvider
+     */
+    public CompressorProviderHolder() {
+    }
 
     @Override
     public void put(String beanId, CompressorProvider provider) {
