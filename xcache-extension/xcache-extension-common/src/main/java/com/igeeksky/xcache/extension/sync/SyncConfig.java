@@ -184,10 +184,8 @@ public class SyncConfig<V> {
             return this;
         }
 
-        public Builder<V> enableGroupPrefix(Boolean enableGroupPrefix) {
-            if (enableGroupPrefix != null) {
-                this.enableGroupPrefix = enableGroupPrefix;
-            }
+        public Builder<V> enableGroupPrefix(boolean enableGroupPrefix) {
+            this.enableGroupPrefix = enableGroupPrefix;
             return this;
         }
 

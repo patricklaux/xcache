@@ -197,9 +197,9 @@ public class CacheManagerImpl implements CacheManager {
                 .valueStrength(storeProps.getValueStrength())
                 .expireAfterWrite(storeProps.getExpireAfterWrite())
                 .expireAfterAccess(storeProps.getExpireAfterAccess())
-                .enableGroupPrefix(storeProps.getEnableGroupPrefix())
                 .enableRandomTtl(storeProps.getEnableRandomTtl())
                 .enableNullValue(storeProps.getEnableNullValue())
+                .enableGroupPrefix(storeProps.getEnableGroupPrefix())
                 .redisType(storeProps.getRedisType())
                 .valueCodec(this.getValueCodec(storeProps.getValueCodec(), cacheConfig))
                 .valueCompressor(this.getCompressor(storeProps.getValueCompressor()))
@@ -294,8 +294,8 @@ public class CacheManagerImpl implements CacheManager {
         return LockConfig.builder()
                 .sid(config.getSid())
                 .name(config.getName())
-                .charset(config.getCharset())
                 .group(config.getGroup())
+                .charset(config.getCharset())
                 .enableGroupPrefix(props.getEnableGroupPrefix())
                 .provider(props.getProvider())
                 .initialCapacity(props.getInitialCapacity())
@@ -332,6 +332,7 @@ public class CacheManagerImpl implements CacheManager {
     private <K, V> PredicateConfig<K> buildPredicateConfig(String beanId, CacheConfig<K, V> config) {
         return PredicateConfig.builder(config.getKeyType(), config.getKeyParams())
                 .name(config.getName())
+                .group(config.getGroup())
                 .provider(beanId)
                 .build();
     }

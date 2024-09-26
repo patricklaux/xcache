@@ -178,11 +178,6 @@ public class PropsUtil {
             to.setSecond(second);
         }
 
-        Boolean enableGroupPrefix = from.getEnableGroupPrefix();
-        if (enableGroupPrefix != null) {
-            to.setEnableGroupPrefix(enableGroupPrefix);
-        }
-
         Long maxLen = from.getMaxLen();
         if (maxLen != null) {
             to.setMaxLen(maxLen);
@@ -191,6 +186,11 @@ public class PropsUtil {
         String provider = StringUtils.trimToNull(from.getProvider());
         if (provider != null) {
             to.setProvider(provider);
+        }
+
+        Boolean enableGroupPrefix = from.getEnableGroupPrefix();
+        if (enableGroupPrefix != null) {
+            to.setEnableGroupPrefix(enableGroupPrefix);
         }
 
         to.setParams(from.getParams());
@@ -284,11 +284,6 @@ public class PropsUtil {
             to.setValueCodec(valueSerializer);
         }
 
-        Boolean enableGroupPrefix = from.getEnableGroupPrefix();
-        if (enableGroupPrefix != null) {
-            to.setEnableGroupPrefix(enableGroupPrefix);
-        }
-
         Boolean enableRandomTtl = from.getEnableRandomTtl();
         if (enableRandomTtl != null) {
             to.setEnableRandomTtl(enableRandomTtl);
@@ -297,6 +292,11 @@ public class PropsUtil {
         Boolean enableNullValue = from.getEnableNullValue();
         if (enableNullValue != null) {
             to.setEnableNullValue(enableNullValue);
+        }
+
+        Boolean enableGroupPrefix = from.getEnableGroupPrefix();
+        if (enableGroupPrefix != null) {
+            to.setEnableGroupPrefix(enableGroupPrefix);
         }
 
         replaceProps(from.getValueCompressor(), to.getValueCompressor());

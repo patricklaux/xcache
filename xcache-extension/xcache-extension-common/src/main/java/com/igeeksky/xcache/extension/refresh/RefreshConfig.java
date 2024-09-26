@@ -51,10 +51,10 @@ public class RefreshConfig {
     private final Map<String, Object> params;
 
     public RefreshConfig(Builder builder) {
-        this.group = builder.group;
         this.name = builder.name;
-        this.provider = builder.provider;
+        this.group = builder.group;
         this.charset = builder.charset;
+        this.provider = builder.provider;
         this.cacheLock = builder.cacheLock;
         this.period = builder.period;
         this.stopAfterAccess = builder.stopAfterAccess;
@@ -125,16 +125,16 @@ public class RefreshConfig {
 
     public static class Builder {
 
-        private String group;
-
         /**
          * 缓存名称
          */
         private String name;
 
-        private String provider;
+        private String group;
 
         private Charset charset;
+
+        private String provider;
 
         private LockService cacheLock;
 
@@ -187,6 +187,11 @@ public class RefreshConfig {
             return this;
         }
 
+        public Builder enableGroupPrefix(boolean enableGroupPrefix) {
+            this.enableGroupPrefix = enableGroupPrefix;
+            return this;
+        }
+
         public Builder params(Map<String, Object> params) {
             if (params != null) {
                 this.params.putAll(params);
@@ -198,12 +203,6 @@ public class RefreshConfig {
             return new RefreshConfig(this);
         }
 
-        public Builder enableGroupPrefix(Boolean enableGroupPrefix) {
-            if (enableGroupPrefix != null) {
-                this.enableGroupPrefix = enableGroupPrefix;
-            }
-            return this;
-        }
     }
 
 }

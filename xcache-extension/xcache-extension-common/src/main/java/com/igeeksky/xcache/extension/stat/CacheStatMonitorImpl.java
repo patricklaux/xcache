@@ -82,7 +82,7 @@ public class CacheStatMonitorImpl implements CacheStatMonitor {
      */
     @Override
     public CacheStatMessage collect() {
-        CacheStatMessage message = new CacheStatMessage(group, name);
+        CacheStatMessage message = new CacheStatMessage(name, group);
         message.setHitLoads(this.hitLoads.getAndSet(0));
         message.setMissLoads(this.missLoads.getAndSet(0));
 

@@ -134,7 +134,7 @@ public class CacheProperties {
     @Override
     public String toString() {
         StringJoiner joiner = new StringJoiner(", ", "{", "}");
-        joiner.add("\"application\":\"" + group + "\"");
+        joiner.add("\"group\":\"" + group + "\"");
         if (template != null) {
             joiner.add("\"template\":" + template);
         }

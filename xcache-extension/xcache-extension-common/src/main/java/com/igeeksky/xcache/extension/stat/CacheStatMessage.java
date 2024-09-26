@@ -12,8 +12,8 @@ import com.igeeksky.xtool.core.json.SimpleJSON;
  */
 public class CacheStatMessage {
 
-    private String app;
     private String name;
+    private String group;
 
     private long hitLoads;
     private long missLoads;
@@ -25,17 +25,9 @@ public class CacheStatMessage {
     public CacheStatMessage() {
     }
 
-    public CacheStatMessage(String app, String name) {
-        this.app = app;
+    public CacheStatMessage(String name, String group) {
         this.name = name;
-    }
-
-    public String getApp() {
-        return app;
-    }
-
-    public void setApp(String app) {
-        this.app = app;
+        this.group = group;
     }
 
     public String getName() {
@@ -44,6 +36,14 @@ public class CacheStatMessage {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
     }
 
     public long getHitLoads() {

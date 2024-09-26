@@ -145,10 +145,8 @@ public class LockConfig {
             return this;
         }
 
-        public Builder enableGroupPrefix(Boolean enableGroupPrefix) {
-            if (enableGroupPrefix != null) {
-                this.enableGroupPrefix = enableGroupPrefix;
-            }
+        public Builder enableGroupPrefix(boolean enableGroupPrefix) {
+            this.enableGroupPrefix = enableGroupPrefix;
             return this;
         }
 

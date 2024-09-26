@@ -714,7 +714,7 @@ sequenceDiagram
 
 ```yaml
 xcache:
-  application: shop
+  group: shop
   T0:
     charset: UTF-8
     cache-type: both

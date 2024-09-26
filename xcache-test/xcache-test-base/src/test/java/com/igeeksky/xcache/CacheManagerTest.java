@@ -27,7 +27,7 @@ class CacheManagerTest {
     @BeforeEach
     void setUp() {
         String name = "user";
-        String app = "shop";
+        String group = "shop";
 
         Template t0 = PropsUtil.defaultTemplate(CacheConstants.DEFAULT_TEMPLATE_ID);
 
@@ -55,7 +55,7 @@ class CacheManagerTest {
         componentManager.addProvider(CacheConstants.CAFFEINE_STORE, new CaffeineStoreProvider(null, null));
 
         CacheManagerConfig managerConfig = CacheManagerConfig.builder()
-                .group(app)
+                .group(group)
                 .componentManager(componentManager)
                 .template(t0)
                 .build();
