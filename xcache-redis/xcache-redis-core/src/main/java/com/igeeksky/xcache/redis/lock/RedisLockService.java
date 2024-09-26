@@ -34,10 +34,11 @@ public class RedisLockService implements LockService {
         this.executor = executor;
         this.scheduler = scheduler;
 
-        this.codec = StringCodec.getInstance(config.getCharset());
         this.sid = config.getSid();
         this.prefix = config.getPrefix();
         this.leaseTime = config.getLeaseTime();
+
+        this.codec = StringCodec.getInstance(config.getCharset());
         this.locks = Maps.newConcurrentHashMap(config.getInitialCapacity());
     }
 

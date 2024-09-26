@@ -12,30 +12,25 @@ public abstract class AbstractProps {
 
     private String keyCodec;
 
+    private String cacheStat;
+
+    private String containsPredicate;
+
     private SyncProps cacheSync = new SyncProps();
 
     private LockProps cacheLock = new LockProps();
 
-    private String cacheStat;
-
     private RefreshProps cacheRefresh = new RefreshProps();
-
-    private String containsPredicate;
 
     private StoreProps first = new StoreProps();
 
-    /**
-     * 二级缓存配置
-     */
     private StoreProps second = new StoreProps();
 
-    /**
-     * 三级缓存配置
-     */
     private StoreProps third = new StoreProps();
 
     /**
-     * 字符集（可不填）<p>
+     * 字符集
+     * <p>
      * 默认：UTF-8
      * <p>
      * {@link CacheConstants#DEFAULT_CHARSET_NAME}
@@ -56,35 +51,38 @@ public abstract class AbstractProps {
     }
 
     /**
-     * KeyCodecProvider 的 beanId（可不填）
+     * CodecProviderId
      * <p>
-     * <b>默认</b>：jackson
+     * 用于获取 KeyCodec，处理 键 与 String 相互转换。
+     * <p>
+     * 默认值：jackson
      * <p>
      * {@link CacheConstants#DEFAULT_KEY_CODEC_PROVIDER}
-     * <p>
-     * 用于存取缓存数据时，将键转换成 String 对象
      *
-     * @return {@link String} – KeyCodecProvider 的 beanId
+     * @return {@link String} – CodecProviderId
      */
     public String getKeyCodec() {
         return keyCodec;
     }
 
     /**
-     * 设置 KeyCodecProvider 的 beanId
+     * 设置 CodecProviderId
      *
-     * @param keyCodec KeyCodecProvider 的 beanId
+     * @param keyCodec CodecProviderId
      */
     public void setKeyCodec(String keyCodec) {
         this.keyCodec = keyCodec;
     }
 
     /**
-     * 缓存锁配置（可不填）
+     * 缓存锁配置
      * <p>
-     * 用于数据回源加锁。<p>
-     * 调用 get(K key, CacheLoader loader) 方法时，
-     * 如果多个线程同时使用相同的 key 回源查询数据，通过加锁保证只有一个线程回源，
+     * 用于数据回源加锁。
+     * <p>
+     * 默认值：{@link PropsUtil#defaultLockProps()}
+     * <p>
+     * 调用 {@code Cache.get(K key, CacheLoader loader)} 方法时，
+     * 多个线程同时使用相同的 key 回源查询数据时，通过加锁保证仅有一个线程回源获取数据并存入缓存，
      * 其它线程则等待该线程完成后再直接读取缓存数据，从而减小数据源的查询压力.
      *
      * @return {@link LockProps} – 数据同步配置
@@ -103,12 +101,14 @@ public abstract class AbstractProps {
     /**
      * CacheStatProviderId
      * <p>
-     * 默认值：log <br>
-     * 统计信息将输出到日志，日志级别为 info。
+     * 用于缓存指标统计信息采集和输出。
+     * <p>
+     * 默认值：log
      * <p>
      * {@link CacheConstants#DEFAULT_STAT_PROVIDER}
      * <p>
-     * 日志输出类为 { com.igeeksky.xcache.extension.stat.LogCacheStatProvider} ，可将此类的日志配置为单独输出到一个文件。
+     * 如果配置为 log，统计信息将输出到日志，日志级别为 info。 <p>
+     * 日志输出类为 { com.igeeksky.xcache.extension.stat.LogCacheStatProvider} ，可将此类的日志配置为单独输出到一个文件.
      *
      * @return {@link String} – CacheStatProviderId
      */
@@ -124,12 +124,13 @@ public abstract class AbstractProps {
     }
 
     /**
-     * 缓存刷新配置（可不填）
+     * 缓存刷新配置
      * <p>
-     * 如果配置了 CacheRefresh，所有通过 get、getAll 方法查询过的 Key，会定期回源取值并刷新缓存数据.
+     * 用于缓存数据刷新。
      * <p>
-     * 注意：<br>
-     * CacheRefresh 依赖于 CacheLoader，如配置了 CacheRefresh，但无 CacheLoader，则会抛出异常。
+     * 默认值：{@link PropsUtil#defaultRefreshProps()}
+     * <p>
+     * 通过缓存查询过的 key，定期通过 {@code CacheLoader} 回源取值并更新缓存数据.
      *
      * @return {@code RefreshProps} – 缓存刷新配置
      */
@@ -138,6 +139,8 @@ public abstract class AbstractProps {
     }
 
     /**
+     * 设置缓存刷新
+     *
      * @param cacheRefresh 缓存刷新配置
      */
     public void setCacheRefresh(RefreshProps cacheRefresh) {
@@ -145,51 +148,73 @@ public abstract class AbstractProps {
     }
 
     /**
-     * ContainsPredicateProvider 的 beanId
+     * ContainsPredicateProviderId
+     * <p>
+     * 用于判断数据源是否存在相应数据。
      * <p>
      * 默认值：none
      * <p>
-     * {@link CacheConstants#DEFAULT_PREDICATE_PROVIDER} <p>
-     * 调用 {@code cache.get(K key, CacheLoader loader) }方法时，用于判断数据源是否存在相应数据，从而避免无效的回源查询.
+     * {@link CacheConstants#DEFAULT_PREDICATE_PROVIDER}
+     * <p>
+     * 调用 {@code cache.get(K key, CacheLoader loader)} 方法时，用于判断数据源是否存在相应数据，从而避免无效的回源查询.
+     * <p>
+     * ContainsPredicate 与具体业务强相关，因此需由用户自行实现，譬如可以采用 BloomFilter.
      *
-     * @return String – ContainsPredicateProvider 的 beanId
+     * @return String – ContainsPredicateProviderId
      */
     public String getContainsPredicate() {
         return containsPredicate;
     }
 
     /**
-     * @param containsPredicate ContainsPredicateProvider 的 beanId
+     * @param containsPredicate ContainsPredicateProviderId
      */
     public void setContainsPredicate(String containsPredicate) {
         this.containsPredicate = containsPredicate;
     }
 
     /**
-     * <b>数据同步配置（可为空）</b><p>
-     * 只有满足以下条件才需配置此选项： <p>
-     * 1. 使用内嵌缓存（如 caffeine），或每个应用实例都有一个私有访问互相隔离的外部缓存（如 localhost:6379 的 redis）<p>
-     * 2. 存在 {@code com.igeeksky.xcache.extension.sync.CacheSyncProvider} 接口的实现类对象，如
-     * {@code com.igeeksky.xcache.redis.sync.RedisCacheSyncProvider} <p>
-     * 3. 可选条件：最好有两级缓存，如果只有一级缓存，只能处理缓存清空操作（ clear） <p>
+     * 缓存数据同步配置
+     * <p>
+     * 用于多个缓存实例之间的数据同步。
+     * <p>
+     * 默认值：{@link PropsUtil#defaultSyncProps()}
+     * <p>
+     * 注意：只有使用本地缓存才需要数据同步。
+     * 譬如内嵌缓存（如 caffeine），或缓存实例之间相互隔离的外部缓存（如 localhost:6379 的 redis）。
+     * <p>
      *
-     * <b>示例说明 1</b><p>
+     * <b>示例一</b><p>
      * 假设有三级缓存：<p>
      * first 为内嵌的 caffeine；<p>
      * second 为 应用实例所在主机部署的 redis，且仅该应用实例可访问； <p>
-     * third 为当前应用的所有实例均可访问的 redis 集群。 <p>
-     * 此时应配置为：{first: all, second: all, …… } <p>
+     * third 为 当前应用的所有实例均可访问的 redis 集群。 <p>
+     * 此时建议配置为：{first: all, second: all, …… } <p>
      * 当应用的某一实例执行缓存数据的更新、删除、清空等操作后（put、putAll、evict、evictAll, clear），
-     * 该应用实例的缓存会发出 remove 或 clear 事件通知，
+     * 该应用实例的缓存会发送 remove 或 clear 事件，
      * 其它应用实例的缓存收到通知后会执行 evict 或 clear 操作，将 first 和 second 的相应缓存数据删除或清空。<p>
+     * <p>
      *
-     * <b>示例说明 2</b><p>
-     * 假设仅有一级缓存：first 为内嵌的 caffeine。<p>
-     * 此时应配置为：{first: clear, …… } <p>
+     * <b>示例二</b><p>
+     * 假设有两级缓存：<p>
+     * first 为内嵌的 caffeine；<p>
+     * second 为 当前应用的所有实例均可访问的 redis 集群。 <p>
+     * 此时建议配置为：{first: all, second: none, …… } <p>
+     * 当应用的某一实例执行缓存数据的更新、删除、清空等操作后（put、putAll、evict、evictAll, clear），
+     * 该应用实例的缓存会发送 remove 或 clear 事件，
+     * 其它应用实例的缓存收到通知后会执行 evict 或 clear 操作，将 first 的相应缓存数据删除或清空。<p>
+     *
+     * <b>示例三</b><p>
+     * 假设仅有一级缓存：<p>
+     * first 为内嵌的 caffeine。<p>
+     * 此时建议配置为：{first: clear, second: none, …… } <p>
      * 当应用的某一实例执行缓存数据的清空操作后（clear），该应用实例的缓存会发出 clear 事件通知，
-     * 其它应用实例的缓存收到通知后会执行 clear 操作，将 first 的相应缓存数据清空。<p>
-     * 如果只有一级缓存，通常应用不会执行缓存清空操作，所以配置成 {first: none, …… } 亦可。<p>
-     * 特别注意：仅有一级缓存不能配置成 all，否则会导致每次读取缓存数据均需回源查询。
+     * 其它应用实例的缓存收到通知后会执行 clear 操作，将 first 的缓存数据清空。<p>
+     * 当然，如果应用无需执行缓存清空操作，配置成 {first: none, second: none, …… } 亦可。<p>
+     * <p>
+     * <b>提示：</b><p>
+     * 1. 如果仅使用本地缓存，不能配置成 {first: all, second: none, …… }，否则会导致每次读取缓存数据均需回源查询。<p>
+     * 2. 如果仅使用远程缓存，配置成 {first: none, second: none, …… } 即可，因为任意一个缓存实例的操作完成后都会被其它实例实时感知，因此根本无需数据同步。
      *
      * @return {@link SyncProps} – 数据同步配置
      */
@@ -206,6 +231,10 @@ public abstract class AbstractProps {
 
     /**
      * 一级缓存配置
+     * <p>
+     * 默认采用 Caffeine 作为一级缓存。
+     * <p>
+     * {@link PropsUtil#defaultEmbedStoreProps()}
      *
      * @return {@link StoreProps} – 一级缓存配置
      */
@@ -213,12 +242,19 @@ public abstract class AbstractProps {
         return first;
     }
 
+    /**
+     * @param first 一级缓存配置
+     */
     public void setFirst(StoreProps first) {
         this.first = first;
     }
 
     /**
      * 二级缓存配置
+     * <p>
+     * 默认采用 Redis 作为二级缓存（Lettuce 作为客户端）。
+     * <p>
+     * {@link PropsUtil#defaultExtraStoreProps}
      *
      * @return {@link StoreProps} – 二级缓存配置
      */
@@ -235,6 +271,8 @@ public abstract class AbstractProps {
 
     /**
      * 三级缓存配置
+     * <p>
+     * 默认无缓存。
      *
      * @return {@link StoreProps} – 三级缓存配置
      */

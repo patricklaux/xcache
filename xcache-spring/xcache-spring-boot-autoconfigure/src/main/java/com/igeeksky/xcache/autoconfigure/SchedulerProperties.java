@@ -24,11 +24,11 @@ public class SchedulerProperties {
      * 3. LogCacheStatProvider {@link com.igeeksky.xcache.extension.stat.LogCacheStatProvider } <p>
      * 4. RedisCacheStatProvider {@code com.igeeksky.xcache.redis.stat.RedisCacheStatProvider } <p>
      * 5. StreamListenerContainer {@code com.igeeksky.redis.stream.StreamListenerContainer } <p>
-     * 以上组件的定时任务均非常轻量，存在 IO 等待的均使用虚拟线程执行，不会过多占用此调度器的线程资源。
+     * 以上组件的定时任务的实际执行均使用虚拟线程，因此不会过多占用此调度器的线程资源。
      * <p>
      * 如果未配置，则使用 (核心数 / 8)，最小为 1 <p>
      * {@snippet :
-     * Math.max(1, Runtime.getRuntime().availableProcessors() / 8);
+     *     int corePoolSize = Math.max(1, Runtime.getRuntime().availableProcessors() / 8);
      *}
      */
     private Integer corePoolSize;

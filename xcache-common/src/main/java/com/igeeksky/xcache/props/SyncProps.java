@@ -17,16 +17,16 @@ public class SyncProps {
 
     private SyncType second;
 
-    private String infix;
-
     private Long maxLen;
 
     private String provider;
 
+    private Boolean enableGroupPrefix;
+
     private final Map<String, Object> params = new HashMap<>();
 
     /**
-     * 一级缓存数据同步类型（可不填）
+     * 一级缓存数据同步类型
      * <p>
      * 默认值：ALL
      * <p>
@@ -50,7 +50,7 @@ public class SyncProps {
     }
 
     /**
-     * 二级缓存数据同步类型（可不填）
+     * 二级缓存数据同步类型
      * <p>
      * 默认值：NONE
      *
@@ -68,41 +68,33 @@ public class SyncProps {
     }
 
     /**
-     * 数据同步通道名称中缀（可不填）
+     * 是否添加 group 作为前缀
      * <p>
-     * 如未设置，采用 xcache.app 的配置值作为中缀。
-     * 完整通道名称："sync:" + infix + ":" + cacheName
+     * 如仅使用 cacheName 作为前缀会导致键冲突，则需再附加 group 作为前缀。
      * <p>
-     * 如设为 “none”，完整通道名称："sync:" + cacheName
+     * 默认值：true <br>
+     * {@link CacheConstants#DEFAULT_ENABLE_GROUP_PREFIX}
      * <p>
-     * {@snippet :
-     * if (Objects.equals("none", infix)){
-     *     channel = "sync:" + cacheName;
-     * } else {
-     *     if(infix == null){
-     *         infix = app;
-     *     }
-     *     channel = "sync:" + infix + ":" + cacheName;
-     * }
-     *}
+     * 如果为 true，则完整的键为：{@code "sync:" + group + ":" + cacheName}。<br>
+     * 如果为 false，则完整的键为：{@code "sync:" + cacheName}。
      *
-     * @return {@link String} - 中缀
+     * @return {@link Boolean} - 是否添加 group 作为前缀
      */
-    public String getInfix() {
-        return infix;
+    public Boolean getEnableGroupPrefix() {
+        return enableGroupPrefix;
     }
 
     /**
-     * 设置中缀
+     * 设置 是否添加 group 作为前缀
      *
-     * @param infix 中缀
+     * @param enableGroupPrefix 是否添加 group 作为前缀
      */
-    public void setInfix(String infix) {
-        this.infix = infix;
+    public void setEnableGroupPrefix(Boolean enableGroupPrefix) {
+        this.enableGroupPrefix = enableGroupPrefix;
     }
 
     /**
-     * 缓存同步队列最大长度（可不填）
+     * 缓存同步队列最大长度
      * <p>
      * 默认值：10000
      * <p>
@@ -124,7 +116,7 @@ public class SyncProps {
     }
 
     /**
-     * CacheSyncProviderId（可不填）
+     * CacheSyncProviderId
      * <p>
      * 默认值：lettuce
      * <p>
@@ -146,9 +138,12 @@ public class SyncProps {
     }
 
     /**
-     * 扩展属性（可不填）
+     * 扩展参数
      * <p>
-     * 自定义扩展实现时，如某些参数不在默认配置中，可通过此扩展属性进行配置
+     * 自定义扩展实现时，如需用到额外的未定义参数，可在此配置。
+     * <p>
+     * 如使用 xcache 内置实现，则无需此配置。<br>
+     * 如不使用，请删除，否则会导致 SpringBoot 读取配置错误而启动失败。
      *
      * @return {@link Map} – 扩展属性
      */

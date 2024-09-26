@@ -43,8 +43,8 @@ import java.util.function.Supplier;
 @SuppressWarnings("unchecked")
 public class CacheManagerImpl implements CacheManager {
 
-    private final String app;
     private final String sid = UUID.randomUUID().toString();
+    private final String group;
 
     private final ComponentManager componentManager;
 
@@ -54,7 +54,7 @@ public class CacheManagerImpl implements CacheManager {
     private final ConcurrentMap<String, Cache<?, ?>> cached = new ConcurrentHashMap<>();
 
     public CacheManagerImpl(CacheManagerConfig managerConfig) {
-        this.app = managerConfig.getApp();
+        this.group = managerConfig.getApp();
         this.componentManager = managerConfig.getComponentManager();
 
         managerConfig.getTemplates().forEach((id, template) -> {
@@ -173,7 +173,7 @@ public class CacheManagerImpl implements CacheManager {
         return CacheConfig.builder(keyType, keyParams, valueType, valueParams)
                 .sid(this.sid)
                 .name(cacheProps.getName())
-                .app(this.app)
+                .group(this.group)
                 .charset(cacheProps.getCharset())
                 .build();
     }
@@ -187,10 +187,9 @@ public class CacheManagerImpl implements CacheManager {
         String name = cacheConfig.getName();
         StoreConfig<V> storeConfig = StoreConfig.builder(cacheConfig.getValueType(), cacheConfig.getValueParams())
                 .name(name)
-                .app(cacheConfig.getApp())
+                .group(cacheConfig.getGroup())
                 .charset(cacheConfig.getCharset())
                 .provider(beanId)
-                .storeType(storeProps.getStoreType())
                 .initialCapacity(storeProps.getInitialCapacity())
                 .maximumSize(storeProps.getMaximumSize())
                 .maximumWeight(storeProps.getMaximumWeight())
@@ -198,7 +197,7 @@ public class CacheManagerImpl implements CacheManager {
                 .valueStrength(storeProps.getValueStrength())
                 .expireAfterWrite(storeProps.getExpireAfterWrite())
                 .expireAfterAccess(storeProps.getExpireAfterAccess())
-                .enableKeyPrefix(storeProps.getEnableKeyPrefix())
+                .enableGroupPrefix(storeProps.getEnableGroupPrefix())
                 .enableRandomTtl(storeProps.getEnableRandomTtl())
                 .enableNullValue(storeProps.getEnableNullValue())
                 .redisType(storeProps.getRedisType())
@@ -296,7 +295,8 @@ public class CacheManagerImpl implements CacheManager {
                 .sid(config.getSid())
                 .name(config.getName())
                 .charset(config.getCharset())
-                .infix((props.getInfix()) != null ? props.getInfix() : config.getApp())
+                .group(config.getGroup())
+                .enableGroupPrefix(props.getEnableGroupPrefix())
                 .provider(props.getProvider())
                 .initialCapacity(props.getInitialCapacity())
                 .leaseTime(props.getLeaseTime())
@@ -361,12 +361,12 @@ public class CacheManagerImpl implements CacheManager {
     private <K, V> RefreshConfig buildRefreshConfig(RefreshProps props, LockService lock, CacheConfig<K, V> config) {
         return RefreshConfig.builder()
                 .name(config.getName())
-                .app(config.getApp())
-                .infix(props.getInfix())
+                .group(config.getGroup())
                 .charset(config.getCharset())
-                .provider(props.getProvider())
                 .period(props.getPeriod())
+                .provider(props.getProvider())
                 .stopAfterAccess(props.getStopAfterAccess())
+                .enableGroupPrefix(props.getEnableGroupPrefix())
                 .params(props.getParams())
                 .cacheLock(lock)
                 .build();
@@ -386,8 +386,8 @@ public class CacheManagerImpl implements CacheManager {
 
     private <K, V> StatConfig buildStatConfig(String provider, CacheConfig<K, V> config) {
         return StatConfig.builder()
+                .group(config.getGroup())
                 .name(config.getName())
-                .app(config.getApp())
                 .provider(provider)
                 .build();
     }
@@ -409,15 +409,15 @@ public class CacheManagerImpl implements CacheManager {
 
     private <K, V> SyncConfig<V> buildSyncConfig(SyncProps props, Store<V>[] stores, CacheConfig<K, V> config) {
         return SyncConfig.builder(stores[0], stores[1])
+                .group(config.getGroup())
                 .name(config.getName())
-                .app(config.getApp())
                 .sid(config.getSid())
                 .charset(config.getCharset())
                 .first(props.getFirst())
                 .second(props.getSecond())
                 .provider(props.getProvider())
                 .maxLen(props.getMaxLen())
-                .infix(props.getInfix())
+                .enableGroupPrefix(props.getEnableGroupPrefix())
                 .params(props.getParams())
                 .build();
     }

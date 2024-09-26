@@ -15,11 +15,11 @@ public class LockProps {
 
     private String provider;
 
-    private String infix;
+    private Long leaseTime;
 
     private Integer initialCapacity;
 
-    private Long leaseTime;
+    private Boolean enableGroupPrefix;
 
     private final Map<String, Object> params = new HashMap<>();
 
@@ -30,80 +30,112 @@ public class LockProps {
      * <p>
      * {@link CacheConstants#DEFAULT_LOCK_PROVIDER}
      *
-     * @return String - LockProviderId
+     * @return {@code String} - LockProviderId
      */
     public String getProvider() {
         return provider;
     }
 
+    /**
+     * 设置 LockProviderId
+     *
+     * @param provider LockProviderId
+     */
     public void setProvider(String provider) {
         this.provider = provider;
     }
 
     /**
-     * 中缀
-     * <p>
-     * 分布式锁，不同应用的缓存锁需要通过中缀加以区分，代码如下：
-     * <pre>{@code
-     * if (infix == null) {
-     *     prefix = "lock:" + application + ":" + cacheName + ":";
-     * } else {
-     *     if (Objects.equals("NONE", StringUtils.toUpperCase(infix))) {
-     *          prefix = "lock:" + cacheName + ":";
-     *     } else {
-     *          prefix = "lock:" + infix + ":" + cacheName + ":";
-     *     }
-     * }
-     * }</pre>
-     *
-     * @return String - 中缀
-     */
-    public String getInfix() {
-        return infix;
-    }
-
-    public void setInfix(String infix) {
-        this.infix = infix;
-    }
-
-    /**
-     * Xcache 使用 HashMap 维护缓存锁对象，因此可定义初始的 HashMap 大小
-     * <p>
-     * 默认值：256
-     * <p>
-     * {@link CacheConstants#DEFAULT_LOCK_INITIAL_CAPACITY}
-     *
-     * @return Integer - 初始的 HashMap 大小
-     */
-    public Integer getInitialCapacity() {
-        return initialCapacity;
-    }
-
-    public void setInitialCapacity(Integer initialCapacity) {
-        this.initialCapacity = initialCapacity;
-    }
-
-    /**
-     * 锁租用时间
+     * 锁租期
      * <p>
      * 默认值：1000  单位：毫秒
      * <p>
      * {@link CacheConstants#DEFAULT_LOCK_LEASE_TIME}
      * <p>
-     * 既知 {@code RedisSpinLock} 有用此配置，{@code EmbedLock} 无需此配置
+     * 既知 {@code RedisSpinLock} 使用此配置，{@code EmbedLock} 无需此配置。
+     * <p>
+     * 对于分布式锁，设置租期是为了避免因为异常原因（进程意外终止、网络故障……）无法主动释放锁，而导致死锁。
+     * <p>
+     * 锁租期内，如果持有锁的线程申请续期，则锁会继续被该线程持有；<p>
+     * 锁租期内，如果持有锁的线程未申请续期，则到期后锁将自动释放；<p>
+     * 锁租期内，如果持有锁的线程主动释放锁，则锁会被释放。
      *
-     * @return Long - 锁租用时间
+     * @return {@link Long} - 锁租期
      */
     public Long getLeaseTime() {
         return leaseTime;
     }
 
+    /**
+     * 设置锁租期
+     *
+     * @param leaseTime 锁租期
+     */
     public void setLeaseTime(Long leaseTime) {
         this.leaseTime = leaseTime;
     }
 
     /**
+     * HashMap 初始容量
+     * <p>
+     * xcache 使用 HashMap 维护缓存锁对象。不同名缓存，存放锁对象的 HashMap 不同。
+     * <p>
+     * 默认值：256
+     * <p>
+     * {@link CacheConstants#DEFAULT_LOCK_INITIAL_CAPACITY}
+     * <p>
+     * 设置此值仅仅是为了避免或减少 Map 扩容，对大多数应用来说，保持默认值即可。
+     * <p>
+     * 可根据单次回源时间内，一个缓存实例的回源次数，并结合网络延迟、数据源压力等因素综合考虑，设置此值。
+     *
+     * @return Integer -  HashMap 初始容量
+     */
+    public Integer getInitialCapacity() {
+        return initialCapacity;
+    }
+
+    /**
+     * 设置 HashMap 初始容量
+     *
+     * @param initialCapacity HashMap 初始容量
+     */
+    public void setInitialCapacity(Integer initialCapacity) {
+        this.initialCapacity = initialCapacity;
+    }
+
+    /**
+     * 是否添加 group 作为前缀
+     * <p>
+     * 当使用分布式锁时，如仅使用 cacheName 作为前缀会导致键冲突，则需再附加 group 作为前缀。
+     * <p>
+     * 默认值：true <br>
+     * {@link CacheConstants#DEFAULT_ENABLE_GROUP_PREFIX}
+     * <p>
+     * 如果为 true，则完整的键为：{@code "lock:" + group + ":" + cacheName + ":" + key}。<br>
+     * 如果为 false，则完整的键为：{@code "lock:" + cacheName + ":" + key}。
+     *
+     * @return {@link Boolean} - 是否添加 group 作为前缀
+     */
+    public Boolean getEnableGroupPrefix() {
+        return enableGroupPrefix;
+    }
+
+    /**
+     * 设置是否添加 group 作为前缀
+     *
+     * @param enableGroupPrefix 是否添加 group 作为前缀
+     */
+    public void setEnableGroupPrefix(Boolean enableGroupPrefix) {
+        this.enableGroupPrefix = enableGroupPrefix;
+    }
+
+    /**
      * 扩展参数
+     * <p>
+     * 自定义扩展实现时，如需用到额外的未定义参数，可在此配置。
+     * <p>
+     * 如使用 xcache 内置实现，则无需此配置。<br>
+     * 如不使用，请删除，否则会导致 SpringBoot 读取配置错误而启动失败。
      *
      * @return {@code Map<String, Object>} - 扩展参数
      */
@@ -111,6 +143,11 @@ public class LockProps {
         return params;
     }
 
+    /**
+     * 设置扩展参数
+     *
+     * @param params 扩展参数
+     */
     public void setParams(Map<String, Object> params) {
         if (params != null) {
             this.params.putAll(params);

@@ -13,8 +13,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class CacheStatMonitorImpl implements CacheStatMonitor {
 
+    private final String group;
     private final String name;
-    private final String application;
 
     private final AtomicLong hitLoads = new AtomicLong();
     private final AtomicLong missLoads = new AtomicLong();
@@ -25,7 +25,7 @@ public class CacheStatMonitorImpl implements CacheStatMonitor {
 
     public CacheStatMonitorImpl(StatConfig config) {
         this.name = config.getName();
-        this.application = config.getApp();
+        this.group = config.getGroup();
     }
 
     @Override
@@ -82,7 +82,7 @@ public class CacheStatMonitorImpl implements CacheStatMonitor {
      */
     @Override
     public CacheStatMessage collect() {
-        CacheStatMessage message = new CacheStatMessage(name, application);
+        CacheStatMessage message = new CacheStatMessage(group, name);
         message.setHitLoads(this.hitLoads.getAndSet(0));
         message.setMissLoads(this.missLoads.getAndSet(0));
 

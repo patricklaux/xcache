@@ -1,12 +1,10 @@
 package com.igeeksky.xcache.extension.lock;
 
 import com.igeeksky.xtool.core.lang.Assert;
-import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * 锁配置信息
@@ -25,9 +23,11 @@ public class LockConfig {
      */
     private final String name;
 
+    private final String group;
+
     private final Charset charset;
 
-    private final String infix;
+    private final boolean enableGroupPrefix;
 
     private final String prefix;
 
@@ -42,17 +42,17 @@ public class LockConfig {
     private LockConfig(Builder builder) {
         this.sid = builder.sid;
         this.name = builder.name;
+        this.group = builder.group;
         this.charset = builder.charset;
         this.provider = builder.provider;
+        this.enableGroupPrefix = builder.enableGroupPrefix;
         this.initialCapacity = builder.initialCapacity;
         this.leaseTime = builder.leaseTime;
         this.params = builder.params;
-        if (Objects.equals("none", StringUtils.toLowerCase(builder.infix))) {
-            this.infix = null;
-            this.prefix = PREFIX + this.name + ":";
+        if (enableGroupPrefix) {
+            this.prefix = PREFIX + this.group + ":" + this.name + ":";
         } else {
-            this.infix = builder.infix;
-            this.prefix = PREFIX + this.infix + ":" + this.name + ":";
+            this.prefix = PREFIX + this.name + ":";
         }
     }
 
@@ -64,12 +64,16 @@ public class LockConfig {
         return name;
     }
 
+    public String getGroup() {
+        return group;
+    }
+
     public Charset getCharset() {
         return charset;
     }
 
-    public String getInfix() {
-        return infix;
+    public boolean isEnableGroupPrefix() {
+        return enableGroupPrefix;
     }
 
     public String getPrefix() {
@@ -99,9 +103,10 @@ public class LockConfig {
     public static class Builder {
         private String sid;
         private String name;
+        private String group;
         private Charset charset;
-        private String infix;
         private String provider;
+        private boolean enableGroupPrefix;
         private int initialCapacity;
         private long leaseTime;
         private final Map<String, Object> params = new HashMap<>();
@@ -129,14 +134,21 @@ public class LockConfig {
 
         /**
          * RedisLock 的 key 是四段结构：<p>
-         * {@code "lock:" + infix + ":" + name + ":" + key}
+         * {@code "lock:" + group + ":" + name + ":" + key}
          *
-         * @param infix RedisLockKey 的中缀
+         * @param group 分组名称
          * @return {@code this}
          */
-        public Builder infix(String infix) {
-            Assert.notNull(infix, "infix must not be null");
-            this.infix = infix;
+        public Builder group(String group) {
+            Assert.notNull(group, "group must not be null");
+            this.group = group;
+            return this;
+        }
+
+        public Builder enableGroupPrefix(Boolean enableGroupPrefix) {
+            if (enableGroupPrefix != null) {
+                this.enableGroupPrefix = enableGroupPrefix;
+            }
             return this;
         }
 

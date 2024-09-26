@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.redis.stat;
 
 import com.igeeksky.redis.RedisOperator;
+import com.igeeksky.xcache.props.CacheConstants;
 import com.igeeksky.xtool.core.lang.Assert;
 
 import java.util.concurrent.ScheduledExecutorService;
@@ -17,7 +18,9 @@ public class RedisStatConfig {
 
     private final long period;
 
-    private final String suffix;
+    private final String group;
+
+    private final boolean enableGroupPrefix;
 
     private final RedisOperator operator;
 
@@ -27,7 +30,8 @@ public class RedisStatConfig {
         this.codec = builder.codec;
         this.maxLen = builder.maxLen;
         this.period = builder.period;
-        this.suffix = builder.suffix;
+        this.group = builder.group;
+        this.enableGroupPrefix = builder.enableGroupPrefix;
         this.operator = builder.operator;
         this.scheduler = builder.scheduler;
     }
@@ -44,8 +48,12 @@ public class RedisStatConfig {
         return maxLen;
     }
 
-    public String getSuffix() {
-        return suffix;
+    public String getGroup() {
+        return group;
+    }
+
+    public boolean isEnableGroupPrefix() {
+        return enableGroupPrefix;
     }
 
     public RedisOperator getOperator() {
@@ -63,12 +71,11 @@ public class RedisStatConfig {
     public static class Builder {
         private long maxLen = 1000;
         private long period = 60000;
-        private String suffix;
+        private String group;
         private RedisOperator operator;
         private RedisCacheStatMessageCodec codec;
         private ScheduledExecutorService scheduler;
-
-
+        private boolean enableGroupPrefix = CacheConstants.DEFAULT_ENABLE_GROUP_PREFIX;
 
         public Builder maxLen(Long maxLen) {
             if (maxLen != null) {
@@ -86,9 +93,9 @@ public class RedisStatConfig {
             return this;
         }
 
-        public Builder suffix(String suffix) {
-            Assert.notNull(suffix, "suffix must not be null");
-            this.suffix = suffix;
+        public Builder group(String group) {
+            Assert.notNull(group, "group must not be null");
+            this.group = group;
             return this;
         }
 
@@ -110,9 +117,17 @@ public class RedisStatConfig {
             return this;
         }
 
+        public Builder enableGroupPrefix(Boolean enableGroupPrefix) {
+            if (enableGroupPrefix != null) {
+                this.enableGroupPrefix = enableGroupPrefix;
+            }
+            return this;
+        }
+
         public RedisStatConfig build() {
             return new RedisStatConfig(this);
         }
+
     }
 
 }

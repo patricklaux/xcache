@@ -12,39 +12,43 @@ import com.igeeksky.xtool.core.lang.codec.StringCodec;
  */
 public class CacheKeyPrefix {
 
-    private final String keyPrefix;
+    private final String prefix;
 
-    private final byte[] keyPrefixBytes;
+    private final byte[] prefixBytes;
 
-    private final int keyPrefixLength;
+    private final int prefixLength;
 
     private final StringCodec stringCodec;
 
-    public CacheKeyPrefix(String name, StringCodec stringCodec) {
-        this.keyPrefix = name + ":";
+    public CacheKeyPrefix(String group, String name, boolean enableGroupPrefix, StringCodec stringCodec) {
+        if (enableGroupPrefix) {
+            this.prefix = group + ":" + name + ":";
+        } else {
+            this.prefix = name + ":";
+        }
         this.stringCodec = stringCodec;
-        this.keyPrefixBytes = stringCodec.encode(keyPrefix);
-        this.keyPrefixLength = keyPrefixBytes.length;
+        this.prefixBytes = stringCodec.encode(prefix);
+        this.prefixLength = this.prefixBytes.length;
     }
 
     public byte[] createHashKey(int index) {
-        return stringCodec.encode(keyPrefix + index);
+        return stringCodec.encode(prefix + index);
     }
 
     public String concatPrefix(String key) {
-        return keyPrefix + key;
+        return prefix + key;
     }
 
     public byte[] concatPrefixBytes(String key) {
-        return ArrayUtils.concat(keyPrefixBytes, stringCodec.encode(key));
+        return ArrayUtils.concat(prefixBytes, stringCodec.encode(key));
     }
 
     public String removePrefix(String keyWithPrefix) {
         return removePrefix(stringCodec.encode(keyWithPrefix));
     }
 
-    public String removePrefix(byte[] keyWithPrefixBytes) {
-        return stringCodec.decode(keyWithPrefixBytes, keyPrefixLength, keyWithPrefixBytes.length - keyPrefixLength);
+    public String removePrefix(byte[] keyWithPrefix) {
+        return stringCodec.decode(keyWithPrefix, prefixLength, keyWithPrefix.length - prefixLength);
     }
 
 }

@@ -210,7 +210,7 @@ public abstract class AbstractJedisOperator implements RedisOperator {
     }
 
     @Override
-    public long time() {
+    public long timeMillis() {
         List<String> time = jedis.time();
         return (Long.parseLong(time.get(0)) * 1000) + (Long.parseLong(time.get(1)) / 1000);
     }

@@ -21,9 +21,7 @@ import java.util.Set;
  */
 public class RedisStringStore<V> implements RedisStore<V> {
 
-    private final RedisOperator connection;
-
-    private final boolean enableKeyPrefix;
+    private final RedisOperator operator;
 
     private final boolean enableRandomTtl;
 
@@ -31,33 +29,29 @@ public class RedisStringStore<V> implements RedisStore<V> {
 
     private final long expireAfterWriteMin;
 
-    private final StringCodec stringCodec;
-
     private final CacheKeyPrefix cacheKeyPrefix;
 
     private final ExtraStoreValueConvertor<V> convertor;
 
-    public RedisStringStore(RedisOperator connection, RedisStoreConfig<V> config) {
-
-        this.connection = connection;
-        this.enableKeyPrefix = config.isEnableKeyPrefix();
+    public RedisStringStore(RedisOperator operator, RedisStoreConfig<V> config) {
+        this.operator = operator;
         this.enableRandomTtl = config.isEnableRandomTtl();
         this.expireAfterWrite = config.getExpireAfterWrite();
         this.expireAfterWriteMin = (long) (expireAfterWrite * 0.8);
-        this.stringCodec = StringCodec.getInstance(config.getCharset());
-        this.cacheKeyPrefix = new CacheKeyPrefix(config.getName(), stringCodec);
+        this.cacheKeyPrefix = new CacheKeyPrefix(config.getGroup(), config.getName(),
+                config.isEnableGroupPrefix(), StringCodec.getInstance(config.getCharset()));
         this.convertor = new ExtraStoreValueConvertor<>(config.isEnableNullValue(), config.isEnableCompressValue(),
                 config.getValueCodec(), config.getValueCompressor());
     }
 
     @Override
     public CacheValue<V> get(String key) {
-        return this.convertor.fromExtraStoreValue(connection.get(toStoreKey(key)));
+        return this.convertor.fromExtraStoreValue(this.operator.get(toStoreKey(key)));
     }
 
     @Override
     public Map<String, CacheValue<V>> getAll(Set<? extends String> keys) {
-        List<KeyValue<byte[], byte[]>> keyValues = connection.mget(toKeysArray(keys));
+        List<KeyValue<byte[], byte[]>> keyValues = this.operator.mget(toKeysArray(keys));
 
         Map<String, CacheValue<V>> result = Maps.newLinkedHashMap(keyValues.size());
         for (KeyValue<byte[], byte[]> kv : keyValues) {
@@ -75,9 +69,9 @@ public class RedisStringStore<V> implements RedisStore<V> {
         byte[] storeValue = this.convertor.toExtraStoreValue(value);
         if (storeValue != null) {
             if (expireAfterWrite <= 0) {
-                checkResult(connection.set(toStoreKey(key), storeValue), "put", key, value);
+                checkResult(this.operator.set(toStoreKey(key), storeValue), "put", key, value);
             } else {
-                checkResult(connection.psetex(toStoreKey(key), timeToLive(), storeValue), "psetex", key, value);
+                checkResult(this.operator.psetex(toStoreKey(key), timeToLive(), storeValue), "psetex", key, value);
             }
         }
     }
@@ -92,7 +86,7 @@ public class RedisStringStore<V> implements RedisStore<V> {
                     map.put(toStoreKey(k), storeValue);
                 }
             });
-            checkResult(connection.mset(map), "mset");
+            checkResult(this.operator.mset(map), "mset");
             return;
         }
 
@@ -104,51 +98,45 @@ public class RedisStringStore<V> implements RedisStore<V> {
             }
         });
 
-        checkResult(connection.mpsetex(expiryKeyValues), "mset");
+        checkResult(this.operator.mpsetex(expiryKeyValues), "mset");
     }
 
     @Override
     public void evict(String key) {
-        connection.del(toStoreKey(key));
+        this.operator.del(toStoreKey(key));
     }
 
     @Override
     public void evictAll(Set<? extends String> keys) {
-        connection.del(toKeysArray(keys));
+        this.operator.del(toKeysArray(keys));
     }
 
     @Override
     public void clear() {
-        connection.clear(cacheKeyPrefix.concatPrefixBytes("*"));
+        this.operator.clear(this.cacheKeyPrefix.concatPrefixBytes("*"));
     }
 
     private byte[][] toKeysArray(Set<? extends String> keys) {
         byte[][] keysArray = new byte[keys.size()][];
         int i = 0;
         for (String key : keys) {
-            keysArray[i++] = toStoreKey(key);
+            keysArray[i++] = this.toStoreKey(key);
         }
         return keysArray;
     }
 
     private byte[] toStoreKey(String key) {
-        if (enableKeyPrefix) {
-            return cacheKeyPrefix.concatPrefixBytes(key);
-        }
-        return stringCodec.encode(key);
+        return this.cacheKeyPrefix.concatPrefixBytes(key);
     }
 
     private String fromStoreKey(byte[] storeKey) {
-        if (enableKeyPrefix) {
-            return cacheKeyPrefix.removePrefix(storeKey);
-        }
-        return stringCodec.decode(storeKey);
+        return this.cacheKeyPrefix.removePrefix(storeKey);
     }
 
     /**
      * 随机生成过期时间
      *
-     * @return 如果 randomAliveTime 为 true，随机生成过期时间；否则返回配置的 expireAfterWrite
+     * @return 如果 randomAliveTime 为 true，返回随机生成的过期时间；否则返回配置的 expireAfterWrite
      */
     private long timeToLive() {
         if (enableRandomTtl) {

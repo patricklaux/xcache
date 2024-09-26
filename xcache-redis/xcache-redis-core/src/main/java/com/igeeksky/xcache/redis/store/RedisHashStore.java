@@ -28,22 +28,29 @@ import java.util.*;
  */
 public class RedisHashStore<V> implements RedisStore<V> {
 
-    private final byte[] name;
+    private static final int LENGTH = 16384;
 
-    private final byte[][] redisHashKeys;
+    private final byte[] hashKey;
 
-    private final RedisOperator connection;
+    private final byte[][] hashKeys;
+
+    private final RedisOperator operator;
 
     private final StringCodec stringCodec;
 
     private final ExtraStoreValueConvertor<V> convertor;
 
-    public RedisHashStore(RedisOperator connection, RedisStoreConfig<V> config) {
-        this.connection = connection;
+    public RedisHashStore(RedisOperator operator, RedisStoreConfig<V> config) {
+        this.operator = operator;
         this.stringCodec = StringCodec.getInstance(config.getCharset());
-        this.name = stringCodec.encode(config.getName());
-        CacheKeyPrefix cacheKeyPrefix = new CacheKeyPrefix(config.getName(), stringCodec);
-        this.redisHashKeys = (connection.isCluster()) ? initHashKeys(cacheKeyPrefix) : null;
+        if (config.isEnableGroupPrefix()) {
+            this.hashKey = stringCodec.encode(config.getGroup() + ":" + config.getName());
+        } else {
+            this.hashKey = stringCodec.encode(config.getName());
+        }
+        CacheKeyPrefix cacheKeyPrefix = new CacheKeyPrefix(config.getGroup(), config.getName(),
+                config.isEnableGroupPrefix(), stringCodec);
+        this.hashKeys = (this.operator.isCluster()) ? initHashKeys(cacheKeyPrefix) : null;
         this.convertor = new ExtraStoreValueConvertor<>(config.isEnableNullValue(), config.isEnableCompressValue(),
                 config.getValueCodec(), config.getValueCompressor());
     }
@@ -51,19 +58,19 @@ public class RedisHashStore<V> implements RedisStore<V> {
     @Override
     public CacheValue<V> get(String field) {
         byte[] storeField = this.toStoreField(field);
-        if (connection.isCluster()) {
-            return this.convertor.fromExtraStoreValue(connection.hget(selectStoreKey(storeField), storeField));
+        if (this.operator.isCluster()) {
+            return this.convertor.fromExtraStoreValue(this.operator.hget(selectStoreKey(storeField), storeField));
         } else {
-            return this.convertor.fromExtraStoreValue(connection.hget(name, storeField));
+            return this.convertor.fromExtraStoreValue(this.operator.hget(hashKey, storeField));
         }
     }
 
     @Override
     public Map<String, CacheValue<V>> getAll(Set<? extends String> fields) {
         int size = fields.size();
-        if (connection.isCluster()) {
+        if (this.operator.isCluster()) {
             Map<byte[], List<byte[]>> keyFields = toKeyFields(fields);
-            return toResult(connection.hmget(keyFields, size));
+            return toResult(this.operator.hmget(keyFields, size));
         }
 
         byte[][] storeFields = new byte[size][];
@@ -71,7 +78,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
         for (String field : fields) {
             storeFields[i++] = toStoreField(field);
         }
-        return toResult(connection.hmget(name, storeFields));
+        return toResult(this.operator.hmget(hashKey, storeFields));
     }
 
     @Override
@@ -81,17 +88,17 @@ public class RedisHashStore<V> implements RedisStore<V> {
         if (storeValue == null) {
             return;
         }
-        if (connection.isCluster()) {
+        if (this.operator.isCluster()) {
             byte[] storeKey = selectStoreKey(storeField);
-            connection.hset(storeKey, storeField, storeValue);
+            this.operator.hset(storeKey, storeField, storeValue);
         } else {
-            connection.hset(name, storeField, storeValue);
+            this.operator.hset(hashKey, storeField, storeValue);
         }
     }
 
     @Override
     public void putAll(Map<? extends String, ? extends V> keyValues) {
-        if (connection.isCluster()) {
+        if (this.operator.isCluster()) {
 
             int maximum = getMaximum(keyValues.size());
             Map<byte[], Map<byte[], byte[]>> keyFieldValues = Maps.newHashMap(maximum);
@@ -107,7 +114,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
                 }
             });
 
-            checkResult(connection.hmset(keyFieldValues), "hmset");
+            checkResult(this.operator.hmset(keyFieldValues), "hmset");
             return;
         }
 
@@ -118,24 +125,24 @@ public class RedisHashStore<V> implements RedisStore<V> {
                 fieldValues.put(toStoreField(field), storeValue);
             }
         });
-        checkResult(connection.hmset(name, fieldValues), "hmset");
+        checkResult(this.operator.hmset(hashKey, fieldValues), "hmset");
     }
 
 
     @Override
     public void evict(String field) {
         byte[] storeField = toStoreField(field);
-        if (connection.isCluster()) {
-            connection.hdel(selectStoreKey(storeField), storeField);
+        if (this.operator.isCluster()) {
+            this.operator.hdel(selectStoreKey(storeField), storeField);
             return;
         }
-        connection.hdel(name, storeField);
+        this.operator.hdel(hashKey, storeField);
     }
 
     @Override
     public void evictAll(Set<? extends String> fields) {
-        if (connection.isCluster()) {
-            connection.hdel(toKeyFields(fields));
+        if (this.operator.isCluster()) {
+            this.operator.hdel(toKeyFields(fields));
             return;
         }
 
@@ -144,15 +151,15 @@ public class RedisHashStore<V> implements RedisStore<V> {
         for (String field : fields) {
             storeFields[index++] = toStoreField(field);
         }
-        connection.hdel(name, storeFields);
+        this.operator.hdel(hashKey, storeFields);
     }
 
     @Override
     public void clear() {
-        if (redisHashKeys != null) {
-            connection.del(redisHashKeys);
+        if (this.operator.isCluster()) {
+            this.operator.del(hashKeys);
         } else {
-            connection.del(name);
+            this.operator.del(hashKey);
         }
     }
 
@@ -161,12 +168,11 @@ public class RedisHashStore<V> implements RedisStore<V> {
      * <p/>
      * 仅集群模式时使用，可以将键和值分散到不同的节点。
      *
-     * @return 16384个哈希表名（cache-name:0, cache-name:1, ……, cache-name:16383）
+     * @return 16384 个哈希表名（group:cache-name:0, group:cache-name:1, ……, group:cache-name:16383）
      */
     private static byte[][] initHashKeys(CacheKeyPrefix cacheKeyPrefix) {
-        int len = 16384;
-        byte[][] keys = new byte[len][];
-        for (int i = 0; i < len; i++) {
+        byte[][] keys = new byte[LENGTH][];
+        for (int i = 0; i < LENGTH; i++) {
             keys[i] = cacheKeyPrefix.createHashKey(i);
         }
         return keys;
@@ -183,7 +189,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
      * @return redis hash key
      */
     private byte[] selectStoreKey(byte[] field) {
-        return redisHashKeys[CRC16.crc16(field)];
+        return hashKeys[CRC16.crc16(field)];
     }
 
     private Map<String, CacheValue<V>> toResult(List<KeyValue<byte[], byte[]>> keyValues) {
@@ -205,7 +211,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
 
     private Map<byte[], List<byte[]>> toKeyFields(Set<? extends String> fields) {
         int maximum = getMaximum(fields.size());
-        Map<byte[], List<byte[]>> keyFields = HashMap.newHashMap(maximum);
+        Map<byte[], List<byte[]>> keyFields = Maps.newHashMap(maximum);
         for (String field : fields) {
             byte[] storeField = toStoreField(field);
             byte[] storeKey = selectStoreKey(storeField);
@@ -216,19 +222,15 @@ public class RedisHashStore<V> implements RedisStore<V> {
     }
 
     private static int getMaximum(int size) {
-        if (size > 32768) {
-            return 16384;
-        } else {
-            return size / 2;
-        }
+        return Math.min(LENGTH, size / 2);
     }
 
     private byte[] toStoreField(String field) {
-        return stringCodec.encode(field);
+        return this.stringCodec.encode(field);
     }
 
     private String fromStoreField(byte[] field) {
-        return stringCodec.decode(field);
+        return this.stringCodec.decode(field);
     }
 
 }

@@ -581,7 +581,7 @@ public abstract class AbstractLettuceOperator implements RedisOperator {
     }
 
     @Override
-    public long time() {
+    public long timeMillis() {
         List<byte[]> time = serverCommands.time();
         long seconds = Long.parseLong(STRING_CODEC.decode(time.get(0)));
         long micros = Long.parseLong(STRING_CODEC.decode(time.get(1)));

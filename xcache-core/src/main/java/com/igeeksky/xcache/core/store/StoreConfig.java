@@ -1,7 +1,6 @@
 package com.igeeksky.xcache.core.store;
 
 import com.igeeksky.xcache.common.ReferenceType;
-import com.igeeksky.xcache.common.StoreType;
 import com.igeeksky.xcache.props.RedisType;
 import com.igeeksky.xtool.core.lang.codec.Codec;
 import com.igeeksky.xtool.core.lang.compress.Compressor;
@@ -21,7 +20,7 @@ public class StoreConfig<V> {
 
     private final String name;
 
-    private final String app;
+    private final String group;
 
     private final Charset charset;
 
@@ -29,18 +28,16 @@ public class StoreConfig<V> {
 
     private final Class<?>[] valueParams;
 
-    private final StoreType storeType;
-
     private final String provider;
-
-    // embed
-    private final int initialCapacity;
 
     // embed
     private final long maximumSize;
 
     // embed
     private final long maximumWeight;
+
+    // embed
+    private final int initialCapacity;
 
     // embed
     private final ReferenceType keyStrength;
@@ -54,14 +51,14 @@ public class StoreConfig<V> {
     // embed & extra
     private final long expireAfterWrite;
 
-    // Remote
-    private final boolean enableKeyPrefix;
-
     // embed & extra
     private final boolean enableRandomTtl;
 
     // embed & extra
     private final boolean enableNullValue;
+
+    // Remote
+    private final boolean enableGroupPrefix;
 
     // embed & extra
     private final boolean enableCompressValue;
@@ -88,12 +85,11 @@ public class StoreConfig<V> {
 
     private StoreConfig(Builder<V> builder) {
         this.name = builder.name;
-        this.app = builder.app;
+        this.group = builder.group;
         this.charset = builder.charset;
         this.valueType = builder.valueType;
         this.valueParams = builder.valueParams;
         this.provider = builder.provider;
-        this.storeType = builder.storeType;
         this.initialCapacity = builder.initialCapacity;
         this.maximumSize = builder.maximumSize;
         this.maximumWeight = builder.maximumWeight;
@@ -101,7 +97,7 @@ public class StoreConfig<V> {
         this.valueStrength = builder.valueStrength;
         this.expireAfterAccess = builder.expireAfterAccess;
         this.expireAfterWrite = builder.expireAfterWrite;
-        this.enableKeyPrefix = builder.enableKeyPrefix;
+        this.enableGroupPrefix = builder.enableGroupPrefix;
         this.enableRandomTtl = builder.enableRandomTtl;
         this.enableNullValue = builder.enableNullValue;
         this.enableCompressValue = builder.enableCompressValue;
@@ -116,8 +112,8 @@ public class StoreConfig<V> {
         return name;
     }
 
-    public String getApp() {
-        return app;
+    public String getGroup() {
+        return group;
     }
 
     public Charset getCharset() {
@@ -130,10 +126,6 @@ public class StoreConfig<V> {
 
     public Class<?>[] getValueParams() {
         return valueParams;
-    }
-
-    public StoreType getStoreType() {
-        return storeType;
     }
 
     public String getProvider() {
@@ -168,8 +160,8 @@ public class StoreConfig<V> {
         return expireAfterWrite;
     }
 
-    public boolean isEnableKeyPrefix() {
-        return enableKeyPrefix;
+    public boolean isEnableGroupPrefix() {
+        return enableGroupPrefix;
     }
 
     public boolean isEnableRandomTtl() {
@@ -212,15 +204,13 @@ public class StoreConfig<V> {
 
         private String name;
 
-        private String app;
+        private String group;
 
         private Charset charset;
 
         private final Class<V> valueType;
 
         private final Class<?>[] valueParams;
-
-        private StoreType storeType;
 
         private String provider;
 
@@ -238,11 +228,11 @@ public class StoreConfig<V> {
 
         private long expireAfterWrite;
 
-        private boolean enableKeyPrefix;
-
         private boolean enableRandomTtl;
 
         private boolean enableNullValue;
+
+        private boolean enableGroupPrefix;
 
         private boolean enableCompressValue;
 
@@ -266,18 +256,13 @@ public class StoreConfig<V> {
             return this;
         }
 
-        public Builder<V> app(String app) {
-            this.app = app;
+        public Builder<V> group(String group) {
+            this.group = group;
             return this;
         }
 
         public Builder<V> charset(Charset charset) {
             this.charset = charset;
-            return this;
-        }
-
-        public Builder<V> storeType(StoreType storeType) {
-            this.storeType = storeType;
             return this;
         }
 
@@ -321,11 +306,6 @@ public class StoreConfig<V> {
             return this;
         }
 
-        public Builder<V> enableKeyPrefix(boolean enableKeyPrefix) {
-            this.enableKeyPrefix = enableKeyPrefix;
-            return this;
-        }
-
         public Builder<V> enableRandomTtl(boolean enableRandomTtl) {
             this.enableRandomTtl = enableRandomTtl;
             return this;
@@ -336,15 +316,20 @@ public class StoreConfig<V> {
             return this;
         }
 
-        public Builder<V> valueCompressor(Compressor valueCompressor) {
-            this.valueCompressor = valueCompressor;
-            this.enableCompressValue = (valueCompressor != null);
+        public Builder<V> enableGroupPrefix(boolean enableGroupPrefix) {
+            this.enableGroupPrefix = enableGroupPrefix;
             return this;
         }
 
         public Builder<V> valueCodec(Codec<V> valueCodec) {
             this.valueCodec = valueCodec;
             this.enableSerializeValue = (valueCodec != null);
+            return this;
+        }
+
+        public Builder<V> valueCompressor(Compressor valueCompressor) {
+            this.valueCompressor = valueCompressor;
+            this.enableCompressValue = (valueCompressor != null);
             return this;
         }
 

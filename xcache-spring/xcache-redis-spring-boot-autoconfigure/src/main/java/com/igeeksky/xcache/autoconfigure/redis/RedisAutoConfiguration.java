@@ -22,6 +22,7 @@ import com.igeeksky.xtool.core.lang.StringUtils;
 import com.igeeksky.xtool.core.lang.codec.Codec;
 import com.igeeksky.xtool.core.lang.codec.StringCodec;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.context.annotation.Bean;
@@ -43,6 +44,9 @@ import java.util.concurrent.ScheduledExecutorService;
 @AutoConfigureBefore({CacheAutoConfiguration.class})
 @AutoConfigureAfter({SchedulerAutoConfiguration.class})
 public class RedisAutoConfiguration {
+
+    @Value("${xcache.group}")
+    private String group;
 
     private final Charset charset;
     private final RedisProperties redisProperties;
@@ -209,7 +213,8 @@ public class RedisAutoConfiguration {
             RedisStatConfig config = RedisStatConfig.builder()
                     .maxLen(option.getMaxLen())
                     .period(option.getPeriod())
-                    .suffix(option.getSuffix())
+                    .group(group)
+                    .enableGroupPrefix(option.getEnableGroupPrefix())
                     .operator(factory.getRedisOperator())
                     .codec(messageCodec)
                     .scheduler(scheduler)

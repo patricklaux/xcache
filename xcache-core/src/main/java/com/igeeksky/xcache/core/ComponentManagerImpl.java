@@ -17,6 +17,7 @@ import com.igeeksky.xcache.extension.stat.CacheStatProvider;
 import com.igeeksky.xcache.extension.stat.LogCacheStatProvider;
 import com.igeeksky.xcache.extension.sync.CacheSyncProvider;
 import com.igeeksky.xcache.props.CacheConstants;
+import com.igeeksky.xcache.props.StatProps;
 import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.util.Objects;
@@ -53,10 +54,14 @@ public class ComponentManagerImpl implements ComponentManager {
 
     private volatile LogCacheStatProvider logCacheStatProvider;
 
-    public ComponentManagerImpl(ScheduledExecutorService scheduler, Long statPeriod) {
-        this.scheduler = scheduler;
-        this.statPeriod = (statPeriod == null ? CacheConstants.DEFAULT_STAT_PERIOD : statPeriod);
+    public ComponentManagerImpl(ScheduledExecutorService scheduler, StatProps statProps) {
+        if (statProps != null && statProps.getPeriod() != null) {
+            this.statPeriod = statProps.getPeriod();
+        } else {
+            this.statPeriod = CacheConstants.DEFAULT_STAT_PERIOD;
+        }
 
+        this.scheduler = scheduler;
         this.addProvider(CacheConstants.JDK_CODEC, JdkCodecProvider.getInstance());
         this.addProvider(CacheConstants.DEFLATER_COMPRESSOR, DeflaterCompressorProvider.getInstance());
         this.addProvider(CacheConstants.GZIP_COMPRESSOR, GzipCompressorProvider.getInstance());

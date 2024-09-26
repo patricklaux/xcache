@@ -44,8 +44,7 @@ public interface CacheConstants {
     ReferenceType DEFAULT_EMBED_KEY_STRENGTH = ReferenceType.STRONG;
     ReferenceType DEFAULT_EMBED_VALUE_STRENGTH = ReferenceType.STRONG;
     String DEFAULT_EMBED_VALUE_CODEC = NONE;
-    String DEFAULT_EMBED_VALUE_COMPRESSOR = NONE;
-    boolean DEFAULT_EMBED_ENABLE_KEY_PREFIX = false;
+    boolean DEFAULT_EMBED_ENABLE_GROUP_PREFIX = false;
     boolean DEFAULT_EMBED_ENABLE_RANDOM_TTL = true;
     boolean DEFAULT_EMBED_ENABLE_NULL_VALUE = true;
     // 内嵌缓存默认配置 end
@@ -56,13 +55,14 @@ public interface CacheConstants {
     RedisType DEFAULT_EXTRA_REDIS_TYPE = RedisType.STRING;
     long DEFAULT_EXTRA_EXPIRE_AFTER_WRITE = 7200000L;
     String DEFAULT_EXTRA_VALUE_CODEC = JACKSON_CODEC;
-    boolean DEFAULT_EXTRA_ENABLE_KEY_PREFIX = true;
+    boolean DEFAULT_EXTRA_ENABLE_GROUP_PREFIX = true;
     boolean DEFAULT_EXTRA_ENABLE_RANDOM_TTL = true;
     boolean DEFAULT_EXTRA_ENABLE_NULL_VALUE = true;
     // 外部缓存默认配置 end
 
 
     // 扩展属性默认配置 start
+    boolean DEFAULT_ENABLE_GROUP_PREFIX = true;
     String DEFAULT_KEY_CODEC_PROVIDER = JACKSON_CODEC;
 
     String DEFAULT_VALUE_COMPRESSOR = NONE;

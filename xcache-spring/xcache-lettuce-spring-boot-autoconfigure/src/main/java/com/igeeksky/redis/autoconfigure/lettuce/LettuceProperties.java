@@ -14,22 +14,31 @@ import java.util.List;
 @ConfigurationProperties(prefix = "xcache.redis.lettuce")
 public class LettuceProperties {
 
-    private List<Lettuce> factory;
+    /**
+     * lettuce 配置列表
+     * <p>
+     * 如不使用 Lettuce，可删除此配置
+     */
+    private List<Lettuce> factories;
 
-    public List<Lettuce> getFactory() {
-        return factory;
+    public List<Lettuce> getFactories() {
+        return factories;
     }
 
-    public void setFactory(List<Lettuce> factory) {
-        this.factory = factory;
+    public void setFactories(List<Lettuce> factories) {
+        this.factories = factories;
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder("{");
-        if (factory != null) {
-            builder.append("\"factory:\"").append(factory);
+        builder.append("\"factories:\"");
+        if (factories != null) {
+            builder.append(factories);
+        } else {
+            builder.append("[]");
         }
         return builder.append("}").toString();
     }
+
 }

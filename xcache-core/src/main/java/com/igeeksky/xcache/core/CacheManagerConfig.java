@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public class CacheManagerConfig {
 
-    private final String app;
+    private final String group;
 
     private final Map<String, CacheProps> caches;
 
@@ -25,14 +25,14 @@ public class CacheManagerConfig {
     private final ComponentManager componentManager;
 
     private CacheManagerConfig(Builder builder) {
-        this.app = builder.app;
+        this.group = builder.group;
         this.componentManager = builder.componentManager;
         this.templates = builder.templates;
         this.caches = builder.caches;
     }
 
     public String getApp() {
-        return app;
+        return group;
     }
 
     public Map<String, CacheProps> getCaches() {
@@ -53,7 +53,7 @@ public class CacheManagerConfig {
 
     public static class Builder {
 
-        private String app;
+        private String group;
 
         private ComponentManager componentManager;
 
@@ -61,8 +61,8 @@ public class CacheManagerConfig {
 
         private final Map<String, CacheProps> caches = new HashMap<>();
 
-        public Builder app(String app) {
-            this.app = app;
+        public Builder group(String group) {
+            this.group = group;
             return this;
         }
 
@@ -104,7 +104,7 @@ public class CacheManagerConfig {
         }
 
         public CacheManagerConfig build() {
-            requireTrue(app != null, "Cache-config: app must not be null");
+            requireTrue(group != null, "Cache-config: group must not be null");
             requireTrue(!templates.isEmpty(), "Cache-config: templates must not be empty.");
             return new CacheManagerConfig(this);
         }

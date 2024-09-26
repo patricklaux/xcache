@@ -3,28 +3,38 @@ spring:
     virtual:
       enabled: true
 
+# 说明：
+# 1.除了标注为必填的选项，其他选项均为选填，留空则表示使用默认配置；
+# 2.每个配置项均有详细说明，可用 ide 自动提示功能快速查看描述信息。
+
 xcache:
-  app: shop # 应用名称 (必填)
-  templates: # 模板配置 (必填)，列表类型，可配置多个模板.
-    - id: t0 # 模板ID (必填)，如缓存未配置 template-id，则默认采用 id 为 t0 的模板，因此建议将其中一个模板的 id 配置为 t0.
-      charset: UTF-8 # 字符集 (可不填，默认 UTF-8)
-      cache-lock: # 缓存锁配置 (可不填)
+  group: shop # 应用名称 (必填)
+  template: # 模板配置 (必填)，列表类型，可配置多个模板。
+    - id: t0 # 模板ID (必填)，建议将其中一个模板的 id 配置为 t0。
+      charset: UTF-8 # 字符集 (默认 UTF-8)
+      cache-lock: # 缓存锁配置
         initial-capacity: 128 #
         lease-time: 1000 #
         provider: lettuce #
-        infix: # 中缀，用于分布式锁区分不同应用 (可不填。如未配置，默认采用 xcache.app 配置值；如配置为 none，则不使用中缀)
-        params: # 扩展参数，map 类型 （可不填，用于扩展实现的自定义参数）
+        enable-group-prefix: true
+        params: # 扩展参数，map 类型 （如不使用，请删除，用于扩展实现的自定义参数）
+          test: test
       cache-sync: #
         first: ALL #
         second: NONE #
-        infix: #
+        enable-group-prefix: true
         max-len: 1000 #
         provider: lettuce #
+        params: # 扩展参数，map 类型 （如不使用，请删除，用于扩展实现的自定义参数）
+          test: test
       cache-stat: lettuce #
       cache-refresh: #
         period: 1000 #
         stop-after-access: 10000 #
+        enable-group-prefix: true
         provider: none #
+        params: # 扩展参数，map 类型 （如不使用，请删除，用于扩展实现的自定义参数）
+          test: test
       key-codec: jackson #
       contains-predicate: #
       first: #
@@ -42,23 +52,27 @@ xcache:
         value-codec: none #
         value-compressor: #
           provider: none #
+        params: # 扩展参数，map 类型 （如不使用，请删除，用于扩展实现的自定义参数）
+          test: test
       second: #
         provider: lettuce #
         store-type: EXTRA #
         redis-type: STRING #
         expire-after-write: 7200000 #
-        enable-key-prefix: true #
+        enable-group-prefix: true #
         enable-random-ttl: true #
         enable-null-value: true #
         value-codec: jackson #
         value-compressor: #
           provider: none #
-      third: #
+        params: # 扩展参数，map 类型 （如不使用，请删除，用于扩展实现的自定义参数）
+          test: test
+      third: # 如不使用，可删除
         provider: none #
         store-type: EXTRA #
         redis-type: STRING #
         expire-after-write: 14400000 #
-        enable-key-prefix: true #
+        enable-group-prefix: true #
         enable-random-ttl: true #
         enable-null-value: true #
         value-codec: jackson #
@@ -66,7 +80,9 @@ xcache:
           provider: deflate #
           level: -1 #
           nowrap: false #
-  caches: #
+        params: # 扩展参数，map 类型 （如不使用，请删除，用于扩展实现的自定义参数）
+          test: test
+  cache: #
     - name: user #
       template-id: t0 #
     - name: order #
@@ -96,12 +112,12 @@ xcache:
         factory: lettuce #
         period: 10000 #
         max-len: 10000 #
-        suffix: shop #
+        enable-group-prefix: true #
     refresh: #
       - id: lettuce #
         factory: lettuce #
     lettuce: #
-      factory: #
+      factories:
         - id: lettuce #
           standalone: #
             node: 127.0.0.1:6379 #

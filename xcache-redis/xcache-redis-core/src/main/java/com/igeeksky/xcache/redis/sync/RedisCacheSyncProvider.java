@@ -33,7 +33,7 @@ public class RedisCacheSyncProvider implements CacheSyncProvider {
     @Override
     public <V> void register(String channel, SyncMessageListener<V> listener) {
         // 获取 Redis 主机时间作为起始 ID（缓存实际启用是在此方法完成之后，因此不会遗漏消息）
-        String startId = this.redisOperator.time() + "-0";
+        String startId = this.redisOperator.timeMillis() + "-0";
         // 使用获取的起始ID和监听器创建一个消息消费者，并将其注册到监控器中。
         StreamMessageListener<CacheSyncMessage> streamListener = new StreamMessageListener<>(this.codec, listener);
         this.listenerContainer.register(ReadOffset.from(this.codec.encodeKey(channel), startId), streamListener);

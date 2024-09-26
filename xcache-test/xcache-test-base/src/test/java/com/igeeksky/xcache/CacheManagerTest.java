@@ -47,12 +47,15 @@ class CacheManagerTest {
         t0.getSecond().setProvider(CacheConstants.NONE);
         t0.getThird().setProvider(CacheConstants.NONE);
 
-        ComponentManagerImpl componentManager = new ComponentManagerImpl(Executors.newSingleThreadScheduledExecutor(), 4000L);
+        StatProps statProps = new StatProps();
+        statProps.setPeriod(5000L);
+
+        ComponentManagerImpl componentManager = new ComponentManagerImpl(Executors.newSingleThreadScheduledExecutor(), statProps);
         componentManager.addProvider(CacheConstants.JACKSON_CODEC, JacksonCodecProvider.getInstance());
         componentManager.addProvider(CacheConstants.CAFFEINE_STORE, new CaffeineStoreProvider(null, null));
 
         CacheManagerConfig managerConfig = CacheManagerConfig.builder()
-                .app(app)
+                .group(app)
                 .componentManager(componentManager)
                 .template(t0)
                 .build();

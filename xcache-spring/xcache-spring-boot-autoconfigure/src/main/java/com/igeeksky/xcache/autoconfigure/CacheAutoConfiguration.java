@@ -20,17 +20,15 @@ import java.util.concurrent.ScheduledExecutorService;
  * @since 0.0.4 2023-09-29
  */
 @Configuration(proxyBeanMethods = false)
-@AutoConfigureAfter({CacheProperties.class, CacheStatProperties.class})
+@AutoConfigureAfter({CacheProperties.class})
 public class CacheAutoConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(CacheAutoConfiguration.class);
 
     private final CacheProperties cacheProperties;
-    private final CacheStatProperties statProperties;
 
-    CacheAutoConfiguration(CacheProperties cacheProperties, CacheStatProperties statProperties) {
+    CacheAutoConfiguration(CacheProperties cacheProperties) {
         this.cacheProperties = cacheProperties;
-        this.statProperties = statProperties;
         if (log.isDebugEnabled()) {
             log.debug("CacheProperties: {}", cacheProperties);
         }
@@ -49,8 +47,8 @@ public class CacheAutoConfiguration {
                               ObjectProvider<CompressorProviderHolder> compressorHolders,
                               ObjectProvider<ContainsPredicateProviderHolder> predicateHolders,
                               ScheduledExecutorService scheduler) {
-
-        ComponentManager componentManager = new ComponentManagerImpl(scheduler, statProperties.getPeriod());
+        
+        ComponentManager componentManager = new ComponentManagerImpl(scheduler, cacheProperties.getStat());
 
         for (StoreProviderHolder holder : storeHolders) {
             holder.getAll().forEach(componentManager::addProvider);
@@ -93,10 +91,10 @@ public class CacheAutoConfiguration {
         }
 
         CacheManagerConfig managerConfig = CacheManagerConfig.builder()
-                .app(cacheProperties.getApp())
+                .group(cacheProperties.getGroup())
                 .componentManager(componentManager)
-                .templates(cacheProperties.getTemplates())
-                .caches(cacheProperties.getCaches())
+                .templates(cacheProperties.getTemplate())
+                .caches(cacheProperties.getCache())
                 .build();
 
         return new CacheManagerImpl(managerConfig);

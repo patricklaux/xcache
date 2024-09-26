@@ -351,7 +351,7 @@ public class RedisProperties {
         private String id;
 
         /**
-         * 底层使用的 RedisOperatorFactory 唯一标识
+         * RedisOperatorFactory 唯一标识
          */
         private String factory;
 
@@ -433,9 +433,9 @@ public class RedisProperties {
         /**
          * Redis stream key 后缀 <p>
          * 使用 Redis stream 来发送缓存统计数据，完整的 key 为：<p>
-         * {@code String key = "stat:" + suffix }
+         * {@code String key = "stat:" + group }
          */
-        private String suffix;
+        private Boolean enableGroupPrefix;
 
         /**
          * Redis stream 最大长度
@@ -466,12 +466,12 @@ public class RedisProperties {
             this.period = period;
         }
 
-        public String getSuffix() {
-            return suffix;
+        public Boolean getEnableGroupPrefix() {
+            return enableGroupPrefix;
         }
 
-        public void setSuffix(String suffix) {
-            this.suffix = suffix;
+        public void setEnableGroupPrefix(Boolean enableGroupPrefix) {
+            this.enableGroupPrefix = enableGroupPrefix;
         }
 
         public long getMaxLen() {

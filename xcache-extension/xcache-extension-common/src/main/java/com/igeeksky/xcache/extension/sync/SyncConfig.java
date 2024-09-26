@@ -3,12 +3,10 @@ package com.igeeksky.xcache.extension.sync;
 
 import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.props.SyncType;
-import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author Patrick.Lau
@@ -22,9 +20,7 @@ public class SyncConfig<V> {
 
     private final String name;
 
-    private final String app;
-
-    private final String infix;
+    private final String group;
 
     private final String channel;
 
@@ -33,6 +29,8 @@ public class SyncConfig<V> {
     private final String provider;
 
     private final Charset charset;
+
+    private final boolean enableGroupPrefix;
 
     private final SyncType first;
 
@@ -47,26 +45,20 @@ public class SyncConfig<V> {
     public SyncConfig(Builder<V> builder) {
         this.sid = builder.sid;
         this.name = builder.name;
-        this.app = builder.app;
+        this.group = builder.group;
         this.maxLen = builder.maxLen;
-        this.provider = builder.provider;
         this.charset = builder.charset;
+        this.provider = builder.provider;
+        this.enableGroupPrefix = builder.enableGroupPrefix;
         this.first = builder.first;
         this.second = builder.second;
         this.firstStore = builder.firstStore;
         this.secondStore = builder.secondStore;
         this.params = builder.params;
-        if (builder.infix != null) {
-            if (Objects.equals("none", StringUtils.toLowerCase(builder.infix))) {
-                this.infix = null;
-                this.channel = PREFIX + this.name;
-            } else {
-                this.infix = builder.infix;
-                this.channel = PREFIX + this.infix + ":" + this.name;
-            }
+        if (this.enableGroupPrefix) {
+            this.channel = PREFIX + this.group + ":" + this.name;
         } else {
-            this.infix = this.app;
-            this.channel = PREFIX + this.infix + ":" + this.name;
+            this.channel = PREFIX + this.name;
         }
     }
 
@@ -78,12 +70,8 @@ public class SyncConfig<V> {
         return name;
     }
 
-    public String getApp() {
-        return app;
-    }
-
-    public String getInfix() {
-        return infix;
+    public String getGroup() {
+        return group;
     }
 
     public String getChannel() {
@@ -100,6 +88,10 @@ public class SyncConfig<V> {
 
     public Charset getCharset() {
         return charset;
+    }
+
+    public boolean isEnableGroupPrefix() {
+        return enableGroupPrefix;
     }
 
     public SyncType getFirst() {
@@ -129,11 +121,11 @@ public class SyncConfig<V> {
     public static class Builder<V> {
         private String sid;
         private String name;
-        private String app;
-        private String infix;
+        private String group;
         private long maxLen;
         private String provider;
         private Charset charset;
+        private boolean enableGroupPrefix;
         private SyncType first;
         private SyncType second;
         private final Store<V> firstStore;
@@ -155,13 +147,8 @@ public class SyncConfig<V> {
             return this;
         }
 
-        public Builder<V> app(String app) {
-            this.app = app;
-            return this;
-        }
-
-        public Builder<V> infix(String infix) {
-            this.infix = infix;
+        public Builder<V> group(String group) {
+            this.group = group;
             return this;
         }
 
@@ -197,9 +184,17 @@ public class SyncConfig<V> {
             return this;
         }
 
+        public Builder<V> enableGroupPrefix(Boolean enableGroupPrefix) {
+            if (enableGroupPrefix != null) {
+                this.enableGroupPrefix = enableGroupPrefix;
+            }
+            return this;
+        }
+
         public SyncConfig<V> build() {
             return new SyncConfig<>(this);
         }
+
     }
 
 }

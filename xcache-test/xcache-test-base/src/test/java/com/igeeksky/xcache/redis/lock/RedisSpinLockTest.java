@@ -1,9 +1,9 @@
 package com.igeeksky.xcache.redis.lock;
 
-import com.igeeksky.xcache.extension.lock.LockConfig;
-import com.igeeksky.xcache.extension.lock.LockTestTask;
 import com.igeeksky.redis.lettuce.LettuceFactory;
 import com.igeeksky.redis.lettuce.LettuceTestHelper;
+import com.igeeksky.xcache.extension.lock.LockConfig;
+import com.igeeksky.xcache.extension.lock.LockTestTask;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -32,7 +32,8 @@ class RedisSpinLockTest {
                 .name("user")
                 .provider("redis")
                 .initialCapacity(64)
-                .infix("shop")
+                .group("shop")
+                .enableGroupPrefix(true)
                 .leaseTime(10000)
                 .build();
 

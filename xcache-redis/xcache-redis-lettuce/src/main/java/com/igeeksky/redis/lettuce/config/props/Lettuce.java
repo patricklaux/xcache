@@ -8,6 +8,7 @@ import com.igeeksky.redis.lettuce.config.LettuceGenericConfig;
 import com.igeeksky.redis.lettuce.config.LettuceSentinelConfig;
 import com.igeeksky.redis.lettuce.config.LettuceStandaloneConfig;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
+import com.igeeksky.xtool.core.json.SimpleJSON;
 import com.igeeksky.xtool.core.lang.Assert;
 import com.igeeksky.xtool.core.lang.StringUtils;
 import io.lettuce.core.ReadFrom;
@@ -16,7 +17,6 @@ import io.lettuce.core.SslVerifyMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.function.Consumer;
 
 /**
@@ -25,14 +25,6 @@ import java.util.function.Consumer;
  */
 public class Lettuce {
 
-    /**
-     * {@link RedisOperatorFactory} 唯一标识
-     * <p>
-     * 默认值：lettuce
-     * <p>
-     * 如果仅一套 Redis 配置，建议保持默认值。<p>
-     * 如果有多套 Redis 配置，可以依次配置为 lettuce1, lettuce2 …… 或你所喜欢的任何名称，保持唯一即可
-     */
     private String id = "lettuce";
 
     /**
@@ -50,6 +42,14 @@ public class Lettuce {
      */
     private LettuceStandalone standalone;
 
+    /**
+     * {@link RedisOperatorFactory} 唯一标识
+     * <p>
+     * 默认值：lettuce
+     * <p>
+     * 如果仅一套 Redis 配置，保持默认即可。<br>
+     * 如果有多套 Redis 配置，可依次配置为 lettuce1, lettuce2 …… 或任何你所喜欢的名称，保持唯一即可
+     */
     public String getId() {
         return id;
     }
@@ -827,12 +827,7 @@ public class Lettuce {
 
     @Override
     public String toString() {
-        return new StringJoiner(", ", "{", "}")
-                .add("\"id\":\"" + id + "\"")
-                .add("\"cluster\":" + cluster)
-                .add("\"sentinel\":" + sentinel)
-                .add("\"standalone\":" + standalone)
-                .toString();
+        return SimpleJSON.toJSONString(this);
     }
 
 }

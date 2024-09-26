@@ -130,5 +130,5 @@ public interface RedisOperator extends AutoCloseable {
      *
      * @return UNIX时间戳，毫秒
      */
-    long time();
+    long timeMillis();
 }

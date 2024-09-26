@@ -86,7 +86,7 @@ public class LettuceTestHelper {
     public static StoreConfig<String> createRedisStoreConfig(RedisType redisType) {
         StoreConfig.Builder<String> builder = StoreConfig.builder(String.class, null);
         return builder.redisType(redisType)
-                .enableKeyPrefix(true)
+                .enableGroupPrefix(true)
                 .enableRandomTtl(true)
                 .enableNullValue(true)
                 .expireAfterWrite(3600000)
