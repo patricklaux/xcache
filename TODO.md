@@ -22,13 +22,13 @@
 - [X] 【开发】 SpringCacheAdapter
 - [X] 【测试】 SpringCacheAdapter
 - [X] 【开发】 cacheable & cacheableAll 不能与其它注解共同用于同一个方法
-- [X] 【思考】 RedisCacheStatProvider，channel 根据 group 进行区分，而不是 cacheName，避免每新增一个缓存名称就需写一套采集程序
+- [X] 【思考】 RedisCacheStatProvider，channel 根据 group 进行区分，避免每新增一个缓存名称就需写一套采集程序
 - [X] 【开发】 分布式缓存的前缀（group + ":" + cacheName + ":"）
 
 ### 待完成任务
 
-- [ ] 【开发】 补充代码注释
 - [ ] 【文档】 Guide，Reference
+- [ ] 【开发】 补充代码注释
 - [ ] 【开发】 xcache-jedis
 - [ ] 【开发】 ConcurrentHashMap 实现无过期时间的缓存
 - [ ] 【开发】 RedisHashStore 分为两类实现：一是集群模式，二是非集群模式。

@@ -125,8 +125,8 @@ public abstract class AbstractJedisOperator implements RedisOperator {
     }
 
     @Override
-    public void publish(byte[] channel, byte[] message) {
-
+    public long publish(byte[] channel, byte[] message) {
+        return jedis.publish(channel, message);
     }
 
     @Override

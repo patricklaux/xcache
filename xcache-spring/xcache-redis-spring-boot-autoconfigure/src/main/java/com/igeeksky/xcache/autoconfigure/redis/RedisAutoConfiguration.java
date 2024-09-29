@@ -53,7 +53,7 @@ public class RedisAutoConfiguration {
 
     public RedisAutoConfiguration(RedisProperties redisProperties) {
         this.redisProperties = redisProperties;
-        this.charset = this.getCharset();
+        this.charset = getCharset(this.redisProperties);
     }
 
     @Bean
@@ -251,11 +251,10 @@ public class RedisAutoConfiguration {
         return new RedisCacheStatMessageCodec(JacksonCodecProvider.getInstance().getCodec(config), stringCodec);
     }
 
-    private Charset getCharset() {
+    private static Charset getCharset(RedisProperties redisProperties) {
         String charsetName = StringUtils.trimToNull(redisProperties.getCharset());
         return (charsetName == null) ? StandardCharsets.UTF_8 : Charset.forName(charsetName);
     }
-
 
     private static Map<String, RedisOperatorFactory> toOperatorFactoryMap(ObjectProvider<RedisOperatorFactoryHolder> provider) {
         Map<String, RedisOperatorFactory> map = new HashMap<>();

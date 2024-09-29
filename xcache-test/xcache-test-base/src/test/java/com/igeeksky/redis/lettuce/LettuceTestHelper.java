@@ -1,10 +1,10 @@
 package com.igeeksky.redis.lettuce;
 
 import com.igeeksky.redis.lettuce.config.LettuceStandaloneConfig;
-import com.igeeksky.redis.lettuce.config.props.Lettuce;
-import com.igeeksky.redis.lettuce.config.props.LettuceCluster;
-import com.igeeksky.redis.lettuce.config.props.LettuceSentinel;
-import com.igeeksky.redis.lettuce.config.props.LettuceStandalone;
+import com.igeeksky.redis.lettuce.props.Lettuce;
+import com.igeeksky.redis.lettuce.props.LettuceCluster;
+import com.igeeksky.redis.lettuce.props.LettuceSentinel;
+import com.igeeksky.redis.lettuce.props.LettuceStandalone;
 import com.igeeksky.xcache.core.store.StoreConfig;
 import com.igeeksky.xcache.extension.jackson.JacksonCodec;
 import com.igeeksky.xcache.props.RedisType;
@@ -27,11 +27,11 @@ public class LettuceTestHelper {
     private static final Charset UTF_8 = StandardCharsets.UTF_8;
 
     public static RedisStoreProvider createStandaloneRedisStoreProvider() {
-        LettuceFactory factory = createStandaloneFactory();
+        LettuceStandaloneFactory factory = createStandaloneFactory();
         return new RedisStoreProvider(factory);
     }
 
-    public static LettuceFactory createStandaloneFactory() {
+    public static LettuceStandaloneFactory createStandaloneFactory() {
         LettuceStandalone standalone = new LettuceStandalone();
         standalone.setNode("127.0.0.1:6379");
         standalone.setNodes(List.of("127.0.0.1:6380"));
@@ -45,7 +45,7 @@ public class LettuceTestHelper {
         ClientOptions options = ClientOptions.builder().build();
         ClientResources resources = ClientResources.builder().build();
 
-        return new LettuceFactory(standaloneConfig, options, resources);
+        return new LettuceStandaloneFactory(standaloneConfig, options, resources);
     }
 
     public static LettuceSentinelFactory createSentinelFactory() {

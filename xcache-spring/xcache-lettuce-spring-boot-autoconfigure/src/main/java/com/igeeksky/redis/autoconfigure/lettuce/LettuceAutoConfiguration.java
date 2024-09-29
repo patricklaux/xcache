@@ -2,12 +2,12 @@ package com.igeeksky.redis.autoconfigure.lettuce;
 
 import com.igeeksky.redis.RedisNode;
 import com.igeeksky.redis.lettuce.LettuceClusterFactory;
-import com.igeeksky.redis.lettuce.LettuceFactory;
+import com.igeeksky.redis.lettuce.LettuceStandaloneFactory;
 import com.igeeksky.redis.lettuce.LettuceSentinelFactory;
 import com.igeeksky.redis.lettuce.config.LettuceClusterConfig;
 import com.igeeksky.redis.lettuce.config.LettuceSentinelConfig;
 import com.igeeksky.redis.lettuce.config.LettuceStandaloneConfig;
-import com.igeeksky.redis.lettuce.config.props.Lettuce;
+import com.igeeksky.redis.lettuce.props.Lettuce;
 import com.igeeksky.xcache.autoconfigure.redis.RedisOperatorFactoryHolder;
 import com.igeeksky.xcache.autoconfigure.redis.RedisAutoConfiguration;
 import com.igeeksky.xcache.common.CacheConfigException;
@@ -80,7 +80,7 @@ class LettuceAutoConfiguration {
             if (lettuce.getStandalone() != null) {
                 LettuceStandaloneConfig config = lettuce.createStandaloneConfig();
                 ClientOptions options = clientOptions(config.getId(), config.getClientOptions(), customizers);
-                holder.put(config.getId(), new LettuceFactory(config, options, res));
+                holder.put(config.getId(), new LettuceStandaloneFactory(config, options, res));
                 continue;
             }
             throw new CacheConfigException("lettuce:[" + lettuce.getId() + "] init error." + lettuce);

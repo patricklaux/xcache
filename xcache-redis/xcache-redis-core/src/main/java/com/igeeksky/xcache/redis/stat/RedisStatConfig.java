@@ -1,7 +1,6 @@
 package com.igeeksky.xcache.redis.stat;
 
 import com.igeeksky.redis.RedisOperator;
-import com.igeeksky.xcache.props.CacheConstants;
 import com.igeeksky.xtool.core.lang.Assert;
 
 import java.util.concurrent.ScheduledExecutorService;
@@ -75,7 +74,7 @@ public class RedisStatConfig {
         private RedisOperator operator;
         private RedisCacheStatMessageCodec codec;
         private ScheduledExecutorService scheduler;
-        private boolean enableGroupPrefix = CacheConstants.DEFAULT_ENABLE_GROUP_PREFIX;
+        private boolean enableGroupPrefix;
 
         public Builder maxLen(Long maxLen) {
             if (maxLen != null) {

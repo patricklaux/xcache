@@ -10,16 +10,19 @@ import io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection;
 import io.lettuce.core.resource.ClientResources;
 
 /**
+ * Lettuce Sentinel 客户端工厂
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-01
  */
-public class LettuceSentinelFactory extends AbstractLettuceFactory {
+public final class LettuceSentinelFactory extends AbstractLettuceFactory {
 
     private final RedisURI uri;
     private final RedisClient client;
     private final LettuceSentinelConfig config;
 
     public LettuceSentinelFactory(LettuceSentinelConfig config, ClientOptions options, ClientResources res) {
+        super();
         this.config = config;
         this.uri = redisUri(config);
         this.client = redisClient(options, res);

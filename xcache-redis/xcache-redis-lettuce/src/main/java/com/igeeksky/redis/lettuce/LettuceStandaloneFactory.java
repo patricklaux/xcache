@@ -16,15 +16,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Lettuce Standalone 客户端工厂
+ * <p>
+ * 单主机模式 和 副本集模式
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-01
  */
-public class LettuceFactory extends AbstractLettuceFactory {
+public final class LettuceStandaloneFactory extends AbstractLettuceFactory {
 
     private final RedisClient client;
     private final LettuceStandaloneConfig config;
 
-    public LettuceFactory(LettuceStandaloneConfig config, ClientOptions options, ClientResources resources) {
+    public LettuceStandaloneFactory(LettuceStandaloneConfig config, ClientOptions options, ClientResources resources) {
+        super();
         this.config = config;
         this.client = redisClient(resources, options);
     }

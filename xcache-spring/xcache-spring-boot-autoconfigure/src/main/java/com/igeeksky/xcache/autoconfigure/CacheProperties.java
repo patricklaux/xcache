@@ -4,7 +4,6 @@ import com.igeeksky.xcache.props.CacheProps;
 import com.igeeksky.xcache.props.StatProps;
 import com.igeeksky.xcache.props.Template;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
@@ -33,7 +32,7 @@ public class CacheProperties {
     private List<Template> template;
 
     /**
-     * 缓存配置列表（可选）
+     * 缓存配置列表
      * <p>
      * caches 会从 templates 获取指定 template-id 的模板并复制其中的全部选项，因此仅需配置缓存名称及与指定模板的差异项.
      * <p>
@@ -43,9 +42,8 @@ public class CacheProperties {
     private List<CacheProps> cache;
 
     /**
-     * 日志方式缓存指标统计配置（可选）
+     * 日志方式缓存指标统计配置
      */
-    @NestedConfigurationProperty
     private StatProps stat;
 
     /**

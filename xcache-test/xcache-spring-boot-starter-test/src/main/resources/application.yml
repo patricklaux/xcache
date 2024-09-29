@@ -8,7 +8,7 @@ spring:
 # 2.每个配置项均有详细说明，可用 ide 自动提示功能快速查看描述信息。
 
 xcache:
-  group: shop # 应用名称 (必填)
+  group: shop # 分组名称 (必填)
   template: # 模板配置 (必填)，列表类型，可配置多个模板。
     - id: t0 # 模板ID (必填)，建议将其中一个模板的 id 配置为 t0。
       charset: UTF-8 # 字符集 (默认 UTF-8)
@@ -92,6 +92,7 @@ xcache:
   scheduler: #
     core-pool-size: 1 #
   redis: #
+    charset: UTF-8
     store: #
       - id: lettuce #
         factory: lettuce #
@@ -110,7 +111,7 @@ xcache:
     stat: #
       - id: lettuce #
         factory: lettuce #
-        period: 10000 #
+        period: 60000 #
         max-len: 10000 #
         enable-group-prefix: true #
     refresh: #
@@ -139,7 +140,7 @@ xcache:
               protocol-version: RESP2 #
               suspend-reconnect-on-protocol-failure: #
               request-queue-size: # Integer.MAX_VALUE
-              # scriptCharset:  #采用全局 charset
+              scriptCharset:  # 脚本字符集，默认 UTF-8
               socketOptions: #
                 connect-timeout: 10000 #
                 tcp-no-delay: true  #  false to disable TCP NoDelay (enable Nagle's algorithm), true to enable TCP NoDelay (disable Nagle's algorithm).
@@ -167,10 +168,10 @@ xcache:
             master-id: mymaster #
             nodes: 127.0.0.1:26379, 127.0.0.1:26380, 127.0.0.1:26381 #
             read-from: #
-            #            sentinel-username: redis-admin #
-            #            sentinel-password: 123456 #
-            #            username: redis-admin #
-            #            password: 123456 #
+            sentinel-username:  #
+            sentinel-password:  #
+            username:  #
+            password:  #
             database: 0 #
             client-name: #
             ssl: false #

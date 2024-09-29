@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Lettuce 实现的 RedisStreamOperator
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/20
  */

@@ -1,6 +1,6 @@
 package com.igeeksky.redis.autoconfigure.lettuce;
 
-import com.igeeksky.redis.lettuce.config.props.Lettuce;
+import com.igeeksky.redis.lettuce.props.Lettuce;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
