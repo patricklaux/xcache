@@ -14,6 +14,13 @@ import io.lettuce.core.api.StatefulRedisConnection;
  */
 public final class LettuceOperator extends AbstractLettuceOperator {
 
+    /**
+     * 构造函数
+     *
+     * @param timeout         超时时间（毫秒）
+     * @param connection      连接对象（执行单个命令，自动提交）
+     * @param batchConnection 连接对象（批量执行命令，不自动提交）
+     */
     public LettuceOperator(long timeout,
                            StatefulRedisConnection<byte[], byte[]> connection,
                            StatefulRedisConnection<byte[], byte[]> batchConnection) {
@@ -24,4 +31,5 @@ public final class LettuceOperator extends AbstractLettuceOperator {
     public boolean isCluster() {
         return false;
     }
+
 }

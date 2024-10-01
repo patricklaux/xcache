@@ -1,31 +1,50 @@
 package com.igeeksky.redis.stream;
 
 /**
+ * 读取选项
+ *
  * @author Patrick.Lau
+ * @see <a href="https://redis.io/commands/xread">XREAD</a>
  * @since 1.0.0 2024/7/21
  */
 public class ReadOptions {
 
     /**
      * 阻塞时间（毫秒）<p>
-     * Redis 接收到流读取命令后，如果没有新数据，则阻塞一段时间，直到有新数据或超时
+     * Redis 接收到流读取命令后，如果没有新消息，则阻塞指定时长，直到有新消息到达或超时
      */
     private final Long block;
 
     /**
-     * 单次命令最大读取数量
+     * 最大读取数量
      */
     private final Long count;
 
+    /**
+     * 私有构造函数，禁止外部实例化
+     *
+     * @param block 阻塞时间（毫秒）
+     * @param count 最大读取数量
+     */
     private ReadOptions(Long block, Long count) {
         this.block = block;
         this.count = count;
     }
 
+    /**
+     * 阻塞时间（毫秒）
+     *
+     * @return {@link Long} – 阻塞时间（毫秒）
+     */
     public Long getBlock() {
         return block;
     }
 
+    /**
+     * 最大读取数量
+     *
+     * @return {@link Long} – 最大读取数量
+     */
     public Long getCount() {
         return count;
     }
@@ -60,7 +79,7 @@ public class ReadOptions {
     }
 
     /**
-     * 创建流读取参数
+     * 创建流读取选项
      *
      * @param block 阻塞时间（毫秒）
      * @param count 最大读取数量

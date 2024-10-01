@@ -19,7 +19,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 /**
- * 循环监听 Stream 消息
+ * 循环阻塞监听 Stream 消息
  *
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/21
@@ -43,6 +43,15 @@ public class StreamListenerContainer {
     private volatile boolean running;
     private final Lock lock = new ReentrantLock();
 
+    /**
+     * 创建一个 StreamListenerContainer 对象，用于循环阻塞监听 Stream 消息。
+     *
+     * @param scheduler 调度器
+     * @param factory   RedisOperatorFactory
+     * @param block     阻塞时间，单位毫秒
+     * @param count     每次读取的消息数量
+     * @param delay     每次循环执行的延迟时间，单位毫秒
+     */
     public StreamListenerContainer(ScheduledExecutorService scheduler, RedisOperatorFactory factory,
                                    long block, long count, long delay) {
         Assert.isTrue(count > 0, "count must be greater than 0");
@@ -58,10 +67,21 @@ public class StreamListenerContainer {
         this.streamOperator = factory.getRedisStreamOperator();
     }
 
+    /**
+     * 获取 RedisOperator 对象
+     *
+     * @return {@link RedisOperator}
+     */
     public RedisOperator getRedisOperator() {
         return operator;
     }
 
+    /**
+     * 注册一个流监听器，用于监听指定流的消息。
+     *
+     * @param offset   流的偏移量，用于确定从哪个位置开始监听消息。
+     * @param consumer 消费者，用于处理从流中读取的消息。
+     */
     public void register(ReadOffset offset, Consumer<StreamMessage> consumer) {
         Assert.notNull(offset, "offset must not be null");
         Assert.notNull(consumer, "consumer must not be null");
@@ -73,6 +93,9 @@ public class StreamListenerContainer {
         this.start();
     }
 
+    /**
+     * 启动监听器，开始循环阻塞监听消息。
+     */
     public void start() {
         if (running) return;
         lock.lock();
@@ -85,6 +108,9 @@ public class StreamListenerContainer {
         }
     }
 
+    /**
+     * 执行监听任务，包括从流中读取消息并分发给相应的消费者。
+     */
     private void execute() {
         try {
             if (future != null && !future.isDone()) {
@@ -148,6 +174,11 @@ public class StreamListenerContainer {
         }
     }
 
+    /**
+     * 创建一个虚拟线程池，用于执行监听任务。
+     *
+     * @return {@link ExecutorService} – 虚拟线程池对象。
+     */
     private static ExecutorService createExecutor() {
         return Executors.newThreadPerTaskExecutor(new VirtualThreadFactory("listener-container-thread-"));
     }

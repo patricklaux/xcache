@@ -21,6 +21,13 @@ public final class LettuceSentinelFactory extends AbstractLettuceFactory {
     private final RedisClient client;
     private final LettuceSentinelConfig config;
 
+    /**
+     * Lettuce Sentinel 客户端工厂
+     *
+     * @param config  配置信息
+     * @param options 客户端选项
+     * @param res     客户端资源
+     */
     public LettuceSentinelFactory(LettuceSentinelConfig config, ClientOptions options, ClientResources res) {
         super();
         this.config = config;

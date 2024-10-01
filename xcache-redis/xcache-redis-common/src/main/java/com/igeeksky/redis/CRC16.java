@@ -18,7 +18,11 @@ package com.igeeksky.redis;
 import java.nio.ByteBuffer;
 
 /**
- * @author Mark Paluch
+ * CRC16 工具类
+ * <p>
+ * 此工具类源码来自 <a href="https://github.com/redis/lettuce">lettuce</a> 项目。<br>
+ * <a href="https://github.com/redis/lettuce/blob/main/src/main/java/io/lettuce/core/codec/CRC16.java">源文件地址</a>
+ *
  * <ul>
  * <li>Name: XMODEM (also known as ZMODEM or CRC-16/ACORN)</li>
  * <li>Width: 16 bit</li>
@@ -28,6 +32,8 @@ import java.nio.ByteBuffer;
  * <li>Reflect Output CRC: False</li>
  * <li>Xor constant to output CRC: 0000</li>
  * </ul>
+ *
+ * @author Mark Paluch
  * @since 3.0
  */
 public class CRC16 {
@@ -72,6 +78,8 @@ public class CRC16 {
      * Create a CRC16 checksum from the bytes.
      *
      * @param bytes input bytes
+     * @param off   offset
+     * @param len   length
      * @return CRC16 as integer value
      */
     public static int crc16(byte[] bytes, int off, int len) {

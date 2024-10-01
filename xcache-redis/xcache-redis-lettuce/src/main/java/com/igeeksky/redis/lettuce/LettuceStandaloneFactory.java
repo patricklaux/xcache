@@ -28,6 +28,13 @@ public final class LettuceStandaloneFactory extends AbstractLettuceFactory {
     private final RedisClient client;
     private final LettuceStandaloneConfig config;
 
+    /**
+     * Lettuce Standalone 客户端工厂
+     *
+     * @param config    配置信息
+     * @param options   客户端选项
+     * @param resources 客户端资源
+     */
     public LettuceStandaloneFactory(LettuceStandaloneConfig config, ClientOptions options, ClientResources resources) {
         super();
         this.config = config;

@@ -93,6 +93,7 @@ public interface RedisOperator extends AutoCloseable {
      * 当数据量小于等于限定数量时，直接删除；当数据量大于限定数量时 (size &gt; 20000)，分批删除
      *
      * @param keys 键集
+     * @return 实际删除的键的数量
      */
     long del(byte[]... keys);
     // String Command --end--
@@ -126,7 +127,9 @@ public interface RedisOperator extends AutoCloseable {
     List<KeyValue<byte[], byte[]>> hmget(byte[] key, byte[]... field);
 
     /**
-     * @param keyFields 键 : 属性集
+     * 批量获取指定键的指定字段的值。
+     *
+     * @param keyFields (键 : 属性) 集合
      * @param totalSize 所有 field 的数量
      * @return 结果集
      */
@@ -222,9 +225,10 @@ public interface RedisOperator extends AutoCloseable {
     /**
      * 使用指定的键和参数执行 Lua 脚本。
      *
-     * @param script   脚本对象。
-     * @param keyCount 键的数量。
-     * @param params   脚本的参数。
+     * @param <T>      返回结果类型
+     * @param script   脚本对象
+     * @param keyCount 键的数量
+     * @param params   脚本参数列表
      * @return 返回执行脚本的结果。
      */
     <T> T eval(RedisScript<T> script, int keyCount, byte[]... params);
@@ -232,9 +236,10 @@ public interface RedisOperator extends AutoCloseable {
     /**
      * 使用指定的键和参数执行 Lua 脚本。
      *
-     * @param script 脚本对象。
-     * @param keys   键的列表。
-     * @param args   脚本的参数。
+     * @param <T>    返回结果类型
+     * @param script 脚本对象
+     * @param keys   键的列表
+     * @param args   脚本参数列表
      * @return 返回执行脚本的结果。
      */
     <T> T eval(RedisScript<T> script, byte[][] keys, byte[]... args);
@@ -242,9 +247,10 @@ public interface RedisOperator extends AutoCloseable {
     /**
      * 使用指定的键和参数执行只读的 Lua 脚本。
      *
-     * @param script   脚本对象。
-     * @param keyCount 键的数量。
-     * @param params   脚本的参数。
+     * @param <T>      返回结果类型
+     * @param script   脚本对象
+     * @param keyCount 键的数量
+     * @param params   脚本参数列表
      * @return 返回执行脚本的结果。
      */
     <T> T evalReadOnly(RedisScript<T> script, int keyCount, byte[]... params);
@@ -252,9 +258,10 @@ public interface RedisOperator extends AutoCloseable {
     /**
      * 使用指定的键和参数执行只读的 Lua 脚本。
      *
-     * @param script 脚本对象。
-     * @param keys   键的列表。
-     * @param args   脚本的参数。
+     * @param <T>    返回结果类型
+     * @param script 脚本对象
+     * @param keys   键的列表
+     * @param args   脚本参数列表
      * @return 返回执行脚本的结果。
      */
     <T> T evalReadOnly(RedisScript<T> script, byte[][] keys, byte[]... args);
@@ -262,9 +269,10 @@ public interface RedisOperator extends AutoCloseable {
     /**
      * 使用指定的键和参数执行只读的 Lua 脚本。
      *
+     * @param <T>      返回结果类型
      * @param script   脚本对象
      * @param keyCount 键数量
-     * @param params   脚本的参数
+     * @param params   脚本参数列表
      * @return 返回执行脚本的结果
      */
     <T> T evalsha(RedisScript<T> script, int keyCount, byte[]... params);
@@ -272,9 +280,10 @@ public interface RedisOperator extends AutoCloseable {
     /**
      * 使用指定的键和参数执行只读的 Lua 脚本。
      *
+     * @param <T>    返回结果类型
      * @param script 脚本对象。
      * @param keys   键的列表。
-     * @param args   脚本的参数。
+     * @param args   脚本参数列表
      * @return 返回执行脚本的结果。
      */
     <T> T evalsha(RedisScript<T> script, byte[][] keys, byte[]... args);
@@ -282,9 +291,10 @@ public interface RedisOperator extends AutoCloseable {
     /**
      * 使用指定的键和参数执行只读的 Lua 脚本。
      *
+     * @param <T>      返回结果类型
      * @param script   脚本对象。
      * @param keyCount 键的数量。
-     * @param params   脚本的参数。
+     * @param params   脚本参数列表
      * @return 返回执行脚本的结果。
      */
     <T> T evalshaReadOnly(RedisScript<T> script, int keyCount, byte[]... params);
@@ -292,9 +302,10 @@ public interface RedisOperator extends AutoCloseable {
     /**
      * 使用指定的键和参数执行只读的 Lua 脚本。
      *
+     * @param <T>    返回结果类型
      * @param script 脚本对象。
      * @param keys   键的列表。
-     * @param args   脚本的参数。
+     * @param args   脚本参数列表
      * @return 返回执行脚本的结果。
      */
     <T> T evalshaReadOnly(RedisScript<T> script, byte[][] keys, byte[]... args);

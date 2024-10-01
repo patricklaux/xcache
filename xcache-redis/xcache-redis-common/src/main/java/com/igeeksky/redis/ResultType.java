@@ -1,5 +1,11 @@
 package com.igeeksky.redis;
 
+/**
+ * 脚本执行结果类别
+ *
+ * @author Patrick.Lau
+ * @since 1.0.0 2024/7/13
+ */
 public enum ResultType {
 
     /**
