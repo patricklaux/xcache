@@ -31,7 +31,7 @@ public class SyncProps {
      * 默认值：ALL
      * <p>
      * 如仅有一级缓存，且为本地缓存，只能设置为 NONE 或 CLEAR：<br>
-     * 需同步缓存清空事件，请设置为 CLEAR；无需同步缓存清空事件，请设置为 NONE. <p>
+     * 需要同步缓存清空事件，请设置为 CLEAR；无需同步缓存清空事件，请设置为 NONE. <p>
      * 如仅有一级缓存，又设置为 ALL，多个实例会重复以下过程，导致每次查询缓存数据均需回源：<p>
      * A(load and put) -- A(send msg) -- B(receive msg) -- B(remove) -- B(load and put) -- B(send msg)
      * -- A(receive msg) -- A(remove)……

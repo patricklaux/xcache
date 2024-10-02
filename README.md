@@ -15,15 +15,16 @@ Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架�
 - 支持多种缓存模式：Cache-Aside，Read-Through，Write-Through，Write-Behind。
 - 支持缓存数据同步：通过缓存事件广播，多个应用实例的缓存数据保持一致。
 - 支持缓存指标统计：通过日志方式输出和 Redis Stream 方式输出，便于统计各种缓存指标。
+- 支持随机存活时间：避免大量的 key 集中过期，导致数据源压力过大。
 - 支持缓存自动刷新：自动刷新缓存数据，避免慢查询导致应用响应缓慢。
 - 支持数据回源加锁：加锁确保相同的键同时仅有一个线程回源查询，降低回源次数，减轻数据源压力。
 - 支持缓存数据压缩：通过压缩数据，降低内存消耗。
 - 支持多级缓存实现：内嵌缓存采用 Caffeine，外部缓存采用 Redis，并可通过实现 Store 接口扩展缓存能力，最多可支持三级缓存。
-- 适配 SpringCache：无需修改现有代码，引入 Xcache 依赖，即可支持更多缓存功能配置。
-- 更强大的缓存注解：Cacheable，CacheableAll，CachePut，CachePutAll，CacheEvict，CacheEvictAll，CacheClear
-- 数据存在断言：通过实现数据存在断言接口，譬如 Bloom Filter，避免回源查询。
+- 支持数据存在断言：通过实现数据存在断言接口，譬如 Bloom Filter，避免回源查询。
 - 支持缓存空值：当数据源确定无数据时，可缓存空值，避免缓存穿透。
-- 虚拟线程优化：需要加锁执行或 IO 等待的定时任务，采用虚拟线程执行，降低平台线程资源占用。
+- 虚拟线程特别优化：需要加锁执行或 IO 等待的定时任务，采用虚拟线程执行，降低平台线程资源占用。
+- 更丰富的缓存注解：Cacheable，CacheableAll，CachePut，CachePutAll，CacheEvict，CacheEvictAll，CacheClear
+- 适配 SpringCache：无需修改现有代码，添加 Xcache 依赖，即可支持更多缓存功能。
 
 ## 使用
 
@@ -41,6 +42,7 @@ JDK：21
 如果不使用缓存注解，直接通过代码调用的方式操作缓存，仅需引入 ``xcache-spring-boot-starter`` 。
 
 ```xml
+
 <dependencies>
     <dependency>
         <groupId>com.igeeksky.xcache</groupId>
@@ -175,13 +177,15 @@ public class UserCacheService {
 
 ### Xcache 注解
 
-**参考项目**：[xcache-samples-annotation](https://github.com/patricklaux/xcache-samples/tree/main/xcache-samples-annotation)
+**参考项目
+**：[xcache-samples-annotation](https://github.com/patricklaux/xcache-samples/tree/main/xcache-samples-annotation)
 
 #### Maven 依赖
 
 如果希望使用 xcache 自定义注解，除了 ``xcache-spring-boot-starter`` 外，还需引入 ``xcache-spring-aop`` 。
 
 ```xml
+
 <dependencies>
     <dependency>
         <groupId>com.igeeksky.xcache</groupId>
@@ -217,9 +221,9 @@ public class UserCacheService {
 
     /**
      * 获取单个用户信息
-     * 
+     *
      * Cacheable 注解，对应 V value = cache.get(K key, CacheLoader<K,V> loader) 方法。
-     * 
+     *
      * 如未配置 key 表达式，采用方法的第一个参数作为缓存键；如已配置 key 表达式，解析该表达式提取键.
      *
      * @param id 用户ID
@@ -278,7 +282,7 @@ public class UserCacheService {
 
     /**
      * 批量获取用户信息
-     * 
+     *
      * CacheableAll 注解，对应 Map<K,V> results = cache.getAll(Set<K> keys, CacheLoader<K,V> loader) 方法.
      * 缓存的键集：Set 类型。如未配置 keys 表达式，采用方法的第一个参数作为键集；如已配置 keys 表达式，解析该表达式提取键集.
      * 缓存结果集：Map 类型.
@@ -296,7 +300,7 @@ public class UserCacheService {
      * 批量获取用户信息
      *
      * @param ids 用户ID集合
-     * @return Optional<Map<Long, User>> – 用户信息集合 
+     * @return Optional<Map < Long, User>> – 用户信息集合 
      * 如检测到方法返回值类型为 Optional，缓存实现会自动采用 Optional.ofNullable() 包装返回值.
      */
     @CacheableAll
@@ -309,7 +313,7 @@ public class UserCacheService {
      * 批量获取用户信息
      *
      * @param ids 用户ID集合
-     * @return CompletableFuture<Map<Long, User>> – 用户信息集合
+     * @return CompletableFuture<Map < Long, User>> – 用户信息集合
      * 如检测到方法返回值类型为 CompletableFuture，缓存实现会自动采用 CompletableFuture.completedFuture() 包装返回值.
      */
     @CacheableAll(keys = "#ids")
@@ -320,7 +324,7 @@ public class UserCacheService {
 
     /**
      * 新增用户信息
-     * 
+     *
      * CachePut 注解，对应 cache.put(K key, V value) 方法.
      * 如未配置 key 表达式，采用方法的第一个参数作为缓存键；如已配置 key 表达式，解析该表达式提取键.
      * 如未配置 value 表达式，采用方法返回结果作为缓存值；如已配置 value 表达式，解析该表达式提取值.
@@ -346,7 +350,7 @@ public class UserCacheService {
 
     /**
      * 批量更新用户信息
-     * 
+     *
      * CachePutAll 注解， 对应 cache.putAll(Map<K,V> keyValues) 方法.
      * 如未配置 keyValues 表达式，默认采用方法返回值；如已配置 keyValues 表达式，解析该表达式提取键值对集合.
      *
@@ -384,7 +388,7 @@ public class UserCacheService {
 
     /**
      * 清空数据
-     * 
+     *
      * CacheClear 注解，对应 cache.clear() 方法.
      */
     @CacheClear
@@ -395,17 +399,18 @@ public class UserCacheService {
 }
 ```
 
-
-
 ### Spring Cache  注解
 
-**参考项目**：[xcache-samples-spring-annotation](https://github.com/patricklaux/xcache-samples/tree/main/xcache-samples-spring-annotation)
+**参考项目
+**：[xcache-samples-spring-annotation](https://github.com/patricklaux/xcache-samples/tree/main/xcache-samples-spring-annotation)
 
 #### Maven 依赖
 
-如希望使用 Spring Cache 及其注解，除了 ``xcache-spring-boot-starter`` 外，还需引入 ``xcache-spring-adapter-autoconfigure`` 。
+如希望使用 Spring Cache 及其注解，除了 ``xcache-spring-boot-starter`` 外，还需引入
+``xcache-spring-adapter-autoconfigure`` 。
 
 ```xml
+
 <dependencies>
     <dependency>
         <groupId>com.igeeksky.xcache</groupId>
@@ -426,7 +431,7 @@ public class UserCacheService {
 ```java
 /**
  * 用户缓存服务
- * 
+ *
  * Spring Cache 没有 CacheableAll、CachePutAll、CacheEvictAll 这三个注解. 
  * Xcache 完整实现了 Spring cache 接口，因此正常使用 Spring cache 注解即可，并无特别限制. 
  * Xcache 适配 Spring cache 的 cacheManager 为 springCacheManager ，如无其它 cacheManager，可以不指定.
@@ -491,8 +496,6 @@ public class UserCacheService {
 
 }
 ```
-
-
 
 ### 缓存配置
 
@@ -683,19 +686,11 @@ xcache:
                 refresh-triggers-reconnect-attempts:
 ```
 
-
-
 ## 缓存锁
-
-
 
 ## 缓存键
 
-
-
 ## 序列化
-
-
 
 ## 缓存概念
 

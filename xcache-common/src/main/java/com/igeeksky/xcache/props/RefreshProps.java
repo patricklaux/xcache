@@ -26,26 +26,26 @@ public class RefreshProps {
     /**
      * 是否附加 group 作为键前缀
      * <p>
-     * 当使用外部的缓存刷新时，如仅使用 cacheName 作为前缀会导致键冲突，则需再附加 group 作为前缀。
+     * 此选项仅用于外部缓存刷新实现，如 {@code RedisCacheRefresh}，当仅使用 cacheName 作为前缀时会导致键冲突，
+     * 则需再附加 group 作为前缀。<br>
+     * 内嵌刷新实现无需此配置，如 {@code EmbedCacheRefresh}。
      * <p>
-     * 默认值：<br>
-     * 内嵌缓存：此选项无效 <br>
-     * 外部缓存：true
+     * 默认值：true <br>
+     * {@link CacheConstants#DEFAULT_ENABLE_GROUP_PREFIX}
      * <p>
-     * {@link CacheConstants#DEFAULT_EXTRA_ENABLE_GROUP_PREFIX}
+     * 如果 enableGroupPrefix 为 true，生成的刷新相关的 key 如下：
      * <p>
-     * 如果 enableGroupPrefix 为 true：<br>
-     * 用于保存所有访问记录 {@code String refreshKey = "refresh:" + group + ":" + cacheName} <br>
-     * 用于避免同名缓存的多个实例同时执行刷新任务：{@code String refreshLockKey = "refresh:lock:" + group + ":" + cacheName} <br>
-     * 用于保证同名缓存的多个实例一个周期内仅执行一次刷新任务：{@code String refreshPeriodKey = "refresh:period:" + group + ":" + cacheName}
+     * 用于保存所有访问记录：{@code String refreshKey = "refresh:" + group + ":" + cacheName} <br>
+     * 用于刷新任务执行的锁：{@code String refreshLockKey = "refresh:lock:" + group + ":" + cacheName} <br>
+     * 用于刷新任务时间记录：{@code String refreshPeriodKey = "refresh:period:" + group + ":" + cacheName}
      * <p>
-     * 如果 enableGroupPrefix 为 false：<br>
-     * 用于保存所有访问记录 {@code String refreshKey = "refresh:" + cacheName} <br>
-     * 用于避免同名缓存的多个实例同时执行刷新任务：{@code String refreshLockKey = "refresh:lock:" + cacheName} <br>
-     * 用于保证同名缓存的多个实例一个周期内仅执行一次刷新任务：{@code String refreshPeriodKey = "refresh:period:" + cacheName}
+     * 如果 enableGroupPrefix 为 false，生成的刷新相关的 key 如下：
      * <p>
+     * 用于保存所有访问记录：{@code String refreshKey = "refresh:" + cacheName} <br>
+     * 用于刷新任务执行的锁：{@code String refreshLockKey = "refresh:lock:" + cacheName} <br>
+     * 用于刷新任务时间记录：{@code String refreshPeriodKey = "refresh:period:" + cacheName}
      *
-     * @return {@link Boolean} – 键是否使用前缀
+     * @return {@link Boolean} – 是否附加 group 作为键前缀
      */
     public Boolean getEnableGroupPrefix() {
         return enableGroupPrefix;

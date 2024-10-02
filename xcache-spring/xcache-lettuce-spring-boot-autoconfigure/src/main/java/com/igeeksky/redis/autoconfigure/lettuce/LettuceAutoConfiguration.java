@@ -2,14 +2,14 @@ package com.igeeksky.redis.autoconfigure.lettuce;
 
 import com.igeeksky.redis.RedisNode;
 import com.igeeksky.redis.lettuce.LettuceClusterFactory;
-import com.igeeksky.redis.lettuce.LettuceStandaloneFactory;
 import com.igeeksky.redis.lettuce.LettuceSentinelFactory;
+import com.igeeksky.redis.lettuce.LettuceStandaloneFactory;
 import com.igeeksky.redis.lettuce.config.LettuceClusterConfig;
 import com.igeeksky.redis.lettuce.config.LettuceSentinelConfig;
 import com.igeeksky.redis.lettuce.config.LettuceStandaloneConfig;
 import com.igeeksky.redis.lettuce.props.Lettuce;
-import com.igeeksky.xcache.autoconfigure.redis.RedisOperatorFactoryHolder;
 import com.igeeksky.xcache.autoconfigure.redis.RedisAutoConfiguration;
+import com.igeeksky.xcache.autoconfigure.redis.RedisOperatorFactoryHolder;
 import com.igeeksky.xcache.common.CacheConfigException;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.lang.StringUtils;
@@ -28,7 +28,6 @@ import org.springframework.util.ResourceUtils;
 
 import java.io.FileNotFoundException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -37,6 +36,7 @@ import java.util.Set;
 
 /**
  * TODO 修改成 com.igeeksky.redis.LettuceAutoConfiguration
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-18
  */
@@ -178,11 +178,6 @@ class LettuceAutoConfiguration {
             Integer requestQueueSize = clientOptions.getRequestQueueSize();
             if (requestQueueSize != null) {
                 builder.requestQueueSize(requestQueueSize);
-            }
-
-            String scriptCharset = StringUtils.toUpperCase(clientOptions.getScriptCharset());
-            if (scriptCharset != null) {
-                builder.scriptCharset(Charset.forName(scriptCharset));
             }
 
             setSslOptionsBuilder(clientOptions.getSslOptions(), sslOptionsBuilder);

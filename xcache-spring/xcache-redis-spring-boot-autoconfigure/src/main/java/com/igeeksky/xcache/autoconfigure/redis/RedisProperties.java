@@ -357,7 +357,7 @@ public class RedisProperties {
         private String factory;
 
         /**
-         * 读取 Stream 时的阻塞毫秒数
+         * 读取 Stream 时的阻塞时长
          * <p>
          * 默认值： 10 单位：毫秒
          * <p>
@@ -369,7 +369,7 @@ public class RedisProperties {
          * {@link StreamListenerContainer} 的每次任务是批量读取所有已注册的 channel，
          * 且只有当次任务执行完毕后才会重新开始新的任务。<br>
          * 即：当 {@link StreamListenerContainer} 已经开始阻塞读取消息时，阻塞期间新注册的 channel 都不会被读取，
-         * 因此建议配置 block 为一个较小的值，且不为 0。
+         * 因此建议配置 block 为一个较小的值，且大于 0。
          */
         private long block = 10;
 
@@ -567,7 +567,7 @@ public class RedisProperties {
         private String factory;
 
         /**
-         * 统计周期
+         * 缓存指标统计的时间间隔
          * <p>
          * 默认值：60000，单位：毫秒
          */
@@ -580,8 +580,8 @@ public class RedisProperties {
          * <p>
          * 如果为 true，完整的 channel 为：{@code String channel = "stat:" + group} <br>
          * 如果为 false，完整的 channel 为：{@code String channel = "stat:" } <p>
-         * {@link CacheStatMessage} 内部已包含 group 名称，
-         * 如希望多个应用的缓存统计指标共用一套消费者进行统计汇总，且新增应用后无需再手动添加 channel，则建议保持默认，不附加 group。
+         * {@link CacheStatMessage} 已有 group 属性，因此可省略 group。
+         * 如希望多个应用的缓存指标共用一套消费者进行统计汇总，且新增应用后无需再手动添加 channel，则建议保持默认，不附加 group。
          */
         private Boolean enableGroupPrefix;
 

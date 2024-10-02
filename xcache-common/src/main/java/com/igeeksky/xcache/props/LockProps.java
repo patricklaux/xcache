@@ -78,7 +78,8 @@ public class LockProps {
     /**
      * HashMap 初始容量
      * <p>
-     * xcache 使用 HashMap 维护缓存锁对象。不同名缓存，存放锁对象的 HashMap 不同。
+     * xcache 使用 HashMap 保证 相同的 key 获取到同一个锁对象，可在此配置初始容量。<br>
+     * 另，不同名缓存，存放锁对象的 HashMap 不同，因此可以根据 cacheName 分配不同的初始容量。
      * <p>
      * 默认值：256
      * <p>

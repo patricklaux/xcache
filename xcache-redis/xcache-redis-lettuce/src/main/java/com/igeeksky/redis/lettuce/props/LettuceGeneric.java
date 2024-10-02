@@ -141,6 +141,8 @@ public sealed class LettuceGeneric permits LettuceStandalone, LettuceSentinel, L
      * SSL 验证模式
      * <p>
      * 默认值：FULL
+     * <p>
+     * 可选值：FULL、NONE、CA
      *
      * @return {@link String} – SSL 验证模式
      * @see io.lettuce.core.SslVerifyMode
@@ -160,23 +162,23 @@ public sealed class LettuceGeneric permits LettuceStandalone, LettuceSentinel, L
     }
 
     /**
-     * 命令执行完成的最大等待时间
+     * 同步执行命令等待完成的最大时长
      * <p>
      * 默认值：60000  单位：毫秒
      * <p>
      * 如需执行类似于 mset、mget、hmget、hmset……等批处理命令，
      * 且单次操作的数据量大，则需结合网络情况，配置更大的值。
      *
-     * @return {@link Long} – 命令执行完成的最大等待时间
+     * @return {@link Long} – 同步执行命令等待完成的最大时长
      */
     public Long getTimeout() {
         return timeout;
     }
 
     /**
-     * 设置：命令执行完成的最大等待时间
+     * 设置：同步执行命令等待完成的最大时长
      *
-     * @param timeout 命令执行完成的最大等待时间
+     * @param timeout 同步执行命令等待完成的最大时长
      */
     public void setTimeout(Long timeout) {
         this.timeout = timeout;

@@ -131,7 +131,7 @@ public class StoreProps {
     /**
      * 初始容量
      * <p>
-     * 默认值：8192 <p>
+     * 默认值：65536 <p>
      * 建议与 maximum-size 保持一致，避免扩容。
      * <p>
      * {@link CacheConstants#DEFAULT_EMBED_INITIAL_CAPACITY}
@@ -156,7 +156,7 @@ public class StoreProps {
     /**
      * 最大容量
      * <p>
-     * 默认值：8192
+     * 默认值：65536
      * <p>
      * {@link  CacheConstants#DEFAULT_EMBED_MAXIMUM_SIZE}
      * <p>
@@ -362,7 +362,7 @@ public class StoreProps {
     /**
      * 是否使用随机存活时间
      * <p>
-     * 使用随机存活时间，是为了避免大规模的 key 同时过期，然后同时回源查询，造成数据源压力过大。
+     * 使用随机存活时间，是为了避免大规模的 key 集中过期，然后同时回源查询，造成数据源压力过大。
      * <p>
      * 默认值：<br>
      * 内嵌缓存：true <br>

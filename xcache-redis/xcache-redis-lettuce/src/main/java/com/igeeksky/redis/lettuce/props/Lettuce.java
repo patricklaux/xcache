@@ -319,8 +319,6 @@ public class Lettuce {
 
         private Integer requestQueueSize;
 
-        private String scriptCharset;
-
         private Boolean suspendReconnectOnProtocolFailure;
 
         private SocketOptions socketOptions;
@@ -386,7 +384,7 @@ public class Lettuce {
         }
 
         /**
-         * 是否在连接激活前发送 PING 消息
+         * 连接激活前是否发送 PING 消息
          * <p>
          * 默认值：true <br>
          * {@link io.lettuce.core.ClientOptions#DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION}
@@ -470,27 +468,6 @@ public class Lettuce {
         }
 
         /**
-         * 脚本字符集
-         * <p>
-         * 默认值：UTF-8 <br>
-         * {@link io.lettuce.core.ClientOptions#DEFAULT_SCRIPT_CHARSET}
-         *
-         * @return {@link String} – 脚本字符集
-         */
-        public String getScriptCharset() {
-            return scriptCharset;
-        }
-
-        /**
-         * 设置：脚本字符集
-         *
-         * @param scriptCharset 脚本字符集
-         */
-        public void setScriptCharset(String scriptCharset) {
-            this.scriptCharset = scriptCharset;
-        }
-
-        /**
          * 是否在协议失败时暂停重连
          * <p>
          * 如 ping 失败，SSL校验错误……
@@ -514,9 +491,9 @@ public class Lettuce {
         }
 
         /**
-         * 客户端 socket 配置选项
+         * socket 配置选项
          *
-         * @return {@link SocketOptions} – 客户端 socket 配置选项
+         * @return {@link SocketOptions} – socket 配置选项
          * @see io.lettuce.core.SocketOptions
          */
         public SocketOptions getSocketOptions() {
@@ -524,9 +501,9 @@ public class Lettuce {
         }
 
         /**
-         * 设置：客户端 socket 配置选项
+         * 设置：socket 配置选项
          *
-         * @param socketOptions 客户端 socket 配置选项
+         * @param socketOptions socket 配置选项
          * @see io.lettuce.core.SocketOptions
          */
         public void setSocketOptions(SocketOptions socketOptions) {
@@ -701,7 +678,7 @@ public class Lettuce {
 
 
     /**
-     * 高级配置：Socket 配置选项
+     * Socket 配置选项
      *
      * @see io.lettuce.core.SocketOptions
      */
@@ -901,21 +878,21 @@ public class Lettuce {
         }
 
         /**
-         * KeepAlive 发送时间间隔
+         * KeepAlive 发送间隔时长
          * <p>
          * 默认值：75000， 单位：毫秒 <br>
          * {@link io.lettuce.core.SocketOptions.KeepAliveOptions#DEFAULT_INTERVAL}
          *
-         * @return {@link Long} – KeepAlive 发送时间间隔
+         * @return {@link Long} – KeepAlive 发送间隔时长
          */
         public Long getInterval() {
             return interval;
         }
 
         /**
-         * 设置：KeepAlive 发送时间间隔
+         * 设置：KeepAlive 发送间隔时长
          *
-         * @param interval KeepAlive 发送时间间隔
+         * @param interval KeepAlive 发送间隔时长
          */
         public void setInterval(Long interval) {
             this.interval = interval;
@@ -941,6 +918,8 @@ public class Lettuce {
         }
 
         /**
+         * 是否启用 TCP_USER_TIMEOUT
+         * <p>
          * 默认值：false
          * <p>
          * {@link io.lettuce.core.SocketOptions#DEFAULT_TCP_USER_TIMEOUT_ENABLED}
@@ -1022,7 +1001,7 @@ public class Lettuce {
         /**
          * SSL Provider
          * <p>
-         * 默认值：SslProvider.JDK <br>
+         * 默认值：JDK <br>
          * {@link io.lettuce.core.SslOptions#DEFAULT_SSL_PROVIDER}
          * <p>
          * 可选值：JDK, OPENSSL,OPENSSL_REFCNT
@@ -1175,20 +1154,20 @@ public class Lettuce {
         }
 
         /**
-         * 握手超时时间
+         * 握手超时
          * <p>
          * 默认值：10000 单位：毫秒
          *
-         * @return {@link Long} – 握手超时时间
+         * @return {@link Long} – 握手超时
          */
         public Long getHandshakeTimeout() {
             return handshakeTimeout;
         }
 
         /**
-         * 设置：握手超时时间
+         * 设置：握手超时
          *
-         * @param handshakeTimeout 握手超时时间
+         * @param handshakeTimeout 握手超时
          */
         public void setHandshakeTimeout(Long handshakeTimeout) {
             this.handshakeTimeout = handshakeTimeout;
@@ -1286,21 +1265,21 @@ public class Lettuce {
         }
 
         /**
-         * 动态刷新超时时间
+         * 动态刷新超时
          * <p>
          * 默认值：30000 单位：毫秒 <br>
          * {@link io.lettuce.core.cluster.ClusterTopologyRefreshOptions.RefreshTrigger#DEFAULT_ADAPTIVE_REFRESH_TIMEOUT}
          *
-         * @return {@link Long} – 动态刷新超时时间
+         * @return {@link Long} – 动态刷新超时
          */
         public Long getAdaptiveRefreshTimeout() {
             return adaptiveRefreshTimeout;
         }
 
         /**
-         * 设置：动态刷新超时时间
+         * 设置：动态刷新超时
          *
-         * @param adaptiveRefreshTimeout 动态刷新超时时间
+         * @param adaptiveRefreshTimeout 动态刷新超时
          */
         public void setAdaptiveRefreshTimeout(Long adaptiveRefreshTimeout) {
             this.adaptiveRefreshTimeout = adaptiveRefreshTimeout;

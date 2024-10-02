@@ -27,7 +27,7 @@ public final class LettuceStandalone extends LettuceGeneric {
     }
 
     /**
-     * Redis 连接地址，支持 UnixSocket 方式。
+     * Redis 节点，支持 UnixSocket 方式。
      * <p>
      * <b>配置示例：</b> <p>
      * {@code 127.0.0.1:6379} 或 {@code socket:/tmp/redis.sock}
@@ -66,6 +66,8 @@ public final class LettuceStandalone extends LettuceGeneric {
 
     /**
      * 读节点选择策略（不区分大小写）
+     * <p>
+     * 默认值：UPSTREAM （仅从主节点读取数据）
      * <p>
      * upstream：仅主连接 <br>
      * upstreamPreferred：尽可能采用主连接 <br>
