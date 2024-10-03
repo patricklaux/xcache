@@ -64,6 +64,10 @@ class LettuceAutoConfiguration {
         RedisOperatorFactoryHolder holder = new RedisOperatorFactoryHolder();
 
         List<Lettuce> lettuces = lettuceProperties.getFactories();
+        if (CollectionUtils.isEmpty(lettuces)) {
+            return holder;
+        }
+
         for (Lettuce lettuce : lettuces) {
             if (lettuce.getSentinel() != null) {
                 LettuceSentinelConfig config = lettuce.createSentinelConfig();

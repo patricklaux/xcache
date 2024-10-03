@@ -207,7 +207,7 @@ public class CacheManagerImpl implements CacheManager {
                 .build();
 
         StoreProvider storeProvider = componentManager.getStoreProvider(beanId);
-        requireNonNull(beanId, () -> "Cache:[" + name + "], CacheStoreProvider:[" + beanId + "] is undefined.");
+        requireNonNull(storeProvider, () -> "Cache:[" + name + "], CacheStoreProvider:[" + beanId + "] is undefined.");
 
         Store<V> store = storeProvider.getStore(storeConfig);
         requireNonNull(store, () -> "Cache:[" + name + "], Unable to get store from beanId:[" + beanId + "].");
@@ -400,10 +400,7 @@ public class CacheManagerImpl implements CacheManager {
         }
 
         CacheStatProvider provider = componentManager.getStatProvider(beanId);
-        if (provider == null) {
-            provider = componentManager.getStatProvider(beanId);
-            requireNonNull(provider, () -> "CacheStatProvider:[" + beanId + "] is undefined.");
-        }
+        requireNonNull(provider, () -> "CacheStatProvider:[" + beanId + "] is undefined.");
 
         return provider.getMonitor(config);
     }

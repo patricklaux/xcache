@@ -24,7 +24,7 @@ xcache:
         second: NONE # 二级缓存数据同步类型（默认值：NONE）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true）
         max-len: 1000 # 缓存同步队列最大长度 （默认值：10000）
-        provider: lettuce # CacheSyncProviderId （默认值：lettuce）
+        provider: lettuce # CacheSyncProviderId （默认值：none）
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则 spring boot 会提示参数读取异常）
           test: test
       cache-stat: lettuce # CacheStatProviderId，用于缓存指标统计信息采集和输出（默认值：log，输出到日志）
