@@ -6,13 +6,13 @@ import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.CacheManager;
 import com.igeeksky.xcache.domain.Key;
 import com.igeeksky.xcache.domain.User;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author patrick
@@ -22,24 +22,19 @@ import java.util.Set;
 @CacheConfig(name = "user", keyType = Key.class, valueType = User.class)
 public class UserService {
 
-    private Cache<Key, User> cache;
+    private final Cache<Key, User> cache;
 
-    @Resource(name = "xcacheManager")
-    private CacheManager cacheManager;
-
-    @PostConstruct
-    public void init() {
-        cache = cacheManager.getOrCreateCache("user", Key.class, User.class);
+    public UserService(CacheManager cacheManager) {
+        this.cache = cacheManager.getOrCreateCache("user", Key.class, User.class);
     }
 
     public void deleteUserByCache(Key key) {
         cache.evict(key);
     }
 
-    public User getUserByCache(Key key) {
+    public CacheValue<User> getUserByCache(Key key) {
         System.out.println("getUserByCache: " + key);
-        CacheValue<User> cacheValue = cache.get(key);
-        return cacheValue != null ? cacheValue.getValue() : null;
+        return cache.get(key);
     }
 
     public void saveUsersToCache(Map<Key, User> keyValues) {
@@ -54,8 +49,32 @@ public class UserService {
 
     @Cacheable
     public User getUser(Key key, int times) {
-        System.out.println("getUserByIdUnless:" + times);
+        System.out.println("getUser:" + times);
         return new User(Integer.toString(times), key.getName(), key.getAge());
+    }
+
+    @Cacheable
+    public Optional<User> getOptionalUser(Key key, int times) {
+        System.out.println("getOptionalUser:" + times);
+        return Optional.of(new User(Integer.toString(times), key.getName(), key.getAge()));
+    }
+
+    @Cacheable
+    public CompletableFuture<User> getFutureUser(Key key, int times) {
+        System.out.println("getFutureUser:" + times);
+        return CompletableFuture.completedFuture(new User(Integer.toString(times), key.getName(), key.getAge()));
+    }
+
+    /**
+     * 方法返回值 CompletableFuture 不能为 null，否则缓存实现将与方法返回值不同
+     * 当值不存在时，缓存的实现是 CompletableFuture.completedFuture(null)
+     *
+     * @param key 键
+     * @return CompletableFuture 不能为 null
+     */
+    @Cacheable
+    public CompletableFuture<User> getNullFutureUser(Key key) {
+        return CompletableFuture.completedFuture(null);
     }
 
     @Cacheable(condition = "#times < 2")

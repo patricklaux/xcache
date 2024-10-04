@@ -3,7 +3,8 @@ package com.igeeksky.xcache.caffeine;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.core.store.AbstractEmbedStore;
+import com.igeeksky.xcache.common.Store;
+import com.igeeksky.xcache.core.EmbedStoreValueConvertor;
 import com.igeeksky.xtool.core.collection.Maps;
 
 import java.util.Map;
@@ -15,19 +16,21 @@ import java.util.Set;
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-22
  */
-public class CaffeineStore<V> extends AbstractEmbedStore<V> {
+public class CaffeineStore<V> implements Store<V> {
 
     private final Cache<String, CacheValue<Object>> store;
+    private final EmbedStoreValueConvertor<V> convertor;
 
     public CaffeineStore(Cache<String, CacheValue<Object>> store, CaffeineConfig<V> config) {
-        super(config.isEnableNullValue(), config.isEnableCompressValue(),
-                config.isEnableSerializeValue(), config.getValueCompressor(), config.getValueCodec());
         this.store = store;
+        this.convertor = new EmbedStoreValueConvertor<>(config.isEnableNullValue(),
+                config.isEnableCompressValue(), config.isEnableSerializeValue(),
+                config.getValueCodec(), config.getValueCompressor());
     }
 
     @Override
     public CacheValue<V> get(String key) {
-        return fromStoreValue(store.getIfPresent(key));
+        return this.convertor.fromStoreValue(store.getIfPresent(key));
     }
 
     @Override
@@ -39,7 +42,7 @@ public class CaffeineStore<V> extends AbstractEmbedStore<V> {
 
         Map<String, CacheValue<V>> result = Maps.newHashMap(kvs.size());
         kvs.forEach((key, storeValue) -> {
-            CacheValue<V> cacheValue = fromStoreValue(storeValue);
+            CacheValue<V> cacheValue = this.convertor.fromStoreValue(storeValue);
             if (cacheValue != null) {
                 result.put(key, cacheValue);
             }
@@ -50,7 +53,7 @@ public class CaffeineStore<V> extends AbstractEmbedStore<V> {
 
     @Override
     public void put(String key, V value) {
-        CacheValue<Object> storeValue = toStoreValue(value);
+        CacheValue<Object> storeValue = this.convertor.toStoreValue(value);
         if (storeValue != null) {
             store.put(key, storeValue);
         }
@@ -73,9 +76,7 @@ public class CaffeineStore<V> extends AbstractEmbedStore<V> {
 
     @Override
     public void clear() {
-        // System.out.println("CaffeineStore clear start: " + store.estimatedSize());
         store.invalidateAll();
-        // System.out.println("CaffeineStore clear end:" + store.estimatedSize());
     }
 
 }

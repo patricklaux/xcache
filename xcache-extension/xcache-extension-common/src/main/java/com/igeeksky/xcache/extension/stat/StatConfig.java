@@ -10,13 +10,13 @@ public class StatConfig {
 
     private final String name;
 
-    private final String application;
+    private final String group;
 
     private final String provider;
 
     private StatConfig(Builder builder) {
         this.name = builder.name;
-        this.application = builder.application;
+        this.group = builder.group;
         this.provider = builder.provider;
     }
 
@@ -24,8 +24,8 @@ public class StatConfig {
         return name;
     }
 
-    public String getApplication() {
-        return application;
+    public String getGroup() {
+        return group;
     }
 
     public String getProvider() {
@@ -40,7 +40,7 @@ public class StatConfig {
 
         private String name;
 
-        private String application;
+        private String group;
 
         private String provider;
 
@@ -52,8 +52,8 @@ public class StatConfig {
             return this;
         }
 
-        public Builder application(String application) {
-            this.application = application;
+        public Builder group(String group) {
+            this.group = group;
             return this;
         }
 

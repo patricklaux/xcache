@@ -27,7 +27,7 @@ public class RedisCacheStatMessageCodec implements StreamMessageCodec<CacheStatM
     private final StringCodec stringCodec;
     private final Codec<CacheStatistics> statCodec;
     private final ByteArray name;
-    private final ByteArray app;
+    private final ByteArray group;
     private final ByteArray hitLoads;
     private final ByteArray missLoads;
     private final ByteArray noop;
@@ -39,7 +39,7 @@ public class RedisCacheStatMessageCodec implements StreamMessageCodec<CacheStatM
         this.statCodec = statCodec;
         this.stringCodec = stringCodec;
         this.name = ByteArray.of(this.stringCodec.encode("name"));
-        this.app = ByteArray.of(this.stringCodec.encode("app"));
+        this.group = ByteArray.of(this.stringCodec.encode("group"));
         this.hitLoads = ByteArray.of(this.stringCodec.encode("hitLoads"));
         this.missLoads = ByteArray.of(this.stringCodec.encode("missLoads"));
         this.noop = ByteArray.of(this.stringCodec.encode("noop"));
@@ -72,7 +72,7 @@ public class RedisCacheStatMessageCodec implements StreamMessageCodec<CacheStatM
     public Map<byte[], byte[]> encodeMsg(CacheStatMessage message) {
         Map<byte[], byte[]> body = new HashMap<>();
         body.put(this.name.getValue(), stringCodec.encode(message.getName()));
-        body.put(this.app.getValue(), stringCodec.encode(message.getApp()));
+        body.put(this.group.getValue(), stringCodec.encode(message.getGroup()));
         body.put(this.hitLoads.getValue(), stringCodec.encode(String.valueOf(message.getHitLoads())));
         body.put(this.missLoads.getValue(), stringCodec.encode(String.valueOf(message.getMissLoads())));
         if (message.getNoop() != null) {
@@ -101,9 +101,9 @@ public class RedisCacheStatMessageCodec implements StreamMessageCodec<CacheStatM
         if (ArrayUtils.isNotEmpty(nameBytes)) {
             message.setName(stringCodec.decode(nameBytes));
         }
-        byte[] appBytes = temp.get(app);
-        if (ArrayUtils.isNotEmpty(appBytes)) {
-            message.setApp(stringCodec.decode(appBytes));
+        byte[] groupBytes = temp.get(group);
+        if (ArrayUtils.isNotEmpty(groupBytes)) {
+            message.setGroup(stringCodec.decode(groupBytes));
         }
         byte[] hitLoadsBytes = temp.get(hitLoads);
         if (ArrayUtils.isNotEmpty(hitLoadsBytes)) {

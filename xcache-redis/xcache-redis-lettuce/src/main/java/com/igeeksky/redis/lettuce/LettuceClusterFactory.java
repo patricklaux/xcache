@@ -13,15 +13,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Lettuce 集群客户端工厂
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-01
  */
-public class LettuceClusterFactory extends AbstractLettuceFactory {
+public final class LettuceClusterFactory extends AbstractLettuceFactory {
 
     private final RedisClusterClient client;
     private final LettuceClusterConfig config;
 
+    /**
+     * 构造函数
+     *
+     * @param config  集群配置
+     * @param options 集群客户端选项
+     * @param res     客户端线程资源
+     */
     public LettuceClusterFactory(LettuceClusterConfig config, ClusterClientOptions options, ClientResources res) {
+        super();
         this.config = config;
         this.client = redisClient(options, res);
     }

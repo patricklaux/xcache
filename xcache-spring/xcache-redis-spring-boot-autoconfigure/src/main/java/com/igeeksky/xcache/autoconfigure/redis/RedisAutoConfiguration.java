@@ -22,6 +22,7 @@ import com.igeeksky.xtool.core.lang.StringUtils;
 import com.igeeksky.xtool.core.lang.codec.Codec;
 import com.igeeksky.xtool.core.lang.codec.StringCodec;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.context.annotation.Bean;
@@ -44,12 +45,15 @@ import java.util.concurrent.ScheduledExecutorService;
 @AutoConfigureAfter({SchedulerAutoConfiguration.class})
 public class RedisAutoConfiguration {
 
+    @Value("${xcache.group}")
+    private String group;
+
     private final Charset charset;
     private final RedisProperties redisProperties;
 
     public RedisAutoConfiguration(RedisProperties redisProperties) {
         this.redisProperties = redisProperties;
-        this.charset = this.getCharset();
+        this.charset = getCharset(this.redisProperties);
     }
 
     @Bean
@@ -209,7 +213,8 @@ public class RedisAutoConfiguration {
             RedisStatConfig config = RedisStatConfig.builder()
                     .maxLen(option.getMaxLen())
                     .period(option.getPeriod())
-                    .suffix(option.getSuffix())
+                    .group(group)
+                    .enableGroupPrefix(option.getEnableGroupPrefix())
                     .operator(factory.getRedisOperator())
                     .codec(messageCodec)
                     .scheduler(scheduler)
@@ -246,11 +251,10 @@ public class RedisAutoConfiguration {
         return new RedisCacheStatMessageCodec(JacksonCodecProvider.getInstance().getCodec(config), stringCodec);
     }
 
-    private Charset getCharset() {
+    private static Charset getCharset(RedisProperties redisProperties) {
         String charsetName = StringUtils.trimToNull(redisProperties.getCharset());
         return (charsetName == null) ? StandardCharsets.UTF_8 : Charset.forName(charsetName);
     }
-
 
     private static Map<String, RedisOperatorFactory> toOperatorFactoryMap(ObjectProvider<RedisOperatorFactoryHolder> provider) {
         Map<String, RedisOperatorFactory> map = new HashMap<>();

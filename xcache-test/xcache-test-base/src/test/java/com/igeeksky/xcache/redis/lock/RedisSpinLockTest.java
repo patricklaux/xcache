@@ -1,9 +1,9 @@
 package com.igeeksky.xcache.redis.lock;
 
+import com.igeeksky.redis.lettuce.LettuceStandaloneFactory;
+import com.igeeksky.redis.lettuce.LettuceTestHelper;
 import com.igeeksky.xcache.extension.lock.LockConfig;
 import com.igeeksky.xcache.extension.lock.LockTestTask;
-import com.igeeksky.redis.lettuce.LettuceFactory;
-import com.igeeksky.redis.lettuce.LettuceTestHelper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -22,7 +22,7 @@ import java.util.concurrent.locks.Condition;
 class RedisSpinLockTest {
 
     private static final String key = "test-lock";
-    private static LettuceFactory lettuceFactory;
+    private static LettuceStandaloneFactory lettuceStandaloneFactory;
     private static RedisLockService lockService;
 
     @BeforeAll
@@ -32,22 +32,23 @@ class RedisSpinLockTest {
                 .name("user")
                 .provider("redis")
                 .initialCapacity(64)
-                .infix("shop")
+                .group("shop")
+                .enableGroupPrefix(true)
                 .leaseTime(10000)
                 .build();
 
-        lettuceFactory = LettuceTestHelper.createStandaloneFactory();
+        lettuceStandaloneFactory = LettuceTestHelper.createStandaloneFactory();
 
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-        RedisLockProvider provider = new RedisLockProvider(scheduler, lettuceFactory);
+        RedisLockProvider provider = new RedisLockProvider(scheduler, lettuceStandaloneFactory);
 
         lockService = provider.get(config);
     }
 
     @AfterAll
     static void afterAll() {
-        lettuceFactory.close();
+        lettuceStandaloneFactory.close();
     }
 
     @Test

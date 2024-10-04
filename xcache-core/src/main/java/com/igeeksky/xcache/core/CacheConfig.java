@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.core;
 
+import com.igeeksky.xtool.core.lang.Assert;
 import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.nio.charset.Charset;
@@ -15,26 +16,50 @@ import java.nio.charset.StandardCharsets;
  */
 public class CacheConfig<K, V> {
 
-    private final String name;
-
-    private final String app;
-
+    /**
+     * 应用实例 ID
+     */
     private final String sid;
 
+    /**
+     * 缓存名称
+     */
+    private final String name;
+
+    /**
+     * 应用名称
+     */
+    private final String group;
+
+    /**
+     * 字符集
+     */
     private final Charset charset;
 
+    /**
+     * 键类型
+     */
     private final Class<K> keyType;
 
+    /**
+     * 键泛型参数
+     */
     private final Class<?>[] keyParams;
 
+    /**
+     * 值类型
+     */
     private final Class<V> valueType;
 
+    /**
+     * 值泛型参数
+     */
     private final Class<?>[] valueParams;
 
     public CacheConfig(Builder<K, V> builder) {
-        this.name = builder.name;
-        this.app = builder.app;
         this.sid = builder.sid;
+        this.name = builder.name;
+        this.group = builder.group;
         this.charset = builder.charset;
         this.keyType = builder.keyType;
         this.keyParams = builder.keyParams;
@@ -46,8 +71,8 @@ public class CacheConfig<K, V> {
         return name;
     }
 
-    public String getApp() {
-        return app;
+    public String getGroup() {
+        return group;
     }
 
     public String getSid() {
@@ -81,11 +106,11 @@ public class CacheConfig<K, V> {
 
     public static class Builder<K, V> {
 
+        private String sid;
+
         private String name;
 
-        private String app;
-
-        private String sid;
+        private String group;
 
         private Charset charset;
 
@@ -104,18 +129,18 @@ public class CacheConfig<K, V> {
             this.valueParams = valueParams;
         }
 
+        public Builder<K, V> sid(String sid) {
+            this.sid = sid;
+            return this;
+        }
+
         public Builder<K, V> name(String name) {
             this.name = name;
             return this;
         }
 
-        public Builder<K, V> app(String app) {
-            this.app = app;
-            return this;
-        }
-
-        public Builder<K, V> sid(String sid) {
-            this.sid = sid;
+        public Builder<K, V> group(String group) {
+            this.group = group;
             return this;
         }
 
@@ -135,6 +160,12 @@ public class CacheConfig<K, V> {
         }
 
         public CacheConfig<K, V> build() {
+            Assert.notNull(sid, "sid must not be null");
+            Assert.notNull(name, "name must not be null");
+            Assert.notNull(group, "group must not be null");
+            Assert.notNull(charset, "charset must not be null");
+            Assert.notNull(keyType, "keyType must not be null");
+            Assert.notNull(valueType, "valueType must not be null");
             return new CacheConfig<>(this);
         }
 

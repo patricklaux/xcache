@@ -7,11 +7,11 @@ package com.igeeksky.xcache.extension.contains;
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/8
  */
-public class ContainsConfig<K> {
+public class PredicateConfig<K> {
 
     private final String name;
 
-    private final String application;
+    private final String group;
 
     private final String provider;
 
@@ -19,9 +19,9 @@ public class ContainsConfig<K> {
 
     private final Class<?>[] keyParams;
 
-    private ContainsConfig(Builder<K> builder) {
+    private PredicateConfig(Builder<K> builder) {
         this.name = builder.name;
-        this.application = builder.application;
+        this.group = builder.group;
         this.provider = builder.provider;
         this.keyType = builder.keyType;
         this.keyParams = builder.keyParams;
@@ -31,8 +31,8 @@ public class ContainsConfig<K> {
         return name;
     }
 
-    public String getApplication() {
-        return application;
+    public String getGroup() {
+        return group;
     }
 
     public String getProvider() {
@@ -54,7 +54,7 @@ public class ContainsConfig<K> {
     public static class Builder<K> {
 
         private String name;
-        private String application;
+        private String group;
         private String provider;
         private final Class<K> keyType;
         private final Class<?>[] keyParams;
@@ -69,8 +69,8 @@ public class ContainsConfig<K> {
             return this;
         }
 
-        public Builder<K> application(String application) {
-            this.application = application;
+        public Builder<K> group(String group) {
+            this.group = group;
             return this;
         }
 
@@ -79,8 +79,8 @@ public class ContainsConfig<K> {
             return this;
         }
 
-        public ContainsConfig<K> build() {
-            return new ContainsConfig<>(this);
+        public PredicateConfig<K> build() {
+            return new PredicateConfig<>(this);
         }
 
     }

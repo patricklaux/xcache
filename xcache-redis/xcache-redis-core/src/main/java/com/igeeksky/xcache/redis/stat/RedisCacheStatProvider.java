@@ -19,9 +19,9 @@ public class RedisCacheStatProvider extends AbstractCacheStatProvider {
     public RedisCacheStatProvider(RedisStatConfig config) {
         super(config.getScheduler(), config.getPeriod());
         long maxLen = config.getMaxLen();
-        String channel = PREFIX + config.getSuffix();
         RedisOperator operator = config.getOperator();
         RedisCacheStatMessageCodec codec = config.getCodec();
+        String channel = config.isEnableGroupPrefix() ? (PREFIX + config.getGroup()) : PREFIX;
         this.publisher = new StreamMessagePublisher<>(operator, maxLen, channel, codec);
     }
 

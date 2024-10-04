@@ -8,12 +8,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 用于向 CacheManager 注册 StoreProvider
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-29
  */
 public class StoreProviderHolder implements Holder<StoreProvider> {
 
     private final Map<String, StoreProvider> map = new HashMap<>();
+
+    /**
+     * 默认构造函数
+     * <p>
+     * 对象初始化时内部会自动创建一个 map ，用于存放 StoreProvider
+     */
+    public StoreProviderHolder() {
+    }
 
     @Override
     public void put(String beanId, StoreProvider provider) {

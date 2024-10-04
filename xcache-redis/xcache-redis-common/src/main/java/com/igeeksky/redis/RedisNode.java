@@ -6,6 +6,8 @@ import com.igeeksky.xtool.core.lang.StringUtils;
 import java.util.Objects;
 
 /**
+ * Redis节点
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-26
  */
@@ -17,6 +19,11 @@ public class RedisNode {
 
     private final String socket;
 
+    /**
+     * 构造 Redis节点
+     *
+     * @param node 格式：{@code host:port} 或 {@code socket:/path/to/socket}
+     */
     public RedisNode(String node) {
         String[] array = node.split(":");
         Assert.isTrue(array.length == 2, () -> "node:[" + node + "] is not valid.");
@@ -35,20 +42,42 @@ public class RedisNode {
         }
     }
 
+    /**
+     * 构造 Redis节点
+     *
+     * @param host   主机名
+     * @param port   端口号
+     * @param socket Unix域套接字文件路径
+     */
     public RedisNode(String host, int port, String socket) {
         this.host = host;
         this.port = port;
         this.socket = socket;
     }
 
+    /**
+     * 获取主机名
+     *
+     * @return {@link String} – 主机名
+     */
     public String getHost() {
         return host;
     }
 
+    /**
+     * 获取端口号
+     *
+     * @return {@link Integer} – 端口号
+     */
     public int getPort() {
         return port;
     }
 
+    /**
+     * 获取 Unix域套接字文件路径
+     *
+     * @return {@link String} – Unix域套接字文件路径
+     */
     public String getSocket() {
         return socket;
     }
@@ -68,4 +97,5 @@ public class RedisNode {
         result = 31 * result + Objects.hashCode(socket);
         return result;
     }
+
 }

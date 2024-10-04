@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Lettuce 实现的 RedisStreamOperator
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/20
  */
@@ -23,6 +25,12 @@ public class LettuceStreamOperator implements RedisStreamOperator {
     private final StatefulConnection<byte[], byte[]> connection;
     private final RedisStreamCommands<byte[], byte[]> commands;
 
+    /**
+     * 构造函数
+     *
+     * @param connection lettuce 连接
+     * @param commands   Stream 操作命令
+     */
     public LettuceStreamOperator(StatefulConnection<byte[], byte[]> connection,
                                  RedisStreamCommands<byte[], byte[]> commands) {
         this.connection = connection;

@@ -1,12 +1,14 @@
 package com.igeeksky.xcache.extension.stat;
 
 import com.igeeksky.xtool.core.concurrent.VirtualThreadFactory;
+import com.igeeksky.xtool.core.lang.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -21,9 +23,10 @@ public abstract class AbstractCacheStatProvider implements CacheStatProvider {
 
     private final ExecutorService executor = executor();
 
-    private final ConcurrentMap<String, CacheStatMonitor> monitors = new ConcurrentHashMap<>();
+    private final Map<String, CacheStatMonitor> monitors = new ConcurrentHashMap<>();
 
     public AbstractCacheStatProvider(ScheduledExecutorService scheduler, long period) {
+        Assert.isTrue(period > 0L, "stat period must be greater than 0");
         scheduler.scheduleAtFixedRate(() -> {
             try {
                 executor.submit(() -> {
@@ -46,7 +49,7 @@ public abstract class AbstractCacheStatProvider implements CacheStatProvider {
 
     @Override
     public CacheStatMonitor getMonitor(StatConfig config) {
-        return monitors.computeIfAbsent(config.getName(), nameKey -> new CacheStatMonitor(config));
+        return monitors.computeIfAbsent(config.getName(), ignored -> new CacheStatMonitorImpl(config));
     }
 
     private static ExecutorService executor() {

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.*;
  */
 class LettuceStandaloneOperatorTest {
 
-    private static LettuceFactory factory;
+    private static LettuceStandaloneFactory factory;
     private static RedisOperatorTestCase redisTestCase;
 
     @BeforeAll

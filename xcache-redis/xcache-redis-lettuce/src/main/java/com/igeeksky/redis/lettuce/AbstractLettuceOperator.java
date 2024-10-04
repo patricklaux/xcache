@@ -29,11 +29,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Lettuce 客户端抽象类
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-03
  */
 @SuppressWarnings("unchecked")
-public abstract class AbstractLettuceOperator implements RedisOperator {
+public sealed abstract class AbstractLettuceOperator implements RedisOperator
+        permits LettuceOperator, LettuceClusterOperator {
 
     private static final StringCodec STRING_CODEC = StringCodec.getInstance(StandardCharsets.UTF_8);
 
@@ -62,11 +65,17 @@ public abstract class AbstractLettuceOperator implements RedisOperator {
     private final RedisScriptingCommands<byte[], byte[]> scriptingCommands;
     private final RedisStreamCommands<byte[], byte[]> streamCommands;
 
-
     private final StatefulConnection<byte[], byte[]> batchConnection;
     private final RedisHashAsyncCommands<byte[], byte[]> batchHashCommands;
     private final RedisStringAsyncCommands<byte[], byte[]> batchStringCommands;
 
+    /**
+     * 构造函数（用于非集群）
+     *
+     * @param timeout         超时时间（毫秒）
+     * @param connection      连接对象（执行单个命令，自动提交）
+     * @param batchConnection 连接对象（批量执行命令，不自动提交）
+     */
     public AbstractLettuceOperator(long timeout, StatefulRedisConnection<byte[], byte[]> connection, StatefulRedisConnection<byte[], byte[]> batchConnection) {
         this.timeout = timeout;
 
@@ -86,6 +95,13 @@ public abstract class AbstractLettuceOperator implements RedisOperator {
         this.batchStringCommands = async;
     }
 
+    /**
+     * 构造函数（用于集群）
+     *
+     * @param timeout         超时时间（毫秒）
+     * @param connection      连接对象（执行单个命令，自动提交）
+     * @param batchConnection 连接对象（批量执行命令，不自动提交）
+     */
     public AbstractLettuceOperator(long timeout, StatefulRedisClusterConnection<byte[], byte[]> connection, StatefulRedisClusterConnection<byte[], byte[]> batchConnection) {
 
         this.timeout = timeout;
@@ -466,8 +482,9 @@ public abstract class AbstractLettuceOperator implements RedisOperator {
     }
 
     @Override
-    public void publish(byte[] channel, byte[] message) {
-        baseCommands.publish(channel, message);
+    public long publish(byte[] channel, byte[] message) {
+        Long received = baseCommands.publish(channel, message);
+        return (received == null) ? 0L : received;
     }
 
     @Override
@@ -581,7 +598,7 @@ public abstract class AbstractLettuceOperator implements RedisOperator {
     }
 
     @Override
-    public long time() {
+    public long timeMillis() {
         List<byte[]> time = serverCommands.time();
         long seconds = Long.parseLong(STRING_CODEC.decode(time.get(0)));
         long micros = Long.parseLong(STRING_CODEC.decode(time.get(1)));

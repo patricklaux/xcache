@@ -7,17 +7,23 @@ import java.lang.annotation.*;
 /**
  * 缓存注解
  * <p>
+ * 对应 V value = cache.get(K key, CacheLoader loader) 方法 <p>
  * 如果数据未缓存，则反射执行方法并缓存；
  * 如果数据已缓存，则直接返回已缓存数据。
  * <p>
- * 如果一个类中使用多个缓存注解，name, keyType, keyParams, valueType, valueParams
- * 这五个公共属性可用类注解 {@link CacheConfig} 配置，此注解保持默认即可。
+ * 五个公共属性 name, keyType, keyParams, valueType, valueParams
+ * 可用类注解 {@link CacheConfig} 配置，此注解保持默认即可。
  * <p>
  * <b>注意</b>：<p>
  * 1. 请勿与其它缓存注解用于同一方法！<br>
- * 因为当成功获取缓存数据时，此注解的目标方法将不会被调用。<p>
- * 2. 项目编译时必须使用 -parameters 记录方法参数信息，否则无法正确解析 SpEL表达式。<br>
- * 如使用 maven-compiler-plugin，必须配置：{@code <parameters>true</parameters> }
+ * 因为当成功从缓存获取数据时，目标方法将不会被调用。<p>
+ * 2. 如使用 SpEL表达式，项目编译时需使用 {@code -parameters } 记录方法参数名信息，否则无法正确解析。<br>
+ * 如使用 maven-compiler-plugin，需配置：{@code <parameters>true</parameters> } <p>
+ * 3. 目标方法的返回值除了返回缓存值类型，也可以是 {@code Optional } 类型，如：{@code Optional<User> }，
+ * 或是 {@code CompletableFuture } 类型，如：{@code CompletableFuture<User> }。 <br>
+ * 缓存实现中会通过 {@code CompletableFuture.get()} 或 {@code Optional.orElse(null) } 方法获取真正的值再缓存。<br>
+ * 需要注意的是，如果目标方法返回值是 {@code Optional<V> } ，其包含的值可以为 null，但 Optional 本身不能为 null；
+ * {@code CompletableFuture } 亦如是。
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-12

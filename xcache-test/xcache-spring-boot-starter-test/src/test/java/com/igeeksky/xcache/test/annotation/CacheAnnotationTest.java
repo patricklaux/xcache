@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.test.annotation;
 
+import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.domain.Key;
 import com.igeeksky.xcache.domain.User;
 import com.igeeksky.xcache.test.UserService;
@@ -12,6 +13,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * 测试之前需先启动 redis
@@ -27,7 +31,7 @@ public class CacheAnnotationTest {
 
     @AfterAll
     public static void afterAll() throws InterruptedException {
-        Thread.sleep(20000);
+        Thread.sleep(5000);
     }
 
     /**
@@ -78,6 +82,69 @@ public class CacheAnnotationTest {
     }
 
     @Test
+    public void cacheableOptional() {
+        Key jack03 = new Key("jack03");
+        User userJack03 = new User("0", jack03.getName(), jack03.getAge());
+
+        // 删除缓存元素
+        userService.deleteUserByCache(jack03);
+
+        // 第一次调用，调用方法，并缓存数据
+        Optional<User> result0 = userService.getOptionalUser(jack03, 0);
+        System.out.println("0: " + result0);
+        Assertions.assertEquals(userJack03, result0.orElse(null));
+
+        Optional<User> result1 = userService.getOptionalUser(jack03, 0);
+        System.out.println("0: " + result1);
+        Assertions.assertEquals(userJack03, result1.orElse(null));
+    }
+
+    @Test
+    public void cacheableOptionalLoop() {
+        for(int i = 0; i < 10; i++){
+            cacheableOptional();
+        }
+    }
+
+    @Test
+    public void cacheableFuture() throws ExecutionException, InterruptedException {
+        Key jack03 = new Key("jack03");
+        User userJack03 = new User("0", jack03.getName(), jack03.getAge());
+
+        // 删除缓存元素
+        userService.deleteUserByCache(jack03);
+
+        // 第一次调用，调用方法，并缓存数据
+        CompletableFuture<User> result0 = userService.getFutureUser(jack03, 0);
+        System.out.println("0: " + result0);
+        Assertions.assertEquals(userJack03, result0.get());
+
+        CompletableFuture<User> result1 = userService.getFutureUser(jack03, 0);
+        System.out.println("0: " + result1);
+        Assertions.assertEquals(userJack03, result1.get());
+    }
+
+    @Test
+    public void cacheableNullFuture() throws ExecutionException, InterruptedException {
+        Key jack03 = new Key("jack03");
+
+        // 删除缓存元素
+        userService.deleteUserByCache(jack03);
+
+        // 第一次调用，调用方法，并缓存数据
+        CompletableFuture<User> result0 = userService.getNullFutureUser(jack03);
+        System.out.println("0: " + result0);
+        Assertions.assertNull(result0.get());
+
+        CompletableFuture<User> result1 = userService.getFutureUser(jack03, 0);
+        System.out.println("0: " + result1);
+        Assertions.assertNull(result1.get());
+
+        CacheValue<User> cacheValue = userService.getUserByCache(jack03);
+        Assertions.assertFalse(cacheValue.hasValue());
+    }
+
+    @Test
     public void cachePut1() {
         Key jack03 = new Key("jack03");
         User userJack03 = new User("0", jack03.getName(), jack03.getAge());
@@ -89,9 +156,9 @@ public class CacheAnnotationTest {
         userService.saveUser(jack03, userJack03);
 
         // 只读取缓存，判断是否保存成功
-        User result2 = userService.getUserByCache(jack03);
+        CacheValue<User> result2 = userService.getUserByCache(jack03);
         System.out.println(result2);
-        Assertions.assertEquals(userJack03, result2);
+        Assertions.assertEquals(userJack03, result2.getValue());
     }
 
     @Test
@@ -159,8 +226,8 @@ public class CacheAnnotationTest {
         userService.saveUsers(users);
 
         // 读取缓存，并对比元素
-        Assertions.assertEquals(userJack08, userService.getUserByCache(jack08));
-        Assertions.assertEquals(userJack09, userService.getUserByCache(jack09));
+        Assertions.assertEquals(userJack08, userService.getUserByCache(jack08).getValue());
+        Assertions.assertEquals(userJack09, userService.getUserByCache(jack09).getValue());
     }
 
     @Test
@@ -177,8 +244,8 @@ public class CacheAnnotationTest {
 
         userService.saveUsersToCache(new HashMap<>(keyValues));
 
-        Assertions.assertEquals(userJack10, userService.getUserByCache(jack10));
-        Assertions.assertEquals(userJack11, userService.getUserByCache(jack11));
+        Assertions.assertEquals(userJack10, userService.getUserByCache(jack10).getValue());
+        Assertions.assertEquals(userJack11, userService.getUserByCache(jack11).getValue());
 
         userService.deleteUsers(new HashSet<>(keyValues.keySet()));
 
@@ -192,7 +259,7 @@ public class CacheAnnotationTest {
         User userJack12 = new User("0", jack12.getName(), jack12.getAge());
         userService.saveUser(jack12, userJack12);
 
-        Assertions.assertEquals(userJack12, userService.getUserByCache(jack12));
+        Assertions.assertEquals(userJack12, userService.getUserByCache(jack12).getValue());
 
         userService.deleteByKey(jack12);
 
@@ -205,7 +272,7 @@ public class CacheAnnotationTest {
         User userJack13 = new User("0", jack13.getName(), jack13.getAge());
         userService.saveUser(jack13, userJack13);
 
-        Assertions.assertEquals(userJack13, userService.getUserByCache(jack13));
+        Assertions.assertEquals(userJack13, userService.getUserByCache(jack13).getValue());
 
         userService.deleteAllUsers();
 

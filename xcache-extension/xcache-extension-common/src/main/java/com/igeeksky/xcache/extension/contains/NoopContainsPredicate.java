@@ -9,13 +9,13 @@ package com.igeeksky.xcache.extension.contains;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-12
  */
-public class EmbedContainsPredicate<K> implements ContainsPredicate<K> {
+public class NoopContainsPredicate<K> implements ContainsPredicate<K> {
 
-    private static final EmbedContainsPredicate<?> INSTANCE = new EmbedContainsPredicate<>();
+    private static final NoopContainsPredicate<?> INSTANCE = new NoopContainsPredicate<>();
 
     @SuppressWarnings("unchecked")
-    public static <K> EmbedContainsPredicate<K> getInstance() {
-        return (EmbedContainsPredicate<K>) INSTANCE;
+    public static <K> NoopContainsPredicate<K> getInstance() {
+        return (NoopContainsPredicate<K>) INSTANCE;
     }
 
     /**

@@ -1,10 +1,10 @@
 package com.igeeksky.xcache.extension.refresh;
 
 import com.igeeksky.xcache.extension.lock.LockService;
-import com.igeeksky.xtool.core.lang.StringUtils;
 
 import java.nio.charset.Charset;
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 刷新配置信息
@@ -14,14 +14,14 @@ import java.util.Objects;
  */
 public class RefreshConfig {
 
+    private final String group;
+
     /**
      * 缓存名称
      */
     private final String name;
 
-    private final String app;
-
-    private final String infix;
+    private final boolean enableGroupPrefix;
 
     private final String provider;
 
@@ -48,41 +48,39 @@ public class RefreshConfig {
      */
     private final long stopAfterAccess;
 
+    private final Map<String, Object> params;
+
     public RefreshConfig(Builder builder) {
         this.name = builder.name;
-        this.app = builder.app;
-        this.provider = builder.provider;
+        this.group = builder.group;
         this.charset = builder.charset;
+        this.provider = builder.provider;
         this.cacheLock = builder.cacheLock;
         this.period = builder.period;
         this.stopAfterAccess = builder.stopAfterAccess;
-        if (builder.infix != null) {
-            if (Objects.equals("none", StringUtils.toLowerCase(builder.infix))) {
-                this.infix = null;
-                this.refreshKey = "refresh:" + this.name;
-                this.refreshLockKey = "refresh:lock:" + this.name;
-                this.refreshPeriodKey = "refresh:period:" + this.name;
-                return;
-            }
-            this.infix = builder.infix;
+        this.enableGroupPrefix = builder.enableGroupPrefix;
+        this.params = builder.params;
+        if (this.enableGroupPrefix) {
+            this.refreshKey = "refresh:" + this.group + ":" + this.name;
+            this.refreshLockKey = "refresh:lock:" + this.group + ":" + this.name;
+            this.refreshPeriodKey = "refresh:period:" + this.group + ":" + this.name;
         } else {
-            this.infix = this.app;
+            this.refreshKey = "refresh:" + this.name;
+            this.refreshLockKey = "refresh:lock:" + this.name;
+            this.refreshPeriodKey = "refresh:period:" + this.name;
         }
-        this.refreshKey = "refresh:" + this.infix + ":" + this.name;
-        this.refreshLockKey = "refresh:lock:" + this.infix + ":" + this.name;
-        this.refreshPeriodKey = "refresh:period:" + this.infix + ":" + this.name;
     }
 
     public String getName() {
         return name;
     }
 
-    public String getApp() {
-        return app;
+    public String getGroup() {
+        return group;
     }
 
-    public String getInfix() {
-        return infix;
+    public boolean getEnableGroupPrefix() {
+        return enableGroupPrefix;
     }
 
     public String getProvider() {
@@ -117,6 +115,10 @@ public class RefreshConfig {
         return stopAfterAccess;
     }
 
+    public Map<String, Object> getParams() {
+        return params;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -128,13 +130,11 @@ public class RefreshConfig {
          */
         private String name;
 
-        private String app;
-
-        private String infix;
-
-        private String provider;
+        private String group;
 
         private Charset charset;
+
+        private String provider;
 
         private LockService cacheLock;
 
@@ -148,18 +148,17 @@ public class RefreshConfig {
          */
         private long stopAfterAccess;
 
+        private boolean enableGroupPrefix;
+
+        private final Map<String, Object> params = new HashMap<>();
+
         public Builder name(String name) {
             this.name = name;
             return this;
         }
 
-        public Builder app(String app) {
-            this.app = app;
-            return this;
-        }
-
-        public Builder infix(String infix) {
-            this.infix = infix;
+        public Builder group(String group) {
+            this.group = group;
             return this;
         }
 
@@ -185,6 +184,18 @@ public class RefreshConfig {
 
         public Builder cacheLock(LockService cacheLock) {
             this.cacheLock = cacheLock;
+            return this;
+        }
+
+        public Builder enableGroupPrefix(boolean enableGroupPrefix) {
+            this.enableGroupPrefix = enableGroupPrefix;
+            return this;
+        }
+
+        public Builder params(Map<String, Object> params) {
+            if (params != null) {
+                this.params.putAll(params);
+            }
             return this;
         }
 

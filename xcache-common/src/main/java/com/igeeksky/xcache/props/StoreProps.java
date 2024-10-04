@@ -15,54 +15,169 @@ import java.util.Map;
  */
 public class StoreProps {
 
-    /**
-     * <b>缓存类型</b>
-     * <p>
-     * 根据缓存类型，选用不同的默认值
-     * <p>
-     * 可选值：EMBED 或 EXTRA
-     * <p>
-     * EMBED：内嵌缓存，如 caffeine； EXTRA：外部缓存，如 redis
-     *
-     * @see StoreType
-     */
     private StoreType storeType;
 
+    private String provider;
+
+    private Integer initialCapacity;
+
+    private Long maximumSize;
+
+    private Long maximumWeight;
+
+    private Long expireAfterWrite;
+
+    private Long expireAfterAccess;
+
+    private ReferenceType keyStrength;
+
+    private ReferenceType valueStrength;
+
+    private String valueCodec;
+
+    private CompressProps valueCompressor = new CompressProps();
+
+    private Boolean enableRandomTtl;
+
+    private Boolean enableNullValue;
+
+    private Boolean enableGroupPrefix;
+
+    private Boolean enableNamePrefix;
+
+    private RedisType redisType;
+
+    private final Map<String, Object> params = new HashMap<>();
+
     /**
-     * <b>缓存工厂 id </b>
+     * 缓存类型
      * <p>
-     * 内嵌缓存默认值：caffeineCacheStoreProvider
+     * 可选值：<br>
+     * EMBED：内嵌缓存，如 caffeine <br>
+     * EXTRA：外部缓存，如 redis
+     * <p>
+     * 根据不同的缓存类型，自动填充默认配置。
+     * <p>
+     * EMBED：{@link PropsUtil#defaultEmbedStoreProps()} <br>
+     * EXTRA：{@link PropsUtil#defaultExtraStoreProps()}
+     *
+     * @return {@link StoreType} – 缓存类型
+     */
+    public StoreType getStoreType() {
+        return storeType;
+    }
+
+    /**
+     * 设置 缓存类型
+     *
+     * @param storeType 缓存类型
+     */
+    public void setStoreType(StoreType storeType) {
+        this.storeType = storeType;
+    }
+
+    /**
+     * <b>StoreProviderId </b>
+     * <p>
+     * 一级缓存默认值：caffeine
      * <p>
      * {@link CacheConstants#DEFAULT_EMBED_STORE_PROVIDER}
      * <p>
-     * 外部缓存默认值：lettuceCacheStoreProvider
+     * 二级缓存默认值：lettuce
      * <p>
      * {@link CacheConstants#DEFAULT_EXTRA_STORE_PROVIDER}
+     * <p>
+     * 三级缓存默认值：none
+     *
+     * @return {@link String} – StoreProviderId
      */
-    private String provider;
+    public String getProvider() {
+        return provider;
+    }
+
+    /**
+     * 设置 StoreProviderId
+     *
+     * @param provider StoreProviderId
+     */
+    public void setProvider(String provider) {
+        this.provider = provider;
+    }
+
+    /**
+     * Redis 命令类型
+     * <p>
+     * 可选值：<br>
+     * STRING（默认值） – 优点：可以设置过期时间；缺点：key 长，耗内存，缓存数据清空操作复杂。<br>
+     * HASH – 优点：key 更短，省内存，便于清空缓存数据；缺点：无法设置过期时间。
+     * <p>
+     * {@link CacheConstants#DEFAULT_EXTRA_REDIS_TYPE}
+     *
+     * @return {@link RedisType} – Redis 命令类型
+     */
+    public RedisType getRedisType() {
+        return redisType;
+    }
+
+    /**
+     * 设置 Redis 命令类型
+     *
+     * @param redisType Redis 命令类型
+     */
+    public void setRedisType(RedisType redisType) {
+        this.redisType = redisType;
+    }
 
     /**
      * 初始容量
      * <p>
-     * 默认值：8192 <p>
+     * 默认值：65536 <p>
      * 建议与 maximum-size 保持一致，避免扩容。
      * <p>
      * {@link CacheConstants#DEFAULT_EMBED_INITIAL_CAPACITY}
      * <p>
-     * 用于内嵌缓存，支持此配置项的缓存列表：caffeine
+     * 既知使用此配置项的缓存类型：caffeine。
+     *
+     * @return {@link Integer} – 初始容量
      */
-    private Integer initialCapacity;
+    public Integer getInitialCapacity() {
+        return initialCapacity;
+    }
+
+    /**
+     * 设置 初始容量
+     *
+     * @param initialCapacity 初始容量
+     */
+    public void setInitialCapacity(Integer initialCapacity) {
+        this.initialCapacity = initialCapacity;
+    }
 
     /**
      * 最大容量
      * <p>
-     * 默认值：8192
+     * 默认值：65536
      * <p>
      * {@link  CacheConstants#DEFAULT_EMBED_MAXIMUM_SIZE}
      * <p>
-     * 用于内嵌缓存，支持此配置项的缓存列表：caffeine
+     * 如果 {@code maximum-size <= 0}，表示不采用基于容量的驱逐策略。
+     * <p>
+     * 既知使用此配置项的缓存类型：caffeine。
+     *
+     * @return {@link Long} – 最大容量
      */
-    private Long maximumSize;
+    public Long getMaximumSize() {
+        return maximumSize;
+    }
+
+    /**
+     * 设置 最大容量
+     *
+     * @param maximumSize 最大容量
+     */
+    public void setMaximumSize(Long maximumSize) {
+        this.maximumSize = maximumSize;
+    }
 
     /**
      * 最大权重
@@ -71,286 +186,289 @@ public class StoreProps {
      * <p>
      * {@link  CacheConstants#DEFAULT_EMBED_MAXIMUM_WEIGHT}
      * <p>
-     * 用于内嵌缓存，支持此配置项的缓存列表：caffeine
+     * 如果 {@code maximum-weight <= 0}，表示不采用基于权重的驱逐策略。
+     * <p>
+     * 既知使用此配置项的缓存类型：caffeine。
+     *
+     * @return {@link Long} – 最大权重
      */
-    private Long maximumWeight;
+    public Long getMaximumWeight() {
+        return maximumWeight;
+    }
 
     /**
-     * 内嵌缓存默认值：3600000 <p>
+     * 设置 最大权重
+     *
+     * @param maximumWeight 最大权重
+     */
+    public void setMaximumWeight(Long maximumWeight) {
+        this.maximumWeight = maximumWeight;
+    }
+
+    /**
+     * 数据写入后的存活时间
+     * <p>
+     * 内嵌缓存默认值：3600000 <br>
      * 外部缓存默认值：7200000
      * <p>
      * 单位：毫秒
      * <p>
      * {@link  CacheConstants#DEFAULT_EMBED_EXPIRE_AFTER_WRITE} <p>
      * {@link  CacheConstants#DEFAULT_EXTRA_EXPIRE_AFTER_WRITE}
-     */
-    private Long expireAfterWrite;
-
-    /**
-     * 内嵌缓存默认值：300000 <p>
-     * 外部缓存无作用
      * <p>
-     * 单位：毫秒
-     * <p>
-     * {@link  CacheConstants#DEFAULT_EMBED_EXPIRE_AFTER_ACCESS}
-     */
-    private Long expireAfterAccess;
-
-    /**
-     * 键的引用类型
-     * <p>
-     * 部分内嵌缓存可以根据键的引用类型来执行驱逐策略。
-     * 默认值：STRONG
-     * <p>
-     * Caffeine 可选值：WEAK(弱引用), STRONG(强引用)
-     * <p>
-     * {@link  CacheConstants#DEFAULT_EMBED_KEY_STRENGTH}
+     * 既知使用此配置项的缓存类型：caffeine， redis(String)。
      *
-     * @see ReferenceType
+     * @return {@link Long} – 数据写入后的存活时间
      */
-    private ReferenceType keyStrength;
-
-    /**
-     * 值的引用类型
-     * <p>
-     * 部分内嵌缓存可以根据值的引用类型来执行驱逐策略。
-     * 默认值：STRONG
-     * <p>
-     * Caffeine 可选值：WEAK(弱引用), SOFT(软引用), STRONG(强引用)
-     * <p>
-     * {@link CacheConstants#DEFAULT_EMBED_VALUE_STRENGTH}
-     *
-     * @see ReferenceType
-     */
-    private ReferenceType valueStrength;
-
-    /**
-     * CodecProvider-Id
-     * <p>
-     * 用于值的序列化操作
-     * <p>
-     * 内嵌缓存默认值：none <p>
-     * 外部缓存默认值：jackson
-     * <p>
-     * {@link CacheConstants#DEFAULT_EMBED_VALUE_CODEC}
-     * {@link CacheConstants#DEFAULT_EXTRA_VALUE_CODEC}
-     */
-    private String valueCodec;
-
-    /**
-     * CompressorProvider-Id
-     * <p>
-     * 用于值序列化后再压缩（节省空间），默认不压缩
-     * <p>
-     * 内嵌缓存默认值：NONE <p>
-     * 外部缓存默认值：NONE
-     * <p>
-     * {@link CacheConstants#DEFAULT_EMBED_VALUE_COMPRESSOR}
-     * {@link CacheConstants#DEFAULT_VALUE_COMPRESSOR}
-     */
-    private CompressProps valueCompressor = new CompressProps();
-
-    /**
-     * 是否使用随机存活时间
-     * <p>
-     * Random.nextLong(expireAfterWrite*0.8, expireAfterWrite) <p>
-     * 如果此选项设置为 true，且 expireAfterWrite &gt; 0，则会使用随机时间：
-     * 最小存活时间为 expireAfterWrite * 0.8，最大存活时间为 expireAfterWrite。
-     * <p>
-     * 使用随机存活时间的目的是为了避免大规模的 key 同时过期，需要回源查询，造成数据源压力过大。
-     * <p>
-     * 内嵌缓存默认值：true <p>
-     * 外部缓存默认值：true
-     * <p>
-     * {@link CacheConstants#DEFAULT_EMBED_ENABLE_RANDOM_TTL}
-     * {@link CacheConstants#DEFAULT_EXTRA_ENABLE_RANDOM_TTL}
-     */
-    private Boolean enableRandomTtl;
-
-    /**
-     * 是否允许保存空值
-     * <p>
-     * 如果此选项设置为 true，当 key 对应的 value 为空，也会将 key 保存到缓存中。
-     * <p>
-     * 如果缓存中存储的是空值，通常表示数据源无有效数据，因此可以避免无效的回源查询。<p>
-     * 例：get(key) 方法的返回值为 cacheValue，可通过如下类似代码来判断是否需要回源。
-     * <pre>{@code
-     * if (cacheValue == null) {
-     *     缓存中未存储值（需要回源）;
-     * } else {
-     *     if (cacheValue.hasValue) {
-     *         缓存中存储的是有效值（无需回源）;
-     *     } else {
-     *         缓存中存储的是空值（无需回源）;
-     *     }
-     * }
-     * }</pre>
-     * 内嵌缓存默认值：true <p>
-     * 外部缓存默认值：true
-     * <p>
-     * {@link CacheConstants#DEFAULT_EMBED_ENABLE_NULL_VALUE}
-     * {@link CacheConstants#DEFAULT_EXTRA_ENABLE_NULL_VALUE}
-     */
-    private Boolean enableNullValue;
-
-    /**
-     * key 是否使用前缀
-     * <p>
-     * 如果此选项设置为 true，完整的键为：cacheName + ":" + key。<p>
-     * 对于外部缓存，譬如 Redis，通常是多个应用共享，或者一个应用中也会有多种类型的数据，极有可能出现键冲突。<p>
-     * 为了避免冲突，因此需要加上前缀进行区分。<p>
-     * 如果确定不会出现冲突，则可以设置为 false。<p>
-     * 对于内部缓存，譬如 caffeine，每一个 cacheName 对应一个 caffeine 实例，因此不会出现冲突。
-     * <p>
-     * 内嵌缓存无需配置 <p>
-     * 外部缓存默认值：true
-     * <p>
-     * {@link CacheConstants#DEFAULT_EXTRA_ENABLE_KEY_PREFIX}
-     */
-    private Boolean enableKeyPrefix;
-
-    /**
-     * Redis 命令类型
-     * <p>
-     * 可选值：STRING 或 HASH
-     * <p>
-     * 默认值：STRING
-     * <p>
-     * {@link CacheConstants#DEFAULT_EXTRA_REDIS_TYPE}
-     * <p>
-     * 用于 Redis 缓存，支持此配置项的缓存列表：lettuce, jedis
-     */
-    private RedisType redisType;
-
-    /**
-     * 自定义扩展属性
-     */
-    private final Map<String, Object> params = new HashMap<>();
-
-    public StoreType getStoreType() {
-        return storeType;
-    }
-
-    public void setStoreType(StoreType storeType) {
-        this.storeType = storeType;
-    }
-
-    public String getProvider() {
-        return provider;
-    }
-
-    public void setProvider(String provider) {
-        this.provider = provider;
-    }
-
-    public RedisType getRedisType() {
-        return redisType;
-    }
-
-    public void setRedisType(RedisType redisType) {
-        this.redisType = redisType;
-    }
-
-    public Integer getInitialCapacity() {
-        return initialCapacity;
-    }
-
-    public void setInitialCapacity(Integer initialCapacity) {
-        this.initialCapacity = initialCapacity;
-    }
-
-    public Long getMaximumSize() {
-        return maximumSize;
-    }
-
-    public void setMaximumSize(Long maximumSize) {
-        this.maximumSize = maximumSize;
-    }
-
-    public Long getMaximumWeight() {
-        return maximumWeight;
-    }
-
-    public void setMaximumWeight(Long maximumWeight) {
-        this.maximumWeight = maximumWeight;
-    }
-
     public Long getExpireAfterWrite() {
         return expireAfterWrite;
     }
 
+    /**
+     * 设置 数据写入后的存活时间
+     *
+     * @param expireAfterWrite 数据写入后的存活时间
+     */
     public void setExpireAfterWrite(Long expireAfterWrite) {
         this.expireAfterWrite = expireAfterWrite;
     }
 
+    /**
+     * 访问后的存活时间
+     * <p>
+     * 默认值：300000 单位：毫秒 <br>
+     * {@link  CacheConstants#DEFAULT_EMBED_EXPIRE_AFTER_ACCESS}
+     * <p>
+     * 既知使用此配置项的缓存类型：caffeine。
+     *
+     * @return {@link Long} – 访问后的存活时间
+     */
     public Long getExpireAfterAccess() {
         return expireAfterAccess;
     }
 
+    /**
+     * 设置 访问后的存活时间
+     *
+     * @param expireAfterAccess 访问后的存活时间
+     */
     public void setExpireAfterAccess(Long expireAfterAccess) {
         this.expireAfterAccess = expireAfterAccess;
     }
 
+    /**
+     * 键的引用类型
+     * <p>
+     * 默认值：STRONG <br>
+     * {@link  CacheConstants#DEFAULT_EMBED_KEY_STRENGTH}
+     * <p>
+     * 基于键的引用类型执行驱逐策略。
+     * <p>
+     * 既知使用此配置项的缓存类型：caffeine，可选值：WEAK(弱引用)，STRONG(强引用)。
+     * <p>
+     *
+     * @return {@link ReferenceType} – 键的引用类型
+     */
     public ReferenceType getKeyStrength() {
         return keyStrength;
     }
 
+    /**
+     * 设置 键的引用类型
+     *
+     * @param keyStrength 键的引用类型
+     */
     public void setKeyStrength(ReferenceType keyStrength) {
         this.keyStrength = keyStrength;
     }
 
+    /**
+     * 值的引用类型
+     * <p>
+     * 默认值：STRONG <br>
+     * {@link CacheConstants#DEFAULT_EMBED_VALUE_STRENGTH}
+     * <p>
+     * 基于值的引用类型执行驱逐策略。
+     * <p>
+     * 既知使用此配置项的缓存类型：caffeine，可选值：WEAK(弱引用)，SOFT(软引用)，STRONG(强引用)。
+     *
+     * @return {@link ReferenceType} – 值的引用类型
+     */
     public ReferenceType getValueStrength() {
         return valueStrength;
     }
 
+    /**
+     * 设置 值的引用类型
+     *
+     * @param valueStrength 值的引用类型
+     */
     public void setValueStrength(ReferenceType valueStrength) {
         this.valueStrength = valueStrength;
     }
 
+    /**
+     * CodecProviderId
+     * <p>
+     * 用于值的序列化
+     * <p>
+     * 默认值：<br>
+     * 内嵌缓存：none <br>
+     * 外部缓存：jackson
+     * <p>
+     * {@link CacheConstants#DEFAULT_EMBED_VALUE_CODEC}
+     * {@link CacheConstants#DEFAULT_EXTRA_VALUE_CODEC}
+     * <p>
+     * 可选值：jackson，jdk
+     * <p>
+     * 内嵌缓存的序列化是可选的，外部缓存的序列化是必需的。<br>
+     * 序列化有一定性能损失，因此除非有特殊原因，否则内嵌缓存不建议使用序列化。
+     *
+     * @return {@link String} – CodecProviderId
+     */
     public String getValueCodec() {
         return valueCodec;
     }
 
+    /**
+     * 设置 CodecProviderId
+     *
+     * @param valueCodec CodecProviderId
+     */
     public void setValueCodec(String valueCodec) {
         this.valueCodec = valueCodec;
     }
 
+    /**
+     * 压缩配置
+     * <p>
+     * 用于缓存值序列化后再压缩（默认不压缩）
+     *
+     * @return {@link CompressProps} – 压缩配置
+     */
     public CompressProps getValueCompressor() {
         return valueCompressor;
     }
 
+    /**
+     * 设置 压缩配置
+     *
+     * @param valueCompressor 压缩配置
+     */
     public void setValueCompressor(CompressProps valueCompressor) {
         this.valueCompressor = valueCompressor;
     }
 
+    /**
+     * 是否使用随机存活时间
+     * <p>
+     * 使用随机存活时间，是为了避免大规模的 key 集中过期，然后同时回源查询，造成数据源压力过大。
+     * <p>
+     * 默认值：<br>
+     * 内嵌缓存：true <br>
+     * 外部缓存：true
+     * <p>
+     * {@link CacheConstants#DEFAULT_EMBED_ENABLE_RANDOM_TTL}
+     * {@link CacheConstants#DEFAULT_EXTRA_ENABLE_RANDOM_TTL}
+     * <p>
+     * {@snippet :
+     * import com.igeeksky.xtool.core.lang.RandomUtils;
+     * if(expireAfterWrite > 0 && enableRandomTtl){
+     *      long minTtl = RandomUtils.nextLong(expireAfterWrite * 0.8, expireAfterWrite);
+     *      long maxTtl = expireAfterWrite;
+     * }
+     *}
+     *
+     * @return {@link Boolean} – 是否使用随机存活时间
+     */
     public Boolean getEnableRandomTtl() {
         return enableRandomTtl;
     }
 
+    /**
+     * 设置 是否使用随机存活时间
+     *
+     * @param enableRandomTtl 是否使用随机存活时间
+     */
     public void setEnableRandomTtl(Boolean enableRandomTtl) {
         this.enableRandomTtl = enableRandomTtl;
     }
 
+    /**
+     * 是否允许保存空值
+     * <p>
+     * 如果此选项为 true，当 value 为 null 时，也会保存到缓存，目的是为了减少无效的回源查询。
+     * <p>
+     * 默认值：<br>
+     * 内嵌缓存：true <br>
+     * 外部缓存：true
+     * <p>
+     * {@link CacheConstants#DEFAULT_EMBED_ENABLE_NULL_VALUE}
+     * {@link CacheConstants#DEFAULT_EXTRA_ENABLE_NULL_VALUE}
+     *
+     * @return {@link Boolean} – 是否允许保存空值
+     */
     public Boolean getEnableNullValue() {
         return enableNullValue;
     }
 
+    /**
+     * 设置 是否允许保存空值
+     *
+     * @param enableNullValue 是否允许保存空值
+     */
     public void setEnableNullValue(Boolean enableNullValue) {
         this.enableNullValue = enableNullValue;
     }
 
-    public Boolean getEnableKeyPrefix() {
-        return enableKeyPrefix;
+    /**
+     * 是否附加 group 作为键前缀
+     * <p>
+     * 当使用外部缓存时，如仅使用 cacheName 作为前缀会导致键冲突，则需再附加 group 作为前缀。
+     * <p>
+     * 默认值：<br>
+     * 内嵌缓存：此选项无效 <br>
+     * 外部缓存：true
+     * <p>
+     * {@link CacheConstants#DEFAULT_EXTRA_ENABLE_GROUP_PREFIX}
+     * <p>
+     * 如果 enableGroupPrefix 为 true，则完整的键为：{@code group + ":" + cacheName + ":" + key}。<br>
+     * 如果 enableGroupPrefix 为 false，则完整的键为：{@code cacheName + ":" + key}。
+     *
+     * @return {@link Boolean} – 键是否使用前缀
+     */
+    public Boolean getEnableGroupPrefix() {
+        return enableGroupPrefix;
     }
 
-    public void setEnableKeyPrefix(Boolean enableKeyPrefix) {
-        this.enableKeyPrefix = enableKeyPrefix;
+    /**
+     * 设置 是否附加 group 作为键前缀
+     *
+     * @param enableGroupPrefix 是否附加 group 作为键前缀
+     */
+    public void setEnableGroupPrefix(Boolean enableGroupPrefix) {
+        this.enableGroupPrefix = enableGroupPrefix;
     }
 
+    /**
+     * 扩展参数
+     * <p>
+     * 自定义扩展实现时，如需用到额外的未定义参数，可在此配置。
+     * <p>
+     * 如使用 xcache 内置实现，则无需此配置。<br>
+     * 如不使用，请删除，否则会导致 SpringBoot 读取配置错误而启动失败。
+     *
+     * @return {@code Map<String, Object>} - 扩展参数
+     */
     public Map<String, Object> getParams() {
         return params;
     }
 
+    /**
+     * 设置扩展参数
+     *
+     * @param params 扩展参数
+     */
     public void setParams(Map<String, Object> params) {
         if (params != null) {
             this.params.putAll(params);

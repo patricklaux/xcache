@@ -15,13 +15,15 @@ public class RedisStoreConfig<V> {
 
     private final String name;
 
+    private final String group;
+
     private final Charset charset;
 
     private final RedisType redisType;
 
     private final long expireAfterWrite;
 
-    private final boolean enableKeyPrefix;
+    private final boolean enableGroupPrefix;
 
     private final boolean enableRandomTtl;
 
@@ -35,10 +37,11 @@ public class RedisStoreConfig<V> {
 
     public RedisStoreConfig(StoreConfig<V> storeConfig) {
         this.name = storeConfig.getName();
+        this.group = storeConfig.getGroup();
         this.charset = storeConfig.getCharset();
         this.redisType = storeConfig.getRedisType();
         this.expireAfterWrite = storeConfig.getExpireAfterWrite();
-        this.enableKeyPrefix = storeConfig.isEnableKeyPrefix();
+        this.enableGroupPrefix = storeConfig.isEnableGroupPrefix();
         this.enableRandomTtl = storeConfig.isEnableRandomTtl();
         this.enableNullValue = storeConfig.isEnableNullValue();
         this.enableCompressValue = storeConfig.isEnableCompressValue();
@@ -48,6 +51,10 @@ public class RedisStoreConfig<V> {
 
     public String getName() {
         return name;
+    }
+
+    public String getGroup() {
+        return group;
     }
 
     public Charset getCharset() {
@@ -62,8 +69,8 @@ public class RedisStoreConfig<V> {
         return expireAfterWrite;
     }
 
-    public boolean isEnableKeyPrefix() {
-        return enableKeyPrefix;
+    public boolean isEnableGroupPrefix() {
+        return enableGroupPrefix;
     }
 
     public boolean isEnableRandomTtl() {

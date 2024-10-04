@@ -43,8 +43,18 @@ public interface CacheManager {
      */
     <K, V> Cache<K, V> getOrCreateCache(String cacheName, Class<K> keyType, Class<?>[] keyParams, Class<V> valueType, Class<?>[] valueParams);
 
+    /**
+     * 获取所有缓存对象
+     *
+     * @return 所有缓存对象
+     */
     Collection<Cache<?, ?>> getAll();
 
+    /**
+     * 获取所有缓存名称
+     *
+     * @return 所有缓存名称
+     */
     Collection<String> getAllCacheNames();
 
 }

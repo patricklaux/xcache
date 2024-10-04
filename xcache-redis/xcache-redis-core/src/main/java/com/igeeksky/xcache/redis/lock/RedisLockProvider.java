@@ -13,12 +13,21 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
+ * Redis 锁的工厂类
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/16
  */
 public class RedisLockProvider implements CacheLockProvider {
 
-    private volatile boolean loaded = false;
+    /**
+     * 脚本是否加载完成
+     */
+    private volatile boolean loadedScript = false;
+
+    /**
+     * 锁对象，用于锁住加载脚本的线程
+     */
     private final Lock lock = new ReentrantLock();
 
     private final ScheduledExecutorService scheduler;
@@ -33,14 +42,14 @@ public class RedisLockProvider implements CacheLockProvider {
 
     @Override
     public RedisLockService get(LockConfig config) {
-        if (!loaded) {
+        if (!loadedScript) {
             lock.lock();
             try {
-                if (!loaded) {
+                if (!loadedScript) {
                     operator.scriptLoad(RedisLockScript.LOCK_SCRIPT);
                     operator.scriptLoad(RedisLockScript.UNLOCK_SCRIPT);
                     operator.scriptLoad(RedisLockScript.NEW_EXPIRE);
-                    loaded = true;
+                    loadedScript = true;
                 }
             } finally {
                 lock.unlock();

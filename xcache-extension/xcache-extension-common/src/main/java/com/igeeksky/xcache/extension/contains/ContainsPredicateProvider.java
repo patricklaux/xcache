@@ -15,6 +15,6 @@ public interface ContainsPredicateProvider {
      * @param <K>    键类型
      * @return ContainsPredicate，用于判断数据源是否存在 key 对应的 value
      */
-    <K> ContainsPredicate<K> get(ContainsConfig<K> config);
+    <K> ContainsPredicate<K> get(PredicateConfig<K> config);
 
 }

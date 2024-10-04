@@ -155,6 +155,11 @@ public class PropsUtil {
             to.setLeaseTime(leaseTime);
         }
 
+        Boolean enableGroupPrefix = from.getEnableGroupPrefix();
+        if (enableGroupPrefix != null) {
+            to.setEnableGroupPrefix(enableGroupPrefix);
+        }
+
         to.setParams(from.getParams());
     }
 
@@ -173,11 +178,6 @@ public class PropsUtil {
             to.setSecond(second);
         }
 
-        String infix = StringUtils.trimToNull(from.getInfix());
-        if (infix != null) {
-            to.setInfix(infix);
-        }
-
         Long maxLen = from.getMaxLen();
         if (maxLen != null) {
             to.setMaxLen(maxLen);
@@ -188,6 +188,11 @@ public class PropsUtil {
             to.setProvider(provider);
         }
 
+        Boolean enableGroupPrefix = from.getEnableGroupPrefix();
+        if (enableGroupPrefix != null) {
+            to.setEnableGroupPrefix(enableGroupPrefix);
+        }
+
         to.setParams(from.getParams());
     }
 
@@ -196,21 +201,24 @@ public class PropsUtil {
             return;
         }
 
-        String provider = StringUtils.trimToNull(from.getProvider());
-        if (provider != null) {
-            to.setProvider(provider);
-        }
-        String infix = StringUtils.trimToNull(from.getInfix());
-        if (infix != null) {
-            to.setInfix(infix);
-        }
         Long period = from.getPeriod();
         if (period != null) {
             to.setPeriod(period);
         }
+
+        String provider = StringUtils.trimToNull(from.getProvider());
+        if (provider != null) {
+            to.setProvider(provider);
+        }
+
         Long stopAfterAccess = from.getStopAfterAccess();
         if (stopAfterAccess != null) {
             to.setStopAfterAccess(stopAfterAccess);
+        }
+
+        Boolean enableGroupPrefix = from.getEnableGroupPrefix();
+        if (enableGroupPrefix != null) {
+            to.setEnableGroupPrefix(enableGroupPrefix);
         }
 
         to.setParams(from.getParams());
@@ -276,11 +284,6 @@ public class PropsUtil {
             to.setValueCodec(valueSerializer);
         }
 
-        Boolean enableKeyPrefix = from.getEnableKeyPrefix();
-        if (enableKeyPrefix != null) {
-            to.setEnableKeyPrefix(enableKeyPrefix);
-        }
-
         Boolean enableRandomTtl = from.getEnableRandomTtl();
         if (enableRandomTtl != null) {
             to.setEnableRandomTtl(enableRandomTtl);
@@ -289,6 +292,11 @@ public class PropsUtil {
         Boolean enableNullValue = from.getEnableNullValue();
         if (enableNullValue != null) {
             to.setEnableNullValue(enableNullValue);
+        }
+
+        Boolean enableGroupPrefix = from.getEnableGroupPrefix();
+        if (enableGroupPrefix != null) {
+            to.setEnableGroupPrefix(enableGroupPrefix);
         }
 
         replaceProps(from.getValueCompressor(), to.getValueCompressor());
@@ -319,6 +327,12 @@ public class PropsUtil {
         to.setParams(from.getParams());
     }
 
+    /**
+     * 模板配置默认值
+     *
+     * @param id 缓存模板ID
+     * @return {@link Template} 模板配置默认值
+     */
     public static Template defaultTemplate(String id) {
         Template props = new Template();
         props.setId(id);
@@ -333,36 +347,63 @@ public class PropsUtil {
 
         props.setFirst(defaultEmbedStoreProps());
         props.setSecond(defaultExtraStoreProps());
-        props.setThird(defaultExtraStoreProps());
+
+        StoreProps third = defaultExtraStoreProps();
+        third.setProvider(CacheConstants.NONE);
+        props.setThird(third);
+
         return props;
     }
 
-    private static RefreshProps defaultRefreshProps() {
+    /**
+     * 缓存数据刷新默认配置
+     *
+     * @return {@link RefreshProps} 缓存数据刷新默认配置
+     */
+    public static RefreshProps defaultRefreshProps() {
         RefreshProps props = new RefreshProps();
         props.setPeriod(CacheConstants.DEFAULT_REFRESH_PERIOD);
-        props.setStopAfterAccess(CacheConstants.DEFAULT_REFRESH_STOP_AFTER_ACCESS);
         props.setProvider(CacheConstants.DEFAULT_REFRESH_PROVIDER);
+        props.setStopAfterAccess(CacheConstants.DEFAULT_REFRESH_STOP_AFTER_ACCESS);
+        props.setEnableGroupPrefix(CacheConstants.DEFAULT_ENABLE_GROUP_PREFIX);
         return props;
     }
 
-    private static LockProps defaultLockProps() {
+    /**
+     * 缓存锁默认配置
+     *
+     * @return {@link LockProps} 默认缓存锁配置
+     */
+    public static LockProps defaultLockProps() {
         LockProps props = new LockProps();
         props.setProvider(CacheConstants.DEFAULT_LOCK_PROVIDER);
-        props.setInitialCapacity(CacheConstants.DEFAULT_LOCK_INITIAL_CAPACITY);
         props.setLeaseTime(CacheConstants.DEFAULT_LOCK_LEASE_TIME);
+        props.setInitialCapacity(CacheConstants.DEFAULT_LOCK_INITIAL_CAPACITY);
+        props.setEnableGroupPrefix(CacheConstants.DEFAULT_ENABLE_GROUP_PREFIX);
         return props;
     }
 
-    private static SyncProps defaultSyncProps() {
+    /**
+     * 缓存数据同步默认配置
+     *
+     * @return {@link SyncProps} 缓存数据同步默认配置
+     */
+    public static SyncProps defaultSyncProps() {
         SyncProps props = new SyncProps();
         props.setFirst(SyncType.ALL);
         props.setSecond(SyncType.NONE);
         props.setMaxLen(CacheConstants.DEFAULT_SYNC_MAX_LEN);
         props.setProvider(CacheConstants.DEFAULT_SYNC_PROVIDER);
+        props.setEnableGroupPrefix(CacheConstants.DEFAULT_ENABLE_GROUP_PREFIX);
         return props;
     }
 
-    private static StoreProps defaultEmbedStoreProps() {
+    /**
+     * 内嵌缓存默认配置
+     *
+     * @return {@link StoreProps} 内嵌缓存默认配置
+     */
+    public static StoreProps defaultEmbedStoreProps() {
         StoreProps props = new StoreProps();
         props.setStoreType(StoreType.EMBED);
         props.setRedisType(RedisType.STRING);
@@ -382,13 +423,19 @@ public class PropsUtil {
         props.setValueCodec(CacheConstants.DEFAULT_EMBED_VALUE_CODEC);
         props.setValueCompressor(defaultCompressProps());
 
-        props.setEnableKeyPrefix(CacheConstants.DEFAULT_EMBED_ENABLE_KEY_PREFIX);
         props.setEnableRandomTtl(CacheConstants.DEFAULT_EMBED_ENABLE_RANDOM_TTL);
         props.setEnableNullValue(CacheConstants.DEFAULT_EMBED_ENABLE_NULL_VALUE);
+
+        props.setEnableGroupPrefix(CacheConstants.DEFAULT_EMBED_ENABLE_GROUP_PREFIX);
         return props;
     }
 
-    private static StoreProps defaultExtraStoreProps() {
+    /**
+     * 外部缓存默认配置
+     *
+     * @return {@link StoreProps} 外部缓存默认配置
+     */
+    public static StoreProps defaultExtraStoreProps() {
         StoreProps props = new StoreProps();
         props.setStoreType(StoreType.EXTRA);
         props.setRedisType(RedisType.STRING);
@@ -408,13 +455,19 @@ public class PropsUtil {
         props.setValueCodec(CacheConstants.DEFAULT_EXTRA_VALUE_CODEC);
         props.setValueCompressor(defaultCompressProps());
 
-        props.setEnableKeyPrefix(CacheConstants.DEFAULT_EXTRA_ENABLE_KEY_PREFIX);
         props.setEnableRandomTtl(CacheConstants.DEFAULT_EXTRA_ENABLE_RANDOM_TTL);
         props.setEnableNullValue(CacheConstants.DEFAULT_EXTRA_ENABLE_NULL_VALUE);
+
+        props.setEnableGroupPrefix(CacheConstants.DEFAULT_EXTRA_ENABLE_GROUP_PREFIX);
         return props;
     }
 
-    private static CompressProps defaultCompressProps() {
+    /**
+     * 缓存数据压缩默认配置
+     *
+     * @return {@link CompressProps} 缓存数据压缩默认配置
+     */
+    public static CompressProps defaultCompressProps() {
         CompressProps props = new CompressProps();
         props.setLevel(CacheConstants.DEFAULT_VALUE_COMPRESSOR_LEVEL);
         props.setNowrap(CacheConstants.DEFAULT_VALUE_COMPRESSOR_WRAP);

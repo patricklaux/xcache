@@ -2,11 +2,11 @@ package com.igeeksky.xcache.caffeine;
 
 import com.github.benmanes.caffeine.cache.Expiry;
 import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xtool.core.lang.RandomUtils;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.time.Duration;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * <p><b>随机存活时间策略</b></p>
@@ -37,7 +37,7 @@ public class RandomRangeExpiry<K, V> implements Expiry<K, CacheValue<V>> {
 
     @Override
     public long expireAfterCreate(@NonNull K key, @NonNull CacheValue<V> cacheValue, long currentTime) {
-        return ThreadLocalRandom.current().nextLong(expireAfterCreateNanosMin, expireAfterCreateNanosMax);
+        return RandomUtils.nextLong(expireAfterCreateNanosMin, expireAfterCreateNanosMax);
     }
 
     @Override

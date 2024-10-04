@@ -7,10 +7,9 @@ import com.igeeksky.xcache.extension.codec.CodecConfig;
 import com.igeeksky.xcache.extension.codec.CodecProvider;
 import com.igeeksky.xcache.extension.compress.CompressConfig;
 import com.igeeksky.xcache.extension.compress.CompressorProvider;
-import com.igeeksky.xcache.extension.contains.ContainsConfig;
 import com.igeeksky.xcache.extension.contains.ContainsPredicate;
 import com.igeeksky.xcache.extension.contains.ContainsPredicateProvider;
-import com.igeeksky.xcache.extension.contains.EmbedContainsPredicate;
+import com.igeeksky.xcache.extension.contains.PredicateConfig;
 import com.igeeksky.xcache.extension.lock.*;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
@@ -22,13 +21,15 @@ import com.igeeksky.xcache.extension.sync.CacheSyncProvider;
 import com.igeeksky.xcache.extension.sync.SyncConfig;
 import com.igeeksky.xcache.extension.sync.SyncMessageListener;
 import com.igeeksky.xcache.props.*;
-import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.lang.StringUtils;
 import com.igeeksky.xtool.core.lang.codec.Codec;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
 import com.igeeksky.xtool.core.lang.compress.Compressor;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
@@ -42,46 +43,26 @@ import java.util.function.Supplier;
 @SuppressWarnings("unchecked")
 public class CacheManagerImpl implements CacheManager {
 
-    private final String app;
     private final String sid = UUID.randomUUID().toString();
+    private final String group;
 
-    private final ComponentRegister register;
+    private final ComponentManager componentManager;
 
     private final ConcurrentMap<String, CacheProps> caches = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Template> templates = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<String, Cache<?, ?>> cached = new ConcurrentHashMap<>();
 
-    private final ConcurrentMap<String, CacheLoader<?, ?>> loaders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CacheWriter<?, ?>> writers = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, StoreProvider> storeProviders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CacheSyncProvider> syncProviders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CacheRefreshProvider> refreshProviders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CacheStatProvider> statProviders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CacheLockProvider> lockProviders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CodecProvider> codecProviders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CompressorProvider> compressorProviders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, ContainsPredicateProvider> predicateProviders = new ConcurrentHashMap<>();
+    public CacheManagerImpl(CacheManagerConfig managerConfig) {
+        this.group = managerConfig.getApp();
+        this.componentManager = managerConfig.getComponentManager();
 
-    public CacheManagerImpl(String app, ComponentRegister register, Map<String, Template> templates, Map<String, CacheProps> caches) {
-        this.app = StringUtils.trimToNull(app);
-        requireNonNull(this.app, () -> "application must not be null or empty");
-
-        this.register = register;
-        requireNonNull(register, () -> "register must not be null");
-
-        if (Maps.isEmpty(templates)) {
-            throw new CacheConfigException("templates must not be null or empty");
-        }
-
-        templates.forEach((id, template) -> {
+        managerConfig.getTemplates().forEach((id, template) -> {
             Template finalTemplate = PropsUtil.replaceTemplate(template, PropsUtil.defaultTemplate(id));
             this.templates.put(id, finalTemplate);
         });
 
-        if (Maps.isNotEmpty(caches)) {
-            this.caches.putAll(caches);
-        }
+        this.caches.putAll(managerConfig.getCaches());
     }
 
     @Override
@@ -101,47 +82,51 @@ public class CacheManagerImpl implements CacheManager {
         CacheProps cacheProps = this.getOrCreateCacheProps(name);
 
         // 2. 创建 CacheConfig
-        CacheConfig<K, V> cacheConfig = CacheConfig.builder(keyType, keyParams, valueType, valueParams)
-                .sid(sid)
-                .name(name)
-                .app(app)
-                .charset(cacheProps.getCharset())
-                .build();
+        CacheConfig<K, V> cacheConfig = this.buildCacheConfig(cacheProps, keyType, keyParams, valueType, valueParams);
 
         Store<V>[] stores = new Store[3];
-        stores[0] = this.getStore(this.buildStoreConfig(cacheProps.getFirst(), cacheConfig));
-        stores[1] = this.getStore(this.buildStoreConfig(cacheProps.getSecond(), cacheConfig));
-        stores[2] = this.getStore(this.buildStoreConfig(cacheProps.getThird(), cacheConfig));
+        stores[0] = this.getStore(cacheProps.getFirst(), cacheConfig);
+        stores[1] = this.getStore(cacheProps.getSecond(), cacheConfig);
+        stores[2] = this.getStore(cacheProps.getThird(), cacheConfig);
 
-        CacheLoader<K, V> cacheLoader = this.getCacheLoader(name);
-        CacheWriter<K, V> cacheWriter = this.getCacheWriter(name);
+        CacheLoader<K, V> cacheLoader = componentManager.getCacheLoader(name);
+        CacheWriter<K, V> cacheWriter = componentManager.getCacheWriter(name);
 
-        int count = CacheBuilder.count(stores);
-        if (count == 0) {
-            return new NoOpCache<>(cacheConfig, cacheLoader, cacheWriter);
+        if (CacheBuilder.count(stores) == 0) {
+            return new NoopCache<>(cacheConfig, cacheLoader, cacheWriter);
         }
+
+        CodecConfig<K> keyCodecConfig = this.buildKeyCodecConfig(cacheConfig);
+        KeyCodec<K> keyCodec = this.getKeyCodec(cacheProps.getKeyCodec(), keyCodecConfig);
 
         LockConfig lockConfig = this.buildLockConfig(cacheProps.getCacheLock(), cacheConfig);
         LockService cacheLock = this.getCacheLock(lockConfig);
 
-        StatConfig statConfig = this.buildStatConfig(cacheProps.getCacheStat(), cacheConfig);
-        CodecConfig<K> keyCodecConfig = this.buildKeyCodecConfig(cacheConfig);
-        ContainsConfig<K> containsConfig = this.buildContainsConfig(cacheProps.getContainsPredicate(), cacheConfig);
-        RefreshConfig refreshConfig = this.buildRefreshConfig(cacheProps.getCacheRefresh(), cacheLock, cacheConfig);
-        SyncConfig<V> syncConfig = this.buildSyncConfig(cacheProps.getCacheSync(), stores[0], stores[1], cacheConfig);
+        PredicateConfig<K> predicateConfig = this.buildPredicateConfig(cacheProps.getContainsPredicate(), cacheConfig);
+        ContainsPredicate<K> predicate = this.getContainsPredicate(predicateConfig);
 
-        ExtendConfig<K, V> extendConfig = ExtendConfig.builder(cacheLoader)
+        RefreshConfig refreshConfig = this.buildRefreshConfig(cacheProps.getCacheRefresh(), cacheLock, cacheConfig);
+        CacheRefresh cacheRefresh = this.getCacheRefresh(refreshConfig);
+
+        StatConfig statConfig = this.buildStatConfig(cacheProps.getCacheStat(), cacheConfig);
+        CacheStatMonitor statMonitor = this.getStatMonitor(statConfig);
+
+        SyncConfig<V> syncConfig = this.buildSyncConfig(cacheProps.getCacheSync(), stores, cacheConfig);
+        CacheSyncMonitor syncMonitor = this.getSyncMonitor(syncConfig);
+
+        ExtendConfig.Builder<K, V> extendBuilder = ExtendConfig.builder();
+        extendBuilder.cacheLoader(cacheLoader)
                 .cacheWriter(cacheWriter)
                 .cacheLock(cacheLock)
-                .keyCodec(this.getKeyCodec(cacheProps.getKeyCodec(), keyCodecConfig))
-                .statMonitor(this.getStatMonitor(statConfig))
-                .syncMonitor(this.getSyncMonitor(syncConfig))
-                .containsPredicate(this.getContainsPredicate(containsConfig))
-                .cacheRefresh(this.getCacheRefresh(refreshConfig))
+                .keyCodec(keyCodec)
+                .statMonitor(statMonitor)
+                .syncMonitor(syncMonitor)
+                .containsPredicate(predicate)
+                .cacheRefresh(cacheRefresh)
                 .build();
 
         return CacheBuilder.builder(cacheConfig)
-                .extendConfig(extendConfig)
+                .extendConfig(extendBuilder.build())
                 .firstStore(stores[0])
                 .secondStore(stores[1])
                 .thirdStore(stores[2])
@@ -161,13 +146,14 @@ public class CacheManagerImpl implements CacheManager {
             if (userProps == null) {
                 userProps = new CacheProps(nameKey);
             }
+
             // 获取 “模板 ID”
-            String id = getTemplateId(userProps.getTemplateId());
-            userProps.setTemplateId(id);
+            String templateId = getTemplateId(userProps.getTemplateId());
+            userProps.setTemplateId(templateId);
 
             // 获取 “最终模板配置”
-            Template template = templates.get(id);
-            requireNonNull(template, () -> "cache:[" + nameKey + "], template:[" + id + "] doesn't exist.");
+            Template template = templates.get(templateId);
+            requireNonNull(template, () -> "cache:[" + nameKey + "], template:[" + templateId + "] doesn't exist.");
 
             // “最终模板配置” 转换为 “初始缓存配置”
             CacheProps initProps = PropsUtil.buildCacheProps(nameKey, template);
@@ -182,19 +168,159 @@ public class CacheManagerImpl implements CacheManager {
         return id != null ? id : CacheConstants.DEFAULT_TEMPLATE_ID;
     }
 
+    private <K, V> CacheConfig<K, V> buildCacheConfig(CacheProps cacheProps, Class<K> keyType, Class<?>[] keyParams,
+                                                      Class<V> valueType, Class<?>[] valueParams) {
+        return CacheConfig.builder(keyType, keyParams, valueType, valueParams)
+                .sid(this.sid)
+                .name(cacheProps.getName())
+                .group(this.group)
+                .charset(cacheProps.getCharset())
+                .build();
+    }
+
+    private <K, V> Store<V> getStore(StoreProps storeProps, CacheConfig<K, V> cacheConfig) {
+        String beanId = storeProps.getProvider();
+        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+            return null;
+        }
+
+        String name = cacheConfig.getName();
+        StoreConfig<V> storeConfig = StoreConfig.builder(cacheConfig.getValueType(), cacheConfig.getValueParams())
+                .name(name)
+                .group(cacheConfig.getGroup())
+                .charset(cacheConfig.getCharset())
+                .provider(beanId)
+                .initialCapacity(storeProps.getInitialCapacity())
+                .maximumSize(storeProps.getMaximumSize())
+                .maximumWeight(storeProps.getMaximumWeight())
+                .keyStrength(storeProps.getKeyStrength())
+                .valueStrength(storeProps.getValueStrength())
+                .expireAfterWrite(storeProps.getExpireAfterWrite())
+                .expireAfterAccess(storeProps.getExpireAfterAccess())
+                .enableRandomTtl(storeProps.getEnableRandomTtl())
+                .enableNullValue(storeProps.getEnableNullValue())
+                .enableGroupPrefix(storeProps.getEnableGroupPrefix())
+                .redisType(storeProps.getRedisType())
+                .valueCodec(this.getValueCodec(storeProps.getValueCodec(), cacheConfig))
+                .valueCompressor(this.getCompressor(storeProps.getValueCompressor()))
+                .params(storeProps.getParams())
+                .build();
+
+        StoreProvider storeProvider = componentManager.getStoreProvider(beanId);
+        requireNonNull(storeProvider, () -> "Cache:[" + name + "], CacheStoreProvider:[" + beanId + "] is undefined.");
+
+        Store<V> store = storeProvider.getStore(storeConfig);
+        requireNonNull(store, () -> "Cache:[" + name + "], Unable to get store from beanId:[" + beanId + "].");
+
+        return store;
+    }
+
+    private <K, V> Codec<V> getValueCodec(String beanId, CacheConfig<K, V> cacheConfig) {
+        CodecConfig<V> codecConfig = CodecConfig.builder(cacheConfig.getValueType(), cacheConfig.getValueParams())
+                .name(cacheConfig.getName())
+                .charset(cacheConfig.getCharset())
+                .build();
+
+        return this.getCodec(beanId, codecConfig);
+    }
+
+    private <V> Codec<V> getCodec(String beanId, CodecConfig<V> config) {
+        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+            return null;
+        }
+
+        String name = config.getName();
+
+        CodecProvider codecProvider = componentManager.getCodecProvider(beanId);
+        requireNonNull(codecProvider, () -> "Cache:[" + name + "], CodecProvider:[" + beanId + "] is undefined.");
+
+        Codec<V> codec = codecProvider.getCodec(config);
+        requireNonNull(codec, () -> "Cache:[" + name + "], unable to get codec from codecProvider:[" + beanId + "].");
+
+        return codec;
+    }
+
+    private Compressor getCompressor(CompressProps props) {
+        CompressConfig compressConfig = CompressConfig.builder()
+                .provider(props.getProvider())
+                .level(props.getLevel())
+                .nowrap(props.getNowrap())
+                .build();
+
+        return this.getCompressor(compressConfig);
+    }
+
+    private Compressor getCompressor(CompressConfig config) {
+        String beanId = config.getProvider();
+        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+            return null;
+        }
+
+        CompressorProvider compressorProvider = componentManager.getCompressorProvider(beanId);
+        requireNonNull(compressorProvider, () -> "CompressorProvider:[" + beanId + "] is undefined.");
+
+        Compressor compressor = compressorProvider.get(config);
+        requireNonNull(compressor, () -> "Unable to get compressor from compressorProvider:[" + beanId + "].");
+
+        return compressor;
+    }
+
+    private <K, V> CodecConfig<K> buildKeyCodecConfig(CacheConfig<K, V> cacheConfig) {
+        return CodecConfig.builder(cacheConfig.getKeyType(), cacheConfig.getKeyParams())
+                .name(cacheConfig.getName())
+                .charset(cacheConfig.getCharset())
+                .build();
+    }
+
+    private <K> KeyCodec<K> getKeyCodec(String beanId, CodecConfig<K> config) {
+        String name = config.getName();
+
+        requireNonNull(beanId, () -> "Cache:[" + name + "], KeyCodec must not be null.");
+
+        if (Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+            throw new CacheConfigException("KeyCodec is required and cannot be set to 'none'.");
+        }
+
+        CodecProvider provider = componentManager.getCodecProvider(beanId);
+        requireNonNull(provider, () -> "Cache:[" + name + "], CodecProvider:[" + beanId + "] is undefined.");
+
+        KeyCodec<K> keyCodec = provider.getKeyCodec(config);
+        requireNonNull(keyCodec, () -> "Unable to get KeyCodec from provider:[" + beanId + "].");
+
+        return keyCodec;
+    }
+
+    private <K, V> LockConfig buildLockConfig(LockProps props, CacheConfig<K, V> config) {
+        return LockConfig.builder()
+                .sid(config.getSid())
+                .name(config.getName())
+                .group(config.getGroup())
+                .charset(config.getCharset())
+                .enableGroupPrefix(props.getEnableGroupPrefix())
+                .provider(props.getProvider())
+                .initialCapacity(props.getInitialCapacity())
+                .leaseTime(props.getLeaseTime())
+                .params(props.getParams())
+                .build();
+    }
+
     /**
      * @param config 缓存锁配置
      * @return <p>{@link LockService}</p>
      * <p>如果未配置，默认返回 {@link EmbedLockService}</p>
-     * <p>如果有配置：配置 bean 正确，返回配置的 CacheLock；配置 bean 错误，抛出异常 {@link CacheConfigException} </p>
+     * <p>如果配置错误，抛出异常 {@link CacheConfigException} </p>
      */
     private LockService getCacheLock(LockConfig config) {
         String beanId = config.getProvider();
-        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+        if (beanId == null) {
             return EmbedCacheLockProvider.getInstance().get(config);
         }
 
-        CacheLockProvider provider = lockProviders.get(beanId);
+        if (Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+            throw new CacheConfigException("Cache lock is required and cannot be set to 'none'.");
+        }
+
+        CacheLockProvider provider = componentManager.getLockProvider(beanId);
         requireNonNull(provider, () -> "CacheLockProvider:[" + beanId + "] is undefined.");
 
         LockService cacheLock = provider.get(config);
@@ -203,48 +329,48 @@ public class CacheManagerImpl implements CacheManager {
         return cacheLock;
     }
 
-    /**
-     * @param config 配置
-     * @param <K>    键泛型参数
-     * @return 如果未配置，或配置为 "NONE"，返回默认的 {@link EmbedContainsPredicate}。 <p>
-     * 如果有配置：配置正确，返回配置的 {@link ContainsPredicate}；配置错误，抛出异常 {@link CacheConfigException}
-     */
-    private <K> ContainsPredicate<K> getContainsPredicate(ContainsConfig<K> config) {
-        String beanId = StringUtils.trimToNull(config.getProvider());
-        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
-            return EmbedContainsPredicate.getInstance();
-        }
-
-        ContainsPredicateProvider provider = predicateProviders.get(beanId);
-        requireNonNull(provider, () -> "ContainsPredicateProvider:[" + beanId + "] is undefined.");
-
-        ContainsPredicate<K> predicate = provider.get(config);
-        requireNonNull(predicate, () -> "Unable to get predicate from provider:[" + beanId + "].");
-
-        return predicate;
+    private <K, V> PredicateConfig<K> buildPredicateConfig(String beanId, CacheConfig<K, V> config) {
+        return PredicateConfig.builder(config.getKeyType(), config.getKeyParams())
+                .name(config.getName())
+                .group(config.getGroup())
+                .provider(beanId)
+                .build();
     }
 
-    private CacheStatMonitor getStatMonitor(StatConfig config) {
+    /**
+     * @param config 断言配置
+     * @param <K>    键泛型参数
+     * @return ContainsPredicate 数据存在断言
+     * <p>
+     * 如果未配置，或者配置为 “none”，返回 null；如果配置错误，抛出异常 {@link CacheConfigException}
+     */
+    private <K> ContainsPredicate<K> getContainsPredicate(PredicateConfig<K> config) {
         String beanId = config.getProvider();
         if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
             return null;
         }
 
-        CacheStatProvider provider = statProviders.get(beanId);
-        if (provider == null) {
-            provider = register.logCacheStat(beanId, this);
-            requireNonNull(provider, () -> "CacheStatProvider:[" + beanId + "] is undefined.");
-        }
+        ContainsPredicateProvider predicateProvider = componentManager.getPredicateProvider(beanId);
+        requireNonNull(predicateProvider, () -> "ContainsPredicateProvider:[" + beanId + "] is undefined.");
 
-        return provider.getMonitor(config);
+        ContainsPredicate<K> predicate = predicateProvider.get(config);
+        requireNonNull(predicate, () -> "Unable to get predicate from ContainsPredicateProvider:[" + beanId + "].");
+
+        return predicate;
     }
 
-    private <K, V> CacheLoader<K, V> getCacheLoader(String name) {
-        return (CacheLoader<K, V>) loaders.get(name);
-    }
-
-    private <K, V> CacheWriter<K, V> getCacheWriter(String name) {
-        return (CacheWriter<K, V>) writers.get(name);
+    private <K, V> RefreshConfig buildRefreshConfig(RefreshProps props, LockService lock, CacheConfig<K, V> config) {
+        return RefreshConfig.builder()
+                .name(config.getName())
+                .group(config.getGroup())
+                .charset(config.getCharset())
+                .period(props.getPeriod())
+                .provider(props.getProvider())
+                .stopAfterAccess(props.getStopAfterAccess())
+                .enableGroupPrefix(props.getEnableGroupPrefix())
+                .params(props.getParams())
+                .cacheLock(lock)
+                .build();
     }
 
     private CacheRefresh getCacheRefresh(RefreshConfig config) {
@@ -253,22 +379,54 @@ public class CacheManagerImpl implements CacheManager {
             return null;
         }
 
-        CacheRefreshProvider provider = refreshProviders.get(beanId);
-        if (provider == null) {
-            provider = register.embedCacheRefresh(beanId, this);
-            requireNonNull(provider, () -> "RefreshProvider:[" + beanId + "] is undefined.");
-        }
+        CacheRefreshProvider provider = componentManager.getRefreshProvider(beanId);
+        requireNonNull(provider, () -> "RefreshProvider:[" + beanId + "] is undefined.");
 
         return provider.getCacheRefresh(config);
+    }
+
+    private <K, V> StatConfig buildStatConfig(String provider, CacheConfig<K, V> config) {
+        return StatConfig.builder()
+                .group(config.getGroup())
+                .name(config.getName())
+                .provider(provider)
+                .build();
+    }
+
+    private CacheStatMonitor getStatMonitor(StatConfig config) {
+        String beanId = config.getProvider();
+        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+            return null;
+        }
+
+        CacheStatProvider provider = componentManager.getStatProvider(beanId);
+        requireNonNull(provider, () -> "CacheStatProvider:[" + beanId + "] is undefined.");
+
+        return provider.getMonitor(config);
+    }
+
+    private <K, V> SyncConfig<V> buildSyncConfig(SyncProps props, Store<V>[] stores, CacheConfig<K, V> config) {
+        return SyncConfig.builder(stores[0], stores[1])
+                .group(config.getGroup())
+                .name(config.getName())
+                .sid(config.getSid())
+                .charset(config.getCharset())
+                .first(props.getFirst())
+                .second(props.getSecond())
+                .provider(props.getProvider())
+                .maxLen(props.getMaxLen())
+                .enableGroupPrefix(props.getEnableGroupPrefix())
+                .params(props.getParams())
+                .build();
     }
 
     private <V> CacheSyncMonitor getSyncMonitor(SyncConfig<V> config) {
         String beanId = config.getProvider();
         if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
-            return new CacheSyncMonitor(config, null);
+            return null;
         }
 
-        CacheSyncProvider provider = syncProviders.get(beanId);
+        CacheSyncProvider provider = componentManager.getSyncProvider(beanId);
         requireNonNull(provider, () -> "CacheSyncProvider:[" + beanId + "] is undefined");
 
         provider.register(config.getChannel(), new SyncMessageListener<>(config));
@@ -279,179 +437,6 @@ public class CacheManagerImpl implements CacheManager {
         return monitor;
     }
 
-    private <V> Store<V> getStore(StoreConfig<V> config) {
-        String name = config.getName();
-        String beanId = config.getProvider();
-
-        if (beanId == null) {
-            return null;
-        }
-
-        StoreProvider provider = storeProviders.get(beanId);
-        requireNonNull(provider, () -> "Cache:[" + name + "], CacheStoreProvider:[" + beanId + "] is undefined.");
-
-        Store<V> store = provider.getStore(config);
-        requireNonNull(store, () -> "Cache:[" + name + "], Unable to get store from provider:[" + beanId + "].");
-
-        return store;
-    }
-
-    private <K> KeyCodec<K> getKeyCodec(String beanId, CodecConfig<K> config) {
-        String name = config.getName();
-        CodecProvider provider = codecProviders.get(beanId);
-        requireNonNull(provider, () -> "Cache:[" + name + "], CodecProvider:[" + beanId + "] is undefined.");
-
-        KeyCodec<K> keyCodec = provider.getKeyCodec(config);
-        requireNonNull(keyCodec, () -> "Unable to get KeyCodec from provider:[" + beanId + "].");
-
-        return keyCodec;
-    }
-
-    private <V> Codec<V> getCodec(String beanId, CodecConfig<V> config) {
-        String name = config.getName();
-
-        CodecProvider provider = codecProviders.get(beanId);
-        requireNonNull(provider, () -> "Cache:[" + name + "], CodecProvider:[" + beanId + "] is undefined.");
-
-        Codec<V> codec = provider.getCodec(config);
-        requireNonNull(codec, () -> "Cache:[" + name + "], unable to get codec from provider:[" + beanId + "].");
-
-        return codec;
-    }
-
-    private <K, V> CodecConfig<K> buildKeyCodecConfig(CacheConfig<K, V> config) {
-        return CodecConfig.builder(config.getKeyType(), config.getKeyParams())
-                .name(config.getName())
-                .charset(config.getCharset())
-                .build();
-    }
-
-    private <K, V> StatConfig buildStatConfig(String provider, CacheConfig<K, V> config) {
-        return StatConfig.builder()
-                .name(config.getName())
-                .application(config.getApp())
-                .provider(provider)
-                .build();
-    }
-
-    private <K, V> LockConfig buildLockConfig(LockProps props, CacheConfig<K, V> config) {
-        return LockConfig.builder()
-                .sid(config.getSid())
-                .name(config.getName())
-                .charset(config.getCharset())
-                .infix((props.getInfix()) != null ? props.getInfix() : config.getApp())
-                .provider(props.getProvider())
-                .initialCapacity(props.getInitialCapacity())
-                .leaseTime(props.getLeaseTime())
-                .params(props.getParams())
-                .build();
-    }
-
-    private <K, V> RefreshConfig buildRefreshConfig(RefreshProps props, LockService lock, CacheConfig<K, V> config) {
-        return RefreshConfig.builder()
-                .name(config.getName())
-                .app(config.getApp())
-                .infix(props.getInfix())
-                .charset(config.getCharset())
-                .provider(props.getProvider())
-                .period(props.getPeriod())
-                .stopAfterAccess(props.getStopAfterAccess())
-                .cacheLock(lock)
-                .build();
-    }
-
-    private <K, V> ContainsConfig<K> buildContainsConfig(String provider, CacheConfig<K, V> config) {
-        return ContainsConfig.builder(config.getKeyType(), config.getKeyParams())
-                .name(config.getName())
-                .provider(provider)
-                .build();
-    }
-
-    private <K, V> SyncConfig<V> buildSyncConfig(SyncProps props, Store<V> first, Store<V> second, CacheConfig<K, V> config) {
-        return SyncConfig.builder(first, second)
-                .name(config.getName())
-                .app(config.getApp())
-                .sid(config.getSid())
-                .charset(config.getCharset())
-                .first(props.getFirst())
-                .second(props.getSecond())
-                .provider(props.getProvider())
-                .maxLen(props.getMaxLen())
-                .infix(props.getInfix())
-                .params(props.getParams())
-                .build();
-    }
-
-
-    private <K, V> StoreConfig<V> buildStoreConfig(StoreProps storeProps, CacheConfig<K, V> config) {
-        String provider = storeProps.getProvider();
-        if (provider == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(provider))) {
-            return StoreConfig.builder(config.getValueType(), config.getValueParams()).build();
-        }
-
-        return StoreConfig.builder(config.getValueType(), config.getValueParams())
-                .name(config.getName())
-                .app(config.getApp())
-                .charset(config.getCharset())
-                .provider(provider)
-                .storeType(storeProps.getStoreType())
-                .initialCapacity(storeProps.getInitialCapacity())
-                .maximumSize(storeProps.getMaximumSize())
-                .maximumWeight(storeProps.getMaximumWeight())
-                .keyStrength(storeProps.getKeyStrength())
-                .valueStrength(storeProps.getValueStrength())
-                .expireAfterWrite(storeProps.getExpireAfterWrite())
-                .expireAfterAccess(storeProps.getExpireAfterAccess())
-                .enableKeyPrefix(storeProps.getEnableKeyPrefix())
-                .enableRandomTtl(storeProps.getEnableRandomTtl())
-                .enableNullValue(storeProps.getEnableNullValue())
-                .redisType(storeProps.getRedisType())
-                .valueCodec(this.getValueCodec(storeProps.getValueCodec(), config))
-                .valueCompressor(this.getCompressor(storeProps.getValueCompressor()))
-                .params(storeProps.getParams())
-                .build();
-    }
-
-    private <K, V> Codec<V> getValueCodec(String provider, CacheConfig<K, V> config) {
-        if (provider == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(provider))) {
-            return null;
-        }
-
-        CodecConfig<V> codecConfig = CodecConfig.builder(config.getValueType(), config.getValueParams())
-                .name(config.getName())
-                .charset(config.getCharset())
-                .build();
-
-        return this.getCodec(provider, codecConfig);
-    }
-
-    private Compressor getCompressor(CompressProps props) {
-        String provider = props.getProvider();
-        if (provider == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(provider))) {
-            return null;
-        }
-
-        CompressConfig compressConfig = CompressConfig.builder()
-                .provider(provider)
-                .level(props.getLevel())
-                .nowrap(props.getNowrap())
-                .build();
-
-        return this.getCompressor(compressConfig);
-    }
-
-    private Compressor getCompressor(CompressConfig config) {
-        String beanId = config.getProvider();
-
-        CompressorProvider provider = compressorProviders.get(beanId);
-        requireNonNull(provider, () -> "CompressorProvider:[" + beanId + "] is undefined.");
-
-        Compressor compressor = provider.get(config);
-        requireNonNull(compressor, () -> "Unable to get compressor from provider:[" + beanId + "].");
-
-        return compressor;
-    }
-
     @Override
     public Collection<Cache<?, ?>> getAll() {
         return Collections.unmodifiableCollection(cached.values());
@@ -460,46 +445,6 @@ public class CacheManagerImpl implements CacheManager {
     @Override
     public Collection<String> getAllCacheNames() {
         return Collections.unmodifiableCollection(cached.keySet());
-    }
-
-    public void addProvider(String beanId, CodecProvider provider) {
-        this.codecProviders.put(beanId, provider);
-    }
-
-    public void addProvider(String beanId, CompressorProvider provider) {
-        this.compressorProviders.put(beanId, provider);
-    }
-
-    public void addProvider(String beanId, CacheSyncProvider provider) {
-        this.syncProviders.put(beanId, provider);
-    }
-
-    public void addProvider(String beanId, CacheStatProvider provider) {
-        this.statProviders.put(beanId, provider);
-    }
-
-    public void addProvider(String beanId, CacheLockProvider provider) {
-        this.lockProviders.put(beanId, provider);
-    }
-
-    public void addProvider(String beanId, ContainsPredicateProvider provider) {
-        this.predicateProviders.put(beanId, provider);
-    }
-
-    public void addProvider(String beanId, StoreProvider provider) {
-        this.storeProviders.put(beanId, provider);
-    }
-
-    public void addCacheLoader(String beanId, CacheLoader<?, ?> loader) {
-        this.loaders.put(beanId, loader);
-    }
-
-    public void addCacheWriter(String beanId, CacheWriter<?, ?> writer) {
-        this.writers.put(beanId, writer);
-    }
-
-    public void addProvider(String beanId, CacheRefreshProvider provider) {
-        this.refreshProviders.put(beanId, provider);
     }
 
     private static void requireNonNull(Object obj, Supplier<String> errMsg) {

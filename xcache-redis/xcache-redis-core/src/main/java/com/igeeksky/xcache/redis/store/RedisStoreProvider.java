@@ -15,10 +15,10 @@ import java.util.Objects;
  */
 public class RedisStoreProvider implements StoreProvider {
 
-    private final RedisOperator connection;
+    private final RedisOperator operator;
 
     public RedisStoreProvider(RedisOperatorFactory factory) {
-        this.connection = factory.getRedisOperator();
+        this.operator = factory.getRedisOperator();
     }
 
     @Override
@@ -26,9 +26,9 @@ public class RedisStoreProvider implements StoreProvider {
         RedisStoreConfig<V> config = new RedisStoreConfig<>(storeConfig);
         RedisType redisType = config.getRedisType();
         if (redisType == null || Objects.equals(RedisType.STRING, redisType)) {
-            return new RedisStringStore<>(this.connection, config);
+            return new RedisStringStore<>(this.operator, config);
         }
-        return new RedisHashStore<>(this.connection, config);
+        return new RedisHashStore<>(this.operator, config);
     }
 
 }

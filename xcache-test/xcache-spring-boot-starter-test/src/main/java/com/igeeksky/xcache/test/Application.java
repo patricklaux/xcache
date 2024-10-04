@@ -11,7 +11,6 @@ import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoCo
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-27
  */
-//@EnableCaching
 @EnableCache(basePackages = {"com.igeeksky.xcache.test"})
 @SpringBootApplication(scanBasePackages = "com.igeeksky.xcache.test",
         exclude = {RedisRepositoriesAutoConfiguration.class, RedisAutoConfiguration.class})
