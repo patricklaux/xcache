@@ -12,6 +12,16 @@ Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架�
 
 **说明**：
 
+1. Cache：缓存实例。
+2. CacheStore：缓存数据存储，每个缓存实例最多可支持三级缓存数据存储。
+3. CacheStat：缓存指标计数，用于记录缓存方法调用次数及结果。
+4. StatCollector：缓存指标统计信息的采集与发布（可选择发布到日志或 Redis）。
+5. CacheSync：缓存数据同步，用于维护各个缓存实例的数据一致性。
+6. MQ：消息队列，用于中转数据同步消息或缓存指标统计消息（已有实现采用 Redis Stream）。
+7. CacheWriter：缓存数据回写，当缓存数据发生变化时，将数据写入到数据源。
+8. CacheLoader：回源加载数据，当缓存无数据或需定期刷新时，从数据源加载新数据。
+9. dataSource：数据源。
+
 
 
 ## 3. 特性
@@ -230,7 +240,7 @@ public class UserCacheService {
 }
 ```
 
-### 5.4. 更多参考信息
+### 5.4. 更多使用信息
 
 详细介绍：[Xcache 使用手册](docs/Reference.md)
 
@@ -256,7 +266,7 @@ mvn clean install
 
 ## 7. 项目参与
 
-### 7.1. 分支介绍
+### 7.1. 分支开发
 
 | 分支     | 说明                  |
 | -------- | --------------------- |
@@ -269,15 +279,15 @@ mvn clean install
 
 https://github.com/patricklaux/xcache/discussions
 
-如您希望了解如何使用 xcache，或在使用中遇到问题无法解决，欢迎提问。
+如您希望了解如何使用 xcache，或在使用中遇到问题无法解决，欢迎在此提问。
 
 ### 7.3. 建议反馈
 
 https://github.com/patricklaux/xcache/issues
 
-如您发现功能缺陷，或有任何开发建议，欢迎提交。
+如您发现功能缺陷，或有任何开发建议，欢迎在此提交。
 
-如发现安全漏洞，请私下与我联系。
+如您发现安全漏洞，请私信与我联系。
 
 ## 8. 许可证
 
