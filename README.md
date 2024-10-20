@@ -48,7 +48,7 @@ JDK：21+
 
 ## 5. 开始使用
 
-以下代码片段来自于 [xcache-samples-base](https://github.com/patricklaux/xcache-samples/tree/main/xcache-samples-base)，如需获取更详细信息，您可以克隆示例项目到本地进行调试。
+以下代码片段来自于 [xcache-samples](https://github.com/patricklaux/xcache-samples)，如需获取更详细信息，您可以克隆示例项目到本地进行调试。
 
 ```bash
 git clone https://github.com/patricklaux/xcache-samples.git
@@ -84,16 +84,16 @@ xcache:
       second: # 二级缓存配置
         provider: none # 缓存存储提供者实例 id（如果配置为 none，则表示不使用二级缓存）
         store-type: EXTRA # 缓存存储类型，根据类型自动填充默认配置
-  cache: # 缓存个性配置，列表类型，可配置零至多个
+  cache: # 缓存实例个性配置，列表类型，可配置零至多个
     - name: user # 缓存名称，用于区分不同的缓存对象
       template-id: t0 # 指定使用的模板为 t0（对应属性：xcache.template[i].id）
 ```
 
 **说明**：
 
-1. 同一应用中，一般会有多个不同名称的缓存对象，它们的配置通常大部分相同。
+1. 同一应用中，一般会有多个不同名称的缓存实例，它们的配置通常大部分相同。
 
-   为了避免填写重复配置，可创建一个公共配置模板，缓存个性配置中则只需填写与该模板的差异部分。
+   为避免重复填写配置，可创建一个公共配置模板，缓存实例个性配置则只需填写与该模板的差异部分。
 
 2. Xcache 提供了丰富的配置项，绝大多数都有默认值，因此可以省略而无需填写。
 
@@ -243,8 +243,6 @@ public class UserCacheService {
 ### 5.4. 更多使用信息
 
 详细介绍：[Xcache 使用手册](docs/Reference.md)
-
-示例项目：[xcache-samples](https://github.com/patricklaux/xcache-samples)
 
 ## 6. 项目构建
 

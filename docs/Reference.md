@@ -1,50 +1,78 @@
-## Xcache  Reference
+## Xcache  Reference Guide
 
-[![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html) [![Release](https://img.shields.io/github/v/release/patricklaux/xcache)](https://github.com/patricklaux/xcache/releases) [![Maven](https://img.shields.io/maven-central/v/com.igeeksky.xcache/xcache-parent.svg)](https://central.sonatype.com/namespace/com.igeeksky.xcache) [![Last commit](https://img.shields.io/github/last-commit/patricklaux/xcache)](https://github.com/patricklaux/xcache/commits)
+Author: Patrick.Lau		Version: 1.0.0
 
-## 简介
+## 1. 基本说明
+
+### 1.1. 文档版本
+
+此文档最新版本位于 https://github.com/patricklaux/xcache/blob/main/docs/Reference.md，如您有任何改进，非常欢迎您提交 pr。
+
+### 1.2. 获取帮助
+
+https://github.com/patricklaux/xcache/discussions
+
+如您希望了解如何使用 xcache，或在使用中遇到问题无法解决，欢迎在此提问。
+
+### 1.3. 建议反馈
+
+https://github.com/patricklaux/xcache/issues
+
+如您发现功能缺陷，或有任何开发建议，欢迎在此提交。
+
+如您发现安全漏洞，请私信与我联系。
+
+### 1.4. 项目测试
+
+https://github.com/patricklaux/xcache/tree/main/xcache-test
+
+如您希望扩展实现，又或者对某处代码逻辑有疑问，您可以参考此测试项目，并对相关实现进行调试。
+
+当然，也欢迎您补充更多的测试用例。
+
+## 2. 相关介绍
+
+### 2.1. 简介
 
 Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架。
 
-## 架构
+### 2.2. 架构
 
 ![Architecture](images/architecture.png)
 
 **说明**：
 
+1. Cache：缓存实例。
+2. CacheStore：缓存数据存储，每个缓存实例最多可支持三级缓存数据存储。
+3. CacheStat：缓存指标计数，用于记录缓存方法调用次数及结果。
+4. StatCollector：缓存指标统计信息的采集与发布（可选择发布到日志或 Redis）。
+5. CacheSync：缓存数据同步，用于维护各个缓存实例的数据一致性。
+6. MQ：消息队列，用于中转数据同步消息或缓存指标统计消息（已有实现采用 Redis Stream）。
+7. CacheWriter：缓存数据回写，当缓存数据发生变化时，将数据写入到数据源。
+8. CacheLoader：回源加载数据，当缓存无数据或需定期刷新时，从数据源加载新数据。
+9. dataSource：数据源。
 
-
-## 特性
-
-- 支持多种缓存模式：Cache-Aside，Read-Through，Write-Through，Write-Behind。
-- 支持缓存数据同步：通过缓存事件广播，多个应用实例的缓存数据保持一致。
-- 支持缓存指标统计：通过日志方式输出和 Redis Stream 方式输出，便于统计各种缓存指标。
-- 支持随机存活时间：避免大量的 key 集中过期，导致数据源压力过大。
-- 支持缓存自动刷新：自动刷新缓存数据，避免慢查询导致应用响应缓慢。
-- 支持数据回源加锁：加锁确保相同的键同时仅有一个线程回源查询，降低回源次数，减轻数据源压力。
-- 支持缓存数据压缩：通过压缩数据，降低内存消耗。
-- 支持多级缓存实现：内嵌缓存采用 Caffeine，外部缓存采用 Redis，并可通过实现 Store 接口扩展缓存能力，最多可支持三级缓存。
-- 支持数据存在断言：通过实现数据存在断言接口，譬如 Bloom Filter，避免回源查询。
-- 支持缓存空值：当数据源确定无数据时，可缓存空值，避免缓存穿透。
-- 虚拟线程特别优化：需要加锁执行或 IO 等待的定时任务，采用虚拟线程执行，降低平台线程资源占用。
-- 更丰富的缓存注解：Cacheable，CacheableAll，CachePut，CachePutAll，CacheEvict，CacheEvictAll，CacheClear
-- 适配 SpringCache：无需修改现有代码，添加 Xcache 依赖，即可支持更多缓存功能。
-
-## 运行环境
+### 2.3. 运行环境
 
 SpringBoot：3.3.0+
 
 JDK：21+
 
-## 开始使用
+## 3. 项目示例
 
-**参考项目**：[xcache-samples-base](https://github.com/patricklaux/xcache-samples/tree/main/xcache-samples-base)
+以下代码片段来自于 [xcache-samples](https://github.com/patricklaux/xcache-samples)，如需获取更详细信息，您可以克隆示例项目到本地进行调试。
 
-### 第一步：引入缓存依赖
+```bash
+git clone https://github.com/patricklaux/xcache-samples.git
+```
 
-如直接通过调用方法操作缓存，不使用缓存注解，仅需引入 ``xcache-spring-boot-starter`` 。
+### 3.1. 调用缓存方法
 
-主要依赖：Caffeine（内嵌缓存），Lettuce（Redis 客户端），Jackson（序列化）
+#### 3.1.1 第一步：引入依赖
+
+如直接通过调用方法操作缓存，仅需引入 ``xcache-spring-boot-starter`` 。
+
+主要组件：Caffeine（内嵌缓存），Lettuce（Redis 客户端），Jackson（序列化）
 
 ```xml
 <dependencies>
@@ -57,7 +85,7 @@ JDK：21+
 </dependencies>
 ```
 
-### 第二步：编写缓存配置
+#### 3.1.2. 第二步：编写配置
 
 ```yaml
 xcache:
@@ -70,22 +98,22 @@ xcache:
       second: # 二级缓存配置
         provider: none # 缓存存储提供者实例 id（如果配置为 none，则表示不使用二级缓存）
         store-type: EXTRA # 缓存存储类型，根据类型自动填充默认配置
-  cache: # 缓存个性配置，列表类型，可配置零至多个
+  cache: # 缓存实例个性配置，列表类型，可配置零至多个
     - name: user # 缓存名称，用于区分不同的缓存对象
       template-id: t0 # 指定使用的模板为 t0（对应属性：xcache.template[i].id）
 ```
 
 **说明**：
 
-1. 公共模板配置
+1. 同一应用中，一般会有多个不同名称的缓存对象，它们的配置通常大部分相同。
 
-   同一应用中，可能会有多个不同名称的缓存对象，它们的配置通常大部分相同。
+   为了避免填写重复配置，可创建一个公共配置模板，缓存个性配置中则只需填写与该模板的差异部分。
 
-   为了避免大量的重复配置，可创建一个公共配置模板，然后在缓存个性配置中只需填写与该公共模板配置的差异部分即可。
+2. Xcache 提供了丰富的配置项，绝大多数都有默认值，因此可以省略而无需填写。
 
-2. Xcache 提供了丰富的配置项，大多数都有默认值，因此可以省略而无需填写。
+3. 每一个配置项都有详细介绍，可借助 ide 的自动提示功能快速查看相关描述信息。
 
-### 第三步：调用缓存方法
+#### 3.1.3. 第三步：调用方法
 
 ```java
 /**
@@ -105,7 +133,7 @@ public class UserCacheService {
     }
 
     /**
-     * 根据用户ID获取单个用户信息
+     * 获取单个用户信息
      *
      * @param id 用户ID
      * @return 用户信息
@@ -117,7 +145,7 @@ public class UserCacheService {
     }
 
     /**
-     * 根据用户ID批量获取用户信息
+     * 批量获取用户信息
      *
      * @param ids 用户ID集合
      * @return 用户信息集合
@@ -226,31 +254,597 @@ public class UserCacheService {
 }
 ```
 
-详细介绍：[Xcache 参考文档](docs/Reference.md)
+提示：
 
-示例项目：[xcache-samples](https://github.com/patricklaux/xcache-samples)
+> CacheLoader 有两个接口：一是 load(key)，用于单个回源取值；二是 loadAll(keys)，用于批量回源取值。
+>
+> cache.get(key, cacheLoader) 方法，单个回源取值时加锁；
+>
+> cache.getAll(keys, cacheLoader) 方法，批量回源取值时不加锁，因为批量加锁可能导致死锁。
 
-## 缓存配置
+#### 3.1.4. 小结
 
-作为开源框架项目，关于配置项，我设计时遵循的是这三个基本原则：
+此示例演示了如何通过直接调用缓存方法来使用缓存。
 
-1、尽可能多配置项：可以全面控制缓存的各种逻辑，对缓存进行全面调优；
+缓存方法的使用并不复杂，但大家可能会对编写配置有些许疑惑：
+
+有哪些配置项？有没有默认值？哪些是必填项？哪些是可选项……
+
+鉴于配置项较多且较复杂，因此写了一个单独章节。欲详细了解，请见 [4.缓存配置](#4. 缓存配置)。
+
+### 3.2. 使用 Xcache 注解
+
+上一个示例演示了如何调用缓存方法，在这个示例中将演示如何使用 Xcache 注解。
+
+#### 3.2.1. 第一步：引入依赖
+
+使用  Xcache 注解，引入 ``xcache-spring-boot-starter`` 之外，还需引入 ``xcache-spring-aop``。
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>com.igeeksky.xcache</groupId>
+        <artifactId>xcache-spring-boot-starter</artifactId>
+        <version>${xcache.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.igeeksky.xcache</groupId>
+        <artifactId>xcache-spring-aop</artifactId>
+        <version>${xcache.version}</version>
+    </dependency>
+    <!-- ... other ... -->
+</dependencies>
+```
+
+#### 3.2.2. 第二步：编写配置
+
+```yaml
+xcache:
+  group: shop # 分组名称（必填），主要用于区分不同的应用
+  template: # 公共模板配置（必填），列表类型，可配置一至多个
+    - id: t0 # 模板ID（必填）
+      first: # 一级缓存配置
+        provider: caffeine # 缓存存储提供者实例 id
+        store-type: EMBED # 缓存存储类型，根据类型自动填充默认配置
+        expire-after-write: 3600000 # 数据写入后的存活时间（单位：毫秒）
+        expire-after-access: 300000 # 数据访问后的存活时间（单位：毫秒）
+        enable-random-ttl: true # 是否使用随机存活时间
+        enable-null-value: true # 是否允许保存空值
+      second: # 二级缓存配置
+        provider: lettuce # 使用 id 为 lettuce 的 StoreProvider
+        store-type: EXTRA # 缓存存储类型，根据类型自动填充默认配置
+        expire-after-write: 7200000 # 数据写入后的存活时间（单位：毫秒）
+        enable-random-ttl: true # 是否使用随机存活时间
+        enable-null-value: true # 是否允许保存空值
+  cache: # 缓存实例个性配置，列表类型，可配置零至多个
+    - name: user # 缓存名称，用于区分不同的缓存对象
+      template-id: t0 # 指定使用的模板为 t0（对应属性：xcache.template[i].id）
+  redis: # Redis 配置
+    store: # RedisStoreProvider 配置，列表类型，可配置多个
+      - id: lettuce #  要创建的 RedisStoreProvider 的 id
+        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id
+    lettuce: # Lettuce 客户端配置
+      factories: # 考虑到一个应用可能会使用多套 Redis，因此采用列表类型，可配置多个
+        - id: lettuce # RedisOperatorFactory 唯一标识
+          sentinel: # 哨兵模式配置
+            master-id: mymaster # 哨兵主节点名称
+            nodes: 127.0.0.1:26379, 127.0.0.1:26380, 127.0.0.1:26381 # 哨兵节点列表
+```
+
+相比上一示例的配置，这份配置有些许改变：
+
+1. 增加了 ``xcache.redis.lettuce`` 配置，用于创建 ``RedisOperatorFactory``，其 id 可以自由设定。
+2. 增加了 ``xcache.redis.store`` 配置，用于创建 ``RedisStoreProvider``，其 id 可以自由设定。``RedisStoreProvider`` 依赖于 ``RedisOperatorFactory``，因此需指定需使用的 ``RedisOperatorFactory``。
+3. 修改了 ``xcache.template[i].second`` 配置，二级缓存指定使用 id 为 "lettuce" 的 ``StoreProvider``，且设定了存活时间、是否允许空值等。
+4. 修改了 ``xcache.template[i].first`` 配置，一级缓存依然使用 id 为 "caffeine" 的 ``StoreProvider``，但设定了存活时间、是否允许空值等。
+
+我想，您可能会有疑问：
+
+id 为 "lettuce" 的 ``StoreProvider`` 需要通过显式配置才能使用，那为什么 id 为 "caffeine" 的 ``StoreProvider`` 并未显式配置却可以直接使用？
+
+这里遵循工厂实例创建的两个基本原则：
+
+> 1、有外部服务依赖的需要显式配置；无外部服务依赖的无需显式配置。
+>
+> 2、需消耗额外线程资源的延迟创建；不消耗额外线程资源的立即创建。
+
+因为 ``CaffeineStoreProvider`` 不依赖于外部服务，又无需消耗额外线程资源，因此在应用启动时就自动创建了 id 为 "caffeine" 的 ``CaffeineStoreProvider`` 实例，所以可以直接使用。
+
+如不使用 Caffeine，且不想创建 ``CaffeineStoreProvider`` 实例，那么可以在引入依赖时去除自动配置项目。
+
+```xml
+<dependency>
+    <groupId>com.igeeksky.xcache</groupId>
+    <artifactId>xcache-spring-boot-starter</artifactId>
+    <exclusions>
+        <!-- 去除 CaffeineStoreProvider -->
+        <exclusion>
+            <groupId>com.igeeksky.xcache</groupId>
+            <artifactId>xcache-caffeine-spring-boot-autoconfigure</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+```
+
+#### 3.2.3. 第三步：使用注解
+
+**启用缓存注解：@EnableCache **
+
+```java
+import com.igeeksky.xcache.aop.EnableCache;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+/**
+ * Xcache 注解示例
+ */
+// 启用缓存注解
+@EnableCache(basePackages = "com.igeeksky.xcache.samples")
+@SpringBootApplication(scanBasePackages = "com.igeeksky.xcache.samples")
+public class AnnotationApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(AnnotationApplication.class, args);
+    }
+
+}
+```
+
+**代码示例** 
+
+```java
+// 引入 Xcache 注解
+import com.igeeksky.xcache.annotation.*;
+// ………… 省略其它
+
+/**
+ * 用户缓存服务
+ *
+ * @author Patrick.Lau
+ * @since 1.0.0 2024/9/13
+ */
+@Service
+// 此类中使用了多个 name 为 "user" 的缓存方法注解，因此在此统一配置公共参数。
+@CacheConfig(name = "user", keyType = Long.class, valueType = User.class)
+public class UserCacheService {
+
+    private final UserDao userDao;
+
+    public UserCacheService(UserDao userDao) {
+        this.userDao = userDao;
+    }
+
+    /**
+     * 获取单个用户信息
+     * <p>
+     * Cacheable 注解，对应 V value = cache.get(K key, CacheLoader<K,V> loader) 方法。
+     * <p>
+     * 如未配置 key 表达式，采用方法的第一个参数作为缓存键；
+     * 如已配置 key 表达式，解析该表达式提取键。
+     *
+     * @param id 用户ID
+     * @return 用户信息
+     */
+    @Cacheable
+    public User getUser(Long id) {
+        return userDao.findUser(id);
+    }
+
+    /**
+     * 获取单个用户信息
+     *
+     * @param id 用户ID
+     * @return Optional<User> – 用户信息
+     * 
+     * 如方法返回值类型为 Optional，Xcache 将采用 Optional.ofNullable(value) 包装返回值。
+     */
+    @Cacheable
+    public Optional<User> getOptionalUser(Long id) {
+        User user = userDao.findUser(id);
+
+        // 错误：方法返回值为 Optional 类型时，当用户不存在，直接返回 null
+        // return user == null ? null : Optional.of(user);
+
+        // 正确：使用 Optional.ofNullable(value) 包装可能为空的值
+        return Optional.ofNullable(user);
+    }
+
+    /**
+     * 获取单个用户信息
+     *
+     * @param id 用户ID
+     * @return CompletableFuture<User> – 用户信息
+     * 
+     * 如方法返回值类型为 CompletableFuture，Xcache 将采用 CompletableFuture.completedFuture() 包装返回值。
+     */
+    @Cacheable
+    public CompletableFuture<User> getFutureUser(Long id) {
+        User user = userDao.findUser(id);
+
+        // 错误：方法返回值为 CompletableFuture 类型时，当用户不存在，直接返回 null
+        // return user == null ? null : CompletableFuture.completedFuture(user);
+
+        // 正确：使用 CompletableFuture.completedFuture 包装可能为空的值
+        return CompletableFuture.completedFuture(user);
+    }
+
+    /**
+     * 批量获取用户信息
+     * <p>
+     * CacheableAll 注解，对应 Map<K,V> results = cache.getAll(Set<K> keys, CacheLoader<K,V> loader) 方法.
+     * 
+     * 缓存的键集：Set 类型。
+     * 如未配置 keys 表达式，采用方法的第一个参数作为键集；
+     * 如已配置 keys 表达式，解析该表达式提取键集。
+     * 
+     * 缓存结果集：Map 类型（方法返回值类型需与其一致）。
+     *
+     * @param ids 用户ID集合
+     * @return Map<Long, User> – 用户信息集合
+     */
+    @CacheableAll
+    public Map<Long, User> getUsers(Set<Long> ids) {
+        return userDao.findUserList(ids);
+    }
+
+    /**
+     * 批量获取用户信息
+     *
+     * @param ids 用户ID集合
+     * @return Optional<Map<Long, User>> – 用户信息集合
+     * 
+     * 如方法返回值类型为 Optional，Xcache 将采用 Optional.ofNullable(value) 包装返回值。
+     */
+    @CacheableAll
+    public Optional<Map<Long, User>> getOptionalUsers(Set<Long> ids) {
+        return Optional.ofNullable(userDao.findUserList(ids));
+    }
+
+    /**
+     * 批量获取用户信息
+     *
+     * @param ids 用户ID集合
+     * @return CompletableFuture<Map<Long, User>> – 用户信息集合
+     * 
+     * 如方法返回值类型为 CompletableFuture，Xcache 将采用 CompletableFuture.completedFuture(value) 包装返回值。
+     */
+    @CacheableAll(keys = "#ids")
+    public CompletableFuture<Map<Long, User>> getFutureUsers(Set<Long> ids) {
+        return CompletableFuture.completedFuture(userDao.findUserList(ids));
+    }
+
+    /**
+     * 新增用户信息
+     * 
+     * CachePut 注解，对应 cache.put(K key, V value) 方法。
+     * 
+     * 如未配置 key 表达式，采用方法的第一个参数作为缓存键；
+     * 如已配置 key 表达式，解析该表达式提取键。
+     * 
+     * 如未配置 value 表达式，采用方法返回结果作为缓存值；
+     * 如已配置 value 表达式，解析该表达式提取值.
+     *
+     * @param user 用户信息（无ID）
+     * @return 用户信息（有ID）
+     */
+    @CachePut(key = "#result.id")
+    public User saveUser(User user) {
+        return userDao.save(user);
+    }
+
+    /**
+     * 更新用户信息
+     *
+     * @param user 用户信息
+     * @return 用户信息
+     */
+    @CachePut(key = "#user.id", value = "#user")
+    public User updateUser(User user) {
+        return userDao.update(user);
+    }
+
+    /**
+     * 批量更新用户信息
+     * <p>
+     * CachePutAll 注解， 对应 cache.putAll(Map<K,V> keyValues) 方法.
+     * <p>
+     * 如未配置 keyValues 表达式，默认采用方法返回值；
+     * 如已配置 keyValues 表达式，解析该表达式提取键值对集合.
+     *
+     * @param users 用户信息列表
+     * @return Map<Long, User> – 用户信息集合
+     */
+    @CachePutAll
+    public Map<Long, User> updateUsers(List<User> users) {
+        return userDao.batchUpdate(users);
+    }
+
+    /**
+     * 删除用户信息
+     * <p>
+     * CacheEvict 注解，对应 cache.evict(K key) 方法.
+     *
+     * @param id 用户ID
+     */
+    @CacheEvict
+    public void deleteUser(Long id) {
+        userDao.delete(id);
+    }
+
+    /**
+     * 批量删除用户信息
+     * <p>
+     * CacheEvictAll 注解，对应 cache.evictAll(Set<K> keys) 方法.
+     *
+     * @param ids 用户ID集合
+     */
+    @CacheEvictAll
+    public void deleteUsers(Set<Long> ids) {
+        userDao.batchDelete(ids);
+    }
+
+    /**
+     * 清空数据
+     *
+     * CacheClear 注解，对应 cache.clear() 方法.
+     */
+    @CacheClear
+    public void clear() {
+        userDao.clear();
+    }
+
+}
+```
+
+#### 3.2.4. 小结
+
+此示例演示了如何使用 Xcache 缓存注解。
+
+1. 公共参数
+
+   Xcache 的方法级缓存注解一共有 7 个：@Cacheable，@CacheableAll，@CachePut，@CachePutAll，@CacheEvict，@CacheEvictAll，@CacheClear。
+
+   这些注解均有 5 个参数：name，keyType，keyParams，valueType，valueParams。
+
+   如果一个类中有多个方法级缓存注解，则可以使用类级缓存注解 @CacheConfig 统一配置公共参数。
+
+2. 每个注解的具体参数配置和逻辑介绍详见 [5. Xcache 注解](#5. Xcache 注解)
+
+3. 返回值类型
+
+   对于 @Cacheable 和 @CacheableAll 注解，被注解方法的返回值类型除了需与缓存结果类型保持一致外，还可以是 Optional  或 CompletableFuture 类型。
+
+   如果是  Optional  或 CompletableFuture 类型，缓存实现会用 Optional.ofNullable(value) 或 CompletableFuture.completedFuture(value)  包装返回值，即使值不存在，也一定不会返回 null。因此被注解方法内部也请勿返回 null，否则将与预期不一致。
+
+   Spring cache 注解还支持 Reactor 的 Mono 和 Flux 类型，但 Xcache 注解暂无计划支持。因为 JDK 21 已有相对成熟的虚拟线程，再引入更多的抽象似乎并不是一个好主意。
+
+   当然，如果您确实希望既使用 Reactor 的响应式编程范式，又使用 Xcache 相对强大的缓存功能，那么可以引入 ``xcache-spring-adapter-autoconfigure``，将 Xcache 作为 Spring cache 相关接口的具体实现，然后使用 Spring cache 注解即可，详见下一章节：[3.3. 使用 Spring cache 注解](#3.3. 使用 Spring cache 注解)。
+
+### 3.3. 使用 Spring cache 注解
+
+上一个示例演示了如何使用 Xcache 注解，在这个示例中将演示如何使用 Spring cache 注解。
+
+#### 3.3.1. 第一步：引入依赖
+
+使用  Spring cache 注解，引入 ``xcache-spring-boot-starter`` 之外，还需引入 ``xcache-spring-adapter-autoconfigure``。
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>com.igeeksky.xcache</groupId>
+        <artifactId>xcache-spring-boot-starter</artifactId>
+        <version>${xcache.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.igeeksky.xcache</groupId>
+        <artifactId>xcache-spring-adapter-autoconfigure</artifactId>
+        <version>${xcache.version}</version>
+    </dependency>
+    <!-- ... other ... -->
+</dependencies>
+```
+
+#### 3.3.2. 第二步：编写配置
+
+```yaml
+xcache:
+  group: shop # 分组名称（必填），主要用于区分不同的应用
+  template: # 公共模板配置（必填），列表类型，可配置一至多个
+    - id: t0 # 模板ID（必填）
+      first: # 一级缓存配置
+        provider: caffeine # 缓存存储提供者实例 id
+        store-type: EMBED # 缓存存储类型，根据类型自动填充默认配置
+        expire-after-write: 3600000 # 数据写入后的存活时间（单位：毫秒）
+        expire-after-access: 300000 # 数据访问后的存活时间（单位：毫秒）
+        enable-random-ttl: true # 是否使用随机存活时间
+        enable-null-value: true # 是否允许保存空值
+      second: # 二级缓存配置
+        provider: lettuce # 使用 id 为 lettuce 的 StoreProvider
+        store-type: EXTRA # 缓存存储类型，根据类型自动填充默认配置
+        expire-after-write: 7200000 # 数据写入后的存活时间（单位：毫秒）
+        enable-random-ttl: true # 是否使用随机存活时间
+        enable-null-value: true # 是否允许保存空值
+  cache: # 缓存实例个性配置，列表类型，可配置零至多个
+    - name: user # 缓存名称，用于区分不同的缓存对象
+      template-id: t0 # 指定使用的模板为 t0（对应属性：xcache.template[i].id）
+  redis: # Redis 配置
+    store: # RedisStoreProvider 配置，列表类型，可配置多个
+      - id: lettuce #  要创建的 RedisStoreProvider 的 id
+        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id
+    lettuce: # Lettuce 客户端配置
+      factories: # 考虑到一个应用可能会使用多套 Redis，因此采用列表类型，可配置多个
+        - id: lettuce # RedisOperatorFactory 唯一标识
+          sentinel: # 哨兵模式配置
+            master-id: mymaster # 哨兵主节点名称
+            nodes: 127.0.0.1:26379, 127.0.0.1:26380, 127.0.0.1:26381 # 哨兵节点列表
+```
+
+> 注：此配置与上一示例的配置相同。
+
+#### 3.3.3. 第三步：使用注解
+
+**启用缓存注解：@EnableCache **
+
+```java
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
+
+/**
+ * Spring Cache 注解示例
+ */
+@EnableCaching
+@SpringBootApplication(scanBasePackages = "com.igeeksky.xcache.samples")
+public class SpringAnnotationApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(SpringAnnotationApplication.class, args);
+    }
+
+}
+```
+
+**代码示例** 
+
+```java
+// 引入 Spring cache 注解
+import org.springframework.cache.annotation.*;
+// ………… 省略其它
+
+/**
+ * 用户缓存服务
+ */
+@Service
+// Xcache 适配 Spring cache 的 cacheManager 为 springCacheManager，如 Spring 容器内无其它 cacheManager 对象，可不指定。
+@CacheConfig(cacheNames = "user", cacheManager = "springCacheManager")
+public class UserCacheService {
+
+    private final UserDao userDao;
+
+    public UserCacheService(UserDao userDao) {
+        this.userDao = userDao;
+    }
+
+    /**
+     * 获取单个用户信息
+     *
+     * @param id 用户ID
+     * @return 用户信息
+     */
+    @Cacheable(key = "#id")
+    public User getUser(Long id) {
+        return userDao.findUser(id);
+    }
+
+    /**
+     * 获取单个用户信息
+     *
+     * @param id 用户ID
+     * @return Optional<User> – 用户信息
+     */
+    @Cacheable(key = "#id")
+    public Optional<User> getOptionalUser(Long id) {
+        return Optional.ofNullable(userDao.findUser(id));
+    }
+
+    /**
+     * 获取单个用户信息
+     *
+     * @param id 用户ID
+     * @return CompletableFuture<User> – 用户信息
+     */
+    @Cacheable(key = "#id")
+    public CompletableFuture<User> getFutureUser(Long id) {
+        return CompletableFuture.completedFuture(userDao.findUser(id));
+    }
+
+    /**
+     * 获取单个用户信息
+     *
+     * @param id 用户ID
+     * @return Mono<User> – 用户信息
+     * Spring cache 适配 Reactor 的 Mono 类型，因此可以返回 Mono<User>。
+     */
+    @Cacheable(key = "#id")
+    public Mono<User> getMonoUser(Long id) {
+        return Mono.fromSupplier(() -> userDao.findUser(id));
+    }
+
+    /**
+     * 新增用户信息
+     *
+     * @param user 用户信息
+     * @return 用户信息
+     */
+    @CachePut(key = "#result.id")
+    public User saveUser(User user) {
+        return userDao.save(user);
+    }
+
+    /**
+     * 更新用户信息
+     *
+     * @param user 用户信息
+     * @return 用户信息
+     */
+    @CachePut(key = "#result.id")
+    public User updateUser(User user) {
+        return userDao.update(user);
+    }
+
+    /**
+     * 删除用户信息
+     *
+     * @param id 用户ID
+     */
+    @CacheEvict(key = "#id")
+    public void deleteUser(Long id) {
+        userDao.delete(id);
+    }
+
+    /**
+     * 清空数据
+     */
+    @CacheEvict(allEntries = true)
+    public void clear() {
+        userDao.clear();
+    }
+
+}
+```
+
+#### 3.3.4. 小结
+
+此示例演示了如何引入适配依赖将 Xcache 作为 Spring cache 的接口实现，并通过 Spring cache 注解操作缓存。
+
+1. Spring Cache 没有 CacheableAll，CachePutAll，CacheEvictAll 这三个批处理注解。
+
+2. Spring Cache 没有写 key 表达式时，不是使用方法的第一个参数，而是使用所有参数生成 SimpleKey 。
+
+3. 对已使用 Spring cache 注解的项目，只需引入 Xcache 相关依赖，几乎可以做到不改动任何代码，就将具体实现替换成 Xcache。
+
+
+## 4. 缓存配置
+
+作为开源框架项目，关于配置项，设计时遵循三个基本原则：
+
+1、尽可能多配置项：可全面控制缓存的各种功能逻辑，进行缓存性能优化；
 
 2、尽可能少写配置：通过提供默认值和公共配置模板，避免显式书写配置；
 
 3、尽可能不改代码：可通过调整配置项和增减依赖包，灵活适配业务逻辑。
 
-#### 总体介绍
+### 总体介绍
 
-所有配置项可以划分为两部分，一部分是关于缓存的基础配置，一部分是关于 Redis 的扩展配置。
+所有配置项可以划分为两部分，一部分是关于缓存的核心配置，一部分是关于 Redis 的扩展配置。
 
 为了让大家有一个整体认识，先通过表格介绍大的配置类别，具体子项后面再通过 yaml 来详细介绍。
 
-##### 基础配置
+#### 基础配置
 
 基础配置部分，除了少数几个必填项，大部分配置项都有默认值，如未配置，则将使用默认值。
 
-| 类别             | 名称             | 详细描述                                                     |
+| 类别             | 名称             | 说明                                                         |
 | ---------------- | ---------------- | ------------------------------------------------------------ |
 | xcache.group     | 组名             | 主要用于区分不同的应用。<br />譬如当有多个应用共用一套 Redis 作为缓存数据存储，则可以附加 group 作为前缀，从而避免键冲突。 |
 | xcache.template  | 公共模板配置     | 除了缓存名称，同一应用的各个缓存实例的大部分配置应该都是相似的。<br />因此可以在此建立一个或多个公共模板，从而避免每一个缓存实例重复配置。 |
@@ -258,25 +852,37 @@ public class UserCacheService {
 | xcache.stat      | 缓存指标统计配置 | 用于配置日志方式的统计信息输出的时间间隔。<br />如所有缓存实例的统计信息都选择输出到 Redis，则此配置项无效。 |
 | xcache.scheduler | 调度器配置       | 缓存定时刷新、缓存指标定时采集均依赖于此调度器。             |
 
-##### Redis 配置
+#### Redis 配置
 
-Redis 配置部分，如果不配置，就不会生成对象实例。
+Redis 配置部分，如果不配置，则不创建对象实例。
 
-| 类别                  | 说明       |
-| --------------------- | ---------- |
-| xcache.redis          | Redis 配置 |
-| xcache.redis.charset  | 字符集     |
-| xcache.redis.store    |            |
-| xcache.redis.listener |            |
-| xcache.redis.sync     |            |
-| xcache.redis.lock     |            |
-| xcache.redis.stat     |            |
-| xcache.redis.refresh  |            |
-| xcache.redis.lettuce  |            |
+| 类别                  | 名称       | 说明                                                         |
+| --------------------- | ---------- | ------------------------------------------------------------ |
+| xcache.redis          | Redis 配置 |                                                              |
+| xcache.redis.charset  | 字符集     |                                                              |
+| xcache.redis.store    |            |                                                              |
+| xcache.redis.listener |            |                                                              |
+| xcache.redis.sync     |            |                                                              |
+| xcache.redis.lock     |            |                                                              |
+| xcache.redis.stat     |            |                                                              |
+| xcache.redis.refresh  |            |                                                              |
+| xcache.redis.lettuce  |            | Lettuce 客户端配置，用于生成 RedisOperatorFactory。如未配置，则不会生成 RedisOperatorFactory 对象实例。 |
 
+#### 默认创建实例
 
+| 类名 | id   | 相关配置 | 是否延迟创建 |
+| ---- | ---- | -------- | ------------ |
+|      |      |          |              |
+|      |      |          |              |
+|      |      |          |              |
+|      |      |          |              |
+|      |      |          |              |
+|      |      |          |              |
+|      |      |          |              |
+|      |      |          |              |
+|      |      |          |              |
 
-#### 细项说明
+### 细项说明
 
 1. 除了标注必填的选项，其他选项均为选填，删除或留空表示使用默认配置；
 2. 每个配置项均有详细说明，可用 ide 自动提示功能快速查看相关描述信息。
@@ -529,11 +1135,14 @@ xcache:
             nodes: 127.0.0.1:26379, 127.0.0.1:26380, 127.0.0.1:26381 # 哨兵节点列表
 ```
 
-此配置使用 Lettuce 连接 Redis 哨兵节点，并使用 redis 实现缓存数据存储、数据同步、缓存锁、缓存指标采集等。
+> 注：
+>
+> 1. 此配置使用 Lettuce 连接 Redis 哨兵节点，并通过 redis 实现缓存数据存储、缓存数据同步、缓存锁、缓存指标采集等。
+> 2. 一级缓存 provider 的默认值是 caffeine，二级缓存 provider 的默认值是 lettuce，因此可省略，其它有默认值的同理均省略不填。
 
 #### 极简配置示例
 
-如果不使用 redis，可以进一步简化配置：
+如果不使用 redis 作为缓存及其它相关功能，仅使用 caffeine 作为一级缓存，可进一步简化配置。如下：
 
 ```yaml
 xcache:
@@ -541,12 +1150,80 @@ xcache:
   template: # 公共模板配置 (必填)
     - id: t0 # 模板ID (必填)
       second: # 二级缓存配置
-        provider: none # 二级缓存默认是 lettuce，因为不使用，所以这里需设为 none。
+        provider: none # 二级缓存默认是 lettuce，如不使用需显式设为 none。
 ```
 
 
 
-## 模块说明
+## 5. 对象创建
+
+| 接口 | id   | 延迟创建 | 依赖 | 用途 |
+| ---- | ---- | -------- | ---- | ---- |
+|      |      |          |      |      |
+|      |      |          |      |      |
+|      |      |          |      |      |
+|      |      |          |      |      |
+|      |      |          |      |      |
+|      |      |          |      |      |
+|      |      |          |      |      |
+|      |      |          |      |      |
+|      |      |          |      |      |
+
+
+
+## 6. Xcache 注解
+
+### 6.1. @Cacheable
+
+#### 相关属性
+
+| 属性        | 必填 | 作用                                                         |
+| :---------- | :--: | ------------------------------------------------------------ |
+| name        |  否  | 指定缓存名称                                                 |
+| keyType     |  否  | 指定键类型                                                   |
+| keyParams   |  否  | 指定键的泛型参数                                             |
+| valueType   |  否  | 指定值类型                                                   |
+| valueParams |  否  | 指定值的泛型参数                                             |
+| key         |  否  | SpEL表达式，用于从参数中提取键。<br/>如果未配置，采用被注解方法的第一个参数作为键。 |
+| condition   |  否  | SpEL表达式，用于判断是否缓存。 <br/>如果未配置，condition 表达式结果默认为 true。 |
+
+#### 执行逻辑
+
+
+
+
+
+### 6.2. @CacheableAll
+
+
+
+### 6.3. @CachePut
+
+
+
+### 6.4. @CachePutAll
+
+
+
+### 6.5. @CacheEvict
+
+
+
+### 6.6. @CacheEvictAll
+
+
+
+### 6.7. @CacheClear
+
+
+
+### 6.8. @CacheConfig
+
+
+
+
+
+## 7. 模块说明
 
 Xcache 拆分为很多子模块，一是为了避免引入不必要的依赖，二是便于自定义扩展实现。
 
@@ -585,6 +1262,34 @@ Xcache 拆分为很多子模块，一是为了避免引入不必要的依赖，�
 
 
 
+## 8. 缓存模式
+
+
+
+## 8. 扩展实现
+
+### 缓存数据存储
+
+StoreProvider
+
+
+
+### 数据回源加载
+
+CacheLoaderProvider
+
+
+
+### 缓存数据刷新
+
+CacheRefreshProvider
+
+
+
+### 缓存数据回写
+
+
+
 ## 缓存键
 
 
@@ -601,8 +1306,6 @@ Xcache 拆分为很多子模块，一是为了避免引入不必要的依赖，�
 
 
 
-## 缓存刷新
-
 
 
 ## 数据加载
@@ -617,7 +1320,11 @@ CacheLoader
 
 ## 
 
-## 缓存模式
+
+
+## 缓存刷新
+
+
 
 
 
