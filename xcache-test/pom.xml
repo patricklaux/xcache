@@ -13,7 +13,7 @@
     <artifactId>xcache-test</artifactId>
     <name>xcache test</name>
     <description>${project.name}</description>
-    <url>${parent.url}</url>
+    <url>https://github.com/patricklaux/xcache</url>
     <packaging>pom</packaging>
 
     <modules>

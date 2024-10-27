@@ -14,7 +14,7 @@
     <artifactId>xcache-dependencies</artifactId>
     <name>xcache dependencies</name>
     <description>${project.name}</description>
-    <url>${parent.url}</url>
+    <url>https://github.com/patricklaux/xcache</url>
 
     <properties>
         <spring.boot.version>3.3.3</spring.boot.version>

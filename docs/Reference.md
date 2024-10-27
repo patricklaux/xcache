@@ -1412,11 +1412,11 @@ xcache:
 
 @EnableCache 是类注解，用于启用 Xcache 缓存注解功能支持。
 
-| 属性         | 必填 |          默认值           | 作用                             |
-| :----------- | :--: | :-----------------------: | -------------------------------- |
-| basePackages |  是  |            无             | 指定需要扫描缓存注解的包完整路径 |
-| order        |  否  | Ordered.LOWEST_PRECEDENCE | 指定切面优先级                   |
-| AdviceMode   |  否  |     AdviceMode.PROXY      | 指定代理实现模式                 |
+| 属性         | 必填 |          默认值           | 作用                                                         |
+| :----------- | :--: | :-----------------------: | ------------------------------------------------------------ |
+| basePackages |  是  |            无             | 指定需要扫描缓存注解的包路径                                 |
+| order        |  否  | Ordered.LOWEST_PRECEDENCE | 指定切面优先级                                               |
+| AdviceMode   |  否  |     AdviceMode.PROXY      | 指定代理模式<br />当前仅支持 AdviceMode.PROXY，不支持 AdviceMode.ASPECTJ。 |
 
 
 
@@ -1436,50 +1436,17 @@ result
 
 
 
-## 7. 模块说明
-
-Xcache 拆分为很多子模块，一是为了避免引入不必要的依赖，二是便于自定义扩展实现。
-
-| 项目名称                                  | 类型 | 项目说明                                                     |
-| :---------------------------------------- | :--: | :----------------------------------------------------------- |
-| xcache-parent                             | pom  | 所有子项目的最顶层父项目，主要用于统一的项目构建             |
-| xcache-common                             | jar  | 基础公共模块，主要用于定义基础接口、数据对象和配置项         |
-| xcache-core                               | jar  | 核心公共模块，主要用于实现具体的缓存逻辑                     |
-| xcache-annotation                         | jar  | 缓存注解                                                     |
-| xcache-caffeine                           | jar  | 使用 caffeine 实现内嵌缓存                                   |
-| xcache-caffeine-spring-boot-autoconfigure | jar  | xcache-caffeine 模块的 Spring boot 自动配置                  |
-| xcache-dependencies                       | pom  | 所有子项目的父项目，主要用于统一的依赖包管理                 |
-| xcache-extension                          | pom  | 扩展模块的父项目                                             |
-| xcache-extension-codec                    | jar  | 编解码模块的基础接口和基本实现，如希望开发自定义的编解码实现，可依赖此项目 |
-| xcache-extension-common                   | jar  | 可扩展模块的基础接口和基本实现                               |
-| xcache-extension-jackson                  | jar  | 使用 jackson 实现的编解码                                    |
-| xcache-jackson-spring-boot-autoconfigure  | jar  | xcache-extension-jackson 模块的 Spring boot 自动配置         |
-| xcache-lettuce-spring-boot-autoconfigure  | jar  |                                                              |
-| xcache-redis                              | pom  |                                                              |
-| xcache-redis-common                       | jar  | 如希望开发自定义的 Redis 客户端，可依赖此项目                |
-| xcache-redis-core                         | jar  |                                                              |
-| xcache-redis-jedis                        | jar  |                                                              |
-| xcache-redis-lettuce                      | jar  |                                                              |
-| xcache-redis-spring-boot-autoconfigure    | jar  |                                                              |
-| xcache-spring                             | pom  | spring 相关项目的父项目                                      |
-| xcache-spring-adapter                     | jar  |                                                              |
-| xcache-spring-adapter-autoconfigure       | jar  |                                                              |
-| xcache-spring-aop                         | jar  |                                                              |
-| xcache-spring-boot-autoconfigure          | jar  |                                                              |
-| xcache-spring-boot-starter                | jar  |                                                              |
-| xcache-spring-boot-starter-test           | jar  | 主要用于 Xcache 注解的测试                                   |
-| xcache-spring-adapter-test                | jar  | 主要用于 Spring cache 适配的测试                             |
-| xcache-test                               | pom  | 所有测试项目的直接父项目                                     |
-| xcache-test-base                          | jar  | 主要用于缓存方法的测试，与及基础接口的公共测试用例           |
-| xcache-test-domain                        | jar  | 测试项目的数据对象定义                                       |
+## 7. 缓存接口
 
 
 
-## 8. 缓存模式
+
+
+## 9. 缓存模式
 
 
 
-## 8. 扩展实现
+## 10. 扩展实现
 
 ### 缓存数据存储
 
@@ -1552,4 +1519,43 @@ CacheLoader
 分散式缓存 与 集中式缓存
 
 单实例缓存 与 分布式缓存
+
+
+
+## 15. 模块说明
+
+Xcache 拆分为很多子模块，一是为了避免引入不必要的依赖，二是便于自定义扩展实现。
+
+| 项目名称                                  | 类型 | 项目说明                                                     |
+| :---------------------------------------- | :--: | :----------------------------------------------------------- |
+| xcache-parent                             | pom  | 所有子项目的最顶层父项目，主要用于统一的项目构建             |
+| xcache-common                             | jar  | 基础公共模块，主要用于定义基础接口、数据对象和配置项         |
+| xcache-core                               | jar  | 核心公共模块，主要用于实现具体的缓存逻辑                     |
+| xcache-annotation                         | jar  | 缓存注解                                                     |
+| xcache-caffeine                           | jar  | 使用 caffeine 实现内嵌缓存                                   |
+| xcache-caffeine-spring-boot-autoconfigure | jar  | xcache-caffeine 模块的 Spring boot 自动配置                  |
+| xcache-dependencies                       | pom  | 所有子项目的父项目，主要用于统一的依赖包管理                 |
+| xcache-extension                          | pom  | 扩展模块的父项目                                             |
+| xcache-extension-codec                    | jar  | 编解码模块的基础接口和基本实现，如希望开发自定义的编解码实现，可依赖此项目 |
+| xcache-extension-common                   | jar  | 可扩展模块的基础接口和基本实现                               |
+| xcache-extension-jackson                  | jar  | 使用 jackson 实现的编解码                                    |
+| xcache-jackson-spring-boot-autoconfigure  | jar  | xcache-extension-jackson 模块的 Spring boot 自动配置         |
+| xcache-lettuce-spring-boot-autoconfigure  | jar  | xcache-redis-lettuce 模块的 Spring boot 自动配置             |
+| xcache-redis                              | pom  | 所有 redis 相关项目的父项目                                  |
+| xcache-redis-common                       | jar  | 如希望开发自定义的 Redis 客户端，可依赖此项目                |
+| xcache-redis-core                         | jar  |                                                              |
+| xcache-redis-jedis                        | jar  |                                                              |
+| xcache-redis-lettuce                      | jar  |                                                              |
+| xcache-redis-spring-boot-autoconfigure    | jar  |                                                              |
+| xcache-spring                             | pom  | spring 相关项目的父项目                                      |
+| xcache-spring-adapter                     | jar  |                                                              |
+| xcache-spring-adapter-autoconfigure       | jar  |                                                              |
+| xcache-spring-aop                         | jar  |                                                              |
+| xcache-spring-boot-autoconfigure          | jar  |                                                              |
+| xcache-spring-boot-starter                | jar  |                                                              |
+| xcache-spring-boot-starter-test           | jar  | 主要用于 Xcache 注解的测试                                   |
+| xcache-spring-adapter-test                | jar  | 主要用于 Spring cache 适配的测试                             |
+| xcache-test                               | pom  | 所有测试项目的直接父项目                                     |
+| xcache-test-base                          | jar  | 主要用于缓存方法的测试，与及基础接口的公共测试用例           |
+| xcache-test-domain                        | jar  | 测试项目的数据对象定义                                       |
 
