@@ -274,44 +274,54 @@ public class CacheOperationContext {
     }
 
     private void processCacheEvict(CacheEvictOperation operation, List<Runnable> afterInvokeRunners) {
-        Object key = this.getKey(operation.getCondition(), operation.getKey());
-        if (key == null) {
+        if (!this.conditionPassing(operation.getCondition())) {
             return;
         }
 
         if (operation.isBeforeInvocation()) {
-            Cache<Object, Object> cache = this.getOrCreateCache(operation);
-            cache.evict(key);
+            doEvict(operation);
             return;
         }
 
         afterInvokeRunners.add(() -> {
             if (this.unlessPassing(operation.getUnless())) {
-                Cache<Object, Object> cache = this.getOrCreateCache(operation);
-                cache.evict(key);
+                doEvict(operation);
             }
         });
     }
 
+    private void doEvict(CacheEvictOperation operation) {
+        Object key = this.generateKey(operation.getKey());
+        if (key == null) {
+            return;
+        }
+        this.getOrCreateCache(operation).evict(key);
+    }
+
     private void processCacheEvictAll(CacheEvictAllOperation operation, List<Runnable> afterInvokeRunners) {
-        // 使用 SpEL 提取 keys 集合
-        Set<Object> keys = (Set<Object>) this.getKey(operation.getCondition(), operation.getKeys());
-        if (CollectionUtils.isEmpty(keys)) {
+        if (!this.conditionPassing(operation.getCondition())) {
             return;
         }
 
         if (operation.isBeforeInvocation()) {
-            Cache<Object, Object> cache = this.getOrCreateCache(operation);
-            cache.evictAll(keys);
+            doEvictAll(operation);
             return;
         }
 
         afterInvokeRunners.add(() -> {
             if (this.unlessPassing(operation.getUnless())) {
-                Cache<Object, Object> cache = this.getOrCreateCache(operation);
-                cache.evictAll(keys);
+                doEvictAll(operation);
             }
         });
+    }
+
+    private void doEvictAll(CacheEvictAllOperation operation) {
+        Set<Object> keys = (Set<Object>) this.generateKey(operation.getKeys());
+        if (CollectionUtils.isEmpty(keys)) {
+            return;
+        }
+        Cache<Object, Object> cache = this.getOrCreateCache(operation);
+        cache.evictAll(keys);
     }
 
 
@@ -321,15 +331,13 @@ public class CacheOperationContext {
         }
 
         if (operation.isBeforeInvocation()) {
-            Cache<Object, Object> cache = this.getOrCreateCache(operation);
-            cache.clear();
+            this.getOrCreateCache(operation).clear();
             return;
         }
 
         afterInvokeRunners.add(() -> {
             if (this.unlessPassing(operation.getUnless())) {
-                Cache<Object, Object> cache = this.getOrCreateCache(operation);
-                cache.clear();
+                this.getOrCreateCache(operation).clear();
             }
         });
     }

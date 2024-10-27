@@ -368,7 +368,7 @@ id 为 "lettuce" 的 ``StoreProvider`` 需要通过显式配置才能使用，�
 
 #### 3.2.3. 第三步：使用注解
 
-**启用缓存注解：@EnableCache **
+**启用缓存注解：@EnableCache ** 
 
 ```java
 import com.igeeksky.xcache.aop.EnableCache;
@@ -685,15 +685,15 @@ xcache:
 
 key-codec 和二级缓存的 value-codec，需要特别配置为适配 Spring cache 的 jackson-spring。
 
-这是因为 Spring cache 注解不支持配置对象类型信息和泛型参数，因此需要在序列化数据中增加对象类型信息，反序列化时才能正确处理类型。
+这是因为 Spring cache 注解不支持配置对象类型和泛型参数，因此需要在序列化数据中增加类型信息，反序列化时才能正确处理类型。
 
-如示例中的 User 对象，配置为 jackson-spring，序列化数据是这样：
+如 User 对象，配置为 jackson-spring，序列化数据是这样：
 
 ```json
 {"@class":"com.igeeksky.xcache.samples.User","id":1,"name":"Jack1","age":18}
 ```
 
-> 特别提示：这也是使用 Spring cache 注解唯一需要注意的配置差别，其余配置完全相同。
+> 特别提示：这是使用 Spring cache 注解唯一需要注意的配置差别，其余配置完全相同。
 
 #### 3.3.3. 第三步：使用注解
 
@@ -848,15 +848,15 @@ public class UserCacheService {
 
 3、尽可能不改代码：可通过调整配置项和增减依赖包，灵活适配业务逻辑。
 
-### 总体介绍
+### 4.1. 总体介绍
 
 所有配置项可以划分为两部分，一部分是关于缓存的核心配置，一部分是关于 Redis 的扩展配置。
 
 为了让大家有一个整体认识，先通过表格介绍大的配置类别，具体子项后面再通过 yaml 来详细介绍。
 
-#### 基础配置
+#### 4.1.1. 核心配置
 
-基础配置部分，除了少数几个必填项，大部分配置项都有默认值，如未配置，则将使用默认值。
+核心配置部分，除少数几个必填项，其余配置项都有默认值，如未配置则使用默认值。
 
 | 类别             | 名称             | 说明                                                         |
 | ---------------- | ---------------- | ------------------------------------------------------------ |
@@ -866,7 +866,13 @@ public class UserCacheService {
 | xcache.stat      | 缓存指标统计配置 | 用于配置日志方式的统计信息输出的时间间隔。<br />如所有缓存实例的统计信息都选择输出到 Redis，则此配置项无效。 |
 | xcache.scheduler | 调度器配置       | 缓存定时刷新、缓存指标定时采集均依赖于此调度器。             |
 
-#### Redis 配置
+
+
+![image-20241021093622933](images/config.png)
+
+
+
+#### 4.1.2. Redis 配置
 
 Redis 配置部分，如果不配置，则不创建对象实例。
 
@@ -884,12 +890,12 @@ Redis 配置部分，如果不配置，则不创建对象实例。
 
 
 
-### 配置示例
+### 4.2. 配置示例
 
 1. 除了标注必填的选项，其他选项均为选填，删除或留空表示使用默认配置；
 2. 每个配置项均有详细说明，可用 ide 自动提示功能快速查看相关描述信息。
 
-#### 完全配置示例
+#### 4.2.1. 完全配置示例
 
 ```yaml
 xcache:
@@ -1098,7 +1104,7 @@ xcache:
                 refresh-triggers-reconnect-attempts: # 刷新触发器重连尝试次数（默认值：3）
 ```
 
-#### 简化配置示例
+#### 4.2.2. 简化配置示例
 
 上面这个示例是 Xcache 的全部配置项，我承认，是真的非常非常多。
 
@@ -1147,10 +1153,11 @@ xcache:
 >
 > 1. 此配置使用 Lettuce 连接 Redis 哨兵节点，并通过 redis 实现缓存数据存储、缓存数据同步、缓存锁、缓存指标采集等。
 > 2. 一级缓存 provider 的默认值是 caffeine，二级缓存 provider 的默认值是 lettuce，因此可省略，其它有默认值的同理均可省略不填。
+> 3. xcache.cache 缓存实例个性化配置，因为所有配置均与 t0 模板相同，所以也可全部省略。
 
-#### 极简配置示例
+#### 4.2.3. 极简配置示例
 
-如果不使用 redis 作为缓存及其它相关功能，仅使用 caffeine 作为一级缓存，可进一步简化配置。如下：
+如不使用 redis 作为缓存及其它相关功能，仅使用 caffeine 作为一级缓存，则可进一步简化配置。
 
 ```yaml
 xcache:
@@ -1165,31 +1172,37 @@ xcache:
 
 ## 5. 对象工厂
 
-| 接口                      | 实现类                      |       id       | 延迟创建 | 显式配置 |          依赖           | 用途 |
-| ------------------------- | --------------------------- | :------------: | :------: | :------: | :---------------------: | ---- |
-| CodecProvider             | JacksonCodecProvider        |    jackson     |    否    |    否    |           无            |      |
-| CodecProvider             | GenericJacksonCodecProvider | jackson-spring |    否    |    否    |           无            |      |
-| CodecProvider             | JdkCodecProvider            |      jdk       |    否    |    否    |           无            |      |
-| CompressorProvider        | DeflaterCompressorProvider  |    deflate     |    否    |    否    |           无            |      |
-| CompressorProvider        | GzipCompressorProvider      |      gzip      |    否    |    否    |           无            |      |
-| ContainsPredicateProvider | NoopContainsPredicate       |       无       |    否    |    否    |           无            |      |
-| CacheLockProvider         | EmbedCacheLockProvider      |     embed      |    否    |    否    |           无            |      |
-| CacheLockProvider         | RedisLockProvider           |     自定义     |    否    |    是    |  RedisOperatorFactory   |      |
-| CacheRefreshProvider      | EmbedCacheRefreshProvider   |     embed      |    否    |    否    |           无            |      |
-| CacheRefreshProvider      | RedisCacheRefreshProvider   |     自定义     |    否    |    是    |  RedisOperatorFactory   |      |
-| CacheStatProvider         | LogCacheStatProvider        |      log       |    是    |    否    |           无            |      |
-| CacheStatProvider         | RedisCacheStatProvider      |     自定义     |    否    |    是    |  RedisOperatorFactory   |      |
-| CacheSyncProvider         | RedisCacheSyncProvider      |     自定义     |    否    |    是    | StreamListenerContainer |      |
-| StoreProvider             | CaffeineStoreProvider       |    caffeine    |    否    |    否    |           无            |      |
-| StoreProvider             | RedisStoreProvider          |     自定义     |    否    |    是    |  RedisOperatorFactory   |      |
-| StreamListenerContainer   | StreamListenerContainer     |     自定义     |    否    |    是    |  RedisOperatorFactory   |      |
-| RedisOperatorFactory      | LettuceOperatorFactory      |     自定义     |    否    |    是    |           无            |      |
-| CacheLoader               | 业务强相关，需用户编程实现  |    缓存名称    |          |          |                         |      |
-| CacheWriter               | 业务强相关，需用户编程实现  |    缓存名称    |          |          |                         |      |
+| 接口                      | 实现类                      |       id       | 延迟创建 | 显式配置 |          依赖           |
+| ------------------------- | --------------------------- | :------------: | :------: | :------: | :---------------------: |
+| CodecProvider             | JacksonCodecProvider        |    jackson     |    否    |    否    |           无            |
+| CodecProvider             | GenericJacksonCodecProvider | jackson-spring |    否    |    否    |           无            |
+| CodecProvider             | JdkCodecProvider            |      jdk       |    否    |    否    |           无            |
+| CompressorProvider        | DeflaterCompressorProvider  |    deflate     |    否    |    否    |           无            |
+| CompressorProvider        | GzipCompressorProvider      |      gzip      |    否    |    否    |           无            |
+| ContainsPredicateProvider | NoopContainsPredicate       |       无       |    否    |    否    |           无            |
+| CacheLockProvider         | EmbedCacheLockProvider      |     embed      |    否    |    否    |           无            |
+| CacheLockProvider         | RedisLockProvider           |     自定义     |    否    |    是    |  RedisOperatorFactory   |
+| CacheRefreshProvider      | EmbedCacheRefreshProvider   |     embed      |    否    |    否    |           无            |
+| CacheRefreshProvider      | RedisCacheRefreshProvider   |     自定义     |    否    |    是    |  RedisOperatorFactory   |
+| CacheStatProvider         | LogCacheStatProvider        |      log       |    是    |    否    |           无            |
+| CacheStatProvider         | RedisCacheStatProvider      |     自定义     |    否    |    是    |  RedisOperatorFactory   |
+| CacheSyncProvider         | RedisCacheSyncProvider      |     自定义     |    否    |    是    | StreamListenerContainer |
+| StoreProvider             | CaffeineStoreProvider       |    caffeine    |    否    |    否    |           无            |
+| StoreProvider             | RedisStoreProvider          |     自定义     |    否    |    是    |  RedisOperatorFactory   |
+| StreamListenerContainer   | StreamListenerContainer     |     自定义     |    否    |    是    |  RedisOperatorFactory   |
+| RedisOperatorFactory      | LettuceOperatorFactory      |     自定义     |    否    |    是    |           无            |
 
 
 
-![image-20241021093622933](images/object-create.png)
+![对象创建与配置](images/object-create.png)
+
+1、实现同一接口的对象的 id 不能重复。
+
+如果仅需连接一个 redis，那么可将 RedisOperatorFactory 的 id 设为 lettuce，其它直接或间接依赖该 RedisOperatorFactory 的 StoreProvider，CacheLockProvider，CacheRefreshProvider，CacheStatProvider，CacheSyncProvider，StreamListenerContainer 的 id 也都设为 lettuce。
+
+如果需要连接多个 redis，那么多个 RedisOperatorFactory 的 id 必须互不相同，譬如可以定义为 lettuce1，lettuce2 …… 而StoreProvider，CacheLockProvider…… 则可以将 id 设为与依赖的 RedisOperatorFactory 的 id 一致。
+
+当然，您可以使用任意您所喜欢 的 id，是否与依赖保持一致也无强制要求，Xcache 仅要求实现同一接口的对象 id 不能重复。
 
 
 
@@ -1197,7 +1210,9 @@ xcache:
 
 ### 6.1. @Cacheable
 
-#### 相关属性
+@Cacheable 是方法注解，主要用于查询和保存单个缓存元素。
+
+#### 6.1.1. 相关属性
 
 | 属性        | 必填 | 作用                                                         |
 | :---------- | :--: | ------------------------------------------------------------ |
@@ -1206,42 +1221,218 @@ xcache:
 | keyParams   |  否  | 指定键的泛型参数                                             |
 | valueType   |  否  | 指定值类型                                                   |
 | valueParams |  否  | 指定值的泛型参数                                             |
-| key         |  否  | SpEL表达式，用于从参数中提取键。<br/>如果未配置，采用被注解方法的第一个参数作为键。 |
-| condition   |  否  | SpEL表达式，用于判断是否缓存。 <br/>如果未配置，condition 表达式结果默认为 true。 |
+| key         |  否  | SpEL表达式，用于提取键。<br/>如果未配置，使用被注解方法的第一个参数作为键。 |
+| condition   |  否  | SpEL表达式，用于判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
 
-#### 执行逻辑
+#### 6.1.2. 执行逻辑
 
-开始
+![image-20241021093622933](images/cacheable.png)
 
 
 
 ### 6.2. @CacheableAll
 
+@CacheableAll 是方法注解，用于批量查询和保存缓存元素。
 
+#### 6.2.1. 相关属性
+
+| 属性        | 必填 | 作用                                                         |
+| :---------- | :--: | ------------------------------------------------------------ |
+| name        |  否  | 指定缓存名称                                                 |
+| keyType     |  否  | 指定键类型                                                   |
+| keyParams   |  否  | 指定键的泛型参数                                             |
+| valueType   |  否  | 指定值类型                                                   |
+| valueParams |  否  | 指定值的泛型参数                                             |
+| keys        |  否  | SpEL表达式，用于提取键集。<br/>如果未配置，使用被注解方法的第一个参数作为键。 |
+| condition   |  否  | SpEL表达式，用于判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
+
+#### 6.2.2. 执行逻辑
+
+![cacheableAll](images/cacheableAll.png)
+
+> 提示：@Cacheable 是加锁执行，@CacheableAll 是不加锁执行。
+>
+> 如果用唯一的锁则所有批量查询会变成串行；如果为每个键都申请锁则可能导致死锁，因此批量回源查询时不加锁。
 
 ### 6.3. @CachePut
 
+@CachePut 是方法注解，用于保存或更新单个缓存元素。
 
+#### 6.3.1. 相关属性
+
+| 属性        | 必填 | 作用                                                         |
+| :---------- | :--: | ------------------------------------------------------------ |
+| name        |  否  | 指定缓存名称                                                 |
+| keyType     |  否  | 指定键类型                                                   |
+| keyParams   |  否  | 指定键的泛型参数                                             |
+| valueType   |  否  | 指定值类型                                                   |
+| valueParams |  否  | 指定值的泛型参数                                             |
+| key         |  否  | SpEL表达式，用于提取键。<br/>如果未配置，使用被注解方法的第一个参数作为键。 |
+| value       |  否  | SpEL表达式，用于提取值。<br/>如果未配置，使用被注解方法的执行结果作为值。 |
+| condition   |  否  | SpEL表达式，用于调用被注解方法前判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
+| unless      |  否  | SpEL表达式，用于调用被注解方法后判断是否执行缓存逻辑。 <br/>如果未配置，默认为 false。 |
+
+#### 6.3.2. 执行逻辑
+
+![cacheableAll](images/cachePut.png)
 
 ### 6.4. @CachePutAll
+
+@CachePutAll 是方法注解，用于批量保存或更新缓存元素。
+
+#### 6.4.1. 相关属性
+
+| 属性        | 必填 | 作用                                                         |
+| :---------- | :--: | ------------------------------------------------------------ |
+| name        |  否  | 指定缓存名称                                                 |
+| keyType     |  否  | 指定键类型                                                   |
+| keyParams   |  否  | 指定键的泛型参数                                             |
+| valueType   |  否  | 指定值类型                                                   |
+| valueParams |  否  | 指定值的泛型参数                                             |
+| keyValues   |  否  | SpEL表达式，用于提取键值对集。<br/>如果未配置，使用被注解方法的第一个参数作为键值对集。 |
+| condition   |  否  | SpEL表达式，用于调用被注解方法前判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
+| unless      |  否  | SpEL表达式，用于调用被注解方法后判断是否执行缓存逻辑。 <br/>如果未配置，默认为 false。 |
+
+#### 6.4.2. 执行逻辑
+
+![cacheableAll](images/cachePutAll.png)
 
 
 
 ### 6.5. @CacheEvict
 
+@CacheEvict 是方法注解，用于驱逐单个缓存元素。
+
+#### 6.5.1. 相关属性
+
+| 属性             | 必填 | 作用                                                         |
+| :--------------- | :--: | ------------------------------------------------------------ |
+| name             |  否  | 指定缓存名称                                                 |
+| keyType          |  否  | 指定键类型                                                   |
+| keyParams        |  否  | 指定键的泛型参数                                             |
+| valueType        |  否  | 指定值类型                                                   |
+| valueParams      |  否  | 指定值的泛型参数                                             |
+| key              |  否  | SpEL表达式，用于提取键。<br/>如果未配置，使用被注解方法的第一个参数作为键。 |
+| condition        |  否  | SpEL表达式，用于调用被注解方法前判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
+| unless           |  否  | SpEL表达式，用于调用被注解方法后判断是否执行缓存逻辑。 <br/>如果未配置，默认为 false。 |
+| beforeInvocation |  否  | 如果为 true，调用被注解方法前驱逐缓存元素；如果为 false，调用被注解方法后驱逐缓存元素。 <br/>如果未配置，默认为 false。 |
+
+#### 6.5.2. 执行逻辑
+
+![cacheEvict](images/cacheEvict.png)
+
 
 
 ### 6.6. @CacheEvictAll
+
+@CacheEvictAll 是方法注解，用于批量驱逐缓存元素。
+
+#### 6.6.1. 相关属性
+
+| 属性             | 必填 | 作用                                                         |
+| :--------------- | :--: | ------------------------------------------------------------ |
+| name             |  否  | 指定缓存名称                                                 |
+| keyType          |  否  | 指定键类型                                                   |
+| keyParams        |  否  | 指定键的泛型参数                                             |
+| valueType        |  否  | 指定值类型                                                   |
+| valueParams      |  否  | 指定值的泛型参数                                             |
+| keys             |  否  | SpEL表达式，用于提取键集。<br/>如果未配置，使用被注解方法的第一个参数作为键集。 |
+| condition        |  否  | SpEL表达式，用于调用被注解方法前判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
+| unless           |  否  | SpEL表达式，用于调用被注解方法后判断是否执行缓存逻辑。 <br/>如果未配置，默认为 false。 |
+| beforeInvocation |  否  | 如果为 true，调用被注解方法前驱逐缓存元素；如果为 false，调用被注解方法后驱逐缓存元素。 <br/>如果未配置，默认为 false。 |
+
+#### 6.6.2. 执行逻辑
+
+![cacheEvictAll](images/cacheEvictAll.png)
 
 
 
 ### 6.7. @CacheClear
 
+@CacheClear 是方法注解，用于清空所有缓存数据。
+
+#### 6.7.1. 相关属性
+
+| 属性             | 必填 | 作用                                                         |
+| :--------------- | :--: | ------------------------------------------------------------ |
+| name             |  否  | 指定缓存名称                                                 |
+| keyType          |  否  | 指定键类型                                                   |
+| keyParams        |  否  | 指定键的泛型参数                                             |
+| valueType        |  否  | 指定值类型                                                   |
+| valueParams      |  否  | 指定值的泛型参数                                             |
+| condition        |  否  | SpEL表达式，用于调用被注解方法前判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
+| unless           |  否  | SpEL表达式，用于调用被注解方法后判断是否执行缓存逻辑。 <br/>如果未配置，默认为 false。 |
+| beforeInvocation |  否  | 如果为 true，调用被注解方法前驱逐缓存元素；如果为 false，调用被注解方法后驱逐缓存元素。 <br/>如果未配置，默认为 false。 |
+
+#### 6.7.2. 执行逻辑
+
+![cacheClear](images/cacheClear.png)
+
 
 
 ### 6.8. @CacheConfig
 
+@CacheConfig 是类注解，用于配置公共属性。
 
+#### 6.8.1. 相关属性
+
+| 属性        | 必填 | 作用             |
+| :---------- | :--: | ---------------- |
+| name        |  是  | 指定缓存名称     |
+| keyType     |  是  | 指定键类型       |
+| keyParams   |  否  | 指定键的泛型参数 |
+| valueType   |  是  | 指定值类型       |
+| valueParams |  否  | 指定值的泛型参数 |
+
+> @Cacheable，@CacheableAll …… 等所有缓存方法注解均有这五个公共属性。
+>
+> 如果一个类中有同名缓存的多个缓存方法注解，那么可以在类中添加 @CacheConfig 注解，避免重复配置公共属性。
+
+#### 6.8.1. 执行逻辑
+
+![cacheClear](images/cacheConfig.png)
+
+1. 公共属性完整性
+
+   @CacheConfig 的 name 、keyType、valueType 是必填属性。
+
+   缓存方法注解中，name 、keyType、valueType 并非必填属性，但如果类中没有 @CacheConfig 注解，则必须填写，否则报异常。
+
+2. 公共属性一致性
+
+   如果缓存方法注解中有配置 keyType、keyParams、valueType、valueParams 任意其中一个或多个属性，但类中又有同名缓存的 @CacheConfig 注解，则这些公共属性值必须一致，否则报异常。
+
+   因此，如果类中有同名缓存的 @CacheConfig 注解，缓存方法注解中的公共属性建议留空。
+
+3. 如果缓存方法注解的 name 属性值未配置或与 @CacheConfig 的相同，则表示两者指向的是同一个缓存实例。
+
+
+
+### 6.9. @EnableCache
+
+@EnableCache 是类注解，用于启用 Xcache 缓存注解功能支持。
+
+| 属性         | 必填 |          默认值           | 作用                             |
+| :----------- | :--: | :-----------------------: | -------------------------------- |
+| basePackages |  是  |            无             | 指定需要扫描缓存注解的包完整路径 |
+| order        |  否  | Ordered.LOWEST_PRECEDENCE | 指定切面优先级                   |
+| AdviceMode   |  否  |     AdviceMode.PROXY      | 指定代理实现模式                 |
+
+
+
+### 6.10. condition 与 unless
+
+condition 默认为 true，该表达式是在调用被注解方法之前进行解析，只有解析结果为 true，才会执行缓存相关逻辑。
+
+unless 默认为 false，该表达式是在调用被注解方法之后进行解析，只有解析结果为 false，才会执行缓存相关逻辑。
+
+由于 condition 先于 unless 进行条件判断，因此如果 condition 为 false，将直接忽略 unless，一定不会执行缓存逻辑。
+
+@Cacheable 无 unless 属性，原因是加锁操作是在缓存方法内部，
+
+@CacheableAll 无 unless 属性，
+
+result
 
 
 
