@@ -124,8 +124,13 @@ public class CacheOperationContext {
     }
 
     private void processCacheable(CacheableOperation operation) throws Throwable {
+        if (this.conditionNotPassing(operation.getCondition())) {
+            this.proceed();
+            return;
+        }
+
         // 使用 SpEL 获取 key
-        Object key = this.getKey(operation.getKey(), operation.getCondition());
+        Object key = this.generateKey(operation.getKey(), false);
         if (key == null) {
             this.proceed();
             return;
@@ -150,8 +155,13 @@ public class CacheOperationContext {
     }
 
     private void processCacheableAll(CacheableAllOperation operation) throws Throwable {
+        if (this.conditionNotPassing(operation.getCondition())) {
+            this.proceed();
+            return;
+        }
+
         // 使用 SpEL 获取 keys 集合
-        Set<Object> keys = (Set<Object>) this.getKey(operation.getCondition(), operation.getKeys());
+        Set<Object> keys = (Set<Object>) this.generateKey(operation.getCondition(), false);
         if (CollectionUtils.isEmpty(keys)) {
             this.proceed();
             return;
@@ -238,7 +248,7 @@ public class CacheOperationContext {
     }
 
     private void processCachePut(CachePutOperation operation, List<Runnable> afterInvokeRunners) {
-        if (!this.conditionPassing(operation.getCondition())) {
+        if (this.conditionNotPassing(operation.getCondition())) {
             return;
         }
 
@@ -246,7 +256,7 @@ public class CacheOperationContext {
             if (!this.unlessPassing(operation.getUnless())) {
                 return;
             }
-            Object key = this.generateKey(operation.getKey());
+            Object key = this.generateKey(operation.getKey(), true);
             if (key == null) {
                 return;
             }
@@ -256,7 +266,7 @@ public class CacheOperationContext {
     }
 
     private void processCachePutAll(CachePutAllOperation operation, List<Runnable> afterInvokeRunners) {
-        if (!this.conditionPassing(operation.getCondition())) {
+        if (this.conditionNotPassing(operation.getCondition())) {
             return;
         }
 
@@ -274,24 +284,24 @@ public class CacheOperationContext {
     }
 
     private void processCacheEvict(CacheEvictOperation operation, List<Runnable> afterInvokeRunners) {
-        if (!this.conditionPassing(operation.getCondition())) {
+        if (this.conditionNotPassing(operation.getCondition())) {
             return;
         }
 
         if (operation.isBeforeInvocation()) {
-            doEvict(operation);
+            doEvict(operation, false);
             return;
         }
 
         afterInvokeRunners.add(() -> {
             if (this.unlessPassing(operation.getUnless())) {
-                doEvict(operation);
+                doEvict(operation, true);
             }
         });
     }
 
-    private void doEvict(CacheEvictOperation operation) {
-        Object key = this.generateKey(operation.getKey());
+    private void doEvict(CacheEvictOperation operation, boolean afterInvocation) {
+        Object key = this.generateKey(operation.getKey(), afterInvocation);
         if (key == null) {
             return;
         }
@@ -299,24 +309,24 @@ public class CacheOperationContext {
     }
 
     private void processCacheEvictAll(CacheEvictAllOperation operation, List<Runnable> afterInvokeRunners) {
-        if (!this.conditionPassing(operation.getCondition())) {
+        if (this.conditionNotPassing(operation.getCondition())) {
             return;
         }
 
         if (operation.isBeforeInvocation()) {
-            doEvictAll(operation);
+            doEvictAll(operation, false);
             return;
         }
 
         afterInvokeRunners.add(() -> {
             if (this.unlessPassing(operation.getUnless())) {
-                doEvictAll(operation);
+                doEvictAll(operation, true);
             }
         });
     }
 
-    private void doEvictAll(CacheEvictAllOperation operation) {
-        Set<Object> keys = (Set<Object>) this.generateKey(operation.getKeys());
+    private void doEvictAll(CacheEvictAllOperation operation, boolean afterInvocation) {
+        Set<Object> keys = (Set<Object>) this.generateKey(operation.getKeys(), afterInvocation);
         if (CollectionUtils.isEmpty(keys)) {
             return;
         }
@@ -326,7 +336,7 @@ public class CacheOperationContext {
 
 
     private void processCacheClear(CacheClearOperation operation, List<Runnable> afterInvokeRunners) {
-        if (!this.conditionPassing(operation.getCondition())) {
+        if (this.conditionNotPassing(operation.getCondition())) {
             return;
         }
 
@@ -342,25 +352,20 @@ public class CacheOperationContext {
         });
     }
 
-    private Object getKey(String condition, String key) {
-        if (this.conditionPassing(condition)) {
-            return this.generateKey(key);
-        }
-        return null;
-    }
-
     /**
      * 根据表达式生成一个唯一键
      *
      * @param expression 表达式如果为空或无文本内容，则返回方法参数中的第一个对象
      * @return 如果无法根据表达式生成键，则返回参数中的第一个对象
      */
-    private Object generateKey(String expression) {
+    private Object generateKey(String expression, boolean afterInvocation) {
         // 检查表达式是否有文本内容
         if (StringUtils.hasText(expression)) {
             // 创建一个基于方法的评估上下文，用于解析表达式
             MethodBasedEvaluationContext context = this.createEvaluationContext();
-            context.setVariable("result", this.result);
+            if (afterInvocation) {
+                context.setVariable("result", this.result);
+            }
             // 使用表达式评估器生成键
             return this.expressionEvaluator.key(expression, this.methodKey, context);
         }
@@ -380,12 +385,12 @@ public class CacheOperationContext {
     /**
      * 根据 condition 判断是否需要缓存操作
      */
-    private boolean conditionPassing(String expression) {
+    private boolean conditionNotPassing(String expression) {
         if (StringUtils.hasText(expression)) {
             MethodBasedEvaluationContext context = createEvaluationContext();
-            return this.expressionEvaluator.condition(expression, this.methodKey, context);
+            return !this.expressionEvaluator.condition(expression, this.methodKey, context);
         }
-        return true;
+        return false;
     }
 
     private boolean unlessPassing(String expression) {

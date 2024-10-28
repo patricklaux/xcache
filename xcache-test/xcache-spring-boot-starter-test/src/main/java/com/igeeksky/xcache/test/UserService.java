@@ -42,6 +42,14 @@ public class UserService {
         cache.putAll(keyValues);
     }
 
+    /**
+     * "#result" 获取的是方法返回值，而不是参数 result
+     */
+    @CachePut(value = "#result")
+    public User save(Key key, User result) {
+        return new User("1", "MethodResult", 18);
+    }
+
     @CacheEvict
     public void deleteByKey(Key key) {
         System.out.println("deleteByKey:" + key);

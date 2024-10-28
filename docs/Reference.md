@@ -1410,7 +1410,7 @@ xcache:
 
 ### 6.9. @EnableCache
 
-@EnableCache 是类注解，用于启用 Xcache 缓存注解功能支持。
+@EnableCache 是类注解，用于启用 Xcache 缓存注解功能。
 
 | 属性         | 必填 |          默认值           | 作用                                                         |
 | :----------- | :--: | :-----------------------: | ------------------------------------------------------------ |
@@ -1420,7 +1420,9 @@ xcache:
 
 
 
-### 6.10. condition 与 unless
+### 6.10. 其它事项
+
+#### 6.10.1. condition 与 unless
 
 condition 默认为 true，该表达式是在调用被注解方法之前进行解析，只有解析结果为 true，才会执行缓存相关逻辑。
 
@@ -1428,11 +1430,71 @@ unless 默认为 false，该表达式是在调用被注解方法之后进行解�
 
 由于 condition 先于 unless 进行条件判断，因此如果 condition 为 false，将直接忽略 unless，一定不会执行缓存逻辑。
 
-@Cacheable 无 unless 属性，原因是加锁操作是在缓存方法内部，
+另：@Cacheable 和 @CacheableAll 无 unless 属性。
 
-@CacheableAll 无 unless 属性，
+#### 6.10.2. 注解互斥
 
-result
+@Cacheable 和 @CacheableAll，当缓存命中（全部）数据时，将不执行被注解方法，因此不能与其它缓存注解共用于同一方法。
+
+#### 6.10.3. 方法参数名
+
+如注解的表达式有用到方法参数名，项目编译时需添加参数 ``-parameters``。
+
+如使用 Maven 进行编译，可参考如下示例：
+
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>${maven.compiler.version}</version>
+    <configuration>
+        <source>${maven.compiler.source}</source>
+        <target>${maven.compiler.target}</target>
+        <encoding>${maven.compiler.encoding}</encoding>
+        <!--如果注解的表达式有用到方法参数名，需添加此编译选项并设为 true -->
+        <parameters>true</parameters>
+    </configuration>
+</plugin>
+```
+
+如不想添加编译参数，则可以使用 "#a" + index 的方式来获取方法参数。
+
+```java
+// #a0 或 #p0 表示获取方法的第 1 个参数，#a1 或 #p1 表示获取方法的第 2 个参数，如此类推。
+@CachePut(key = "#a0", value = "#a1")
+//@CachePut(key = "#p0", value = "#p1")
+public void save(long id, User user) {
+    // do something
+}
+```
+
+#### 6.10.4. result
+
+如表达式计算是在被注解方法执行之后，被注解方法的执行结果将使用 “result” 关键字保存到表达式计算的上下文环境，表达式中可使用 “#result” 来提取被注解方法执行结果。
+
+需要注意的是，如果被注解方法的参数之一也命名为 “result”，那么：
+
+如表达式计算是在被注解方法执行之前，“#result” 获取到的是被注解方法的参数变量；
+如表达式计算是在被注解方法执行之后，“#result” 获取到的是被注解方法的返回结果。
+
+```java
+@CachePut(value = "#result")
+public User save(long id, User result) {
+    return new User(1, "MethodResult", 18);
+}
+```
+
+上面这个示例，"#result" 获取到的是方法返回结果，而不是参数中的 result。
+
+如果不想改参数名，又希望使用参数中的 result，那么可使用 "#a1" 或 "#p1"来获取参数中的值。
+
+```java
+@CachePut(value = "#a1")
+//@CachePut(value = "#p1")
+public User save(long id, User result) {
+    return new User(1, "MethodResult", 18);
+}
+```
 
 
 
@@ -1541,7 +1603,7 @@ Xcache 拆分为很多子模块，一是为了避免引入不必要的依赖，�
 | xcache-extension-jackson                  | jar  | 使用 jackson 实现的编解码                                    |
 | xcache-jackson-spring-boot-autoconfigure  | jar  | xcache-extension-jackson 模块的 Spring boot 自动配置         |
 | xcache-lettuce-spring-boot-autoconfigure  | jar  | xcache-redis-lettuce 模块的 Spring boot 自动配置             |
-| xcache-redis                              | pom  | 所有 redis 相关项目的父项目                                  |
+| xcache-redis                              | pom  | Redis 相关项目的父项目                                       |
 | xcache-redis-common                       | jar  | 如希望开发自定义的 Redis 客户端，可依赖此项目                |
 | xcache-redis-core                         | jar  |                                                              |
 | xcache-redis-jedis                        | jar  |                                                              |

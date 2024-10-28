@@ -162,6 +162,24 @@ public class CacheAnnotationTest {
     }
 
     @Test
+    public void cachePut2() {
+        Key key = new Key("test-result");
+        User argsResult = new User("0", "ArgsResult", key.getAge());
+        User methodResult = new User("1", "MethodResult", 18);
+
+        // 删除缓存元素
+        userService.deleteUserByCache(key);
+
+        // 调用方法，缓存元素
+        userService.save(key, argsResult);
+
+        // 只读取缓存，判断是否保存成功
+        CacheValue<User> result2 = userService.getUserByCache(key);
+        System.out.println(result2);
+        Assertions.assertEquals(methodResult, result2.getValue());
+    }
+
+    @Test
     public void cacheableAll() {
         Key jack04 = new Key("jack04");
         Key jack05 = new Key("jack05");
