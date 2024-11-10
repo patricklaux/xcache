@@ -376,7 +376,7 @@ xcache: #【1】Xcache 配置的根节点
 
 #### 3.2.3. 第三步：使用注解
 
-**启用缓存注解：@EnableCache ** 
+**启用缓存注解：@EnableCache** 
 
 ```java
 import com.igeeksky.xcache.aop.EnableCache;
@@ -702,7 +702,7 @@ xcache: #【1】Xcache 配置的根节点
 
 #### 3.3.3. 第三步：使用注解
 
-**启用缓存注解：@EnableCaching **
+**启用缓存注解：@EnableCaching** 
 
 ```java
 import org.springframework.boot.SpringApplication;
