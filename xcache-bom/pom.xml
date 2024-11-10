@@ -11,13 +11,13 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>xcache-dependencies</artifactId>
+    <artifactId>xcache-bom</artifactId>
     <name>xcache dependencies</name>
     <description>${project.name}</description>
     <url>https://github.com/patricklaux/xcache</url>
 
     <properties>
-        <spring.boot.version>3.3.3</spring.boot.version>
+        <spring.boot.version>3.3.5</spring.boot.version>
         <xtool.version>1.0.19</xtool.version>
     </properties>
 

@@ -169,7 +169,7 @@ public class CacheOperationContext {
 
         // 根据注解获取对应的缓存实例，并从缓存读取数据
         Cache<Object, Object> cache = this.getOrCreateCache(operation);
-        Map<Object, CacheValue<Object>> cacheHits = cache.getAll(keys);
+        Map<Object, CacheValue<Object>> cacheHits = cache.getAllCacheValues(keys);
 
         // 移除已缓存的键
         keys.removeAll(cacheHits.keySet());
@@ -305,7 +305,7 @@ public class CacheOperationContext {
         if (key == null) {
             return;
         }
-        this.getOrCreateCache(operation).evict(key);
+        this.getOrCreateCache(operation).remove(key);
     }
 
     private void processCacheEvictAll(CacheEvictAllOperation operation, List<Runnable> afterInvokeRunners) {
@@ -331,7 +331,7 @@ public class CacheOperationContext {
             return;
         }
         Cache<Object, Object> cache = this.getOrCreateCache(operation);
-        cache.evictAll(keys);
+        cache.removeAll(keys);
     }
 
 

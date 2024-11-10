@@ -2,7 +2,6 @@ package com.igeeksky.xcache.extension.sync;
 
 import com.igeeksky.xcache.common.MessageListener;
 import com.igeeksky.xcache.common.Store;
-import com.igeeksky.xcache.props.SyncType;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,24 +22,20 @@ public class SyncMessageListener<V> implements MessageListener<CacheSyncMessage>
 
     private final String sid;
 
-    private final Store<V> first;
-    private final Store<V> second;
+    private final Store<V> firstStore;
+    private final Store<V> secondStore;
 
-    private final boolean sync;
-    private final boolean firstClear;
-    private final boolean secondClear;
-    private final boolean firstRemove;
-    private final boolean secondRemove;
+    private final boolean enabled;
+    private final boolean firstEnabled;
+    private final boolean secondEnabled;
 
     public SyncMessageListener(SyncConfig<V> config) {
         this.sid = config.getSid();
-        this.first = config.getFirstStore();
-        this.second = config.getSecondStore();
-        this.firstClear = isClear(first, config.getFirst());
-        this.secondClear = isClear(second, config.getSecond());
-        this.firstRemove = isRemove(first, config.getFirst());
-        this.secondRemove = isRemove(second, config.getSecond());
-        this.sync = firstClear || secondClear;
+        this.firstStore = config.getFirstStore();
+        this.secondStore = config.getSecondStore();
+        this.firstEnabled = isEnabled(firstStore, config.getFirst());
+        this.secondEnabled = isEnabled(secondStore, config.getSecond());
+        this.enabled = firstEnabled || secondEnabled;
     }
 
     public void onMessage(CacheSyncMessage message) {
@@ -48,7 +43,7 @@ public class SyncMessageListener<V> implements MessageListener<CacheSyncMessage>
             log.debug("onMessage: {}", message);
         }
 
-        if (!sync) return;
+        if (!enabled) return;
 
         String sourceId = message.getSid();
         if (Objects.equals(sid, sourceId)) {
@@ -56,27 +51,30 @@ public class SyncMessageListener<V> implements MessageListener<CacheSyncMessage>
         }
 
         int type = message.getType();
-        if (Objects.equals(CacheSyncMessage.TYPE_REMOVE, type)) {
+        if (CacheSyncMessage.TYPE_REMOVE == type) {
             Set<String> keys = message.getKeys();
             if (CollectionUtils.isNotEmpty(keys)) {
-                if (firstRemove) first.evictAll(keys);
-                if (secondRemove) second.evictAll(keys);
+                if (secondEnabled) {
+                    secondStore.removeAll(keys);
+                }
+                if (firstEnabled) {
+                    firstStore.removeAll(keys);
+                }
             }
             return;
         }
 
-        if (Objects.equals(CacheSyncMessage.TYPE_CLEAR, type)) {
-            if (firstClear) first.clear();
-            if (secondClear) second.clear();
+        if (CacheSyncMessage.TYPE_CLEAR == type) {
+            if (firstEnabled) firstStore.clear();
+            if (secondEnabled) secondStore.clear();
+            return;
         }
+
+        log.error("onMessage: unknown message type: {}", type);
     }
 
-    private static <V> boolean isRemove(Store<V> store, SyncType type) {
-        return store != null && Objects.equals(SyncType.ALL, type);
-    }
-
-    private static <V> boolean isClear(Store<V> store, SyncType type) {
-        return store != null && (Objects.equals(SyncType.ALL, type) || Objects.equals(SyncType.CLEAR, type));
+    private static <V> boolean isEnabled(Store<V> store, boolean enabled) {
+        return store != null && enabled;
     }
 
 }

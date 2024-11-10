@@ -10,16 +10,16 @@ import java.util.Set;
  * @author Patrick.Lau
  * @since 1.0.0 2024/9/9
  */
-public class NoopCacheLoader<K, V> implements CacheLoader<K, V> {
+public class NoOpCacheLoader<K, V> implements CacheLoader<K, V> {
 
-    public static final NoopCacheLoader<Object, Object> INSTANCE = new NoopCacheLoader<>();
+    public static final NoOpCacheLoader<Object, Object> INSTANCE = new NoOpCacheLoader<>();
 
-    private NoopCacheLoader() {
+    private NoOpCacheLoader() {
     }
 
     @SuppressWarnings("unchecked")
-    public static <K, V> NoopCacheLoader<K, V> getInstance() {
-        return (NoopCacheLoader<K, V>) INSTANCE;
+    public static <K, V> NoOpCacheLoader<K, V> getInstance() {
+        return (NoOpCacheLoader<K, V>) INSTANCE;
     }
 
     @Override

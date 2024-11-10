@@ -43,7 +43,7 @@ public class SpringCache implements org.springframework.cache.Cache {
 
     @Override
     public ValueWrapper get(@NonNull Object key) {
-        return this.toValueWrapper(cache.get(key));
+        return this.toValueWrapper(cache.getCacheValue(key));
     }
 
     @Override
@@ -74,7 +74,7 @@ public class SpringCache implements org.springframework.cache.Cache {
 
     @Override
     public <V> V get(@NonNull Object key, Class<V> type) {
-        return this.fromStoreValue(cache.get(key));
+        return this.fromStoreValue(cache.getCacheValue(key));
     }
 
     @Override
@@ -99,7 +99,7 @@ public class SpringCache implements org.springframework.cache.Cache {
 
     @Override
     public void evict(@NonNull Object key) {
-        cache.evict(key);
+        cache.remove(key);
     }
 
     @Override

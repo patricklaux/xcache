@@ -50,12 +50,12 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected CacheValue<V> doGet(String key) {
-        CacheValue<V> cacheValue = first.get(key);
+        CacheValue<V> cacheValue = first.getCacheValue(key);
         if (cacheValue != null) {
             return cacheValue;
         }
 
-        cacheValue = second.get(key);
+        cacheValue = second.getCacheValue(key);
         if (cacheValue != null) {
             first.put(key, cacheValue.getValue());
         }
@@ -71,7 +71,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
         Map<String, CacheValue<V>> result = Maps.newHashMap(keys.size());
 
         // 从一级缓存查询数据
-        Map<String, CacheValue<V>> firstAll = first.getAll(cloneKeys);
+        Map<String, CacheValue<V>> firstAll = first.getAllCacheValues(cloneKeys);
         if (Maps.isNotEmpty(firstAll)) {
             firstAll.forEach((key, cacheValue) -> {
                 if (cacheValue != null) {
@@ -86,7 +86,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
         }
 
         // 从二级缓存查询数据
-        Map<String, CacheValue<V>> secondAll = second.getAll(cloneKeys);
+        Map<String, CacheValue<V>> secondAll = second.getAllCacheValues(cloneKeys);
         if (Maps.isNotEmpty(secondAll)) {
             Map<String, V> saveToLower = Maps.newHashMap(secondAll.size());
             secondAll.forEach((key, cacheValue) -> {
@@ -120,16 +120,16 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected void doEvict(String key) {
-        second.evict(key);
-        first.evict(key);
+    protected void doRemove(String key) {
+        second.remove(key);
+        first.remove(key);
         syncMonitor.afterEvict(key);
     }
 
     @Override
-    protected void doEvictAll(Set<String> keys) {
-        second.evictAll(keys);
-        first.evictAll(keys);
+    protected void doRemoveAll(Set<String> keys) {
+        second.removeAll(keys);
+        first.removeAll(keys);
         syncMonitor.afterEvictAll(keys);
     }
 

@@ -9,16 +9,16 @@ import java.util.Set;
  * @author Patrick.Lau
  * @since 1.0.0 2024/9/9
  */
-public class NoopCacheWriter<K, V> implements CacheWriter<K, V> {
+public class NoOpCacheWriter<K, V> implements CacheWriter<K, V> {
 
-    private static final NoopCacheWriter<Object, Object> INSTANCE = new NoopCacheWriter<>();
+    private static final NoOpCacheWriter<Object, Object> INSTANCE = new NoOpCacheWriter<>();
 
-    private NoopCacheWriter() {
+    private NoOpCacheWriter() {
     }
 
     @SuppressWarnings("unchecked")
-    public static <K, V> NoopCacheWriter<K, V> getInstance() {
-        return (NoopCacheWriter<K, V>) INSTANCE;
+    public static <K, V> NoOpCacheWriter<K, V> getInstance() {
+        return (NoOpCacheWriter<K, V>) INSTANCE;
     }
 
     @Override

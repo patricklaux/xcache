@@ -66,11 +66,31 @@ JDK：21+
 git clone https://github.com/patricklaux/xcache-samples.git
 ```
 
+### 3.0. Maven bom
+
+Xcache 支持 bom 方式统一管理版本，可在 pom.xml 文件中添加如下配置片段，后续真正引入组件依赖时可省略版本号。
+
+```xml
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>com.igeeksky.xcache</groupId>
+            <artifactId>xcache-bom</artifactId>
+            <version>${xcache.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
 ### 3.1. 调用缓存方法
+
+详见 ``xcache-samples-method`` 子项目。
 
 #### 3.1.1 第一步：引入依赖
 
-如直接通过调用方法操作缓存，仅需引入 ``xcache-spring-boot-starter`` 。
+如直接通过调用方法操作缓存，仅需引入 ``xcache-spring-boot-starter`` 模块。
 
 主要组件：Caffeine（内嵌缓存），Lettuce（Redis 客户端），Jackson（序列化）
 
@@ -79,7 +99,6 @@ git clone https://github.com/patricklaux/xcache-samples.git
     <dependency>
         <groupId>com.igeeksky.xcache</groupId>
         <artifactId>xcache-spring-boot-starter</artifactId>
-        <version>${xcache.version}</version>
     </dependency>
     <!-- ... other ... -->
 </dependencies>
@@ -88,30 +107,25 @@ git clone https://github.com/patricklaux/xcache-samples.git
 #### 3.1.2. 第二步：编写配置
 
 ```yaml
-xcache:
-  group: shop # 分组名称（必填），主要用于区分不同的应用
-  template: # 公共模板配置（必填），列表类型，可配置一至多个
-    - id: t0 # 模板ID（必填）
-      first: # 一级缓存配置
-        provider: caffeine # 缓存存储提供者实例 id
-        store-type: EMBED # 缓存存储类型，根据类型自动填充默认配置
-      second: # 二级缓存配置
-        provider: none # 缓存存储提供者实例 id（如果配置为 none，则表示不使用二级缓存）
-        store-type: EXTRA # 缓存存储类型，根据类型自动填充默认配置
-  cache: # 缓存实例个性配置，列表类型，可配置零至多个
-    - name: user # 缓存名称，用于区分不同的缓存对象
-      template-id: t0 # 指定使用的模板为 t0（对应属性：xcache.template[i].id）
+xcache: #【1】Xcache 配置的根节点
+  group: shop #【2】分组名称（必填），主要用于区分不同的应用
+  template: #【3】公共模板配置（必填），列表类型，可配置一至多个
+    - id: t0 #【4】模板ID（必填）
+      first: #【5】一级缓存配置
+        provider: caffeine #【6】使用 id 为 caffeine 的 StoreProvider 作为一级缓存
+  cache: #【7】缓存个性配置，列表类型，可配置零至多个
+    - name: user #【8】缓存名称，用于区分不同的缓存实例
+      template-id: t0 #【9】指定使用的模板为 t0（即【4】中设定的 id）
 ```
 
 **说明**：
 
-1. 同一应用中，一般会有多个不同名称的缓存对象，它们的配置通常大部分相同。
+- 同一应用中，一般会有多个不同名称的缓存对象，它们的配置通常大部分相同。
 
-   为了避免填写重复配置，可创建一个公共配置模板，缓存个性配置中则只需填写与该模板的差异部分。
+  为了避免填写重复配置，可创建一个公共配置模板【3】，缓存个性配置【9】中则只需填写与该模板的差异部分。
 
-2. Xcache 提供了丰富的配置项，绝大多数都有默认值，因此可以省略而无需填写。
+- Xcache 提供了丰富的配置项，绝大多数都有默认值，因此可以省略而无需填写。
 
-3. 每一个配置项都有详细介绍，可借助 ide 的自动提示功能快速查看相关描述信息。
 
 #### 3.1.3. 第三步：调用方法
 
@@ -274,23 +288,21 @@ public class UserCacheService {
 
 ### 3.2. 使用 Xcache 注解
 
-上一个示例演示了如何调用缓存方法，在这个示例中将演示如何使用 Xcache 注解。
+详见 ``xcache-samples-annotation`` 子项目。
 
 #### 3.2.1. 第一步：引入依赖
 
-使用  Xcache 注解，引入 ``xcache-spring-boot-starter`` 之外，还需引入 ``xcache-spring-aop``。
+使用  Xcache 注解，除了需引入 ``xcache-spring-boot-starter``，还需引入 ``xcache-spring-aop``。
 
 ```xml
 <dependencies>
     <dependency>
         <groupId>com.igeeksky.xcache</groupId>
         <artifactId>xcache-spring-boot-starter</artifactId>
-        <version>${xcache.version}</version>
     </dependency>
     <dependency>
         <groupId>com.igeeksky.xcache</groupId>
         <artifactId>xcache-spring-aop</artifactId>
-        <version>${xcache.version}</version>
     </dependency>
     <!-- ... other ... -->
 </dependencies>
@@ -299,72 +311,68 @@ public class UserCacheService {
 #### 3.2.2. 第二步：编写配置
 
 ```yaml
-xcache:
-  group: shop # 分组名称（必填），主要用于区分不同的应用
-  template: # 公共模板配置（必填），列表类型，可配置一至多个
-    - id: t0 # 模板ID（必填）
-      first: # 一级缓存配置
-        provider: caffeine # 缓存存储提供者实例 id
-        store-type: EMBED # 缓存存储类型，根据类型自动填充默认配置
-        expire-after-write: 3600000 # 数据写入后的存活时间（单位：毫秒）
-        expire-after-access: 300000 # 数据访问后的存活时间（单位：毫秒）
-        enable-random-ttl: true # 是否使用随机存活时间
-        enable-null-value: true # 是否允许保存空值
-      second: # 二级缓存配置
-        provider: lettuce # 使用 id 为 lettuce 的 StoreProvider
-        store-type: EXTRA # 缓存存储类型，根据类型自动填充默认配置
-        expire-after-write: 7200000 # 数据写入后的存活时间（单位：毫秒）
-        enable-random-ttl: true # 是否使用随机存活时间
-        enable-null-value: true # 是否允许保存空值
-  cache: # 缓存实例个性配置，列表类型，可配置零至多个
-    - name: user # 缓存名称，用于区分不同的缓存对象
-      template-id: t0 # 指定使用的模板为 t0（对应属性：xcache.template[i].id）
-  redis: # Redis 配置
-    store: # RedisStoreProvider 配置，列表类型，可配置多个
-      - id: lettuce #  要创建的 RedisStoreProvider 的 id
-        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id
-    lettuce: # Lettuce 客户端配置
-      factories: # 考虑到一个应用可能会使用多套 Redis，因此采用列表类型，可配置多个
-        - id: lettuce # RedisOperatorFactory 唯一标识
-          sentinel: # 哨兵模式配置
-            master-id: mymaster # 哨兵主节点名称
-            nodes: 127.0.0.1:26379, 127.0.0.1:26380, 127.0.0.1:26381 # 哨兵节点列表
+xcache: #【1】Xcache 配置的根节点
+  group: shop #【2】分组名称（必填），主要用于区分不同的应用
+  template: #【3】公共模板配置（必填），列表类型，可配置一至多个
+    - id: t0 #【4】模板ID（必填）
+      first: #【5】一级缓存配置
+        provider: caffeine #【6】使用 id 为 caffeine 的 StoreProvider 作为一级缓存
+      second: #【7】二级缓存配置
+        provider: lettuce #【8】使用 id 为 lettuce 的 StoreProvider 作为二级缓存（即【14】中设定的 id）
+  cache: #【9】缓存个性配置，列表类型，可配置零至多个
+    - name: user #【10】缓存名称，用于区分不同的缓存对象
+      template-id: t0 #【11】指定使用的模板为 t0（即【4】中设定的模板 id）
+  redis: #【12】Redis 配置
+    store: #【13】RedisStoreProvider 配置，列表类型，可配置多个
+      - id: lettuce #【14】要创建的 RedisStoreProvider 的 id
+        factory: lettuce #【15】指定使用的 RedisOperatorFactory 的 id（即【18】中设定的 id）
+    lettuce: #【16】Lettuce 客户端配置
+      factories: #【17】考虑到一个应用可能会使用多套 Redis，因此采用列表类型，可配置多个
+        - id: lettuce #【18】RedisOperatorFactory 唯一标识
+          sentinel: #【19】哨兵模式配置
+            master-id: mymaster #【20】哨兵主节点名称
+            nodes: 127.0.0.1:26379, 127.0.0.1:26380, 127.0.0.1:26381 #【21】哨兵节点列表
 ```
 
-相比上一示例的配置，这份配置有些许改变：
+**说明**：
 
-1. 增加了 ``xcache.redis.lettuce`` 配置，用于创建 ``RedisOperatorFactory``，其 id 可以自由设定。
-2. 增加了 ``xcache.redis.store`` 配置，用于创建 ``RedisStoreProvider``，其 id 可以自由设定。``RedisStoreProvider`` 依赖于 ``RedisOperatorFactory``，因此需指定需使用的 ``RedisOperatorFactory``。
-3. 修改了 ``xcache.template[i].second`` 配置，二级缓存指定使用 id 为 "lettuce" 的 ``StoreProvider``，且设定了存活时间、是否允许空值等。
-4. 修改了 ``xcache.template[i].first`` 配置，一级缓存依然使用 id 为 "caffeine" 的 ``StoreProvider``，但设定了存活时间、是否允许空值等。
+为了让大家对配置项有进一步了解，这份配置文件增加了一些配置项。
 
-我想，您可能会有疑问：
+上一配置文件仅使用 Caffeine 作为一级缓存，这份配置文件则增加 Redis 作为二级缓存。
 
-id 为 "lettuce" 的 ``StoreProvider`` 需要通过显式配置才能使用，那为什么 id 为 "caffeine" 的 ``StoreProvider`` 并未显式配置却可以直接使用？
+1. 首先，【16~21】增加 ``xcache.redis.lettuce`` 配置。
 
-这里遵循工厂实例创建的两个基本原则：
+   【18】创建一个 ``RedisOperatorFactory`` 类型的对象，这个对象的 id 设定为 “lettuce”。
 
-> 1、有外部服务依赖的需要显式配置；无外部服务依赖的无需显式配置。
->
-> 2、如无外部服务依赖：需消耗额外线程的延迟创建；不消耗额外线程的启动创建。
+   【19】这个 ``RedisOperatorFactory`` 对象用 Lettuce 作为客户端连接 Redis 哨兵节点。
 
-因为 ``CaffeineStoreProvider`` 不依赖于外部服务，又无需消耗额外线程资源，因此在应用启动时就自动创建了 id 为 "caffeine" 的 ``CaffeineStoreProvider`` 实例，所以可以直接使用。
+2. 其次，【13~15】增加了 ``xcache.redis.store`` 配置。
 
-如不使用 Caffeine，且不想创建 ``CaffeineStoreProvider`` 实例，那么可以在引入依赖时去除自动配置项目。
+   【14】创建一个 ``RedisStoreProvider`` 类型的对象，这个对象的 id 也设定为 “lettuce”。
 
-```xml
-<dependency>
-    <groupId>com.igeeksky.xcache</groupId>
-    <artifactId>xcache-spring-boot-starter</artifactId>
-    <exclusions>
-        <!-- 去除 CaffeineStoreProvider -->
-        <exclusion>
-            <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-caffeine-spring-boot-autoconfigure</artifactId>
-        </exclusion>
-    </exclusions>
-</dependency>
-```
+   【15】``RedisStoreProvider`` 依赖于 ``RedisOperatorFactory``，因此需指定使用的 ``RedisOperatorFactory`` 的 id。
+
+3. 最后，【8】二级缓存指定使用 id 为 "lettuce" 的 ``StoreProvider``。
+
+**常见问题**：
+
+1. **Q**：为什么已经创建了 ``RedisOperatorFactory`` ，还要再创建 ``RedisStoreProvider`` ？
+
+   **A**：``RedisOperatorFactory`` 仅仅是用于提供执行 Redis 命令的客户端（类似于 Spring 的 ``RedisTemplate``）， ``RedisStoreProvider`` 则是缓存数据操作的抽象实现。
+
+   ``RedisOperatorFactory`` 不仅仅用于缓存数据操作，还用于分布式锁、缓存数据同步、缓存数据刷新……等等功能。
+
+2. **Q**：为什么 ``RedisOperatorFactory`` 、 ``RedisStoreProvider`` …… 等配置要设计成列表类型？
+
+   **A**：一个复杂应用连接多套 Redis 服务是比较常见的，设计成列表可以让用户不用再手写配置类来扩展。
+
+   又因为设计成列表，所以需通过 id 来加以区分。
+
+3. **Q**：为什么 id 为 "caffeine" 的 ``StoreProvider`` 并没有通过配置来创建却可以直接使用？
+
+   **A**：因为 ``CaffeineStoreProvider`` 不依赖外部服务，创建该对象也无需任何参数，因此在应用启动时就自动创建了 id 为 “caffeine” 的 ``CaffeineStoreProvider`` 。
+
+   而 ``RedisStoreProvider`` 则依赖于外部服务，又需获取必要的连接信息，且可能有多个实例，因此需显式配置，并通过 id 区分。
 
 #### 3.2.3. 第三步：使用注解
 
@@ -622,23 +630,23 @@ public class UserCacheService {
 
 ### 3.3. 使用 Spring cache 注解
 
-上一个示例演示了如何使用 Xcache 注解，在这个示例中将演示如何使用 Spring cache 注解。
+详见 ``xcache-samples-spring-annotation`` 子项目。
+
+如既想要使用更流行的 Spring cache 注解，又想要 Xcache 相对丰富的功能特性，那么，Xcache 提供了  Spring cache 适配模块，可以将 Spring cache 的底层实现替换为 Xcache。
 
 #### 3.3.1. 第一步：引入依赖
 
-使用  Spring cache 注解，引入 ``xcache-spring-boot-starter`` 之外，还需引入 ``xcache-spring-adapter-autoconfigure``。
+使用  Spring cache 注解，除了需引入 ``xcache-spring-boot-starter``，还需引入 ``xcache-spring-adapter-autoconfigure``。
 
 ```xml
 <dependencies>
     <dependency>
         <groupId>com.igeeksky.xcache</groupId>
         <artifactId>xcache-spring-boot-starter</artifactId>
-        <version>${xcache.version}</version>
     </dependency>
     <dependency>
         <groupId>com.igeeksky.xcache</groupId>
         <artifactId>xcache-spring-adapter-autoconfigure</artifactId>
-        <version>${xcache.version}</version>
     </dependency>
     <!-- ... other ... -->
 </dependencies>
@@ -647,57 +655,54 @@ public class UserCacheService {
 #### 3.3.2. 第二步：编写配置
 
 ```yaml
-xcache:
-  group: shop # 分组名称（必填），主要用于区分不同的应用
-  template: # 公共模板配置（必填），列表类型，可配置一至多个
-    - id: t0 # 模板ID（必填）
-      key-codec: jackson-spring # 键转为String（需设为适配 Spring cache 的 jackson-spring）
-      first: # 一级缓存配置
-        provider: caffeine # 缓存存储提供者实例 id
-        store-type: EMBED # 缓存存储类型，根据类型自动填充默认配置
-        expire-after-write: 3600000 # 数据写入后的存活时间（单位：毫秒）
-        expire-after-access: 300000 # 数据访问后的存活时间（单位：毫秒）
-        enable-random-ttl: true # 是否使用随机存活时间
-        enable-null-value: true # 是否允许保存空值
-      second: # 二级缓存配置
-        provider: lettuce # 使用 id 为 lettuce 的 StoreProvider
-        store-type: EXTRA # 缓存存储类型，根据类型自动填充默认配置
-        value-codec: jackson-spring # 值序列化（需设为适配 Spring cache 的 jackson-spring）
-        expire-after-write: 7200000 # 数据写入后的存活时间（单位：毫秒）
-        enable-random-ttl: true # 是否使用随机存活时间
-        enable-null-value: true # 是否允许保存空值
-  cache: # 缓存实例个性配置，列表类型，可配置零至多个
-    - name: user # 缓存名称，用于区分不同的缓存对象
-      template-id: t0 # 指定使用的模板为 t0（对应属性：xcache.template[i].id）
-  redis: # Redis 配置
-    store: # RedisStoreProvider 配置，列表类型，可配置多个
-      - id: lettuce #  要创建的 RedisStoreProvider 的 id
-        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id
-    lettuce: # Lettuce 客户端配置
-      factories: # 考虑到一个应用可能会使用多套 Redis，因此采用列表类型，可配置多个
-        - id: lettuce # RedisOperatorFactory 唯一标识
-          sentinel: # 哨兵模式配置
-            master-id: mymaster # 哨兵主节点名称
-            nodes: 127.0.0.1:26379, 127.0.0.1:26380, 127.0.0.1:26381 # 哨兵节点列表
+xcache: #【1】Xcache 配置的根节点
+  group: shop #【2】分组名称（必填），主要用于区分不同的应用
+  template: #【3】公共模板配置（必填），列表类型，可配置一至多个
+    - id: t0 #【4】模板ID（必填）
+      key-codec: jackson-spring #【5】键转为String（需设为适配 Spring cache 的 jackson-spring）
+      first: #【6】一级缓存配置
+        provider: caffeine #【7】使用 id 为 caffeine 的 StoreProvider 作为一级缓存
+      second: #【8】二级缓存配置
+        provider: lettuce #【9】使用 id 为 lettuce 的 StoreProvider 作为二级缓存（即【16】中设定的 id）
+        value-codec: jackson-spring #【10】值序列化（需设为适配 Spring cache 的 jackson-spring）
+  cache: #【11】缓存个性配置，列表类型，可配置零至多个
+    - name: user #【12】缓存名称，用于区分不同的缓存对象
+      template-id: t0 #【13】指定使用的模板为 t0（即【4】中设定的 id）
+  redis: #【14】Redis 配置
+    store: #【15】RedisStoreProvider 配置，列表类型，可配置多个
+      - id: lettuce #【16】要创建的 RedisStoreProvider 的 id
+        factory: lettuce #【17】指定使用的 RedisOperatorFactory 的 id（即【20】中设定的 id）
+    lettuce: #【18】Lettuce 客户端配置
+      factories: #【19】考虑到一个应用可能会使用多套 Redis，因此采用列表类型，可配置多个
+        - id: lettuce #【20】RedisOperatorFactory 唯一标识
+          sentinel: #【21】哨兵模式配置
+            master-id: mymaster #【22】哨兵主节点名称
+            nodes: 127.0.0.1:26379, 127.0.0.1:26380, 127.0.0.1:26381 #【23】哨兵节点列表
 ```
 
-这份配置与上一份配置相比，改动的地方有两处：
+与上一示例的配置相比，这份配置显式指定了序列化实现：
 
-key-codec 和二级缓存的 value-codec，需要特别配置为适配 Spring cache 的 jackson-spring。
+1. 【5】``key-codec``，需显式设定为适配 Spring cache 的 “jackson-spring”（默认是 “jackson”）。
+2. 【10】``value-codec``，需显式设定为适配 Spring cache 的 “jackson-spring”（默认是 “jackson”）。
 
-这是因为 Spring cache 注解不支持配置对象类型和泛型参数，因此需要在序列化数据中增加类型信息，反序列化时才能正确处理类型。
+这是因为 Spring cache 注解无法配置对象类型，因此序列化数据需携带类型信息，这样在反序列化时才能确定对象类型。
 
-如 User 对象，配置为 jackson-spring，序列化数据是这样：
+譬如示例项目的 ``User`` 对象，当配置为 “jackson-spring” 时，序列化数据会多出 “@class” 属性：
 
 ```json
-{"@class":"com.igeeksky.xcache.samples.User","id":1,"name":"Jack1","age":18}
+{
+    "@class": "com.igeeksky.xcache.samples.User",
+    "id": 1,
+    "name": "Jack1",
+    "age": 18
+}
 ```
 
-> 特别提示：这是使用 Spring cache 注解唯一需要注意的配置差别，其余配置完全相同。
+> 特别提示：这是使用 Spring cache 注解唯一需要修改的特别配置，其余配置与另外两种方式完全相同。
 
 #### 3.3.3. 第三步：使用注解
 
-**启用缓存注解：@EnableCache **
+**启用缓存注解：@EnableCaching **
 
 ```java
 import org.springframework.boot.SpringApplication;
@@ -729,7 +734,7 @@ import org.springframework.cache.annotation.*;
  * 用户缓存服务
  */
 @Service
-// Xcache 适配 Spring cache 的 cacheManager 为 springCacheManager，如 Spring 容器内无其它 cacheManager 对象，可不指定。
+// 适配 Spring cache 的 CacheManager 为 springCacheManager，如 Spring 容器内无其它 CacheManager 对象，可不配置。
 @CacheConfig(cacheNames = "user", cacheManager = "springCacheManager")
 public class UserCacheService {
 
@@ -833,69 +838,244 @@ public class UserCacheService {
 
 1. Spring Cache 没有 CacheableAll，CachePutAll，CacheEvictAll 这三个批处理注解。
 
-2. Spring Cache 没有写 key 表达式时，不是使用方法的第一个参数，而是使用所有参数生成 SimpleKey 。
+2. Spring Cache 没有写 key 表达式时，不是使用方法的第一个参数作为键，而是使用所有参数生成 SimpleKey 对象作为键。
 
-3. 对已使用 Spring cache 注解的项目，只需引入 Xcache 相关依赖，几乎可以做到不改动任何代码，就将具体实现替换成 Xcache。
+3. 对已使用 Spring cache 注解的项目，只需引入 Xcache 相关依赖，几乎不用改动代码，就可将缓存实现替换成 Xcache。
 
 
 ## 4. 缓存配置
 
-作为开源框架项目，关于配置项，设计时遵循三个基本原则：
+作为开源框架项目，关于配置项，我在设计时遵循三个基本原则：
 
-1、尽可能多配置项：可全面控制缓存的各种功能逻辑，进行缓存性能优化；
+1. 尽可能多配置项：可全面控制缓存的各种功能逻辑，进行缓存性能优化；
+2. 尽可能少写配置：通过提供默认值和公共配置模板，减少显式书写配置；
+3. 尽可能不改代码：可通过调整配置和增减依赖组件，灵活适配业务逻辑。
 
-2、尽可能少写配置：通过提供默认值和公共配置模板，避免显式书写配置；
+当然，越灵活越全面其实也意味着越复杂。
 
-3、尽可能不改代码：可通过调整配置项和增减依赖包，灵活适配业务逻辑。
+但是，只要掌握其中几个关键逻辑，就会发现其实一切都很简单。
 
 ### 4.1. 总体介绍
 
-所有配置项可以划分为两部分，一部分是关于缓存的核心配置，一部分是关于 Redis 的扩展配置。
-
-为了让大家有一个整体认识，先通过表格介绍大的配置类别，具体子项后面再通过 yaml 来详细介绍。
+所有配置项大概可分为三部分：一是缓存核心配置，二是 Redis 配置，三是其它配置。
 
 #### 4.1.1. 核心配置
 
-核心配置部分，除少数几个必填项，其余配置项都有默认值，如未配置则使用默认值。
+核心配置部分，用于创建 Cache 对象。
 
-| 类别             | 名称             | 说明                                                         |
-| ---------------- | ---------------- | ------------------------------------------------------------ |
-| xcache.group     | 组名             | 主要用于区分不同的应用。<br />譬如当有多个应用共用一套 Redis 作为缓存数据存储，则可以附加 group 作为前缀，从而避免键冲突。 |
-| xcache.template  | 公共模板配置     | 除了缓存名称，同一应用的各个缓存实例的大部分配置应该都是相似的。<br />因此可以在此建立一个或多个公共模板，从而避免每一个缓存实例重复配置。 |
-| xcache.cache     | 缓存个性配置     | 具体到某个缓存实例：<br />如配置项与公共模板配置完全相同，可以省略全部配置。<br />如配置项与公共模板配置部分不同，只需配置差异部分。 |
-| xcache.stat      | 缓存指标统计配置 | 用于配置日志方式的统计信息输出的时间间隔。<br />如所有缓存实例的统计信息都选择输出到 Redis，则此配置项无效。 |
-| xcache.scheduler | 调度器配置       | 缓存定时刷新、缓存指标定时采集均依赖于此调度器。             |
+Cache 对象可能依赖于“Redis 配置”或“其它配置”中创建的对象。
 
+| 类别            | 名称         | 说明                                                         |
+| --------------- | ------------ | ------------------------------------------------------------ |
+| xcache.group    | 组名         | 用于区分不同的应用，主要是为了避免键冲突。<br />譬如，当一个 Redis 被多个应用共用，每个应用可设定不同的 group 作为缓存键前缀，从而避免键冲突。 |
+| xcache.template | 公共模板配置 | 除了缓存名称外，同一应用的各个缓存实例的其它配置是相似的。<br />因此可配置一个或多个公共模板，从而避免每一个缓存实例重复配置。 |
+| xcache.cache    | 缓存个性配置 | 如配置项与公共模板配置完全相同，可以省略全部配置。<br />如配置项与公共模板配置部分不同，只需配置差异部分。 |
 
+**相关配置类**：
 
-![image-20241021093622933](images/config.png)
-
-
+| 所在项目                         | 配置类                                            |
+| -------------------------------- | ------------------------------------------------- |
+| xcache-spring-boot-autoconfigure | com.igeeksky.xcache.autoconfigure.CacheProperties |
 
 #### 4.1.2. Redis 配置
 
-Redis 配置部分，如果不配置，则不创建对象实例。
+Redis 配置部分，用于创建 Redis 相关的对象。
 
-| 类别                  | 名称       | 说明                                                         |
-| --------------------- | ---------- | ------------------------------------------------------------ |
-| xcache.redis          | Redis 配置 |                                                              |
-| xcache.redis.charset  | 字符集     |                                                              |
-| xcache.redis.store    |            |                                                              |
-| xcache.redis.listener |            |                                                              |
-| xcache.redis.sync     |            |                                                              |
-| xcache.redis.lock     |            |                                                              |
-| xcache.redis.stat     |            |                                                              |
-| xcache.redis.refresh  |            |                                                              |
-| xcache.redis.lettuce  |            | Lettuce 客户端配置，用于生成 RedisOperatorFactory。如未配置，则不会生成 RedisOperatorFactory 对象实例。 |
+| 类别                  | 名称                      | 说明                                                         |
+| --------------------- | ------------------------- | ------------------------------------------------------------ |
+| xcache.redis.charset  | 字符集                    | 用于缓存同步消息、缓存统计消息……编解码                       |
+| xcache.redis.store    | Redis 缓存数据存储配置    | 创建 RedisStoreProvider 对象<br />用于缓存数据操作。         |
+| xcache.redis.listener | Redis Stream 消息监听配置 | 创建 StreamListenerContainer 对象<br />用于监听 Redis Stream 消息。 |
+| xcache.redis.sync     | Redis 缓存数据同步配置    | 创建 RedisCacheSyncProvider 对象                             |
+| xcache.redis.lock     | Redis 缓存锁配置          | 创建 RedisCacheLockProvider 对象<br />用于将 Redis 作为分布式锁。 |
+| xcache.redis.stat     | Redis 缓存指标统计配置    | 创建 RedisCacheStatProvider 对象<br />用于发送缓存指标数据到 Redis。 |
+| xcache.redis.refresh  | Redis 缓存数据刷新配置    | 创建 RedisCacheRefreshProvider 对象<br />使用 Redis 执行缓存数据刷新。 |
+| xcache.redis.lettuce  | Lettuce 客户端配置        | 创建 RedisOperatorFactory 对象<br />使用 lettuce 客户端连接 Redis。 |
 
+**相关配置类**：
 
+| 所在项目                                 | 配置类                                                     |
+| ---------------------------------------- | ---------------------------------------------------------- |
+| xcache-redis-spring-boot-autoconfigure   | com.igeeksky.xcache.autoconfigure.redis.RedisProperties    |
+| xcache-lettuce-spring-boot-autoconfigure | com.igeeksky.redis.autoconfigure.lettuce.LettuceProperties |
 
-### 4.2. 配置示例
+#### 4.1.3. 其它配置
+
+其它配置部分，用于创建无外部服务依赖的一些对象。
+
+| 类别             | 名称             | 说明                                                         |
+| ---------------- | ---------------- | ------------------------------------------------------------ |
+| xcache.stat      | 缓存指标统计配置 | 用于创建 LogCacheStatProvider 对象<br />当前 Xcache 的缓存指标统计支持两种输出方式：<br />一是将缓存指标数据输出到日志，二是将缓存指标数据发送到 Redis。<br />此配置项仅用于日志输出方式；如希望使用 Redis 进行指标数据采集，需在 xcache.redis.stat 配置。 |
+| xcache.scheduler | 任务调度器配置   | 用于创建 ScheduledExecutorService 对象<br />缓存定时刷新、缓存指标数据定时采集和输出均依赖于此调度器。 |
+
+**相关配置类**：
+
+| 所在项目                         | 配置类                                                |
+| -------------------------------- | ----------------------------------------------------- |
+| xcache-spring-boot-autoconfigure | com.igeeksky.xcache.autoconfigure.CacheProperties     |
+| xcache-spring-boot-autoconfigure | com.igeeksky.xcache.autoconfigure.SchedulerProperties |
+
+#### 4.1.4. 小结
+
+这一章节主要介绍了大的配置类别，具体的细项配置可参见 [4.3.1. 完全配置](#4.3.1. 完全配置)。
+
+如果想继续了解 Xcache 有哪些主要的对象类型，哪些需要配置，哪些无需配置，请参见下一节：[4.2. 对象创建与使用](#4.2. 对象创建与使用)
+
+### 4.2. 对象创建与使用
+
+#### 4.2.1. 对象类型
+
+Cache 对象需要用到不同类型的对象来完成不同的功能。
+
+譬如缓存数据用 Jackson 进行序列化操作，那么就需要先创建一个 ``JacksonCodecProvider`` 对象；
+
+譬如一级缓存用 Caffeine 作为缓存数据存储，那么就需要先创建一个 ``CaffeineStoreProvider`` 对象；
+
+譬如二级缓存用 Redis 作为缓存数据存储，那么就需要先创建一个 ``RedisStoreProvider`` 对象；而 ``RedisStoreProvider`` 对象，又需要用到 ``RedisOperatorFactory``，那么就需要先创建一个 ``RedisOperatorFactory`` 对象。
+
+…………
+
+对象类型汇总信息可见下表：
+
+| 功能           | 接口                    | 实现类                      |       id       | 显式配置 |                      对象依赖                      |
+| -------------- | ----------------------- | --------------------------- | :------------: | :------: | :------------------------------------------------: |
+| 序列化         | CodecProvider           | JacksonCodecProvider        |    jackson     |    否    |                         无                         |
+| 序列化         | CodecProvider           | GenericJacksonCodecProvider | jackson-spring |    否    |                         无                         |
+| 序列化         | CodecProvider           | JdkCodecProvider            |      jdk       |    否    |                         无                         |
+| 数据压缩       | CompressorProvider      | DeflaterCompressorProvider  |    deflate     |    否    |                         无                         |
+| 数据压缩       | CompressorProvider      | GzipCompressorProvider      |      gzip      |    否    |                         无                         |
+| 缓存锁         | CacheLockProvider       | EmbedCacheLockProvider      |     embed      |    否    |                         无                         |
+| 缓存锁         | CacheLockProvider       | RedisLockProvider           |     自定义     |    是    |                RedisOperatorFactory                |
+| 缓存数据刷新   | CacheRefreshProvider    | EmbedCacheRefreshProvider   |     embed      |    否    |              ScheduledExecutorService              |
+| 缓存数据刷新   | CacheRefreshProvider    | RedisCacheRefreshProvider   |     自定义     |    是    | RedisOperatorFactory<br />ScheduledExecutorService |
+| 缓存指标统计   | CacheStatProvider       | LogCacheStatProvider        |      log       |    否    |              ScheduledExecutorService              |
+| 缓存指标统计   | CacheStatProvider       | RedisCacheStatProvider      |     自定义     |    是    | RedisOperatorFactory<br />ScheduledExecutorService |
+| 缓存数据同步   | CacheSyncProvider       | RedisCacheSyncProvider      |     自定义     |    是    |              StreamListenerContainer               |
+| 缓存存储       | StoreProvider           | CaffeineStoreProvider       |    caffeine    |    否    |                         无                         |
+| 缓存存储       | StoreProvider           | RedisStoreProvider          |     自定义     |    是    |                RedisOperatorFactory                |
+| 消息监听       | StreamListenerContainer | StreamListenerContainer     |     自定义     |    是    |                RedisOperatorFactory                |
+| Redis 命令操作 | RedisOperatorFactory    | LettuceOperatorFactory      |     自定义     |    是    |                         无                         |
+| 执行定时任务   | ExecutorService         | ScheduledExecutorService    |       无       |    否    |                         否                         |
+
+**常见问题**：
+
+**Q**：如何判断是否需要显式配置？
+
+**A**：*有外部服务依赖的需要显式配置；无外部服务依赖的无需显式配置*。
+
+譬如，``CaffeineStoreProvider`` 不依赖于外部服务，由 Xcache 自动创建 id 为 "caffeine" 的对象实例。
+
+譬如，``JacksonCodecProvider`` 不依赖于外部服务，由 Xcache 自动创建 id 为 "jackson" 的对象实例。
+
+…………
+
+而，所有 Redis 相关的对象都依赖于外部服务，因此都需要显式配置才会创建对象实例。
+
+譬如，``RedisOperatorFactory`` 需显式设定 id 和 必要的连接信息，才会创建该类型对象。
+
+…………
+
+另，无外部服务依赖的对象，一部分有可选配置，一部分无任何配置。不管有无可选配置，都会根据需要创建对象实例。当然，如果有可选配置，但又未配置，则使用默认参数。
+
+譬如，``LogCacheStatProvider``，有可选配置，可在 ``xcache.stat`` 中配置相关参数。
+
+譬如，``ScheduledExecutorService``，有可选配置，可在 ``xcache.scheduler`` 中配置相关参数。
+
+譬如，``JacksonCodecProvider``，则无任何配置。
+
+…………
+
+**Q**：id 是否能重复？
+
+**A**：*实现同一接口的对象的 id 不能重复*。
+
+Xcache 内部，每个接口类型使用一个 Map  作为对象容器，id 作为键，对象实例作为值。所以，不同接口的对象 id 可以重复，相同接口的对象 id 不能重复。
+
+譬如， ``CaffeineStoreProvider`` 的 id 已经被预设为 "caffeine"，那么  ``RedisStoreProvider`` 就不能再设为 caffeine，因为这两个类都实现了 ``StoreProvider`` 接口。
+
+又譬如， ``RedisOperatorFactory`` 的 id 设为自定义的 "lettuce"，其它如 ``RedisStoreProvider`` ，``RedisLockProvider`` …… 等的 id 也都可以设为 lettuce，因为这些类实现的是不同的接口。
+
+**Q**：为什么有些接口名称的后缀为 “provider” 或 “factory”？
+
+**A**：“provider” 或 “factory” 结尾的是工厂类，真正负责具体功能实现的是通过这些工厂类创建的对象。
+
+创建这些工厂可能需要配置信息，这些工厂创建对象时也可能需要配置信息。
+
+譬如，创建  ``RedisStoreProvider`` 时需指定 ``RedisOperatorFactory`` 的 id（Redis 配置中配置），而  ``RedisStoreProvider`` 创建 ``Store`` 对象时则需用到过期时间等配置信息（核心配置中配置）。
+
+#### 4.2.2. 对象使用
+
+为了更好地说明如何通过配置创建和使用对象，这份配置删除了无关参数，仅保留对象创建和使用信息。
+
+```yaml
+xcache: #【1】Xcache 配置的根节点
+  group: shop #【2】分组名称 (必填)
+  template: #【3】公共模板配置 (必填)
+    - id: t0 #【4】模板ID (必填)
+      cache-lock: #【5】缓存锁配置
+        provider: lettuce #【6】使用 id 为 lettuce 的 LockProvider（即【31】中设定的 id）
+      cache-stat: lettuce #【9】使用 id 为 lettuce 的 CacheStatProvider（即【33】中设定的 id）
+      cache-refresh: #【10】缓存刷新配置
+        provider: lettuce #【11】使用 id 为 lettuce 的 CacheRefreshProvider（即【36】中设定的 id）
+      cache-sync: #【7】缓存同步配置
+        provider: lettuce #【8】使用 id 为 lettuce 的 CacheSyncProvider（即【39】中设定的 id）
+      key-codec: jackson #【12】使用 id 为 jackson 的 CodecProvider（预设id）
+      first: #【13】一级缓存配置
+        provider: caffeine #【14】使用 id 为 caffeine 的 StoreProvider（预设id）
+      second: #【15】二级缓存配置
+        provider: lettuce #【16】使用 id 为 lettuce 的 StoreProvider（即【28】中设定的 id）
+        value-codec: jackson #【17】使用 id 为 jackson 的 CodecProvider（预设id）
+        value-compressor: #【18】值压缩配置
+          provider: gzip #【19】使用 id 为 gzip 的 CompressorProvider（预设id）
+      third: #【20】三级缓存配置
+        provider: none #【21】设置为 none，表示不使用三级缓存
+  stat: #【22】LogCacheStatProvider 配置（id 为预设的 log）
+    period: 60000 #【23】缓存指标采集的时间间隔
+  scheduler: #【24】ScheduledExecutorService 配置
+    core-pool-size: 1 #【25】定时任务调度器核心线程数
+  redis: #【26】Redis 配置
+    store: #【27】RedisStoreProvider 配置
+      - id: lettuce #【28】创建 id 为 lettuce 的 RedisStoreProvider
+        factory: lettuce #【29】指定使用 id 为 lettuce 的 RedisOperatorFactory（即【47】中设定的 id）
+    lock: #【30】RedisLockProvider 配置
+      - id: lettuce #【31】创建 id 为 lettuce 的 RedisLockProvider
+        factory: lettuce #【32】指定使用 id 为 lettuce 的 RedisOperatorFactory（即【47】中设定的 id）
+    stat: #【33】RedisCacheStatProvider 配置
+      - id: lettuce #【34】创建 id 为 lettuce 的 RedisCacheStatProvider
+        factory: lettuce #【35】指定使用 id 为 lettuce 的 RedisOperatorFactory（即【47】中设定的 id）
+    refresh: #【36】RedisCacheRefreshProvider 配置
+      - id: lettuce #【37】创建 id 为 lettuce 的 RedisCacheRefreshProvider
+        factory: lettuce #【38】指定使用 id 为 lettuce 的 RedisOperatorFactory（即【47】中设定的 id）
+    sync: #【39】RedisCacheSyncProvider 配置
+      - id: lettuce #【40】创建 id 为 lettuce 的 RedisCacheSyncProvider
+        listener: lettuce #【41】指定使用 id 为 lettuce 的 StreamListenerContainer（即【43】中设定的 id）
+    listener: #【42】StreamListenerContainer 配置
+      - id: lettuce #【43】创建 id 为 lettuce 的 StreamListenerContainer
+        factory: lettuce #【44】指定使用 id 为 lettuce 的 RedisOperatorFactory（即【47】中设定的 id）
+    lettuce: #【45】Lettuce 客户端配置
+      factories: #【46】列表类型，可配置多个
+        - id: lettuce #【47】创建 id 为 lettuce 的 RedisOperatorFactory
+          standalone: #【48】单机模式 或 副本集模式
+            node: 127.0.0.1:6379 #【49】Redis 节点
+```
+
+总之，如果要使用某个对象类型作为具体功能实现，那么：
+
+1. 首先，创建这个对象类型的实例：
+
+   无外部服务依赖的由 Xcache 使用预设 id 进行创建；有外部服务依赖的则需由用户显式配置 id 和 必要参数才会创建。
+
+2. 其次，相关功能配置中填写该 id 指定使用该对象实例；
+
+3. 最后，Xcache 内部根据 id 找到该实例并执行相关功能。
+
+### 4.3. 配置示例
 
 1. 除了标注必填的选项，其他选项均为选填，删除或留空表示使用默认配置；
-2. 每个配置项均有详细说明，可用 ide 自动提示功能快速查看相关描述信息。
+2. 每个配置项均有详细说明，可用 ide 自动提示功能快速查看相关描述信息；
+3. 如无法通过 ide 查看描述信息，可查看相关配置类，每一项均有详细注释。
 
-#### 4.2.1. 完全配置示例
+#### 4.3.1. 完全配置
 
 ```yaml
 xcache:
@@ -904,33 +1084,31 @@ xcache:
     - id: t0 # 模板ID (必填)，建议将其中一个模板的 id 配置为 t0。
       charset: UTF-8 # 字符集 (默认 UTF-8)
       cache-lock: # 缓存锁配置
+        provider: lettuce # LockProviderId（默认值：embed）
         initial-capacity: 128 # HashMap 初始容量（）
         lease-time: 1000 # 锁租期 （默认值：1000 单位：毫秒）
-        provider: lettuce # LockProviderId（默认值：embed）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true）
-        params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则会提示参数读取异常）
-          test: test
-      cache-sync: # 缓存同步配置
-        first: ALL # 一级缓存数据同步 （默认值：ALL，如仅有一级缓存，且为本地缓存，请改为 NONE 或 CLEAR）
-        second: NONE # 二级缓存数据同步（默认值：NONE）
-        enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true）
-        max-len: 1000 # 缓存同步队列最大长度 （默认值：10000）
-        provider: lettuce # CacheSyncProviderId （默认值：lettuce）
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则会提示参数读取异常）
           test: test
       cache-stat: lettuce # CacheStatProviderId，用于缓存指标信息采集和输出（默认值：log，输出到日志）
       cache-refresh: # 缓存刷新配置
+        provider: none # CacheRefreshProviderId（默认值：none，不启用缓存刷新）
         period: 1000 # 刷新间隔周期（默认值：1800000 单位：毫秒）
         stop-after-access: 10000 # 某个键最后一次查询后，超过此时限则不再刷新 （默认值：7200000 毫秒）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，适用于外部刷新实现）
-        provider: none # CacheRefreshProviderId（默认值：none，不启用缓存刷新）
+        params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则会提示参数读取异常）
+          test: test
+      cache-sync: # 缓存同步配置
+        provider: lettuce # CacheSyncProviderId （默认值：none）
+        first: true # 一级缓存数据同步 （默认值：true，如仅有一级缓存，请改为 false）
+        second: false # 二级缓存数据同步（默认值：false）
+        enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true）
+        max-len: 1000 # 缓存同步队列最大长度 （默认值：10000）
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则会提示参数读取异常）
           test: test
       key-codec: jackson # 用于将键转换成 String（默认值：jackson）
-      contains-predicate: # 用于判断数据源是否存在相应数据（默认值：none，需自行实现并注入到 spring 容器）
       first: # 一级缓存配置
-        store-type: EMBED # 根据是内嵌缓存还是外部缓存，自动填充不同的默认配置（一级缓存默认设定为：EMBED）
-        provider: caffeine # StoreProviderId（内嵌缓存默认值：caffeine）
+        provider: caffeine # StoreProviderId（默认值：caffeine）
         initial-capacity: 65536 # 初始容量（默认值：65536）
         maximum-size: 65536 # 最大容量（默认值：65536）
         maximum-weight: 0 # 最大权重 （默认值：0，如小于等于 0，表示不采用基于权重的驱逐策略）
@@ -946,8 +1124,7 @@ xcache:
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则会提示参数读取异常）
           test: test
       second: # 二级缓存配置
-        store-type: EXTRA # 根据是内嵌缓存还是外部缓存，自动填充不同的默认配置（二级缓存默认设定为：EXTRA）
-        provider: lettuce # StoreProviderId（外部缓存默认值：lettuce）
+        provider: lettuce # StoreProviderId（默认值：none）
         redis-type: STRING # Redis 命令类型（默认：STRING，如无需过期，可设为 HASH）
         expire-after-write: 7200000 # 数据写入后的存活时间（外部缓存默认值：7200000 单位：毫秒）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，仅适用于外部缓存）
@@ -961,7 +1138,6 @@ xcache:
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则 spring boot 会提示参数读取异常）
           test: test
       third: # 三级缓存配置
-        store-type: EXTRA # 根据是内嵌缓存还是外部缓存，自动填充不同的默认配置（三级缓存默认设定为：EXTRA）
         provider: none # StoreProviderId（三级缓存默认值：none）
         redis-type: STRING # Redis 命令类型（默认：STRING，如无需过期，可设为 HASH）
         expire-after-write: 7200000 # 数据写入后的存活时间（外部缓存默认值：7200000 单位：毫秒）
@@ -976,14 +1152,15 @@ xcache:
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则会提示参数读取异常）
           test: test
   cache: # 缓存配置（template 是公共配置，cache 是具体缓存个性配置，仅需配置与对应 template 不同的部分）
-    # 另，如缓存配置与 id 为 t0 的模板配置完全相同，那么这里可以彻底删除，包括 name 与 template-id。
-    - name: user # 缓存名称（必填）
+    - name: user # 缓存名称
       template-id: t0 # 模板id（默认值：t0，如未配置，默认从 id 为 t0 的模板中复制配置项）
       # …… 其余配置项与模板配置相同，所以直接省略
-    - name: order # 缓存名称（必填）
+      # 另，如此缓存配置与 id 为 t0 的模板配置完全相同，name 与 template-id 其实也可以省略。
+    - name: order # 缓存名称
       template-id: t0 # 模板id（默认值：t0，如未配置，默认从 id 为 t0 的模板中复制配置项）
       # …… 其余配置项与模板配置相同，所以直接省略
-  stat: # 日志方式缓存指标统计配置
+      # 另，如此缓存配置与 id 为 t0 的模板配置完全相同，name 与 template-id 其实也可以省略。
+  stat: # 缓存指标统计配置（对象类型为 LogCacheStatProvider，id 为预设的 log）
     period: 60000 # 缓存指标采集的时间间隔（默认值：60000 单位：毫秒）
   scheduler: # 调度器配置
     core-pool-size: 1 # 定时任务调度器核心线程数，如未配置，则使用 (核心数 / 8)，最小为 1。
@@ -992,15 +1169,6 @@ xcache:
     store: # RedisStoreProvider 配置，列表类型，可配置零至多个
       - id: lettuce #  要创建的 RedisStoreProvider 的 id（必填）
         factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
-    listener: # StreamListenerContainer 配置，列表类型，可配置零至多个
-      - id: lettuce # 要创建的 StreamListenerContainer 的 id（必填）
-        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
-        block: 10 # 读取 Stream 时的阻塞时长（默认值： 10 单位：毫秒）
-        delay: 1000 # 当次同步任务结束后，下次任务开始前的延迟时长（默认值： 10 单位：毫秒）
-        count: 1000 # 同步任务每次从 Stream 读取的最大消息数量（默认值： 1000）
-    sync: # RedisCacheSyncProvider 配置，列表类型，可配置零至多个
-      - id: lettuce # 需要创建的 RedisCacheSyncProvider 的 id
-        listener: lettuce # （）
     lock: # RedisLockProvider 配置，列表类型，可配置零至多个
       - id: lettuce # 要创建的 RedisLockProvider  的 id（必填）
         factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
@@ -1014,10 +1182,21 @@ xcache:
     refresh: # RedisCacheRefreshProvider 配置，，列表类型，可配置多个
       - id: lettuce # 要创建的 RedisCacheRefreshProvider 的 id（必填）
         factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
+    sync: # RedisCacheSyncProvider 配置，列表类型，可配置零至多个
+      - id: lettuce # 需要创建的 RedisCacheSyncProvider 的 id
+        listener: lettuce # （）
+    listener: # StreamListenerContainer 配置，列表类型，可配置零至多个
+      - id: lettuce # 要创建的 StreamListenerContainer 的 id（必填）
+        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
+        block: 10 # 读取 Stream 时的阻塞时长（默认值： 10 单位：毫秒）
+        delay: 1000 # 当次同步任务结束后，下次任务开始前的延迟时长（默认值： 10 单位：毫秒）
+        count: 1000 # 同步任务每次从 Stream 读取的最大消息数量（默认值： 1000）
     lettuce: # Lettuce 客户端配置
       factories: # 考虑到一个应用可能会使用多套 Redis，因此采用列表类型，可配置多个
         - id: lettuce # RedisOperatorFactory 唯一标识（默认值：lettuce）
-          standalone: # 单机模式 或 副本集模式（优先 sentinel 配置，其次 cluster，最后 standalone）
+          standalone: # 单机模式 或 副本集模式
+            # 这里为了演示 standalone，sentinel，cluster 分别如何配置，所以三种配置都存在，实际只需保留真正使用的其中一种
+            # 当三种配置都存在时，那么优先使用 sentinel 配置，其次 cluster，最后 standalone
             node: 127.0.0.1:6379 # Redis 节点，支持 UnixSocket 方式
             nodes: socket:/tmp/redis.sock, 127.0.0.1:6380 # Redis 节点列表
             read-from: # 读节点选择策略（默认值：UPSTREAM，仅从主节点读取数据）
@@ -1060,7 +1239,9 @@ xcache:
                 handshake-timeout: # 握手超时（默认值：10000 单位：毫秒）
               timeout-options: # 命令超时配置选项
                 fixedTimeout: # 固定超时时间（默认值：-1，单位：毫秒，无超时配置）
-          sentinel: # 哨兵模式配置（优先 sentinel 配置，其次 cluster 配置，最后 standalone 配置）
+          sentinel: # 哨兵模式配置
+            # 这里为了演示 standalone，sentinel，cluster 分别如何配置，所以三种配置都存在，实际只需保留真正使用的其中一种
+            # 当三种配置都存在时，那么优先使用 sentinel 配置，其次 cluster，最后 standalone
             master-id: mymaster # 哨兵主节点名称
             nodes: 127.0.0.1:26379, 127.0.0.1:26380, 127.0.0.1:26381 # 哨兵节点列表
             read-from: # 读节点选择策略（默认值：UPSTREAM，仅从主节点读取数据）
@@ -1077,7 +1258,9 @@ xcache:
             client-options: # 客户端选项，一般保持默认即可，可参考 Lettuce 官方文档
               auto-reconnect: true # 是否自动重连（默认值：true）
               # …… 其余配置省略，可参考 standalone 的相关配置
-          cluster: # 集群模式配置 （优先 sentinel 配置，其次 cluster 配置，最后 standalone 配置）
+          cluster: # 集群模式配置
+            # 这里为了演示 standalone，sentinel，cluster 分别如何配置，所以三种配置都存在，实际只需保留真正使用的其中一种
+            # 当三种配置都存在时，那么优先使用 sentinel 配置，其次 cluster，最后 standalone
             nodes: 127.0.0.1:7001, 127.0.0.1:7002, 127.0.0.1:7003, 127.0.0.1:7004, 127.0.0.1:7005, 127.0.0.1:7006 # 集群节点列表
             read-from: # 读节点选择策略（默认值：UPSTREAM，仅从主节点读取数据）
             username: redis-admin # Redis 用户名
@@ -1104,105 +1287,29 @@ xcache:
                 refresh-triggers-reconnect-attempts: # 刷新触发器重连尝试次数（默认值：3）
 ```
 
-#### 4.2.2. 简化配置示例
 
-上面这个示例是 Xcache 的全部配置项，我承认，是真的非常非常多。
 
-好消息是可以对缓存做非常精细的调整，另一个好消息是绝大部分可以直接省略（有默认值）。
-
-以下是一个简化后的配置示例。
+#### 4.3.2. 极简配置
 
 ```yaml
 xcache:
   group: shop # 分组名称 (必填)
   template: # 公共模板配置 (必填)
     - id: t0 # 模板ID (必填)
-      cache-lock: # 缓存锁配置
-        provider: lettuce # LockProviderId（默认值：embed，这里选用 lettuce）
-      cache-sync: # 缓存同步配置
-        provider: lettuce # CacheSyncProviderId （默认值：none）
-      cache-stat: lettuce # CacheStatProviderId（默认值：log，这里选用 lettuce）
-  redis: # Redis 配置
-    store: # RedisStoreProvider 配置
-      - id: lettuce #  要创建的 RedisStoreProvider 的 id（必填）
-        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
-    listener: # StreamListenerContainer 配置，列表类型，可配置多个
-      - id: lettuce # 要创建的 StreamListenerContainer 的 id（必填）
-        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
-    sync: # RedisCacheSyncProvider 配置，列表类型，可配置多个
-      - id: lettuce # 需要创建的 RedisCacheSyncProvider 的 id（必填）
-        listener: lettuce # 指定使用的 StreamListenerContainer 的 id（必填）
-    lock: # RedisLockProvider 配置
-      - id: lettuce # 要创建的 RedisLockProvider 的 id（必填）
-        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
-    stat: # RedisCacheStatProvider 配置
-      - id: lettuce # 要创建的 RedisCacheStatProvider 的 id（必填）
-        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
-    refresh: # RedisCacheRefreshProvider 配置
-      - id: lettuce # 要创建的 RedisCacheRefreshProvider 的 id（必填）
-        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
-    lettuce: # Lettuce 客户端配置
-      factories: 
-        - id: lettuce # RedisOperatorFactory 唯一标识
-          sentinel: # 哨兵模式配置
-            master-id: mymaster # 哨兵主节点名称
-            nodes: 127.0.0.1:26379, 127.0.0.1:26380, 127.0.0.1:26381 # 哨兵节点列表
 ```
 
-> 注：
->
-> 1. 此配置使用 Lettuce 连接 Redis 哨兵节点，并通过 redis 实现缓存数据存储、缓存数据同步、缓存锁、缓存指标采集等。
-> 2. 一级缓存 provider 的默认值是 caffeine，二级缓存 provider 的默认值是 lettuce，因此可省略，其它有默认值的同理均可省略不填。
-> 3. xcache.cache 缓存实例个性化配置，因为所有配置均与 t0 模板相同，所以也可全部省略。
+**说明**：
 
-#### 4.2.3. 极简配置示例
+这份配置设定了 group，并定义了一个公共模板配置，且仅设定了模板 id，其余全部使用默认配置。
 
-如不使用 redis 作为缓存及其它相关功能，仅使用 caffeine 作为一级缓存，则可进一步简化配置。
+那么，这份配置会有什么样的默认逻辑呢？
 
-```yaml
-xcache:
-  group: shop # 分组名称 (必填)
-  template: # 公共模板配置 (必填)
-    - id: t0 # 模板ID (必填)
-      second: # 二级缓存配置
-        provider: none # 二级缓存默认是 lettuce，如不使用需显式设为 none。
-```
-
-
-
-## 5. 对象工厂
-
-| 接口                      | 实现类                      |       id       | 延迟创建 | 显式配置 |          依赖           |
-| ------------------------- | --------------------------- | :------------: | :------: | :------: | :---------------------: |
-| CodecProvider             | JacksonCodecProvider        |    jackson     |    否    |    否    |           无            |
-| CodecProvider             | GenericJacksonCodecProvider | jackson-spring |    否    |    否    |           无            |
-| CodecProvider             | JdkCodecProvider            |      jdk       |    否    |    否    |           无            |
-| CompressorProvider        | DeflaterCompressorProvider  |    deflate     |    否    |    否    |           无            |
-| CompressorProvider        | GzipCompressorProvider      |      gzip      |    否    |    否    |           无            |
-| ContainsPredicateProvider | NoopContainsPredicate       |       无       |    否    |    否    |           无            |
-| CacheLockProvider         | EmbedCacheLockProvider      |     embed      |    否    |    否    |           无            |
-| CacheLockProvider         | RedisLockProvider           |     自定义     |    否    |    是    |  RedisOperatorFactory   |
-| CacheRefreshProvider      | EmbedCacheRefreshProvider   |     embed      |    否    |    否    |           无            |
-| CacheRefreshProvider      | RedisCacheRefreshProvider   |     自定义     |    否    |    是    |  RedisOperatorFactory   |
-| CacheStatProvider         | LogCacheStatProvider        |      log       |    是    |    否    |           无            |
-| CacheStatProvider         | RedisCacheStatProvider      |     自定义     |    否    |    是    |  RedisOperatorFactory   |
-| CacheSyncProvider         | RedisCacheSyncProvider      |     自定义     |    否    |    是    | StreamListenerContainer |
-| StoreProvider             | CaffeineStoreProvider       |    caffeine    |    否    |    否    |           无            |
-| StoreProvider             | RedisStoreProvider          |     自定义     |    否    |    是    |  RedisOperatorFactory   |
-| StreamListenerContainer   | StreamListenerContainer     |     自定义     |    否    |    是    |  RedisOperatorFactory   |
-| RedisOperatorFactory      | LettuceOperatorFactory      |     自定义     |    否    |    是    |           无            |
-
-
-
-![对象创建与配置](images/object-create.png)
-
-1、实现同一接口的对象的 id 不能重复。
-
-如果仅需连接一个 redis，那么可将 RedisOperatorFactory 的 id 设为 lettuce，其它直接或间接依赖该 RedisOperatorFactory 的 StoreProvider，CacheLockProvider，CacheRefreshProvider，CacheStatProvider，CacheSyncProvider，StreamListenerContainer 的 id 也都设为 lettuce。
-
-如果需要连接多个 redis，那么多个 RedisOperatorFactory 的 id 必须互不相同，譬如可以定义为 lettuce1，lettuce2 …… 而StoreProvider，CacheLockProvider…… 则可以将 id 设为与依赖的 RedisOperatorFactory 的 id 一致。
-
-当然，您可以使用任意您所喜欢 的 id，是否与依赖保持一致也无强制要求，Xcache 仅要求实现同一接口的对象 id 不能重复。
+1. 一级缓存：caffeine，过期时间、缓存空值 …… 等均使用默认值。
+2. 二级缓存：无。
+3. 三级缓存：无。
+4. 缓存个性配置：无，所有缓存实例都完全使用 t0 模板配置。
+5. 缓存指标统计：统计数据输出到日志。
+6. 缓存数据同步、缓存数据刷新 …… 等：无。
 
 
 
@@ -1210,16 +1317,16 @@ xcache:
 
 ### 6.1. @Cacheable
 
-@Cacheable 是方法注解，主要用于查询和保存单个缓存元素。
+``@Cacheable`` 是方法注解，主要用于查询和保存单个缓存元素。
 
 #### 6.1.1. 相关属性
 
 | 属性        | 必填 | 作用                                                         |
 | :---------- | :--: | ------------------------------------------------------------ |
-| name        |  否  | 指定缓存名称                                                 |
-| keyType     |  否  | 指定键类型                                                   |
+| name        |  否  | 指定缓存名称（如类中无 ``@CacheConfig`` 注解则必须填写）     |
+| keyType     |  否  | 指定键类型（如类中无 ``@CacheConfig`` 注解则必须填写）       |
 | keyParams   |  否  | 指定键的泛型参数                                             |
-| valueType   |  否  | 指定值类型                                                   |
+| valueType   |  否  | 指定值类型（如类中无 ``@CacheConfig`` 注解则必须填写）       |
 | valueParams |  否  | 指定值的泛型参数                                             |
 | key         |  否  | SpEL表达式，用于提取键。<br/>如果未配置，使用被注解方法的第一个参数作为键。 |
 | condition   |  否  | SpEL表达式，用于判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
@@ -1232,16 +1339,16 @@ xcache:
 
 ### 6.2. @CacheableAll
 
-@CacheableAll 是方法注解，用于批量查询和保存缓存元素。
+``@CacheableAll`` 是方法注解，用于批量查询和保存缓存元素。
 
 #### 6.2.1. 相关属性
 
 | 属性        | 必填 | 作用                                                         |
 | :---------- | :--: | ------------------------------------------------------------ |
-| name        |  否  | 指定缓存名称                                                 |
-| keyType     |  否  | 指定键类型                                                   |
+| name        |  否  | 指定缓存名称（如类中无 ``@CacheConfig`` 注解则必须填写）     |
+| keyType     |  否  | 指定键类型（如类中无 ``@CacheConfig`` 注解则必须填写）       |
 | keyParams   |  否  | 指定键的泛型参数                                             |
-| valueType   |  否  | 指定值类型                                                   |
+| valueType   |  否  | 指定值类型（如类中无 ``@CacheConfig`` 注解则必须填写）       |
 | valueParams |  否  | 指定值的泛型参数                                             |
 | keys        |  否  | SpEL表达式，用于提取键集。<br/>如果未配置，使用被注解方法的第一个参数作为键。 |
 | condition   |  否  | SpEL表达式，用于判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
@@ -1250,22 +1357,22 @@ xcache:
 
 ![cacheableAll](images/cacheableAll.png)
 
-> 提示：@Cacheable 是加锁执行，@CacheableAll 是不加锁执行。
+> 提示：``@Cacheable`` 是加锁执行，``@CacheableAll`` 是不加锁执行。
 >
 > 如果用唯一的锁则所有批量查询会变成串行；如果为每个键都申请锁则可能导致死锁，因此批量回源查询时不加锁。
 
 ### 6.3. @CachePut
 
-@CachePut 是方法注解，用于保存或更新单个缓存元素。
+``@CachePut`` 是方法注解，用于保存或更新单个缓存元素。
 
 #### 6.3.1. 相关属性
 
 | 属性        | 必填 | 作用                                                         |
 | :---------- | :--: | ------------------------------------------------------------ |
-| name        |  否  | 指定缓存名称                                                 |
-| keyType     |  否  | 指定键类型                                                   |
+| name        |  否  | 指定缓存名称（如类中无 ``@CacheConfig`` 注解则必须填写）     |
+| keyType     |  否  | 指定键类型（如类中无 ``@CacheConfig`` 注解则必须填写）       |
 | keyParams   |  否  | 指定键的泛型参数                                             |
-| valueType   |  否  | 指定值类型                                                   |
+| valueType   |  否  | 指定值类型（如类中无 ``@CacheConfig`` 注解则必须填写）       |
 | valueParams |  否  | 指定值的泛型参数                                             |
 | key         |  否  | SpEL表达式，用于提取键。<br/>如果未配置，使用被注解方法的第一个参数作为键。 |
 | value       |  否  | SpEL表达式，用于提取值。<br/>如果未配置，使用被注解方法的执行结果作为值。 |
@@ -1278,16 +1385,16 @@ xcache:
 
 ### 6.4. @CachePutAll
 
-@CachePutAll 是方法注解，用于批量保存或更新缓存元素。
+``@CachePutAll`` 是方法注解，用于批量保存或更新缓存元素。
 
 #### 6.4.1. 相关属性
 
 | 属性        | 必填 | 作用                                                         |
 | :---------- | :--: | ------------------------------------------------------------ |
-| name        |  否  | 指定缓存名称                                                 |
-| keyType     |  否  | 指定键类型                                                   |
+| name        |  否  | 指定缓存名称（如类中无 ``@CacheConfig`` 注解则必须填写）     |
+| keyType     |  否  | 指定键类型（如类中无 ``@CacheConfig`` 注解则必须填写）       |
 | keyParams   |  否  | 指定键的泛型参数                                             |
-| valueType   |  否  | 指定值类型                                                   |
+| valueType   |  否  | 指定值类型（如类中无 ``@CacheConfig`` 注解则必须填写）       |
 | valueParams |  否  | 指定值的泛型参数                                             |
 | keyValues   |  否  | SpEL表达式，用于提取键值对集。<br/>如果未配置，使用被注解方法的第一个参数作为键值对集。 |
 | condition   |  否  | SpEL表达式，用于调用被注解方法前判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
@@ -1301,16 +1408,16 @@ xcache:
 
 ### 6.5. @CacheEvict
 
-@CacheEvict 是方法注解，用于驱逐单个缓存元素。
+``@CacheEvict`` 是方法注解，用于驱逐单个缓存元素。
 
 #### 6.5.1. 相关属性
 
 | 属性             | 必填 | 作用                                                         |
 | :--------------- | :--: | ------------------------------------------------------------ |
-| name             |  否  | 指定缓存名称                                                 |
-| keyType          |  否  | 指定键类型                                                   |
+| name             |  否  | 指定缓存名称（如类中无 ``@CacheConfig`` 注解则必须填写）     |
+| keyType          |  否  | 指定键类型（如类中无 ``@CacheConfig`` 注解则必须填写）       |
 | keyParams        |  否  | 指定键的泛型参数                                             |
-| valueType        |  否  | 指定值类型                                                   |
+| valueType        |  否  | 指定值类型（如类中无 ``@CacheConfig`` 注解则必须填写）       |
 | valueParams      |  否  | 指定值的泛型参数                                             |
 | key              |  否  | SpEL表达式，用于提取键。<br/>如果未配置，使用被注解方法的第一个参数作为键。 |
 | condition        |  否  | SpEL表达式，用于调用被注解方法前判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
@@ -1325,16 +1432,16 @@ xcache:
 
 ### 6.6. @CacheEvictAll
 
-@CacheEvictAll 是方法注解，用于批量驱逐缓存元素。
+``@CacheEvictAll`` 是方法注解，用于批量驱逐缓存元素。
 
 #### 6.6.1. 相关属性
 
 | 属性             | 必填 | 作用                                                         |
 | :--------------- | :--: | ------------------------------------------------------------ |
-| name             |  否  | 指定缓存名称                                                 |
-| keyType          |  否  | 指定键类型                                                   |
+| name             |  否  | 指定缓存名称（如类中无 ``@CacheConfig`` 注解则必须填写）     |
+| keyType          |  否  | 指定键类型（如类中无 ``@CacheConfig`` 注解则必须填写）       |
 | keyParams        |  否  | 指定键的泛型参数                                             |
-| valueType        |  否  | 指定值类型                                                   |
+| valueType        |  否  | 指定值类型（如类中无 ``@CacheConfig`` 注解则必须填写）       |
 | valueParams      |  否  | 指定值的泛型参数                                             |
 | keys             |  否  | SpEL表达式，用于提取键集。<br/>如果未配置，使用被注解方法的第一个参数作为键集。 |
 | condition        |  否  | SpEL表达式，用于调用被注解方法前判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
@@ -1349,16 +1456,16 @@ xcache:
 
 ### 6.7. @CacheClear
 
-@CacheClear 是方法注解，用于清空所有缓存数据。
+``@CacheClear`` 是方法注解，用于清空所有缓存数据。
 
 #### 6.7.1. 相关属性
 
 | 属性             | 必填 | 作用                                                         |
 | :--------------- | :--: | ------------------------------------------------------------ |
-| name             |  否  | 指定缓存名称                                                 |
-| keyType          |  否  | 指定键类型                                                   |
+| name             |  否  | 指定缓存名称（如类中无 ``@CacheConfig`` 注解则必须填写）     |
+| keyType          |  否  | 指定键类型（如类中无 ``@CacheConfig`` 注解则必须填写）       |
 | keyParams        |  否  | 指定键的泛型参数                                             |
-| valueType        |  否  | 指定值类型                                                   |
+| valueType        |  否  | 指定值类型（如类中无 ``@CacheConfig`` 注解则必须填写）       |
 | valueParams      |  否  | 指定值的泛型参数                                             |
 | condition        |  否  | SpEL表达式，用于调用被注解方法前判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
 | unless           |  否  | SpEL表达式，用于调用被注解方法后判断是否执行缓存逻辑。 <br/>如果未配置，默认为 false。 |
@@ -1372,7 +1479,7 @@ xcache:
 
 ### 6.8. @CacheConfig
 
-@CacheConfig 是类注解，用于配置公共属性。
+``@CacheConfig`` 是类注解，用于配置公共属性。
 
 #### 6.8.1. 相关属性
 
@@ -1384,9 +1491,9 @@ xcache:
 | valueType   |  是  | 指定值类型       |
 | valueParams |  否  | 指定值的泛型参数 |
 
-> @Cacheable，@CacheableAll …… 等所有缓存方法注解均有这五个公共属性。
+> ``@Cacheable``，``@CacheableAll`` …… 等所有缓存方法注解均有这五个公共属性。
 >
-> 如果一个类中有同名缓存的多个缓存方法注解，那么可以在类中添加 @CacheConfig 注解，避免重复配置公共属性。
+> 如果一个类中有同名缓存的多个缓存方法注解，那么可以在类中添加 ``@CacheConfig`` 注解，避免重复配置公共属性。
 
 #### 6.8.1. 执行逻辑
 
@@ -1394,31 +1501,29 @@ xcache:
 
 1. 公共属性完整性
 
-   @CacheConfig 的 name 、keyType、valueType 是必填属性。
+   ``@CacheConfig`` 的 name 、keyType、valueType 是必填属性。
 
-   缓存方法注解中，name 、keyType、valueType 并非必填属性，但如果类中没有 @CacheConfig 注解，则必须填写，否则报异常。
+   缓存方法注解中，name 、keyType、valueType 并非必填属性，但如果类中没有 ``@CacheConfig`` 注解，则必须填写，否则报异常。
 
 2. 公共属性一致性
 
-   如果缓存方法注解中有配置 keyType、keyParams、valueType、valueParams 任意其中一个或多个属性，但类中又有同名缓存的 @CacheConfig 注解，则这些公共属性值必须一致，否则报异常。
+   如果缓存方法注解中有配置 keyType、keyParams、valueType、valueParams 任意其中一个或多个属性，但类中又有同名缓存的 ``@CacheConfig`` 注解，则这些公共属性值必须一致，否则报异常。
 
-   因此，如果类中有同名缓存的 @CacheConfig 注解，缓存方法注解中的公共属性建议留空。
+   因此，如果类中有同名缓存的 ``@CacheConfig`` 注解，缓存方法注解中的公共属性建议留空。
 
-3. 如果缓存方法注解的 name 属性值未配置或与 @CacheConfig 的相同，则表示两者指向的是同一个缓存实例。
+3. 如果缓存方法注解的 name 属性值未配置或与 ``@CacheConfig`` 的相同，则表示两者指向的是同一个缓存实例。
 
 
 
 ### 6.9. @EnableCache
 
-@EnableCache 是类注解，用于启用 Xcache 缓存注解功能。
+``@EnableCache`` 是类注解，用于启用 Xcache 缓存注解功能。
 
 | 属性         | 必填 |          默认值           | 作用                                                         |
 | :----------- | :--: | :-----------------------: | ------------------------------------------------------------ |
 | basePackages |  是  |            无             | 指定需要扫描缓存注解的包路径                                 |
 | order        |  否  | Ordered.LOWEST_PRECEDENCE | 指定切面优先级                                               |
 | AdviceMode   |  否  |     AdviceMode.PROXY      | 指定代理模式<br />当前仅支持 AdviceMode.PROXY，不支持 AdviceMode.ASPECTJ。 |
-
-
 
 ### 6.10. 其它事项
 
@@ -1500,7 +1605,138 @@ public User save(long id, User result) {
 
 ## 7. 缓存接口
 
+缓存核心接口位于 ``com.igeeksky.xcache.common.cache``：
 
+### 7.1. 主要接口
+
+```java
+    /**
+     * 根据键从缓存中读取值
+     */
+    V get(K key);
+
+	/**
+     * 根据键从缓存中读取值
+     */
+    CacheValue<V> getCacheValue(K key);
+
+	/**
+     * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值。
+     * 2. 如果缓存未命中，通过 cacheLoader 回源取值，取值结果存入缓存并返回。
+     * 注：回源时内部加锁执行。
+     */
+    V get(K key, CacheLoader<K, V> cacheLoader);
+
+	/**
+     * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值。
+     * 2. 如果缓存未命中：
+     * 2.1. 有配置 CacheLoader，则通过 cacheLoader 回源取值，取值结果存入缓存并返回；
+     * 2.2. 未配置 CacheLoader，返回 null。
+     * 注：回源时内部加锁执行。
+     */
+    V getOrLoad(K key);
+
+	/**
+     * 根据键集从缓存中读取值
+     */
+    Map<K,V> getAll(Set<? extends K> keys);
+
+	/**
+     * 根据键集从缓存中读取值
+     */
+    Map<K, CacheValue<V>> getAllCacheValues(Set<? extends K> keys);
+
+    /**
+     * 1. 先从缓存取值，如果缓存命中全部数据，返回缓存数据集。
+     * 2. 如果缓存有未命中数据，通过 cacheLoader 回源取值，取值结果存入缓存，并返回合并结果集：缓存数据集+回源取值结果集。
+     * 注：批量回源取值不加锁
+     */
+    Map<K,V> getAll(Set<? extends K> keys, CacheLoader<K, V> cacheLoader);
+
+    /**
+     * 1. 先从缓存取值，如果缓存命中全部数据，返回缓存数据集。
+     * 2. 如果缓存有未命中数据：
+     * 2.1. 有配置 CacheLoader，通过 cacheLoader 回源取值，取值结果存入缓存并返回合并结果集：缓存数据集+回源取值结果集。
+     * 2.2. 未配置 CacheLoader，返回缓存数据集。
+     * 
+     * 注：批量回源取值不加锁
+     */
+    Map<K,V> getOrLoadAll(Set<? extends K> keys);
+
+	/**
+     * 将单个键值对存入缓存
+     */
+    void put(K key, V value);
+
+    /**
+     * 将多个键值对存入缓存
+     */
+    void putAll(Map<? extends K, ? extends V> keyValues);
+
+    /**
+     * 根据键将数据逐出缓存
+     */
+    void remove(K key);
+
+    /**
+     * 根据键集将数据逐出缓存
+     */
+    void removeAll(Set<? extends K> keys);
+
+    /**
+     * 清空缓存中的所有数据
+     */
+    void clear();
+```
+
+### 7.2. 关于空值
+
+#### 空值问题
+
+缓存查询接口 ``V get(K key)``，那么当返回值为 ``null`` 时，会有语义模糊：
+
+1. 可能是数据源无数据；
+2. 可能是未缓存数据。
+
+此时，为了判断数据源是否有值，调用者就需再次从数据源查询数据。
+
+而且，每次返回 ``null`` ，都需回源查询，这无疑会增加数据源压力，并降低应用的响应速度。
+
+#### 解决方案
+
+Xcache 被设计为可缓存空值，``CacheValue`` 是缓存值的包装类。
+
+而缓存查询接口 ``CacheValue<V> getCacheValue(K key)`` ，可通过 ``cacheValue`` 是否为 ``null`` 来判断是数据源无值还是未缓存。
+
+```java
+CacheValue<User> cacheValue = cache.get(id);
+if (cacheValue == null) {
+    // 未缓存，从数据源加载数据
+    User user = userDao.find(id);
+    // 虽然 user 可能为 null，但存入缓存后，下次查询时 cacheValue != null
+    cache.put(id, user);
+    // do something
+ } else {
+     if (cacheValue.hasValue()){
+         // 已缓存，数据源有数据
+         User user = cacheValue.getValue();
+         // do something
+     } else {
+         // 已缓存空值，数据源肯定无数据（无需再回源确认是否有数据）
+         // do something
+     }
+ }
+```
+
+上面这个示例中，只有 ``cacheValue == null`` 时，才需回源取值，因此可以减少回源次数。
+
+其它接口如 ``Map<K, CacheValue<V>> getAll(Set<? extends K> keys)``，关于 ``cacheValue`` 的语义也是如此。
+
+> 注：
+>
+> 通过 ``cacheValue`` 是否为 ``null`` 来决定是否回源取值，需将 Xcache 配置为允许缓存空值。
+>
+> 即，至少需有其中一级缓存数据存储的  ``enable-null-value`` 配置项为 ``true``（默认为  ``true``）。
 
 
 

@@ -34,7 +34,7 @@ class CacheManagerTest {
         t0.getCacheSync().setProvider(CacheConstants.NONE);
 
         CompressProps compress = new CompressProps();
-        compress.setProvider(CacheConstants.DEFLATER_COMPRESSOR);
+        compress.setProvider(CacheConstants.DEFLATE_COMPRESSOR);
         compress.setLevel(9);
         compress.setNowrap(true);
 
@@ -67,17 +67,17 @@ class CacheManagerTest {
     void testGet() throws InterruptedException {
         User jack = new User("001", "Jack", 16);
         cache.put("001", jack);
-        CacheValue<User> cacheValue = cache.get("001");
+        CacheValue<User> cacheValue = cache.getCacheValue("001");
         System.out.println(1 + ":" + cacheValue.getValue());
         Assertions.assertEquals(cacheValue.getValue(), jack);
 
         Thread.sleep(5000L);
-        cacheValue = cache.get("001");
+        cacheValue = cache.getCacheValue("001");
         System.out.println(2 + ":" + cacheValue.getValue());
         Assertions.assertEquals(cacheValue.getValue(), jack);
 
         Thread.sleep(5000L);
-        cacheValue = cache.get("001");
+        cacheValue = cache.getCacheValue("001");
         System.out.println(3 + ":" + cacheValue);
         Assertions.assertNull(cacheValue);
     }
@@ -85,7 +85,7 @@ class CacheManagerTest {
     @Test
     void testPut() {
         cache.put("001", null);
-        CacheValue<User> cacheValue = cache.get("001");
+        CacheValue<User> cacheValue = cache.getCacheValue("001");
         Assertions.assertNotNull(cacheValue);
         Assertions.assertNull(cacheValue.getValue());
     }

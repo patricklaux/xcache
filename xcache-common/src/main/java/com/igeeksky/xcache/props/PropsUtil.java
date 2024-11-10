@@ -1,13 +1,7 @@
 package com.igeeksky.xcache.props;
 
-import com.igeeksky.xcache.common.CacheConfigException;
 import com.igeeksky.xcache.common.ReferenceType;
-import com.igeeksky.xcache.common.StoreType;
 import com.igeeksky.xtool.core.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Objects;
 
 /**
  * 配置工具类
@@ -17,7 +11,11 @@ import java.util.Objects;
  */
 public class PropsUtil {
 
-    private static final Logger log = LoggerFactory.getLogger(PropsUtil.class);
+    /**
+     * 私有构造函数
+     */
+    private PropsUtil() {
+    }
 
     /**
      * “用户模板配置”覆盖 “默认模板配置”，生成 “最终模板配置”
@@ -76,62 +74,23 @@ public class PropsUtil {
             to.setCacheStat(cacheStat);
         }
 
-        String containsPredicate = StringUtils.trimToNull(from.getContainsPredicate());
-        if (containsPredicate != null) {
-            to.setContainsPredicate(containsPredicate);
-        }
-
         replaceProps(from.getCacheLock(), to.getCacheLock());
         replaceProps(from.getCacheSync(), to.getCacheSync());
         replaceProps(from.getCacheRefresh(), to.getCacheRefresh());
 
         StoreProps first = from.getFirst();
         if (first != null) {
-            StoreType storeType = first.getStoreType();
-            if (Objects.equals(StoreType.EXTRA, storeType)) {
-                to.setFirst(defaultExtraStoreProps());
-            }
             replaceProps(first, to.getFirst());
         }
 
         StoreProps second = from.getSecond();
         if (second != null) {
-            StoreType storeType = second.getStoreType();
-            if (Objects.equals(StoreType.EMBED, storeType)) {
-                to.setSecond(defaultEmbedStoreProps());
-            }
             replaceProps(second, to.getSecond());
         }
 
         StoreProps third = from.getThird();
         if (third != null) {
-            StoreType storeType = third.getStoreType();
-            if (Objects.equals(StoreType.EMBED, storeType)) {
-                to.setThird(defaultEmbedStoreProps());
-            }
             replaceProps(third, to.getThird());
-        }
-
-        checkStoreType(new StoreProps[]{to.getFirst(), to.getSecond(), to.getThird()});
-    }
-
-    private static void checkStoreType(StoreProps[] stores) {
-        int extraIndex = -1, embedCount = 0;
-        for (int i = 0; i < stores.length; i++) {
-            StoreType storeType = stores[i].getStoreType();
-            if (storeType == StoreType.EXTRA) {
-                extraIndex = i;
-                continue;
-            }
-            // 内嵌缓存数量大于 1，输出警告日志
-            if (++embedCount > 1) {
-                log.warn("embed-store more than one.");
-            }
-            // 如果外部缓存的级别低于内嵌缓存，抛出异常
-            if (extraIndex >= 0) {
-                String error = String.format("extra-store level [%d] is lower than embed-store level [%d].", extraIndex + 1, i + 1);
-                throw new CacheConfigException(error);
-            }
         }
     }
 
@@ -168,12 +127,12 @@ public class PropsUtil {
             return;
         }
 
-        SyncType first = from.getFirst();
+        Boolean first = from.getFirst();
         if (first != null) {
             to.setFirst(first);
         }
 
-        SyncType second = from.getSecond();
+        Boolean second = from.getSecond();
         if (second != null) {
             to.setSecond(second);
         }
@@ -227,11 +186,6 @@ public class PropsUtil {
     private static void replaceProps(StoreProps from, StoreProps to) {
         if (from == null) {
             return;
-        }
-
-        StoreType storeType = from.getStoreType();
-        if (storeType != null) {
-            to.setStoreType(storeType);
         }
 
         RedisType redisType = from.getRedisType();
@@ -339,7 +293,6 @@ public class PropsUtil {
         props.setCharset(CacheConstants.DEFAULT_CHARSET_NAME);
         props.setKeyCodec(CacheConstants.DEFAULT_KEY_CODEC_PROVIDER);
         props.setCacheStat(CacheConstants.DEFAULT_STAT_PROVIDER);
-        props.setContainsPredicate(CacheConstants.DEFAULT_PREDICATE_PROVIDER);
 
         props.setCacheLock(defaultLockProps());
         props.setCacheSync(defaultSyncProps());
@@ -347,10 +300,7 @@ public class PropsUtil {
 
         props.setFirst(defaultEmbedStoreProps());
         props.setSecond(defaultExtraStoreProps());
-
-        StoreProps third = defaultExtraStoreProps();
-        third.setProvider(CacheConstants.NONE);
-        props.setThird(third);
+        props.setThird(defaultExtraStoreProps());
 
         return props;
     }
@@ -390,8 +340,8 @@ public class PropsUtil {
      */
     public static SyncProps defaultSyncProps() {
         SyncProps props = new SyncProps();
-        props.setFirst(SyncType.ALL);
-        props.setSecond(SyncType.NONE);
+        props.setFirst(Boolean.TRUE);
+        props.setSecond(Boolean.FALSE);
         props.setMaxLen(CacheConstants.DEFAULT_SYNC_MAX_LEN);
         props.setProvider(CacheConstants.DEFAULT_SYNC_PROVIDER);
         props.setEnableGroupPrefix(CacheConstants.DEFAULT_ENABLE_GROUP_PREFIX);
@@ -405,7 +355,6 @@ public class PropsUtil {
      */
     public static StoreProps defaultEmbedStoreProps() {
         StoreProps props = new StoreProps();
-        props.setStoreType(StoreType.EMBED);
         props.setRedisType(RedisType.STRING);
 
         props.setProvider(CacheConstants.DEFAULT_EMBED_STORE_PROVIDER);
@@ -437,7 +386,6 @@ public class PropsUtil {
      */
     public static StoreProps defaultExtraStoreProps() {
         StoreProps props = new StoreProps();
-        props.setStoreType(StoreType.EXTRA);
         props.setRedisType(RedisType.STRING);
 
         props.setProvider(CacheConstants.DEFAULT_EXTRA_STORE_PROVIDER);

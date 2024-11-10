@@ -17,10 +17,19 @@ public final class NullValue implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    /**
+     * 单例
+     */
     public static final NullValue INSTANCE = new NullValue();
 
+    /**
+     * {@link NullValue} 的序列化字符串（JSON格式）
+     */
     public static final String INSTANCE_STR = "{\"@class\":\"com.igeeksky.xcache.NullValue\"}";
 
+    /**
+     * {@link NullValue} 的序列化字节数组（JSON格式）
+     */
     public static final byte[] INSTANCE_BYTES = INSTANCE_STR.getBytes(StandardCharsets.UTF_8);
 
     private NullValue() {
@@ -40,4 +49,5 @@ public final class NullValue implements Serializable {
     public String toString() {
         return "null";
     }
+
 }

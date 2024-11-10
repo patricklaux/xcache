@@ -8,14 +8,14 @@ import com.igeeksky.xcache.props.StoreLevel;
  * @author Patrick.Lau
  * @since 1.0.0 2024/9/9
  */
-public class NoopCacheStatMonitor implements CacheStatMonitor {
+public class NoOpCacheStatMonitor implements CacheStatMonitor {
 
-    private static final NoopCacheStatMonitor INSTANCE = new NoopCacheStatMonitor();
+    private static final NoOpCacheStatMonitor INSTANCE = new NoOpCacheStatMonitor();
 
-    private NoopCacheStatMonitor() {
+    private NoOpCacheStatMonitor() {
     }
 
-    public static NoopCacheStatMonitor getInstance() {
+    public static NoOpCacheStatMonitor getInstance() {
         return INSTANCE;
     }
 

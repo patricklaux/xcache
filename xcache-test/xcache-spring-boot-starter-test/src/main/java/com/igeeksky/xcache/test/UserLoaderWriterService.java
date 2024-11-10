@@ -30,7 +30,7 @@ public class UserLoaderWriterService {
     }
 
     public CacheValue<User> get(Key key) {
-        return cache.get(key);
+        return cache.getCacheValue(key);
     }
 
     public User getOrLoad(Key key) {
@@ -46,7 +46,7 @@ public class UserLoaderWriterService {
     }
 
     public Map<Key, CacheValue<User>> getAll(Set<Key> keys) {
-        return cache.getAll(keys);
+        return cache.getAllCacheValues(keys);
     }
 
     public Map<Key, User> getOrLoadAll(Set<Key> keys) {
@@ -54,11 +54,11 @@ public class UserLoaderWriterService {
     }
 
     public void delete(Key key) {
-        cache.evict(key);
+        cache.remove(key);
     }
 
     public void deleteAll(Set<Key> keys) {
-        cache.evictAll(keys);
+        cache.removeAll(keys);
     }
 
 }

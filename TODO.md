@@ -24,6 +24,8 @@
 - [X] 【开发】 cacheable & cacheableAll 不能与其它注解共同用于同一个方法
 - [X] 【思考】 RedisCacheStatProvider，channel 根据 group 进行区分，避免每新增一个缓存名称就需写一套采集程序
 - [X] 【开发】 分布式缓存的前缀（group + ":" + cacheName + ":"）
+- [X] 【开发】 NONE 默认为大写
+- [X] 【开发】 删除 ContainsPredicateProvider
 
 ### 待完成任务
 
@@ -32,3 +34,4 @@
 - [ ] 【开发】 xcache-jedis
 - [ ] 【开发】 ConcurrentHashMap 实现无过期时间的缓存
 - [ ] 【开发】 RedisHashStore 分为两类实现：一是集群模式，二是非集群模式。
+- [ ] 【开发】 缓存接口方法名调整

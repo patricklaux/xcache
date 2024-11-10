@@ -44,7 +44,7 @@ class CaffeineStoreTest {
     void get() throws InterruptedException {
         store.put("a", "a");
         Thread.sleep(2500);
-        CacheValue<Object> cacheValue = store.get("a");
+        CacheValue<Object> cacheValue = store.getCacheValue("a");
         Assertions.assertEquals("a", cacheValue.getValue());
     }
 
@@ -54,7 +54,7 @@ class CaffeineStoreTest {
         byte[] value = CODEC.encode("temp_value");
         store.put(key, value);
 
-        CacheValue<Object> cacheValue = store.get(key);
+        CacheValue<Object> cacheValue = store.getCacheValue(key);
         Assertions.assertArrayEquals(value, (byte[]) cacheValue.getValue());
     }
 
@@ -76,7 +76,7 @@ class CaffeineStoreTest {
         byte[] value = CODEC.encode("temp_value");
         cache.put(key, value);
 
-        CacheValue<byte[]> cacheValue = cache.get(key);
+        CacheValue<byte[]> cacheValue = cache.getCacheValue(key);
         Assertions.assertArrayEquals(value, cacheValue.getValue());
     }
 
@@ -89,7 +89,7 @@ class CaffeineStoreTest {
         Set<String> set = new HashSet<>();
         set.add(key);
 
-        Map<String, CacheValue<Object>> all = store.getAll(set);
+        Map<String, CacheValue<Object>> all = store.getAllCacheValues(set);
         Assertions.assertTrue(all.containsKey(key));
         Assertions.assertArrayEquals(value, (byte[]) all.get(key).getValue());
     }

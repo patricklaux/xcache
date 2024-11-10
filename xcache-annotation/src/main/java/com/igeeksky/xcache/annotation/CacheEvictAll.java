@@ -39,7 +39,7 @@ public @interface CacheEvictAll {
      * <p>
      * 如果未配置，condition 表达式结果默认为 true。
      * <p>
-     * 如果 condition 表达式结果为 true，beforeInvocation 为 true ，调用被注解方法前执行缓存操作 (evict) ：<p>
+     * 如果 condition 表达式结果为 true，beforeInvocation 为 true ，调用被注解方法前执行缓存操作 (removeAll) ：<p>
      * 如果 condition 表达式结果为 false，无论 unless 表达式结果是否为 false，一定不会执行缓存操作。
      */
     String condition() default "";
@@ -50,7 +50,7 @@ public @interface CacheEvictAll {
      * 如果未配置，unless 表达式结果默认为 false。
      * <p>
      * 如果 condition 表达式结果为 true，beforeInvocation 为 false，
-     * 且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (evict)。
+     * 且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (removeAll)。
      */
     String unless() default "";
 

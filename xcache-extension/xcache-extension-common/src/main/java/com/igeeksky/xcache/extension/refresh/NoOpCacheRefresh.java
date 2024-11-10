@@ -11,14 +11,14 @@ import java.util.function.Consumer;
  * @author Patrick.Lau
  * @since 1.0.0 2024/9/4
  */
-public class NoopCacheRefresh implements CacheRefresh {
+public class NoOpCacheRefresh implements CacheRefresh {
 
-    private static final NoopCacheRefresh cacheRefresh = new NoopCacheRefresh();
+    private static final NoOpCacheRefresh cacheRefresh = new NoOpCacheRefresh();
 
-    private NoopCacheRefresh() {
+    private NoOpCacheRefresh() {
     }
 
-    public static NoopCacheRefresh getInstance() {
+    public static NoOpCacheRefresh getInstance() {
         return cacheRefresh;
     }
 

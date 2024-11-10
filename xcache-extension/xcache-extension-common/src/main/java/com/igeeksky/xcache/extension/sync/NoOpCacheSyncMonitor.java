@@ -5,14 +5,14 @@ import java.util.Set;
 /**
  * 缓存同步监视器的无操作实现
  */
-public class NoopCacheSyncMonitor implements CacheSyncMonitor {
+public class NoOpCacheSyncMonitor implements CacheSyncMonitor {
 
-    private static final NoopCacheSyncMonitor INSTANCE = new NoopCacheSyncMonitor();
+    private static final NoOpCacheSyncMonitor INSTANCE = new NoOpCacheSyncMonitor();
 
-    private NoopCacheSyncMonitor() {
+    private NoOpCacheSyncMonitor() {
     }
 
-    public static NoopCacheSyncMonitor getInstance() {
+    public static NoOpCacheSyncMonitor getInstance() {
         return INSTANCE;
     }
 

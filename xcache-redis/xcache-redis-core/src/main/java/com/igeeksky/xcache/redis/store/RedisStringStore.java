@@ -45,12 +45,12 @@ public class RedisStringStore<V> implements RedisStore<V> {
     }
 
     @Override
-    public CacheValue<V> get(String key) {
+    public CacheValue<V> getCacheValue(String key) {
         return this.convertor.fromExtraStoreValue(this.operator.get(toStoreKey(key)));
     }
 
     @Override
-    public Map<String, CacheValue<V>> getAll(Set<? extends String> keys) {
+    public Map<String, CacheValue<V>> getAllCacheValues(Set<? extends String> keys) {
         List<KeyValue<byte[], byte[]>> keyValues = this.operator.mget(toKeysArray(keys));
 
         Map<String, CacheValue<V>> result = Maps.newLinkedHashMap(keyValues.size());
@@ -102,12 +102,12 @@ public class RedisStringStore<V> implements RedisStore<V> {
     }
 
     @Override
-    public void evict(String key) {
+    public void remove(String key) {
         this.operator.del(toStoreKey(key));
     }
 
     @Override
-    public void evictAll(Set<? extends String> keys) {
+    public void removeAll(Set<? extends String> keys) {
         this.operator.del(toKeysArray(keys));
     }
 

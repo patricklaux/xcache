@@ -18,7 +18,7 @@ public interface Base<K, V> {
      * 根据键从缓存中读取值 <p>
      * <p>
      * 增加一层包装类 CacheValue ，当允许缓存空值时，可以明确判断是缓存无值，还是数据源无值，从而决定是否需要再回源查询
-     * <pre>{@code
+     * {@snippet :
      * if (cacheValue == null) {
      *     // 未缓存，未知数据源是否有数据
      * } else {
@@ -28,12 +28,12 @@ public interface Base<K, V> {
      *         // 已缓存，数据源无数据，无需回源（只有允许缓存空值，才会出现这个条件）；
      *     }
      * }
-     * }</pre>
+     *}
      *
      * @param key 键
      * @return CacheValue – 值的包装类
      */
-    CacheValue<V> get(K key);
+    CacheValue<V> getCacheValue(K key);
 
     /**
      * 根据键集从缓存中读取值
@@ -44,7 +44,7 @@ public interface Base<K, V> {
      * 1. CacheValue.hasValue() == true，缓存的是正常值； <p>
      * 2. CacheValue.hasValue() == false，缓存的是空值； <p>
      */
-    Map<K, CacheValue<V>> getAll(Set<? extends K> keys);
+    Map<K, CacheValue<V>> getAllCacheValues(Set<? extends K> keys);
 
     /**
      * 将单个键值对存入缓存
@@ -66,14 +66,14 @@ public interface Base<K, V> {
      *
      * @param key 键
      */
-    void evict(K key);
+    void remove(K key);
 
     /**
      * 根据键集将数据逐出缓存
      *
      * @param keys 键集
      */
-    void evictAll(Set<? extends K> keys);
+    void removeAll(Set<? extends K> keys);
 
     /**
      * 清空缓存中的所有数据

@@ -8,7 +8,7 @@ import com.igeeksky.xcache.extension.codec.JdkCodecProvider;
 import com.igeeksky.xcache.extension.compress.CompressorProvider;
 import com.igeeksky.xcache.extension.compress.DeflaterCompressorProvider;
 import com.igeeksky.xcache.extension.compress.GzipCompressorProvider;
-import com.igeeksky.xcache.extension.contains.ContainsPredicateProvider;
+import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.CacheLockProvider;
 import com.igeeksky.xcache.extension.lock.EmbedCacheLockProvider;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
@@ -47,7 +47,7 @@ public class ComponentManagerImpl implements ComponentManager {
     private final ConcurrentMap<String, CacheLockProvider> locks = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CodecProvider> codecs = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CompressorProvider> compressors = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, ContainsPredicateProvider> predicates = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, ContainsPredicate<?>> predicates = new ConcurrentHashMap<>();
 
     private final long statPeriod;
     private final ScheduledExecutorService scheduler;
@@ -63,7 +63,7 @@ public class ComponentManagerImpl implements ComponentManager {
 
         this.scheduler = scheduler;
         this.addProvider(CacheConstants.JDK_CODEC, JdkCodecProvider.getInstance());
-        this.addProvider(CacheConstants.DEFLATER_COMPRESSOR, DeflaterCompressorProvider.getInstance());
+        this.addProvider(CacheConstants.DEFLATE_COMPRESSOR, DeflaterCompressorProvider.getInstance());
         this.addProvider(CacheConstants.GZIP_COMPRESSOR, GzipCompressorProvider.getInstance());
         this.addProvider(CacheConstants.EMBED_CACHE_LOCK, EmbedCacheLockProvider.getInstance());
         this.addProvider(CacheConstants.EMBED_CACHE_REFRESH, new EmbedCacheRefreshProvider(scheduler));
@@ -100,13 +100,13 @@ public class ComponentManagerImpl implements ComponentManager {
     }
 
     @Override
-    public void addProvider(String beanId, ContainsPredicateProvider provider) {
-        this.predicates.put(beanId, provider);
+    public void addContainsPredicate(String name, ContainsPredicate<?> provider) {
+        this.predicates.put(name, provider);
     }
 
     @Override
-    public ContainsPredicateProvider getPredicateProvider(String beanId) {
-        return this.predicates.get(beanId);
+    public <K> ContainsPredicate<K> getContainsPredicate(String name) {
+        return (ContainsPredicate<K>) this.predicates.get(name);
     }
 
     @Override

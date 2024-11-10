@@ -21,9 +21,9 @@ public class StoreTestCase {
         String key = "test-get";
         store.put(key, key);
 
-        Assertions.assertEquals(key, store.get(key).getValue());
+        Assertions.assertEquals(key, store.getCacheValue(key).getValue());
 
-        store.evict(key);
+        store.remove(key);
     }
 
     public void getAll() {
@@ -42,10 +42,10 @@ public class StoreTestCase {
             throw new RuntimeException(e);
         }
 
-        Map<String, CacheValue<String>> all = store.getAll(keyValues.keySet());
+        Map<String, CacheValue<String>> all = store.getAllCacheValues(keyValues.keySet());
         keyValues.forEach((key, value) -> Assertions.assertEquals(value, all.get(key).getValue()));
 
-        store.evictAll(keyValues.keySet());
+        store.removeAll(keyValues.keySet());
     }
 
     /**
@@ -57,7 +57,7 @@ public class StoreTestCase {
         String key = "test-put-1";
         store.put(key, null);
 
-        Assertions.assertNull(store.get(key).getValue());
+        Assertions.assertNull(store.getCacheValue(key).getValue());
     }
 
     /**
@@ -70,7 +70,7 @@ public class StoreTestCase {
         String value = "";
         store.put(key, value);
 
-        Assertions.assertEquals(value, store.get(key).getValue());
+        Assertions.assertEquals(value, store.getCacheValue(key).getValue());
     }
 
     public void putAll() {
@@ -81,10 +81,10 @@ public class StoreTestCase {
         String key = "test-evict";
 
         store.put(key, key);
-        Assertions.assertEquals(key, store.get(key).getValue());
+        Assertions.assertEquals(key, store.getCacheValue(key).getValue());
 
-        store.evict(key);
-        Assertions.assertNull(store.get(key));
+        store.remove(key);
+        Assertions.assertNull(store.getCacheValue(key));
     }
 
     public void evictAll() {

@@ -1,10 +1,10 @@
 package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.common.*;
-import com.igeeksky.xcache.extension.NoopCacheWriter;
-import com.igeeksky.xcache.extension.contains.ContainsPredicate;
+import com.igeeksky.xcache.extension.NoOpCacheWriter;
+import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
-import com.igeeksky.xcache.extension.refresh.NoopCacheRefresh;
+import com.igeeksky.xcache.extension.refresh.NoOpCacheRefresh;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.collection.Sets;
@@ -62,7 +62,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     private void setCacheWriter(CacheWriter<K, V> cacheWriter) {
-        this.cacheWriter = cacheWriter != null ? cacheWriter : NoopCacheWriter.getInstance();
+        this.cacheWriter = cacheWriter != null ? cacheWriter : NoOpCacheWriter.getInstance();
     }
 
     private void setCacheRefresh(CacheRefresh cacheRefresh, CacheLoader<K, V> cacheLoader) {
@@ -73,7 +73,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         // 此抽象类的 cacheLoader 在 getOrLoad 和 getOrLoadAll 方法中需要根据是否为空来判断是否加锁数据回源
         // 因此当 cacheLoader 为空时，不能赋值 为 NoopCacheLoader
         this.cacheLoader = cacheLoader;
-        this.cacheRefresh = cacheRefresh != null ? cacheRefresh : NoopCacheRefresh.getInstance();
+        this.cacheRefresh = cacheRefresh != null ? cacheRefresh : NoOpCacheRefresh.getInstance();
         this.cacheRefresh.setConsumer(this::consume);
     }
 
@@ -143,27 +143,37 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CacheValue<V> get(K key) {
+    public V get(K key) {
         requireNonNull(key, "get", "key must not be null.");
-
-        String storeKey = this.toStoreKey(key);
-        this.cacheRefresh.access(storeKey);
-        return this.doGet(storeKey);
+        CacheValue<V> cacheValue = this.doGetAndAccess(key);
+        return (cacheValue != null) ? cacheValue.getValue() : null;
     }
 
-    protected abstract CacheValue<V> doGet(String key);
+    @Override
+    public CacheValue<V> getCacheValue(K key) {
+        requireNonNull(key, "getCacheValue", "key must not be null.");
+        return this.doGetAndAccess(key);
+    }
 
     @Override
     public V getOrLoad(K key) {
         requireNonNull(key, "getOrLoad", "key must not be null.");
 
         if (this.cacheLoader == null) {
-            CacheValue<V> cacheValue = this.get(key);
+            CacheValue<V> cacheValue = this.doGetAndAccess(key);
             return (cacheValue != null) ? cacheValue.getValue() : null;
         }
 
         return this.doGetOrLoad(key, this.cacheLoader);
     }
+
+    private CacheValue<V> doGetAndAccess(K key) {
+        String storeKey = this.toStoreKey(key);
+        this.cacheRefresh.access(storeKey);
+        return this.doGet(storeKey);
+    }
+
+    protected abstract CacheValue<V> doGet(String key);
 
     @Override
     public V get(K key, CacheLoader<K, V> cacheLoader) {
@@ -220,8 +230,8 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public Map<K, CacheValue<V>> getAll(Set<? extends K> keys) {
-        String method = "getAll";
+    public Map<K, CacheValue<V>> getAllCacheValues(Set<? extends K> keys) {
+        String method = "getAllCacheValues";
         requireNonNull(keys, method, "keys must not be null.");
 
         if (keys.isEmpty()) {
@@ -238,7 +248,33 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         Map<K, CacheValue<V>> result = Maps.newHashMap(cacheValues.size());
         cacheValues.forEach((storeKey, cacheValue) -> {
             if (cacheValue != null) {
-                result.put(keyMapping.remove(storeKey), cacheValue);
+                result.put(keyMapping.get(storeKey), cacheValue);
+            }
+        });
+
+        return result;
+    }
+
+    @Override
+    public Map<K, V> getAll(Set<? extends K> keys) {
+        String method = "getAll";
+        requireNonNull(keys, method, "keys must not be null.");
+
+        if (keys.isEmpty()) {
+            return Maps.newHashMap(0);
+        }
+
+        // 1. 建立原生Key 和 缓存Key 之间的映射
+        Map<String, K> keyMapping = this.createKeyMapping(keys, method);
+
+        // 2. 从缓存中获取缓存值
+        Map<String, CacheValue<V>> cacheValues = this.doGetAll(keyMapping.keySet());
+
+        // 3. 原生Key 替换 缓存Key，并过滤掉无缓存的结果
+        Map<K, V> result = Maps.newHashMap(cacheValues.size());
+        cacheValues.forEach((storeKey, cacheValue) -> {
+            if (cacheValue != null && cacheValue.hasValue()) {
+                result.put(keyMapping.get(storeKey), cacheValue.getValue());
             }
         });
 
@@ -420,19 +456,19 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     protected abstract void doPutAll(Map<String, ? extends V> keyValues);
 
     @Override
-    public void evict(K key) {
+    public void remove(K key) {
         requireNonNull(key, "evict", "key must not be null.");
         String storeKey = toStoreKey(key);
 
         this.cacheWriter.delete(key);
-        this.doEvict(storeKey);
+        this.doRemove(storeKey);
         this.cacheRefresh.remove(storeKey);
     }
 
-    protected abstract void doEvict(String key);
+    protected abstract void doRemove(String key);
 
     @Override
-    public void evictAll(Set<? extends K> keys) {
+    public void removeAll(Set<? extends K> keys) {
         requireNonNull(keys, "evictAll", "keys must not be null.");
         if (keys.isEmpty()) {
             return;
@@ -445,11 +481,11 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         }
 
         this.cacheWriter.deleteAll(keys);
-        this.doEvictAll(set);
+        this.doRemoveAll(set);
         this.cacheRefresh.removeAll(set);
     }
 
-    protected abstract void doEvictAll(Set<String> keys);
+    protected abstract void doRemoveAll(Set<String> keys);
 
     protected String toStoreKey(K key) {
         return this.keyCodec.encode(key);

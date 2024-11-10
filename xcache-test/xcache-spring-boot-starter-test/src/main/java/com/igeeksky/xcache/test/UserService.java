@@ -29,12 +29,12 @@ public class UserService {
     }
 
     public void deleteUserByCache(Key key) {
-        cache.evict(key);
+        cache.remove(key);
     }
 
     public CacheValue<User> getUserByCache(Key key) {
         System.out.println("getUserByCache: " + key);
-        return cache.get(key);
+        return cache.getCacheValue(key);
     }
 
     public void saveUsersToCache(Map<Key, User> keyValues) {

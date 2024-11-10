@@ -1,4 +1,6 @@
-package com.igeeksky.xcache.extension.contains;
+package com.igeeksky.xcache.extension;
+
+import com.igeeksky.xcache.common.ContainsPredicate;
 
 /**
  * 总是返回 true
@@ -9,13 +11,13 @@ package com.igeeksky.xcache.extension.contains;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-12
  */
-public class NoopContainsPredicate<K> implements ContainsPredicate<K> {
+public class NoOpContainsPredicate<K> implements ContainsPredicate<K> {
 
-    private static final NoopContainsPredicate<?> INSTANCE = new NoopContainsPredicate<>();
+    private static final NoOpContainsPredicate<?> INSTANCE = new NoOpContainsPredicate<>();
 
     @SuppressWarnings("unchecked")
-    public static <K> NoopContainsPredicate<K> getInstance() {
-        return (NoopContainsPredicate<K>) INSTANCE;
+    public static <K> NoOpContainsPredicate<K> getInstance() {
+        return (NoOpContainsPredicate<K>) INSTANCE;
     }
 
     /**

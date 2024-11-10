@@ -49,19 +49,31 @@ public interface Cache<K, V> extends Base<K, V> {
     Class<?>[] getValueParams();
 
     /**
-     * 先从缓存取值，如果缓存无值，但配置了 CacheLoader，则通过 cacheLoader 回源取值
-     * <p>
-     * 注意：为减少回源次数，回源时加锁执行
+     * 获取缓存值
      *
      * @param key 键
-     * @return CacheValue – 值的包装类
+     * @return 值
+     */
+    V get(K key);
+
+    /**
+     * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值。<p>
+     * 2. 如果缓存未命中：<p>
+     * 2.1. 有配置 CacheLoader，则通过 cacheLoader 回源取值，取值结果存入缓存并返回；<p>
+     * 2.2. 未配置 CacheLoader，返回 null。
+     * <p>
+     * 注：回源时内部加锁执行。
+     *
+     * @param key 键
+     * @return 值
      */
     V getOrLoad(K key);
 
     /**
-     * 先从缓存取值，如果缓存无值，则通过 cacheLoader 回源取值
+     * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值。<p>
+     * 2. 如果缓存未命中，通过 cacheLoader 回源取值，取值结果存入缓存并返回。
      * <p>
-     * 注意：回源时加锁，避免多个线程同时回源，导致缓存击穿
+     * 注：回源时内部加锁执行。
      *
      * @param key         键
      * @param cacheLoader 回源函数
@@ -70,10 +82,20 @@ public interface Cache<K, V> extends Base<K, V> {
     V get(K key, CacheLoader<K, V> cacheLoader);
 
     /**
-     * 先从缓存取值，如果缓存无值，但配置了 CacheLoader，则通过 cacheLoader 回源取值
+     * 批量获取缓存值
+     *
+     * @param keys 键集
+     * @return 键值对集合
+     */
+    Map<K, V> getAll(Set<? extends K> keys);
+
+    /**
+     * 1. 先从缓存取值，如果缓存命中全部数据，返回缓存数据集。<p>
+     * 2. 如果缓存有未命中数据：<p>
+     * 2.1. 有配置 CacheLoader，则通过 cacheLoader 回源取值，取值结果存入缓存并返回合并结果集：缓存数据集 + 回源取值结果集。<p>
+     * 2.2. 未配置 CacheLoader，返回缓存数据集。
      * <p>
-     * <b>注意</b>：<p>
-     * 批量回源取值不加锁，如希望加锁，请循环调用 {@link #getOrLoad(Object)}
+     * 注：批量回源取值不加锁
      *
      * @param keys 键集
      * @return 键值对集合

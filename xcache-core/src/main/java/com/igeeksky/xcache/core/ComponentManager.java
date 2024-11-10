@@ -5,7 +5,7 @@ import com.igeeksky.xcache.common.CacheWriter;
 import com.igeeksky.xcache.core.store.StoreProvider;
 import com.igeeksky.xcache.extension.codec.CodecProvider;
 import com.igeeksky.xcache.extension.compress.CompressorProvider;
-import com.igeeksky.xcache.extension.contains.ContainsPredicateProvider;
+import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.CacheLockProvider;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
 import com.igeeksky.xcache.extension.stat.CacheStatProvider;
@@ -37,9 +37,9 @@ public interface ComponentManager {
 
     CacheLockProvider getLockProvider(String beanId);
 
-    void addProvider(String beanId, ContainsPredicateProvider provider);
+    void addContainsPredicate(String name, ContainsPredicate<?> predicate);
 
-    ContainsPredicateProvider getPredicateProvider(String beanId);
+    <K> ContainsPredicate<K> getContainsPredicate(String beanId);
 
     void addProvider(String beanId, CacheRefreshProvider provider);
 

@@ -44,7 +44,7 @@ public class CacheTestCase {
         String name = "patrick";
 
         Key key = new Key(name);
-        cache.evict(key);
+        cache.remove(key);
 
         Assertions.assertNotNull(cache.get(key, k -> null));
 
@@ -53,7 +53,7 @@ public class CacheTestCase {
 
         Assertions.assertEquals(user, cache.get(key, k -> null));
 
-        cache.evict(key);
+        cache.remove(key);
 
         Assertions.assertEquals(user, cache.get(key, k -> new User(name)));
     }

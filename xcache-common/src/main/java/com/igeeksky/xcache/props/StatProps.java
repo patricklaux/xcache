@@ -22,7 +22,7 @@ public class StatProps {
      * 如果采用内嵌的缓存统计（写入日志），可以通过此配置调整统计周期。
      * 打印日志由 {@code com.igeeksky.xcache.extension.stat.LogStatMessagePublisher} 完成，日志级别为 INFO。<p>
      * 用户可以通过调整该类的日志配置，以控制缓存统计日志是否输出及输出方式。
-     * 譬如输出到独立的统计日志文件，或者通过插件输出到 MQ，然后采集计算实现全局统计。
+     * 譬如输出到独立的统计日志文件，或者通过日志插件输出到 MQ，然后采集计算实现全局统计。
      *
      * @return Long – 缓存统计的时间间隔
      */
