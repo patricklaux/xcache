@@ -15,7 +15,7 @@ import java.util.Set;
 public interface Base<K, V> {
 
     /**
-     * 根据键从缓存中读取值 <p>
+     * 根据键从缓存中读取值
      * <p>
      * 增加一层包装类 CacheValue ，当允许缓存空值时，可以明确判断是缓存无值，还是数据源无值，从而决定是否需要再回源查询
      * {@snippet :

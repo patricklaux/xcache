@@ -52,14 +52,14 @@ public interface Cache<K, V> extends Base<K, V> {
      * 获取缓存值
      *
      * @param key 键
-     * @return 值
+     * @return 值（返回值为原始值）
      */
     V get(K key);
 
     /**
      * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值。<p>
      * 2. 如果缓存未命中：<p>
-     * 2.1. 有配置 CacheLoader，则通过 cacheLoader 回源取值，取值结果存入缓存并返回；<p>
+     * 2.1. 有配置 CacheLoader，则通过 cacheLoader 回源取值，取值结果先存入缓存，最后返回该结果；<p>
      * 2.2. 未配置 CacheLoader，返回 null。
      * <p>
      * 注：回源时内部加锁执行。
@@ -92,7 +92,7 @@ public interface Cache<K, V> extends Base<K, V> {
     /**
      * 1. 先从缓存取值，如果缓存命中全部数据，返回缓存数据集。<p>
      * 2. 如果缓存有未命中数据：<p>
-     * 2.1. 有配置 CacheLoader，则通过 cacheLoader 回源取值，取值结果存入缓存并返回合并结果集：缓存数据集 + 回源取值结果集。<p>
+     * 2.1. 有配置 CacheLoader，则通过 cacheLoader 回源取值，取值结果先存入缓存，最后返回合并结果集：缓存数据集 + 回源取值结果集。<p>
      * 2.2. 未配置 CacheLoader，返回缓存数据集。
      * <p>
      * 注：批量回源取值不加锁
@@ -100,7 +100,7 @@ public interface Cache<K, V> extends Base<K, V> {
      * @param keys 键集
      * @return 键值对集合
      */
-    Map<K, V> getOrLoadAll(Set<? extends K> keys);
+    Map<K, V> getAllOrLoad(Set<? extends K> keys);
 
     /**
      * 先从缓存取值，如果缓存无值，则通过 cacheLoader 回源取值
