@@ -1100,7 +1100,7 @@ xcache:
           test: test
       cache-sync: # 缓存同步配置
         provider: lettuce # CacheSyncProviderId （默认值：none）
-        first: true # 一级缓存数据同步 （默认值：true，如仅有一级缓存，请改为 false）
+        first: true # 一级缓存数据同步（默认值：true，如仅有一级缓存，请改为 false）
         second: false # 二级缓存数据同步（默认值：false）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true）
         max-len: 1000 # 缓存同步队列最大长度 （默认值：10000）
@@ -1287,7 +1287,9 @@ xcache:
                 refresh-triggers-reconnect-attempts: # 刷新触发器重连尝试次数（默认值：3）
 ```
 
+这份完全配置中确实有超多的配置项，实际使用时可以复制这份配置，然后根据需求进行删减。
 
+如果默认配置值与期望值一致，那么直接删除该配置项即可，最后应该会留下比较简洁的配置。
 
 #### 4.3.2. 极简配置
 
@@ -1313,13 +1315,13 @@ xcache:
 
 
 
-## 6. Xcache 注解
+## 5. Xcache 注解
 
-### 6.1. @Cacheable
+### 5.1. @Cacheable
 
 ``@Cacheable`` 是方法注解，主要用于查询和保存单个缓存元素。
 
-#### 6.1.1. 相关属性
+#### 5.1.1. 相关属性
 
 | 属性        | 必填 | 作用                                                         |
 | :---------- | :--: | ------------------------------------------------------------ |
@@ -1331,17 +1333,17 @@ xcache:
 | key         |  否  | SpEL表达式，用于提取键。<br/>如果未配置，使用被注解方法的第一个参数作为键。 |
 | condition   |  否  | SpEL表达式，用于判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
 
-#### 6.1.2. 执行逻辑
+#### 5.1.2. 执行逻辑
 
 ![image-20241021093622933](images/cacheable.png)
 
 
 
-### 6.2. @CacheableAll
+### 5.2. @CacheableAll
 
 ``@CacheableAll`` 是方法注解，用于批量查询和保存缓存元素。
 
-#### 6.2.1. 相关属性
+#### 5.2.1. 相关属性
 
 | 属性        | 必填 | 作用                                                         |
 | :---------- | :--: | ------------------------------------------------------------ |
@@ -1353,7 +1355,7 @@ xcache:
 | keys        |  否  | SpEL表达式，用于提取键集。<br/>如果未配置，使用被注解方法的第一个参数作为键。 |
 | condition   |  否  | SpEL表达式，用于判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
 
-#### 6.2.2. 执行逻辑
+#### 5.2.2. 执行逻辑
 
 ![cacheableAll](images/cacheableAll.png)
 
@@ -1361,11 +1363,11 @@ xcache:
 >
 > 如果用唯一的锁则所有批量查询会变成串行；如果为每个键都申请锁则可能导致死锁，因此批量回源查询时不加锁。
 
-### 6.3. @CachePut
+### 5.3. @CachePut
 
 ``@CachePut`` 是方法注解，用于保存或更新单个缓存元素。
 
-#### 6.3.1. 相关属性
+#### 5.3.1. 相关属性
 
 | 属性        | 必填 | 作用                                                         |
 | :---------- | :--: | ------------------------------------------------------------ |
@@ -1379,15 +1381,15 @@ xcache:
 | condition   |  否  | SpEL表达式，用于调用被注解方法前判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
 | unless      |  否  | SpEL表达式，用于调用被注解方法后判断是否执行缓存逻辑。 <br/>如果未配置，默认为 false。 |
 
-#### 6.3.2. 执行逻辑
+#### 5.3.2. 执行逻辑
 
 ![cacheableAll](images/cachePut.png)
 
-### 6.4. @CachePutAll
+### 5.4. @CachePutAll
 
 ``@CachePutAll`` 是方法注解，用于批量保存或更新缓存元素。
 
-#### 6.4.1. 相关属性
+#### 5.4.1. 相关属性
 
 | 属性        | 必填 | 作用                                                         |
 | :---------- | :--: | ------------------------------------------------------------ |
@@ -1400,17 +1402,17 @@ xcache:
 | condition   |  否  | SpEL表达式，用于调用被注解方法前判断是否执行缓存逻辑。 <br/>如果未配置，默认为 true。 |
 | unless      |  否  | SpEL表达式，用于调用被注解方法后判断是否执行缓存逻辑。 <br/>如果未配置，默认为 false。 |
 
-#### 6.4.2. 执行逻辑
+#### 5.4.2. 执行逻辑
 
 ![cacheableAll](images/cachePutAll.png)
 
 
 
-### 6.5. @CacheEvict
+### 5.5. @CacheEvict
 
 ``@CacheEvict`` 是方法注解，用于驱逐单个缓存元素。
 
-#### 6.5.1. 相关属性
+#### 5.5.1. 相关属性
 
 | 属性             | 必填 | 作用                                                         |
 | :--------------- | :--: | ------------------------------------------------------------ |
@@ -1424,17 +1426,17 @@ xcache:
 | unless           |  否  | SpEL表达式，用于调用被注解方法后判断是否执行缓存逻辑。 <br/>如果未配置，默认为 false。 |
 | beforeInvocation |  否  | 如果为 true，调用被注解方法前驱逐缓存元素；如果为 false，调用被注解方法后驱逐缓存元素。 <br/>如果未配置，默认为 false。 |
 
-#### 6.5.2. 执行逻辑
+#### 5.5.2. 执行逻辑
 
 ![cacheEvict](images/cacheEvict.png)
 
 
 
-### 6.6. @CacheEvictAll
+### 5.6. @CacheEvictAll
 
 ``@CacheEvictAll`` 是方法注解，用于批量驱逐缓存元素。
 
-#### 6.6.1. 相关属性
+#### 5.6.1. 相关属性
 
 | 属性             | 必填 | 作用                                                         |
 | :--------------- | :--: | ------------------------------------------------------------ |
@@ -1448,17 +1450,17 @@ xcache:
 | unless           |  否  | SpEL表达式，用于调用被注解方法后判断是否执行缓存逻辑。 <br/>如果未配置，默认为 false。 |
 | beforeInvocation |  否  | 如果为 true，调用被注解方法前驱逐缓存元素；如果为 false，调用被注解方法后驱逐缓存元素。 <br/>如果未配置，默认为 false。 |
 
-#### 6.6.2. 执行逻辑
+#### 5.6.2. 执行逻辑
 
 ![cacheEvictAll](images/cacheEvictAll.png)
 
 
 
-### 6.7. @CacheClear
+### 5.7. @CacheClear
 
 ``@CacheClear`` 是方法注解，用于清空所有缓存数据。
 
-#### 6.7.1. 相关属性
+#### 5.7.1. 相关属性
 
 | 属性             | 必填 | 作用                                                         |
 | :--------------- | :--: | ------------------------------------------------------------ |
@@ -1471,17 +1473,17 @@ xcache:
 | unless           |  否  | SpEL表达式，用于调用被注解方法后判断是否执行缓存逻辑。 <br/>如果未配置，默认为 false。 |
 | beforeInvocation |  否  | 如果为 true，调用被注解方法前驱逐缓存元素；如果为 false，调用被注解方法后驱逐缓存元素。 <br/>如果未配置，默认为 false。 |
 
-#### 6.7.2. 执行逻辑
+#### 5.7.2. 执行逻辑
 
 ![cacheClear](images/cacheClear.png)
 
 
 
-### 6.8. @CacheConfig
+### 5.8. @CacheConfig
 
 ``@CacheConfig`` 是类注解，用于配置公共属性。
 
-#### 6.8.1. 相关属性
+#### 5.8.1. 相关属性
 
 | 属性        | 必填 | 作用             |
 | :---------- | :--: | ---------------- |
@@ -1495,7 +1497,7 @@ xcache:
 >
 > 如果一个类中有同名缓存的多个缓存方法注解，那么可以在类中添加 ``@CacheConfig`` 注解，避免重复配置公共属性。
 
-#### 6.8.1. 执行逻辑
+#### 5.8.2. 执行逻辑
 
 ![cacheClear](images/cacheConfig.png)
 
@@ -1515,7 +1517,7 @@ xcache:
 
 
 
-### 6.9. @EnableCache
+### 5.9. @EnableCache
 
 ``@EnableCache`` 是类注解，用于启用 Xcache 缓存注解功能。
 
@@ -1525,9 +1527,9 @@ xcache:
 | order        |  否  | Ordered.LOWEST_PRECEDENCE | 指定切面优先级                                               |
 | AdviceMode   |  否  |     AdviceMode.PROXY      | 指定代理模式<br />当前仅支持 AdviceMode.PROXY，不支持 AdviceMode.ASPECTJ。 |
 
-### 6.10. 其它事项
+### 5.10. 其它事项
 
-#### 6.10.1. condition 与 unless
+#### 5.10.1. condition 与 unless
 
 condition 默认为 true，该表达式是在调用被注解方法之前进行解析，只有解析结果为 true，才会执行缓存相关逻辑。
 
@@ -1537,11 +1539,11 @@ unless 默认为 false，该表达式是在调用被注解方法之后进行解�
 
 另：@Cacheable 和 @CacheableAll 无 unless 属性。
 
-#### 6.10.2. 注解互斥
+#### 5.10.2. 注解互斥
 
 @Cacheable 和 @CacheableAll，当缓存命中（全部）数据时，将不执行被注解方法，因此不能与其它缓存注解共用于同一方法。
 
-#### 6.10.3. 方法参数名
+#### 5.10.3. 方法参数名
 
 如注解的表达式有用到方法参数名，项目编译时需添加参数 ``-parameters``。
 
@@ -1562,7 +1564,7 @@ unless 默认为 false，该表达式是在调用被注解方法之后进行解�
 </plugin>
 ```
 
-如不想添加编译参数，则可以使用 "#a" + index 的方式来获取方法参数。
+如不想添加编译参数，则需使用 【#a + index】 的方式来获取方法参数。
 
 ```java
 // #a0 或 #p0 表示获取方法的第 1 个参数，#a1 或 #p1 表示获取方法的第 2 个参数，如此类推。
@@ -1573,25 +1575,27 @@ public void save(long id, User user) {
 }
 ```
 
-#### 6.10.4. result
+#### 5.10.4. result
 
 如表达式计算是在被注解方法执行之后，被注解方法的执行结果将使用 “result” 关键字保存到表达式计算的上下文环境，表达式中可使用 “#result” 来提取被注解方法执行结果。
 
-需要注意的是，如果被注解方法的参数之一也命名为 “result”，那么：
+需要注意的是，如果被注解方法中存在命名为 “result” 的参数，那么：
 
 如表达式计算是在被注解方法执行之前，“#result” 获取到的是被注解方法的参数变量；
 如表达式计算是在被注解方法执行之后，“#result” 获取到的是被注解方法的返回结果。
 
 ```java
+/**
+ * 此示例，"#result" 获取到的是方法返回结果，而不是参数中的 result。
+ * 因为 @CachePut 的表达式计算和缓存逻辑执行是在方法执行之后。
+ */
 @CachePut(value = "#result")
 public User save(long id, User result) {
     return new User(1, "MethodResult", 18);
 }
 ```
 
-上面这个示例，"#result" 获取到的是方法返回结果，而不是参数中的 result。
-
-如果不想改参数名，又希望使用参数中的 result，那么可使用 "#a1" 或 "#p1"来获取参数中的值。
+如果参数命名为 result，又希望表达式中使用该参数，那么可使用 【#a+index】 或 【#p+index】 来获取参数中的值。
 
 ```java
 @CachePut(value = "#a1")
@@ -1601,28 +1605,26 @@ public User save(long id, User result) {
 }
 ```
 
-
-
-## 7. 缓存接口
+## 6. 缓存接口
 
 缓存核心接口位于 ``com.igeeksky.xcache.common.cache``：
 
-### 7.1. 主要接口
+### 6.1. 主要接口
 
 ```java
     /**
-     * 根据键从缓存中读取值
+     * 根据键从缓存中读取值（返回值为原始值）
      */
     V get(K key);
 
 	/**
-     * 根据键从缓存中读取值
+     * 根据键从缓存中读取值（返回值为包装类）
      */
     CacheValue<V> getCacheValue(K key);
 
 	/**
-     * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值。
-     * 2. 如果缓存未命中，通过 cacheLoader 回源取值，取值结果存入缓存并返回。
+     * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值；
+     * 2. 如果缓存未命中，则通过 cacheLoader 回源取值，取值结果先存入缓存，最后返回该值。
      * 注：回源时内部加锁执行。
      */
     V get(K key, CacheLoader<K, V> cacheLoader);
@@ -1637,18 +1639,18 @@ public User save(long id, User result) {
     V getOrLoad(K key);
 
 	/**
-     * 根据键集从缓存中读取值
+     * 根据键集从缓存中读取值（返回值为原始值）
      */
     Map<K,V> getAll(Set<? extends K> keys);
 
 	/**
-     * 根据键集从缓存中读取值
+     * 根据键集从缓存中读取值（返回值为包装类）
      */
     Map<K, CacheValue<V>> getAllCacheValues(Set<? extends K> keys);
 
     /**
      * 1. 先从缓存取值，如果缓存命中全部数据，返回缓存数据集。
-     * 2. 如果缓存有未命中数据，通过 cacheLoader 回源取值，取值结果存入缓存，并返回合并结果集：缓存数据集+回源取值结果集。
+     * 2. 如果缓存有未命中数据，通过 cacheLoader 回源取值，取值结果先存入缓存，最后返回合并结果集：缓存数据集+回源取值结果集。
      * 注：批量回源取值不加锁
      */
     Map<K,V> getAll(Set<? extends K> keys, CacheLoader<K, V> cacheLoader);
@@ -1656,12 +1658,12 @@ public User save(long id, User result) {
     /**
      * 1. 先从缓存取值，如果缓存命中全部数据，返回缓存数据集。
      * 2. 如果缓存有未命中数据：
-     * 2.1. 有配置 CacheLoader，通过 cacheLoader 回源取值，取值结果存入缓存并返回合并结果集：缓存数据集+回源取值结果集。
+     * 2.1. 有配置 CacheLoader，通过 cacheLoader 回源取值，取值结果先存入缓存，最后返回合并结果集：缓存数据集+回源取值结果集。
      * 2.2. 未配置 CacheLoader，返回缓存数据集。
      * 
      * 注：批量回源取值不加锁
      */
-    Map<K,V> getOrLoadAll(Set<? extends K> keys);
+    Map<K,V> getAllOrLoad(Set<? extends K> keys);
 
 	/**
      * 将单个键值对存入缓存
@@ -1689,31 +1691,31 @@ public User save(long id, User result) {
     void clear();
 ```
 
-### 7.2. 关于空值
+### 6.2. 关于空值
 
 #### 空值问题
 
 缓存查询接口 ``V get(K key)``，那么当返回值为 ``null`` 时，会有语义模糊：
 
-1. 可能是数据源无数据；
-2. 可能是未缓存数据。
+1. 可能是数据源无该数据；
+2. 可能是还未缓存该数据。
 
-此时，为了判断数据源是否有值，调用者就需再次从数据源查询数据。
+为了判断数据源是否有该数据，调用者需再次查询数据源。
 
-而且，每次返回 ``null`` ，都需回源查询，这无疑会增加数据源压力，并降低应用的响应速度。
+每次返回 ``null`` ，为了确定数据源是否有值，都需回源查询，这无疑会大大增加数据源压力。
 
 #### 解决方案
 
 Xcache 被设计为可缓存空值，``CacheValue`` 是缓存值的包装类。
 
-而缓存查询接口 ``CacheValue<V> getCacheValue(K key)`` ，可通过 ``cacheValue`` 是否为 ``null`` 来判断是数据源无值还是未缓存。
+当使用缓存查询接口 ``CacheValue<V> getCacheValue(K key)`` 时，可通过 ``cacheValue`` 是否为 ``null`` 来判断是否还未缓存该数据。
 
 ```java
 CacheValue<User> cacheValue = cache.get(id);
 if (cacheValue == null) {
-    // 未缓存，从数据源加载数据
+    // 未缓存，从数据源读取数据
     User user = userDao.find(id);
-    // 虽然 user 可能为 null，但存入缓存后，下次查询时 cacheValue != null
+    // 取值结果存入缓存，如果缓存设置成允许缓存空值，那么下次查询时 cacheValue != null
     cache.put(id, user);
     // do something
  } else {
@@ -1734,37 +1736,312 @@ if (cacheValue == null) {
 
 > 注：
 >
-> 通过 ``cacheValue`` 是否为 ``null`` 来决定是否回源取值，需将 Xcache 配置为允许缓存空值。
+> 通过 ``cacheValue`` 是否为 ``null`` 来决定是否回源取值，需将该缓存实例配置为允许缓存空值。
 >
-> 即，至少需有其中一级缓存数据存储的  ``enable-null-value`` 配置项为 ``true``（默认为  ``true``）。
+> 即，缓存实例至少有一级的缓存数据存储的  ``enable-null-value`` 配置项为 ``true``（默认为  ``true``）。
+
+## 7. 扩展接口
+
+Xcache 提供了一些扩展接口，用于支持不同的缓存模式和特定功能。
+
+### 7.1. 回源取值
+
+#### 7.1.1. CacheLoader
+
+``CacheLoader`` 主要用于实现 read-through 模式，其接口定义如下：
+
+```java
+/**
+ * 回源取值，用于从数据源读取数据
+ *
+ * @param <K> 键类型
+ * @param <V> 值类型
+ */
+@FunctionalInterface
+public interface CacheLoader<K, V> {
+
+    /**
+     * 单个回源取值
+     *
+     * @param key 要回源取值的键
+     * @return 如果有值，返回值；如果无值，返回 null
+     */
+    V load(K key);
+
+    /**
+     * 批量回源取值
+     *
+     * @param keys 要回源取值的键集
+     * @return 返回键值对集合，不能返回 null
+     */
+    default Map<K, V> loadAll(Set<? extends K> keys) {
+        Map<K, V> map = Maps.newHashMap(keys.size());
+        for (K key : keys) {
+            V value = load(key);
+            if (value != null) {
+                map.put(key, value);
+            }
+        }
+        return map;
+    }
+
+}
+```
+
+#### 7.1.2. 用法示例
+
+**实现类**：
+
+```java
+public record UserCacheLoader(UserDao userDao) implements CacheLoader<Long, User> {
+
+    @Override
+    public User load(Long id) {
+        return this.userDao.findUser(id);
+    }
+
+    @Override
+    public Map<Long, User> loadAll(Set<? extends Long> ids) {
+        return this.userDao.findUserList(ids);
+    }
+
+}
+```
+
+**用法示例一**：
+
+```java
+@Service
+public class UserCacheService {
+
+    private final Cache<Long, User> cache;
+    private final CacheLoader<Long, User> cacheLoader;
+
+    public UserCacheService(UserDao userDao, CacheManager cacheManager) {
+        this.cache = cacheManager.getOrCreateCache("user", Long.class, User.class);
+        this.cacheLoader = new UserCacheLoader(userDao);
+    }
+
+    /**
+     * 根据用户ID获取单个用户信息
+     *
+     * @param id 用户ID
+     * @return 用户信息
+     */
+    public User getUser(Long id) {
+        // 1. 首先查询缓存，如果缓存命中，则直接返回缓存数据；
+        // 2. 如果缓存未命中，则由缓存直接调用 cacheLoader 从数据源加载数据。
+        return cache.get(id, cacheLoader);
+    }
+
+    /**
+     * 根据用户ID批量获取用户信息
+     *
+     * @param ids 用户ID集合
+     * @return 用户信息集合
+     */
+    public Map<Long, User> getUsers(Set<Long> ids) {
+        // 1. 首先查询缓存，如果缓存全部命中，则直接返回缓存数据；
+        // 2. 如果缓存全部未命中或部分命中，则调用 cacheLoader 从数据源加载未命中数据。
+        return cache.getAll(ids, this.cacheLoader);
+    }
+
+}
+```
+
+**用法示例二**：
+
+首先，将 ``UserCacheLoader`` 作为 bean 对象注入到 spring 容器。
+
+> CacheManager 创建 Cache 对象时，会根据缓存名称查找对应的 CacheLoader，如果与 Cache 同名的 CacheLoader 存在，则将其设为该 Cache 对象的属性。
+
+```java
+@Configuration
+@AutoConfigureBefore(CacheAutoConfiguration.class)
+public class CacheLoaderAutoConfiguration {
+   
+    @Bean
+    CacheLoaderHolder userCacheLoader(UserDao userDao) {
+        // 创建一个 CacheLoaderHolder
+        CacheLoaderHolder holder = new CacheLoaderHolder();
+        // 将 UserCacheLoader 放入到 holder，键为缓存名称 “user”。
+        holder.put("user", new UserCacheLoader(userDao));
+        return holder;
+    }
+
+}
+```
+
+其次，查询数据时，改为调用 ``cache.getOrLoad(key)`` 或 ``cache.getAllOrLoad(keys)`` 方法。
+
+> 当缓存未命中时，Cache 对象将调用内部的 ``CacheLoader`` 从数据源读取数据然后再存入缓存。
+
+```java
+@Service
+public class UserCacheService {
+
+    private final Cache<Long, User> cache;
+
+    public UserCacheService(CacheManager cacheManager) {
+        this.cache = cacheManager.getOrCreateCache("user", Long.class, User.class);
+    }
+
+    /**
+     * 获取单个用户信息
+     *
+     * @param id 用户ID
+     * @return 用户信息
+     */
+    public User getUser(Long id) {
+        // 1. 首先查询缓存，如果缓存命中，则直接返回缓存数据；
+        // 2. 如果缓存未命中，则由缓存调用内部的 cacheLoader 从数据源加载数据，然后存入缓存。
+        return cache.getOrLoad(id);
+    }
+
+    /**
+     * 批量获取用户信息
+     *
+     * @param ids 用户ID集合
+     * @return 用户信息集合
+     */
+    public Map<Long, User> getUsers(Set<Long> ids) {
+        // 1. 首先查询缓存，如果缓存全部命中，则直接返回缓存数据；
+        // 2. 如果缓存全部未命中或部分命中，则调用 cacheLoader 从数据源加载未命中数据。
+        return cache.getAllorLoad(ids);
+    }
+
+}
+```
 
 
 
-## 9. 缓存模式
+### 7.2. 数据回写
+
+#### 7.2.1. CacheWriter
+
+``CacheWriter`` 主要用于实现 write-through 和 write-behind 模式，接口定义如下：
+
+```java
+
+/**
+ * 数据回写：缓存数据写入数据源
+ * <p>
+ * 如果实现类同步写入数据源，则为 write-through 模式；
+ * 如果实现类异步写入数据源，则为 write-behind 模式。
+ *
+ * @param <K> 键类型
+ * @param <V> 值类型
+ */
+public interface CacheWriter<K, V> {
+
+    /**
+     * 删除数据源的数据
+     *
+     * @param key 缓存键
+     */
+    void delete(K key);
+
+    /**
+     * 批量删除数据源的数据
+     *
+     * @param keys 缓存键集合
+     */
+    void deleteAll(Set<? extends K> keys);
+
+    /**
+     * 数据存入数据源
+     *
+     * @param key   缓存键
+     * @param value 缓存值
+     */
+    void write(K key, V value);
+
+    /**
+     * 批量存入数据源
+     *
+     * @param keyValues 缓存键值对集合
+     */
+    void writeAll(Map<? extends K, ? extends V> keyValues);
+
+}
+```
+
+#### 7.2.1. 用法示例
 
 
 
-## 10. 扩展实现
+### 7.3. 存在断言
 
-### 缓存数据存储
+#### 7.3.1. ContainsPredicate
 
-StoreProvider
+cache 内部在调用 ``CacheLoader`` 之前，先使用 ``ContainsPredicate`` 判断数据源是否存在该数据，只有为 ``true`` 时才会调用 ``CacheLoader``，其接口定义如下：
+
+```java
+/**
+ * 判断数据源是否有值 <p>
+ * 作用：处理缓存穿透问题 <p>
+ * 譬如：定时读取数据源中的所有 Key，然后生成布隆过滤器，每次回源查询数据时可以通过布隆过滤器来判断数据源是否有值
+ *
+ * @param <K> 键类型
+ */
+@FunctionalInterface
+public interface ContainsPredicate<K> {
+
+    /**
+     * 判断数据源是否存在 key 对应的 value
+     *
+     * @param key 键
+     * @return 数据源存在 key 对应的 value，返回 true，否则返回 false
+     */
+    boolean test(K key);
+
+}
+```
+
+#### 7.3.1. 用法示例
 
 
 
-### 数据回源加载
+## 8. 缓存模式
 
-CacheLoaderProvider
-
-
-
-### 缓存数据刷新
-
-CacheRefreshProvider
+### 8.1. Cache-Aside
 
 
 
-### 缓存数据回写
+```mermaid
+sequenceDiagram
+    
+    actor->>app: 1: request data
+	app->>cache: 2: read data from cache
+	cache-->>app: 2.1: return data
+	Note left of app: if data in cache
+	app-->>actor: 3: return data
+	Note left of cache: if data not in cache
+	app->>datasource: 4: read data from datasource
+	datasource-->>app: 4.1: return data
+	app->>cache: 5: put data to cache
+	cache-->>app: 5.1: return
+	app-->>actor: 6: return data
+	
+```
+
+
+
+### 8.2. Read-Through
+
+
+
+### 8.3. Write-Through
+
+
+
+### 8.4. Write-Behind
+
+
+
+### 8.5. Refresh-Ahead
+
+
 
 
 
@@ -1781,22 +2058,6 @@ CacheRefreshProvider
 
 
 ## 缓存锁
-
-
-
-
-
-## 数据加载
-
-CacheLoader
-
-
-
-## 数据回写
-
-CacheLoader
-
-## 
 
 
 

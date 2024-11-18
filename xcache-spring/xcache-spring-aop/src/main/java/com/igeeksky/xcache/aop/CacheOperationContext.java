@@ -140,7 +140,7 @@ public class CacheOperationContext {
         Cache<Object, Object> cache = this.getOrCreateCache(operation);
 
         // 读取缓存，然后判断是否已缓存值
-        Object value = cache.get(key, k -> {
+        Object value = cache.getOrLoad(key, k -> {
             try {
                 this.proceed();
                 return this.unwrapReturnType(this.result);

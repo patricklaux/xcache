@@ -50,7 +50,7 @@ public class UserLoaderWriterService {
     }
 
     public Map<Key, User> getOrLoadAll(Set<Key> keys) {
-        return cache.getOrLoadAll(keys);
+        return cache.getAllOrLoad(keys);
     }
 
     public void delete(Key key) {

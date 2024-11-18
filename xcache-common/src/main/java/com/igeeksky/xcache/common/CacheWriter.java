@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 缓存数据写入数据源
+ * 数据回写：缓存数据写入数据源
  * <p>
  * 如果实现类同步写入数据源，则为 write-through 模式；
  * 如果实现类异步写入数据源，则为 write-behind 模式。

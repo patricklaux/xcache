@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 从数据源读取数据
+ * 回源取值，用于从数据源读取数据
  *
  * @param <K> 键类型
  * @param <V> 值类型

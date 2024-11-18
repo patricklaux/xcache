@@ -58,7 +58,7 @@ public class SpringCache implements org.springframework.cache.Cache {
     @Override
     @NonNull
     public <T> CompletableFuture<T> retrieve(@NonNull Object key, @NonNull Supplier<CompletableFuture<T>> valueLoader) {
-        T value = (T) cache.get(key, k -> (CacheLoader<Object, T>) ignored -> {
+        T value = (T) cache.getOrLoad(key, k -> (CacheLoader<Object, T>) ignored -> {
             try {
                 CompletableFuture<T> future = valueLoader.get();
                 if (future != null) {
@@ -79,7 +79,7 @@ public class SpringCache implements org.springframework.cache.Cache {
 
     @Override
     public <V> V get(@NonNull Object key, @NonNull Callable<V> valueLoader) {
-        Object value = cache.get(key, k -> new CacheLoaderImpl<>(valueLoader));
+        Object value = cache.getOrLoad(key, k -> new CacheLoaderImpl<>(valueLoader));
         return (V) value;
     }
 
