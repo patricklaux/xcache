@@ -42,7 +42,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     @Override
     protected CacheValue<V> doGet(String key) {
         for (int i = 0; i < LENGTH; i++) {
-            CacheValue<V> cacheValue = stores[i].get(key);
+            CacheValue<V> cacheValue = stores[i].getCacheValue(key);
             if (cacheValue != null) {
                 if (i > 0) {
                     for (int j = i - 1; j >= 0; j--) {
@@ -63,7 +63,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
         Map<String, V> saveToLower = null;
         for (int i = 0; i < LENGTH; i++) {
             Store<V> store = stores[i];
-            Map<String, CacheValue<V>> cacheValues = store.getAll(cloneKeys);
+            Map<String, CacheValue<V>> cacheValues = store.getAllCacheValues(cloneKeys);
             if (Maps.isEmpty(cacheValues)) {
                 continue;
             }
@@ -115,17 +115,17 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected void doEvict(String key) {
+    protected void doRemove(String key) {
         for (int j = LIMIT; j >= 0; j--) {
-            stores[j].evict(key);
+            stores[j].remove(key);
         }
         syncMonitor.afterEvict(key);
     }
 
     @Override
-    protected void doEvictAll(Set<String> keys) {
+    protected void doRemoveAll(Set<String> keys) {
         for (int j = LIMIT; j >= 0; j--) {
-            stores[j].evictAll(keys);
+            stores[j].removeAll(keys);
         }
         syncMonitor.afterEvictAll(keys);
     }

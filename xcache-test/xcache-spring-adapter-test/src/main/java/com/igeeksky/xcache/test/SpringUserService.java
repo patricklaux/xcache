@@ -35,7 +35,7 @@ public class SpringUserService {
 
     public User getUserByCache(Key key) {
         System.out.println("getUserByCache: " + key);
-        CacheValue<Object> cacheValue = cache.get(key);
+        CacheValue<Object> cacheValue = cache.getCacheValue(key);
         if (cacheValue != null) {
             return (User) cacheValue.getValue();
         }
@@ -53,7 +53,7 @@ public class SpringUserService {
     }
 
     public void deleteUserByCache(Key key) {
-        cache.evict(key);
+        cache.remove(key);
     }
 
     @Cacheable(key = "#key", unless = "#result.id == '0'")

@@ -29,12 +29,12 @@ public class CaffeineStore<V> implements Store<V> {
     }
 
     @Override
-    public CacheValue<V> get(String key) {
+    public CacheValue<V> getCacheValue(String key) {
         return this.convertor.fromStoreValue(store.getIfPresent(key));
     }
 
     @Override
-    public Map<String, CacheValue<V>> getAll(Set<? extends String> keys) {
+    public Map<String, CacheValue<V>> getAllCacheValues(Set<? extends String> keys) {
         Map<String, CacheValue<Object>> kvs = store.getAllPresent(keys);
         if (Maps.isEmpty(kvs)) {
             return Maps.newHashMap(0);
@@ -65,12 +65,12 @@ public class CaffeineStore<V> implements Store<V> {
     }
 
     @Override
-    public void evict(String key) {
+    public void remove(String key) {
         store.invalidate(key);
     }
 
     @Override
-    public void evictAll(Set<? extends String> keys) {
+    public void removeAll(Set<? extends String> keys) {
         store.invalidateAll(keys);
     }
 

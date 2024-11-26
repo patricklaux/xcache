@@ -2,7 +2,6 @@ package com.igeeksky.xcache.extension.sync;
 
 
 import com.igeeksky.xcache.common.Store;
-import com.igeeksky.xcache.props.SyncType;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -32,9 +31,9 @@ public class SyncConfig<V> {
 
     private final boolean enableGroupPrefix;
 
-    private final SyncType first;
+    private final boolean first;
 
-    private final SyncType second;
+    private final boolean second;
 
     private final Store<V> firstStore;
 
@@ -94,11 +93,11 @@ public class SyncConfig<V> {
         return enableGroupPrefix;
     }
 
-    public SyncType getFirst() {
+    public boolean getFirst() {
         return first;
     }
 
-    public SyncType getSecond() {
+    public boolean getSecond() {
         return second;
     }
 
@@ -126,8 +125,8 @@ public class SyncConfig<V> {
         private String provider;
         private Charset charset;
         private boolean enableGroupPrefix;
-        private SyncType first;
-        private SyncType second;
+        private boolean first;
+        private boolean second;
         private final Store<V> firstStore;
         private final Store<V> secondStore;
         private final Map<String, Object> params = new HashMap<>();
@@ -167,12 +166,12 @@ public class SyncConfig<V> {
             return this;
         }
 
-        public Builder<V> first(SyncType first) {
+        public Builder<V> first(boolean first) {
             this.first = first;
             return this;
         }
 
-        public Builder<V> second(SyncType second) {
+        public Builder<V> second(boolean second) {
             this.second = second;
             return this;
         }

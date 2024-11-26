@@ -7,9 +7,6 @@ import com.igeeksky.xcache.extension.codec.CodecConfig;
 import com.igeeksky.xcache.extension.codec.CodecProvider;
 import com.igeeksky.xcache.extension.compress.CompressConfig;
 import com.igeeksky.xcache.extension.compress.CompressorProvider;
-import com.igeeksky.xcache.extension.contains.ContainsPredicate;
-import com.igeeksky.xcache.extension.contains.ContainsPredicateProvider;
-import com.igeeksky.xcache.extension.contains.PredicateConfig;
 import com.igeeksky.xcache.extension.lock.*;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
@@ -91,9 +88,10 @@ public class CacheManagerImpl implements CacheManager {
 
         CacheLoader<K, V> cacheLoader = componentManager.getCacheLoader(name);
         CacheWriter<K, V> cacheWriter = componentManager.getCacheWriter(name);
+        ContainsPredicate<K> predicate = componentManager.getContainsPredicate(name);
 
         if (CacheBuilder.count(stores) == 0) {
-            return new NoopCache<>(cacheConfig, cacheLoader, cacheWriter);
+            return new NoOpCache<>(cacheConfig, cacheLoader, cacheWriter, predicate);
         }
 
         CodecConfig<K> keyCodecConfig = this.buildKeyCodecConfig(cacheConfig);
@@ -102,9 +100,6 @@ public class CacheManagerImpl implements CacheManager {
         LockConfig lockConfig = this.buildLockConfig(cacheProps.getCacheLock(), cacheConfig);
         LockService cacheLock = this.getCacheLock(lockConfig);
 
-        PredicateConfig<K> predicateConfig = this.buildPredicateConfig(cacheProps.getContainsPredicate(), cacheConfig);
-        ContainsPredicate<K> predicate = this.getContainsPredicate(predicateConfig);
-
         RefreshConfig refreshConfig = this.buildRefreshConfig(cacheProps.getCacheRefresh(), cacheLock, cacheConfig);
         CacheRefresh cacheRefresh = this.getCacheRefresh(refreshConfig);
 
@@ -112,7 +107,7 @@ public class CacheManagerImpl implements CacheManager {
         CacheStatMonitor statMonitor = this.getStatMonitor(statConfig);
 
         SyncConfig<V> syncConfig = this.buildSyncConfig(cacheProps.getCacheSync(), stores, cacheConfig);
-        CacheSyncMonitor syncMonitor = this.getSyncMonitor(syncConfig);
+        CacheSyncMonitor syncMonitor = this.getSyncMonitor(syncConfig, stores);
 
         ExtendConfig.Builder<K, V> extendBuilder = ExtendConfig.builder();
         extendBuilder.cacheLoader(cacheLoader)
@@ -180,7 +175,7 @@ public class CacheManagerImpl implements CacheManager {
 
     private <K, V> Store<V> getStore(StoreProps storeProps, CacheConfig<K, V> cacheConfig) {
         String beanId = storeProps.getProvider();
-        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(beanId))) {
             return null;
         }
 
@@ -225,7 +220,7 @@ public class CacheManagerImpl implements CacheManager {
     }
 
     private <V> Codec<V> getCodec(String beanId, CodecConfig<V> config) {
-        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(beanId))) {
             return null;
         }
 
@@ -252,7 +247,7 @@ public class CacheManagerImpl implements CacheManager {
 
     private Compressor getCompressor(CompressConfig config) {
         String beanId = config.getProvider();
-        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(beanId))) {
             return null;
         }
 
@@ -277,7 +272,7 @@ public class CacheManagerImpl implements CacheManager {
 
         requireNonNull(beanId, () -> "Cache:[" + name + "], KeyCodec must not be null.");
 
-        if (Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+        if (Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(beanId))) {
             throw new CacheConfigException("KeyCodec is required and cannot be set to 'none'.");
         }
 
@@ -316,7 +311,7 @@ public class CacheManagerImpl implements CacheManager {
             return EmbedCacheLockProvider.getInstance().get(config);
         }
 
-        if (Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+        if (Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(beanId))) {
             throw new CacheConfigException("Cache lock is required and cannot be set to 'none'.");
         }
 
@@ -327,36 +322,6 @@ public class CacheManagerImpl implements CacheManager {
         requireNonNull(cacheLock, () -> "Unable to get lock from provider:[" + beanId + "].");
 
         return cacheLock;
-    }
-
-    private <K, V> PredicateConfig<K> buildPredicateConfig(String beanId, CacheConfig<K, V> config) {
-        return PredicateConfig.builder(config.getKeyType(), config.getKeyParams())
-                .name(config.getName())
-                .group(config.getGroup())
-                .provider(beanId)
-                .build();
-    }
-
-    /**
-     * @param config 断言配置
-     * @param <K>    键泛型参数
-     * @return ContainsPredicate 数据存在断言
-     * <p>
-     * 如果未配置，或者配置为 “none”，返回 null；如果配置错误，抛出异常 {@link CacheConfigException}
-     */
-    private <K> ContainsPredicate<K> getContainsPredicate(PredicateConfig<K> config) {
-        String beanId = config.getProvider();
-        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
-            return null;
-        }
-
-        ContainsPredicateProvider predicateProvider = componentManager.getPredicateProvider(beanId);
-        requireNonNull(predicateProvider, () -> "ContainsPredicateProvider:[" + beanId + "] is undefined.");
-
-        ContainsPredicate<K> predicate = predicateProvider.get(config);
-        requireNonNull(predicate, () -> "Unable to get predicate from ContainsPredicateProvider:[" + beanId + "].");
-
-        return predicate;
     }
 
     private <K, V> RefreshConfig buildRefreshConfig(RefreshProps props, LockService lock, CacheConfig<K, V> config) {
@@ -375,7 +340,7 @@ public class CacheManagerImpl implements CacheManager {
 
     private CacheRefresh getCacheRefresh(RefreshConfig config) {
         String beanId = config.getProvider();
-        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(beanId))) {
             return null;
         }
 
@@ -395,7 +360,7 @@ public class CacheManagerImpl implements CacheManager {
 
     private CacheStatMonitor getStatMonitor(StatConfig config) {
         String beanId = config.getProvider();
-        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(beanId))) {
             return null;
         }
 
@@ -420,10 +385,22 @@ public class CacheManagerImpl implements CacheManager {
                 .build();
     }
 
-    private <V> CacheSyncMonitor getSyncMonitor(SyncConfig<V> config) {
+    private <V> CacheSyncMonitor getSyncMonitor(SyncConfig<V> config, Store<V>[] stores) {
         String beanId = config.getProvider();
-        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toLowerCase(beanId))) {
+        if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(beanId))) {
             return null;
+        }
+
+        if (config.getFirst()) {
+            if (stores[1] == null && stores[2] == null) {
+                throw new CacheConfigException("Cache:[" + config.getName() + "], cache-sync: if first set to true, second-store or third-store must be exist");
+            }
+        }
+
+        if (config.getSecond()) {
+            if (stores[2] == null) {
+                throw new CacheConfigException("Cache:[" + config.getName() + "], cache-sync: if second set to true, third-store must be exist");
+            }
         }
 
         CacheSyncProvider provider = componentManager.getSyncProvider(beanId);

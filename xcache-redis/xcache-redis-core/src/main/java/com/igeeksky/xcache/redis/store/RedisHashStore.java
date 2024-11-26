@@ -56,7 +56,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
     }
 
     @Override
-    public CacheValue<V> get(String field) {
+    public CacheValue<V> getCacheValue(String field) {
         byte[] storeField = this.toStoreField(field);
         if (this.operator.isCluster()) {
             return this.convertor.fromExtraStoreValue(this.operator.hget(selectStoreKey(storeField), storeField));
@@ -66,7 +66,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
     }
 
     @Override
-    public Map<String, CacheValue<V>> getAll(Set<? extends String> fields) {
+    public Map<String, CacheValue<V>> getAllCacheValues(Set<? extends String> fields) {
         int size = fields.size();
         if (this.operator.isCluster()) {
             Map<byte[], List<byte[]>> keyFields = toKeyFields(fields);
@@ -130,7 +130,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
 
 
     @Override
-    public void evict(String field) {
+    public void remove(String field) {
         byte[] storeField = toStoreField(field);
         if (this.operator.isCluster()) {
             this.operator.hdel(selectStoreKey(storeField), storeField);
@@ -140,7 +140,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
     }
 
     @Override
-    public void evictAll(Set<? extends String> fields) {
+    public void removeAll(Set<? extends String> fields) {
         if (this.operator.isCluster()) {
             this.operator.hdel(toKeyFields(fields));
             return;

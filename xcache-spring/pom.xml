@@ -4,16 +4,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>xcache-dependencies</artifactId>
+        <artifactId>xcache-bom</artifactId>
         <groupId>com.igeeksky.xcache</groupId>
         <version>${revision}</version>
-        <relativePath>../xcache-dependencies</relativePath>
+        <relativePath>../xcache-bom</relativePath>
     </parent>
 
     <artifactId>xcache-spring</artifactId>
     <name>xcache spring</name>
     <description>${project.name}</description>
-    <url>${parent.url}</url>
+    <url>https://github.com/patricklaux/xcache</url>
     <packaging>pom</packaging>
 
     <modules>

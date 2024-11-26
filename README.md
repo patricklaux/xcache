@@ -12,6 +12,16 @@ Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架�
 
 **说明**：
 
+1. Cache：缓存实例。
+2. CacheStore：缓存数据存储，每个缓存实例最多可支持三级缓存数据存储。
+3. CacheStat：缓存指标计数，用于记录缓存方法调用次数及结果。
+4. StatCollector：缓存指标统计信息的采集与发布（可选择发布到日志或 Redis）。
+5. CacheSync：缓存数据同步，用于维护各个缓存实例的数据一致性。
+6. MQ：消息队列，用于中转数据同步消息或缓存指标统计消息（已有实现采用 Redis Stream）。
+7. CacheWriter：缓存数据回写，当缓存数据发生变化时，将数据写入到数据源。
+8. CacheLoader：回源加载数据，当缓存无数据或需定期刷新时，从数据源加载新数据。
+9. dataSource：数据源。
+
 
 
 ## 3. 特性
@@ -38,7 +48,7 @@ JDK：21+
 
 ## 5. 开始使用
 
-以下代码片段来自于 [xcache-samples-base](https://github.com/patricklaux/xcache-samples/tree/main/xcache-samples-base)，如需获取更详细信息，您可以克隆示例项目到本地进行调试。
+以下代码片段来自于 [xcache-samples](https://github.com/patricklaux/xcache-samples)，如需获取更详细信息，您可以克隆示例项目到本地进行调试。
 
 ```bash
 git clone https://github.com/patricklaux/xcache-samples.git
@@ -74,16 +84,16 @@ xcache:
       second: # 二级缓存配置
         provider: none # 缓存存储提供者实例 id（如果配置为 none，则表示不使用二级缓存）
         store-type: EXTRA # 缓存存储类型，根据类型自动填充默认配置
-  cache: # 缓存个性配置，列表类型，可配置零至多个
+  cache: # 缓存实例个性配置，列表类型，可配置零至多个
     - name: user # 缓存名称，用于区分不同的缓存对象
       template-id: t0 # 指定使用的模板为 t0（对应属性：xcache.template[i].id）
 ```
 
 **说明**：
 
-1. 同一应用中，一般会有多个不同名称的缓存对象，它们的配置通常大部分相同。
+1. 同一应用中，一般会有多个不同名称的缓存实例，它们的配置通常大部分相同。
 
-   为了避免填写重复配置，可创建一个公共配置模板，缓存个性配置中则只需填写与该模板的差异部分。
+   为避免重复填写配置，可创建一个公共配置模板，缓存实例个性配置则只需填写与该模板的差异部分。
 
 2. Xcache 提供了丰富的配置项，绝大多数都有默认值，因此可以省略而无需填写。
 
@@ -230,11 +240,9 @@ public class UserCacheService {
 }
 ```
 
-### 5.4. 更多参考信息
+### 5.4. 更多使用信息
 
 详细介绍：[Xcache 使用手册](docs/Reference.md)
-
-示例项目：[xcache-samples](https://github.com/patricklaux/xcache-samples)
 
 ## 6. 项目构建
 
@@ -256,7 +264,7 @@ mvn clean install
 
 ## 7. 项目参与
 
-### 7.1. 分支介绍
+### 7.1. 分支开发
 
 | 分支     | 说明                  |
 | -------- | --------------------- |
@@ -269,15 +277,15 @@ mvn clean install
 
 https://github.com/patricklaux/xcache/discussions
 
-如您希望了解如何使用 xcache，或在使用中遇到问题无法解决，欢迎提问。
+如您希望了解如何使用 xcache，或在使用中遇到问题无法解决，欢迎在此提问。
 
 ### 7.3. 建议反馈
 
 https://github.com/patricklaux/xcache/issues
 
-如您发现功能缺陷，或有任何开发建议，欢迎提交。
+如您发现功能缺陷，或有任何开发建议，欢迎在此提交。
 
-如发现安全漏洞，请私下与我联系。
+如您发现安全漏洞，请私信与我联系。
 
 ## 8. 许可证
 

@@ -1,7 +1,6 @@
 package com.igeeksky.xcache.props;
 
 import com.igeeksky.xcache.common.ReferenceType;
-import com.igeeksky.xcache.common.StoreType;
 import com.igeeksky.xtool.core.json.SimpleJSON;
 
 import java.util.HashMap;
@@ -14,8 +13,6 @@ import java.util.Map;
  * @since 1.0.0 2024/6/11
  */
 public class StoreProps {
-
-    private StoreType storeType;
 
     private String provider;
 
@@ -50,44 +47,13 @@ public class StoreProps {
     private final Map<String, Object> params = new HashMap<>();
 
     /**
-     * 缓存类型
+     * <b>StoreProviderId</b>
      * <p>
-     * 可选值：<br>
-     * EMBED：内嵌缓存，如 caffeine <br>
-     * EXTRA：外部缓存，如 redis
+     * 一级缓存默认值：caffeine {@link CacheConstants#DEFAULT_EMBED_STORE_PROVIDER}
      * <p>
-     * 根据不同的缓存类型，自动填充默认配置。
+     * 二级缓存默认值：NONE {@link CacheConstants#DEFAULT_EXTRA_STORE_PROVIDER}
      * <p>
-     * EMBED：{@link PropsUtil#defaultEmbedStoreProps()} <br>
-     * EXTRA：{@link PropsUtil#defaultExtraStoreProps()}
-     *
-     * @return {@link StoreType} – 缓存类型
-     */
-    public StoreType getStoreType() {
-        return storeType;
-    }
-
-    /**
-     * 设置 缓存类型
-     *
-     * @param storeType 缓存类型
-     */
-    public void setStoreType(StoreType storeType) {
-        this.storeType = storeType;
-    }
-
-    /**
-     * <b>StoreProviderId </b>
-     * <p>
-     * 一级缓存默认值：caffeine
-     * <p>
-     * {@link CacheConstants#DEFAULT_EMBED_STORE_PROVIDER}
-     * <p>
-     * 二级缓存默认值：lettuce
-     * <p>
-     * {@link CacheConstants#DEFAULT_EXTRA_STORE_PROVIDER}
-     * <p>
-     * 三级缓存默认值：none
+     * 三级缓存默认值：NONE {@link CacheConstants#DEFAULT_EXTRA_STORE_PROVIDER}
      *
      * @return {@link String} – StoreProviderId
      */

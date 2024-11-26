@@ -13,18 +13,18 @@ xcache:
     - id: t0 # 模板ID (必填)，建议将其中一个模板的 id 配置为 t0。
       charset: UTF-8 # 字符集 (默认 UTF-8)
       cache-lock: # 缓存锁配置
+        provider: lettuce # LockProviderId（默认值：embed）
         initial-capacity: 128 # HashMap 初始容量（）
         lease-time: 1000 # 锁租期 （默认值：1000 单位：毫秒）
-        provider: lettuce # LockProviderId（默认值：embed）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true）
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则 spring boot 会提示参数读取异常）
           test: test
       cache-sync: # 缓存同步配置
-        first: ALL # 一级缓存数据同步类型 （默认值：ALL，如仅有一级缓存，且为本地缓存，请改为 NONE 或 CLEAR）
-        second: NONE # 二级缓存数据同步类型（默认值：NONE）
+        provider: lettuce # CacheSyncProviderId （默认值：none）
+        first: true # 一级缓存数据同步类型 （默认值：true）
+        second: false # 二级缓存数据同步类型（默认值：false）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true）
         max-len: 1000 # 缓存同步队列最大长度 （默认值：10000）
-        provider: lettuce # CacheSyncProviderId （默认值：none）
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则 spring boot 会提示参数读取异常）
           test: test
       cache-stat: lettuce # CacheStatProviderId，用于缓存指标统计信息采集和输出（默认值：log，输出到日志）
@@ -36,9 +36,7 @@ xcache:
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则 spring boot 会提示参数读取异常）
           test: test
       key-codec: jackson # 用于将键转换成 String（默认值：jackson）
-      contains-predicate: # 用于判断数据源是否存在相应数据（默认值：none，需自行实现并添加到 spring 容器）
       first: # 一级缓存配置
-        store-type: EMBED # 根据是内嵌缓存还是外部缓存，自动填充不同的默认配置（一级缓存默认设定为：EMBED）
         provider: caffeine # StoreProviderId（内嵌缓存默认值：caffeine）
         initial-capacity: 65536 # 初始容量（默认值：65536）
         maximum-size: 65536 # 最大容量（默认值：65536）
@@ -55,7 +53,6 @@ xcache:
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则 spring boot 会提示参数读取异常）
           test: test
       second: # 二级缓存配置
-        store-type: EXTRA # 根据是内嵌缓存还是外部缓存，自动填充不同的默认配置（二级缓存默认设定为：EXTRA）
         provider: lettuce # StoreProviderId（外部缓存默认值：lettuce）
         redis-type: STRING # Redis 命令类型（默认：STRING，如无需过期，可设为 HASH）
         expire-after-write: 7200000 # 数据写入后的存活时间（外部缓存默认值：7200000 单位：毫秒）
@@ -70,7 +67,6 @@ xcache:
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则 spring boot 会提示参数读取异常）
           test: test
       third: # 三级缓存配置
-        store-type: EXTRA # 根据是内嵌缓存还是外部缓存，自动填充不同的默认配置（三级缓存默认设定为：EXTRA）
         provider: none # StoreProviderId（三级缓存默认值：none）
         redis-type: STRING # Redis 命令类型（默认：STRING，如无需过期，可设为 HASH）
         expire-after-write: 7200000 # 数据写入后的存活时间（外部缓存默认值：7200000 单位：毫秒）

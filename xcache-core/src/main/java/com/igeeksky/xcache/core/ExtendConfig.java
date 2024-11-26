@@ -4,13 +4,13 @@ package com.igeeksky.xcache.core;
 import com.igeeksky.xcache.common.CacheLoader;
 import com.igeeksky.xcache.common.CacheRefresh;
 import com.igeeksky.xcache.common.CacheWriter;
-import com.igeeksky.xcache.extension.contains.ContainsPredicate;
-import com.igeeksky.xcache.extension.contains.NoopContainsPredicate;
+import com.igeeksky.xcache.common.ContainsPredicate;
+import com.igeeksky.xcache.extension.NoOpContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
-import com.igeeksky.xcache.extension.stat.NoopCacheStatMonitor;
+import com.igeeksky.xcache.extension.stat.NoOpCacheStatMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
-import com.igeeksky.xcache.extension.sync.NoopCacheSyncMonitor;
+import com.igeeksky.xcache.extension.sync.NoOpCacheSyncMonitor;
 import com.igeeksky.xtool.core.lang.Assert;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
 
@@ -103,11 +103,11 @@ public class ExtendConfig<K, V> {
     /**
      * 缓存统计监视器，用于统计缓存命中率、缓存命中次数等
      *
-     * @return 如果有配置，返回配置的监视器；否则返回无操作监视器 {@link NoopCacheStatMonitor}
+     * @return 如果有配置，返回配置的监视器；否则返回无操作监视器 {@link NoOpCacheStatMonitor}
      */
     public CacheStatMonitor getStatMonitor() {
         if (statMonitor == null) {
-            return NoopCacheStatMonitor.getInstance();
+            return NoOpCacheStatMonitor.getInstance();
         }
         return statMonitor;
     }
@@ -115,11 +115,11 @@ public class ExtendConfig<K, V> {
     /**
      * 缓存同步监视器，用于在分布式环境下，同步缓存数据
      *
-     * @return 如果有配置，返回配置的监视器；否则返回无操作监视器 {@link NoopCacheSyncMonitor}
+     * @return 如果有配置，返回配置的监视器；否则返回无操作监视器 {@link NoOpCacheSyncMonitor}
      */
     public CacheSyncMonitor getSyncMonitor() {
         if (syncMonitor == null) {
-            return NoopCacheSyncMonitor.getInstance();
+            return NoOpCacheSyncMonitor.getInstance();
         }
         return syncMonitor;
     }
@@ -127,11 +127,11 @@ public class ExtendConfig<K, V> {
     /**
      * 存在断言，用于判断数据源是否包含某个键
      *
-     * @return 如果有配置，返回配置的断言；否则返回无操作断言 {@link NoopContainsPredicate}
+     * @return 如果有配置，返回配置的断言；否则返回无操作断言 {@link NoOpContainsPredicate}
      */
     public ContainsPredicate<K> getContainsPredicate() {
         if (containsPredicate == null) {
-            return NoopContainsPredicate.getInstance();
+            return NoOpContainsPredicate.getInstance();
         }
         return containsPredicate;
     }

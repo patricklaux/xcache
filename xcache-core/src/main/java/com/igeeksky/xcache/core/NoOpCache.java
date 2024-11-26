@@ -1,14 +1,12 @@
 package com.igeeksky.xcache.core;
 
 
-import com.igeeksky.xcache.common.Cache;
-import com.igeeksky.xcache.common.CacheLoader;
-import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.common.CacheWriter;
-import com.igeeksky.xcache.extension.NoopCacheLoader;
-import com.igeeksky.xcache.extension.NoopCacheWriter;
+import com.igeeksky.xcache.common.*;
+import com.igeeksky.xcache.extension.NoOpCacheLoader;
+import com.igeeksky.xcache.extension.NoOpCacheWriter;
 import com.igeeksky.xtool.core.collection.Maps;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,7 +20,7 @@ import java.util.Set;
  * @author Patrick.Lau
  * @since 0.0.4 2021-09-19
  */
-public class NoopCache<K, V> implements Cache<K, V> {
+public class NoOpCache<K, V> implements Cache<K, V> {
 
     private final String name;
     private final Class<K> keyType;
@@ -31,17 +29,20 @@ public class NoopCache<K, V> implements Cache<K, V> {
     private final Class<?>[] valueParams;
     private final CacheLoader<K, V> cacheLoader;
     private final CacheWriter<K, V> cacheWriter;
+    private final ContainsPredicate<K> containsPredicate;
 
     private final String message;
 
-    public NoopCache(CacheConfig<K, V> config, CacheLoader<K, V> cacheLoader, CacheWriter<K, V> cacheWriter) {
+    public NoOpCache(CacheConfig<K, V> config, CacheLoader<K, V> cacheLoader,
+                     CacheWriter<K, V> cacheWriter, ContainsPredicate<K> containsPredicate) {
         this.name = config.getName();
         this.keyType = config.getKeyType();
         this.keyParams = config.getKeyParams();
         this.valueType = config.getValueType();
         this.valueParams = config.getValueParams();
-        this.cacheLoader = cacheLoader != null ? cacheLoader : NoopCacheLoader.getInstance();
-        this.cacheWriter = cacheWriter != null ? cacheWriter : NoopCacheWriter.getInstance();
+        this.cacheLoader = cacheLoader != null ? cacheLoader : NoOpCacheLoader.getInstance();
+        this.cacheWriter = cacheWriter != null ? cacheWriter : NoOpCacheWriter.getInstance();
+        this.containsPredicate = containsPredicate;
         this.message = "Cache:[" + this.name + "], method:[%s], %s";
     }
 
@@ -61,50 +62,76 @@ public class NoopCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public Class<?>[] getValueParams() {
-        return this.valueParams;
-    }
-
-    @Override
     public Class<V> getValueType() {
         return valueType;
     }
 
     @Override
-    public CacheValue<V> get(K key) {
+    public Class<?>[] getValueParams() {
+        return this.valueParams;
+    }
+
+    @Override
+    public V get(K key) {
+        requireNonNull(key, "get", "key must not be null");
+        return null;
+    }
+
+    @Override
+    public CacheValue<V> getCacheValue(K key) {
         requireNonNull(key, "get", "key must not be null");
         return null;
     }
 
     @Override
     public V getOrLoad(K key) {
-        requireNonNull(key, "getOrLoad", "key must not be null");
-        return this.cacheLoader.load(key);
+        return this.getOrLoad(key, this.cacheLoader);
     }
 
     @Override
-    public V get(K key, CacheLoader<K, V> cacheLoader) {
-        requireNonNull(key, "get", "key must not be null");
-        requireNonNull(cacheLoader, "get", "cacheLoader must not be null");
+    public V getOrLoad(K key, CacheLoader<K, V> cacheLoader) {
+        requireNonNull(key, "getOrLoad", "key must not be null");
+        requireNonNull(cacheLoader, "getOrLoad", "cacheLoader must not be null");
+
+        if (this.containsPredicate != null) {
+            if (this.containsPredicate.test(key)) {
+                return cacheLoader.load(key);
+            }
+            return null;
+        }
         return cacheLoader.load(key);
     }
 
     @Override
-    public Map<K, CacheValue<V>> getAll(Set<? extends K> keys) {
+    public Map<K, V> getAll(Set<? extends K> keys) {
         requireNonNull(keys, "getAll", "keys must not be null");
         return Maps.newHashMap(0);
     }
 
     @Override
-    public Map<K, V> getOrLoadAll(Set<? extends K> keys) {
-        requireNonNull(keys, "getOrLoadAll", "keys must not be null");
-        return this.cacheLoader.loadAll(keys);
+    public Map<K, CacheValue<V>> getAllCacheValues(Set<? extends K> keys) {
+        requireNonNull(keys, "getAll", "keys must not be null");
+        return Maps.newHashMap(0);
     }
 
     @Override
-    public Map<K, V> getAll(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
-        requireNonNull(keys, "getAll", "keys must not be null");
-        requireNonNull(cacheLoader, "getAll", "cacheLoader must not be null");
+    public Map<K, V> getAllOrLoad(Set<? extends K> keys) {
+        return this.getAllOrLoad(keys, this.cacheLoader);
+    }
+
+    @Override
+    public Map<K, V> getAllOrLoad(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
+        requireNonNull(keys, "getAllOrLoad", "keys must not be null");
+        requireNonNull(cacheLoader, "getAllOrLoad", "cacheLoader must not be null");
+        if (this.containsPredicate != null) {
+            Set<K> exists = HashSet.newHashSet(keys.size());
+            keys.forEach(key -> {
+                if (this.containsPredicate.test(key)) {
+                    exists.add(key);
+                }
+            });
+            return cacheLoader.loadAll(exists);
+        }
         return cacheLoader.loadAll(keys);
     }
 
@@ -121,19 +148,20 @@ public class NoopCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public void evict(K key) {
+    public void remove(K key) {
         requireNonNull(key, "evict", "key must not be null");
         this.cacheWriter.delete(key);
     }
 
     @Override
-    public void evictAll(Set<? extends K> keys) {
+    public void removeAll(Set<? extends K> keys) {
         requireNonNull(keys, "evictAll", "keys must not be null");
         this.cacheWriter.deleteAll(keys);
     }
 
     @Override
     public void clear() {
+        // do nothing
     }
 
     private void requireNonNull(Object obj, String method, String tips) {

@@ -45,8 +45,8 @@
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <maven.gpg.version>3.2.4</maven.gpg.version>
         <maven.source.version>3.3.1</maven.source.version>
-        <maven.javadoc.version>3.7.0</maven.javadoc.version>
-        <maven.flatten.version>1.1.0</maven.flatten.version>
+        <maven.javadoc.version>3.11.1</maven.javadoc.version>
+        <maven.flatten.version>1.6.0</maven.flatten.version>
         <maven.central.publishing.version>0.5.0</maven.central.publishing.version>
         <maven.jacoco.version>0.8.12</maven.jacoco.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -54,7 +54,7 @@
     </properties>
 
     <modules>
-        <module>xcache-dependencies</module>
+        <module>xcache-bom</module>
         <module>xcache-common</module>
         <module>xcache-extension</module>
         <module>xcache-core</module>

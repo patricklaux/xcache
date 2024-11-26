@@ -44,18 +44,18 @@ public class CacheTestCase {
         String name = "patrick";
 
         Key key = new Key(name);
-        cache.evict(key);
+        cache.remove(key);
 
-        Assertions.assertNotNull(cache.get(key, k -> null));
+        Assertions.assertNotNull(cache.getOrLoad(key, k -> null));
 
         User user = new User(name);
         cache.put(key, user);
 
-        Assertions.assertEquals(user, cache.get(key, k -> null));
+        Assertions.assertEquals(user, cache.getOrLoad(key, k -> null));
 
-        cache.evict(key);
+        cache.remove(key);
 
-        Assertions.assertEquals(user, cache.get(key, k -> new User(name)));
+        Assertions.assertEquals(user, cache.getOrLoad(key, k -> new User(name)));
     }
 
     void getAll() {

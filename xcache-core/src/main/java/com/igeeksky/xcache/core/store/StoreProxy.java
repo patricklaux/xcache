@@ -33,8 +33,8 @@ public class StoreProxy<V> implements Store<V> {
     }
 
     @Override
-    public CacheValue<V> get(String key) {
-        CacheValue<V> value = store.get(key);
+    public CacheValue<V> getCacheValue(String key) {
+        CacheValue<V> value = store.getCacheValue(key);
         if (value != null) {
             statMonitor.incHits(level, 1L);
         } else {
@@ -44,9 +44,9 @@ public class StoreProxy<V> implements Store<V> {
     }
 
     @Override
-    public Map<String, CacheValue<V>> getAll(Set<? extends String> keys) {
+    public Map<String, CacheValue<V>> getAllCacheValues(Set<? extends String> keys) {
         int total = keys.size();
-        Map<String, CacheValue<V>> result = store.getAll(keys);
+        Map<String, CacheValue<V>> result = store.getAllCacheValues(keys);
 
         int hits = result.size();
         statMonitor.incHits(level, hits);
@@ -69,15 +69,15 @@ public class StoreProxy<V> implements Store<V> {
     }
 
     @Override
-    public void evict(String key) {
-        store.evict(key);
+    public void remove(String key) {
+        store.remove(key);
         statMonitor.incRemovals(level, 1L);
     }
 
     @Override
-    public void evictAll(Set<? extends String> keys) {
+    public void removeAll(Set<? extends String> keys) {
         int size = keys.size();
-        store.evictAll(keys);
+        store.removeAll(keys);
         statMonitor.incRemovals(level, size);
     }
 

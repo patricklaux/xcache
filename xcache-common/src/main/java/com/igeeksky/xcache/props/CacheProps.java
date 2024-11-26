@@ -11,18 +11,8 @@ import com.igeeksky.xtool.core.json.SimpleJSON;
  */
 public class CacheProps extends AbstractProps {
 
-    /**
-     * 缓存名称（不能为空）
-     */
     private String name;
 
-    /**
-     * 从指定模板中复制配置项
-     * <p>
-     * 如未指定，采用默认模板：t0
-     *
-     * @see CacheConstants#DEFAULT_TEMPLATE_ID
-     */
     private String templateId;
 
     public CacheProps() {
@@ -32,22 +22,55 @@ public class CacheProps extends AbstractProps {
         this.name = name;
     }
 
+    /**
+     * 缓存名称（不能为空）
+     * <p>
+     * 用于唯一标识缓存对象实例
+     *
+     * @return {@link String} – 缓存名称
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * 设置缓存名称
+     *
+     * @param name 缓存名称
+     */
     public void setName(String name) {
         this.name = name;
     }
 
+    /**
+     * 要使用的模板的 id
+     * <p>
+     * 用于从指定模板复制配置项，然后再用缓存个性化配置项覆盖模板配置项
+     * <p>
+     * 默认值：t0
+     * <p>
+     * {@link CacheConstants#DEFAULT_TEMPLATE_ID}
+     *
+     * @return {@link String} – 模板ID
+     */
     public String getTemplateId() {
         return templateId;
     }
 
+    /**
+     * 设置要使用的模板的 id
+     *
+     * @param templateId 模板ID
+     */
     public void setTemplateId(String templateId) {
         this.templateId = templateId;
     }
 
+    /**
+     * 缓存配置项的 JSON 字符串
+     *
+     * @return {@link String} – JSON 字符串
+     */
     @Override
     public String toString() {
         return SimpleJSON.toJSONString(this);

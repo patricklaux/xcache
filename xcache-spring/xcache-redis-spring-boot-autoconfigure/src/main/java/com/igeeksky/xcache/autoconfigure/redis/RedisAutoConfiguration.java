@@ -189,6 +189,11 @@ public class RedisAutoConfiguration {
     }
 
 
+    /**
+     * @param provider  RedisOperatorFactoryHolder
+     * @param scheduler 调度器
+     * @return {@link CacheStatProviderHolder} – 缓存指标信息统计发布
+     */
     @Bean
     CacheStatProviderHolder redisCacheStatProviderHolder(ObjectProvider<RedisOperatorFactoryHolder> provider,
                                                          ScheduledExecutorService scheduler) {
@@ -231,7 +236,7 @@ public class RedisAutoConfiguration {
      * 获取缓存同步消息编码器<p>
      * 该编码器固定采用 Jackson 作为编解码器
      *
-     * @return RedisCacheSyncMessageCodec 实例，用于对缓存同步消息进行编码和解码
+     * @return {@link RedisCacheSyncMessageCodec} – 用于对缓存同步消息进行编码和解码
      */
     private RedisCacheSyncMessageCodec getCacheSyncMessageCodec() {
         StringCodec stringCodec = StringCodec.getInstance(this.charset);
@@ -243,7 +248,7 @@ public class RedisAutoConfiguration {
      * 获取缓存统计消息编码器<p>
      * 该编码器固定采用 Jackson 作为编解码器
      *
-     * @return RedisCacheStatMessageCodec 实例，用于对缓存统计消息进行编码和解码
+     * @return {@link RedisCacheStatMessageCodec} – 用于对缓存统计消息进行编码和解码
      */
     private RedisCacheStatMessageCodec getCacheStatMessageCodec() {
         StringCodec stringCodec = StringCodec.getInstance(this.charset);

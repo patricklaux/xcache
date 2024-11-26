@@ -29,17 +29,25 @@ public class UserService {
     }
 
     public void deleteUserByCache(Key key) {
-        cache.evict(key);
+        cache.remove(key);
     }
 
     public CacheValue<User> getUserByCache(Key key) {
         System.out.println("getUserByCache: " + key);
-        return cache.get(key);
+        return cache.getCacheValue(key);
     }
 
     public void saveUsersToCache(Map<Key, User> keyValues) {
         System.out.println("saveUserToCache");
         cache.putAll(keyValues);
+    }
+
+    /**
+     * "#result" 获取的是方法返回值，而不是参数 result
+     */
+    @CachePut(value = "#result")
+    public User save(Key key, User result) {
+        return new User("1", "MethodResult", 18);
     }
 
     @CacheEvict

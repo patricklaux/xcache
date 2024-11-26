@@ -43,7 +43,7 @@ public class SpringCache implements org.springframework.cache.Cache {
 
     @Override
     public ValueWrapper get(@NonNull Object key) {
-        return this.toValueWrapper(cache.get(key));
+        return this.toValueWrapper(cache.getCacheValue(key));
     }
 
     @Override
@@ -58,7 +58,7 @@ public class SpringCache implements org.springframework.cache.Cache {
     @Override
     @NonNull
     public <T> CompletableFuture<T> retrieve(@NonNull Object key, @NonNull Supplier<CompletableFuture<T>> valueLoader) {
-        T value = (T) cache.get(key, k -> (CacheLoader<Object, T>) ignored -> {
+        T value = (T) cache.getOrLoad(key, k -> (CacheLoader<Object, T>) ignored -> {
             try {
                 CompletableFuture<T> future = valueLoader.get();
                 if (future != null) {
@@ -74,12 +74,12 @@ public class SpringCache implements org.springframework.cache.Cache {
 
     @Override
     public <V> V get(@NonNull Object key, Class<V> type) {
-        return this.fromStoreValue(cache.get(key));
+        return this.fromStoreValue(cache.getCacheValue(key));
     }
 
     @Override
     public <V> V get(@NonNull Object key, @NonNull Callable<V> valueLoader) {
-        Object value = cache.get(key, k -> new CacheLoaderImpl<>(valueLoader));
+        Object value = cache.getOrLoad(key, k -> new CacheLoaderImpl<>(valueLoader));
         return (V) value;
     }
 
@@ -99,7 +99,7 @@ public class SpringCache implements org.springframework.cache.Cache {
 
     @Override
     public void evict(@NonNull Object key) {
-        cache.evict(key);
+        cache.remove(key);
     }
 
     @Override

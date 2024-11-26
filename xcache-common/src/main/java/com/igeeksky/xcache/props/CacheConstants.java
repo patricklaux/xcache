@@ -14,17 +14,16 @@ public interface CacheConstants {
     /**
      * 停用某个 String 类型的配置项，可以配置为 none
      */
-    String NONE = "none";
+    String NONE = "NONE";
 
 
     // 默认组件注册 ID
-    String LETTUCE = "lettuce";
     String CAFFEINE_STORE = "caffeine";
     String JDK_CODEC = "jdk";
     String JACKSON_CODEC = "jackson";
     String JACKSON_SPRING_CODEC = "jackson-spring";
     String GZIP_COMPRESSOR = "gzip";
-    String DEFLATER_COMPRESSOR = "deflate";
+    String DEFLATE_COMPRESSOR = "deflate";
     String LOG_CACHE_STAT = "log";
     String EMBED_CACHE_LOCK = "embed";
     String EMBED_CACHE_REFRESH = "embed";
@@ -51,7 +50,7 @@ public interface CacheConstants {
 
 
     // 外部缓存默认配置 start
-    String DEFAULT_EXTRA_STORE_PROVIDER = LETTUCE;
+    String DEFAULT_EXTRA_STORE_PROVIDER = NONE;
     RedisType DEFAULT_EXTRA_REDIS_TYPE = RedisType.STRING;
     long DEFAULT_EXTRA_EXPIRE_AFTER_WRITE = 7200000L;
     String DEFAULT_EXTRA_VALUE_CODEC = JACKSON_CODEC;
@@ -73,10 +72,8 @@ public interface CacheConstants {
     long DEFAULT_LOCK_LEASE_TIME = 1000;
     int DEFAULT_LOCK_INITIAL_CAPACITY = 256;
 
-    String DEFAULT_PREDICATE_PROVIDER = NONE;
-
     String DEFAULT_REFRESH_PROVIDER = NONE;
-    long DEFAULT_REFRESH_PERIOD = 1800000;
+    long DEFAULT_REFRESH_PERIOD = 2400000;
     long DEFAULT_REFRESH_STOP_AFTER_ACCESS = 7200000;
 
     String DEFAULT_SYNC_PROVIDER = NONE;

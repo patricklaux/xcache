@@ -45,9 +45,9 @@ public class CacheAutoConfiguration {
                               ObjectProvider<CacheWriterHolder> writerHolders,
                               ObjectProvider<CacheRefreshProviderHolder> refreshHolders,
                               ObjectProvider<CompressorProviderHolder> compressorHolders,
-                              ObjectProvider<ContainsPredicateProviderHolder> predicateHolders,
+                              ObjectProvider<ContainsPredicateHolder> predicateHolders,
                               ScheduledExecutorService scheduler) {
-        
+
         ComponentManager componentManager = new ComponentManagerImpl(scheduler, cacheProperties.getStat());
 
         for (StoreProviderHolder holder : storeHolders) {
@@ -86,8 +86,8 @@ public class CacheAutoConfiguration {
             holder.getAll().forEach(componentManager::addProvider);
         }
 
-        for (ContainsPredicateProviderHolder holder : predicateHolders) {
-            holder.getAll().forEach(componentManager::addProvider);
+        for (ContainsPredicateHolder holder : predicateHolders) {
+            holder.getAll().forEach(componentManager::addContainsPredicate);
         }
 
         CacheManagerConfig managerConfig = CacheManagerConfig.builder()

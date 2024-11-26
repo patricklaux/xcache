@@ -35,7 +35,7 @@ public @interface CachePutAll {
     String keyValues() default "";
 
     /**
-     * SpEL表达式
+     * SpEL表达式，用于判断是否执行缓存操作。
      * <p>
      * 如果未配置，condition 表达式结果默认为 true。
      * <p>

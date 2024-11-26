@@ -42,12 +42,12 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected CacheValue<V> doGet(String key) {
-        return store.get(key);
+        return store.getCacheValue(key);
     }
 
     @Override
     protected Map<String, CacheValue<V>> doGetAll(Set<String> keys) {
-        return store.getAll(keys);
+        return store.getAllCacheValues(keys);
     }
 
     @Override
@@ -61,13 +61,13 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected void doEvict(String key) {
-        store.evict(key);
+    protected void doRemove(String key) {
+        store.remove(key);
     }
 
     @Override
-    protected void doEvictAll(Set<String> keys) {
-        store.evictAll(keys);
+    protected void doRemoveAll(Set<String> keys) {
+        store.removeAll(keys);
     }
 
     @Override

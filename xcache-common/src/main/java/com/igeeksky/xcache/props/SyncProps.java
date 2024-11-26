@@ -13,9 +13,9 @@ import java.util.Map;
  */
 public class SyncProps {
 
-    private SyncType first;
+    private Boolean first;
 
-    private SyncType second;
+    private Boolean second;
 
     private Long maxLen;
 
@@ -26,44 +26,52 @@ public class SyncProps {
     private final Map<String, Object> params = new HashMap<>();
 
     /**
-     * 一级缓存数据同步类型
+     * 一级缓存是否启用数据同步
      * <p>
-     * 默认值：ALL
+     * 默认值：true
      * <p>
-     * 如仅有一级缓存，且为本地缓存，只能设置为 NONE 或 CLEAR：<br>
-     * 需要同步缓存清空事件，请设置为 CLEAR；无需同步缓存清空事件，请设置为 NONE. <p>
-     * 如仅有一级缓存，又设置为 ALL，多个实例会重复以下过程，导致每次查询缓存数据均需回源：<p>
+     * 当且仅当满足以下两个条件，此选项才能设置为 true：<br>
+     * 1. 一级缓存为私有缓存；<br>
+     * 2. 二级缓存或三级缓存至少有一级为共享缓存。
+     * <p>
+     * 如仅有一级缓存，又设置为 true，多个实例会重复以下过程，导致每次查询缓存数据均需回源：<br>
      * A(load and put) -- A(send msg) -- B(receive msg) -- B(remove) -- B(load and put) -- B(send msg)
      * -- A(receive msg) -- A(remove)……
+     * <p>
+     * 当然，如果无需数据同步，建议直接将 provider 配置项设为 none。
      *
-     * @return {@link SyncType} – 一级缓存数据同步类型
+     * @return {@link Boolean} – 一级缓存是否启用数据同步
      */
-    public SyncType getFirst() {
+    public Boolean getFirst() {
         return first;
     }
 
     /**
      * @param first 数据同步类型
      */
-    public void setFirst(SyncType first) {
+    public void setFirst(Boolean first) {
         this.first = first;
     }
 
     /**
-     * 二级缓存数据同步类型
+     * 二级缓存是否启用数据同步
      * <p>
-     * 默认值：NONE
+     * 默认值：false
+     * <p>
+     * 当且仅当满足以下两个条件，此选项才能设置为 true：<br>
+     * 1. 二级缓存为私有缓存；<br>
+     * 2. 三级缓存为共享缓存。
      *
-     * @return {@link SyncType} – 二级缓存数据同步类型
+     * @return {@link Boolean} – 二级缓存是否启用数据同步
      */
-    public SyncType getSecond() {
+    public Boolean getSecond() {
         return second;
     }
 
     /**
      * @param second 数据同步类型
      */
-    public void setSecond(SyncType second) {
+    public void setSecond(Boolean second) {
         this.second = second;
     }
 
@@ -118,7 +126,7 @@ public class SyncProps {
     /**
      * CacheSyncProviderId
      * <p>
-     * 默认值：lettuce
+     * 默认值：none
      * <p>
      * {@link CacheConstants#DEFAULT_SYNC_PROVIDER}
      *

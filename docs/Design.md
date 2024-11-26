@@ -1,13 +1,6 @@
-## xcache
+## 缓存设计
 
-[![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
-[![Release](https://img.shields.io/github/v/release/patricklaux/xcache)](https://github.com/patricklaux/xcache/releases)
-![Maven](https://img.shields.io/maven-central/v/com.igeeksky.xcache/xcache-parent.svg)
-[![Last commit](https://img.shields.io/github/last-commit/patricklaux/xcache)](https://github.com/patricklaux/xcache/commits)
-
-## 缓存设计与分析
-
-## 源数据操作与缓存事件广播
+## 缓存事件广播
 
 ### 新增数据（Create）
 
@@ -784,8 +777,6 @@ sequenceDiagram
 
 
 
-
-
 ## 缓存指标
 
 
@@ -799,3 +790,218 @@ sequenceDiagram
 
 
 ## 缓存数据序列化
+
+
+
+## 8. 缓存模式
+
+### 8.1. Cache-Aside
+
+Cache-Aside 策略是最常用的缓存模式，其主要特点是缓存不与数据源直接交互，仅作为旁路逻辑。
+
+#### 8.1.1. 读数据
+
+1. 用户向应用程序请求数据。
+2. 应用程序从缓存读取数据。
+3. 如果缓存中有该数据，直接返回缓存数据给用户【结束】。
+4. 如果缓存中无该数据，由**应用程序**从数据源读取数据，并将该数据写入到缓存。
+5. 返回该数据给用户【结束】。
+
+![image-20241116094138874](images/Design/image-20241116094138874.png)
+
+```mermaid
+sequenceDiagram
+    
+    actor->>app: 1: request
+	app->>cache: 2: read data
+	cache-->>app: 2: return data
+	Note left of cache: if data not in cache
+	app->>datasource: 3: read data
+	datasource-->>app: 3: return data
+	app->>cache: 3: put data
+	cache-->>app: 3: return
+	app-->>actor: 4: response data
+```
+
+#### 8.1.2. 写数据
+
+1. 用户向应用程序请求写入数据。
+2. 应用程序将数据写入数据源。
+3. 应用程序将数据写入缓存。
+4. 返回结果给用户【结束】。
+
+```mermaid
+sequenceDiagram
+    actor->>app: 1: request
+	app->>datasource: 2: write data
+	datasource-->>app: 2.1: return
+	app->>cache: 3: write data
+	cache-->>app: 3.1: return
+	app-->>actor: 4: response
+```
+
+#### 8.1.3. 代码示例
+
+```java
+/**
+ * 数据读取
+ */
+public User getUser(Long id){
+    CacheValue<User> cacheValue = cache.getCacheValue(id);
+    if(cacheValue != null){
+        // 如果缓存中有数据，直接返回缓存数据；
+        return cacheValue.getValue();
+    }
+    // 如果缓存中无数据，从数据源查找数据，并将结果存入缓存
+    User user = userDao.find(id);
+    cache.put(id, user);
+    return user;
+}
+
+/**
+ * 数据更新
+ */
+public void updateUser(Long id, User user){
+    // 更新数据源
+    userDao.update(id, user);
+	// 删除缓存数据（或更新缓存数据）
+    cache.remove(id);
+    // cache.put(id, user);
+}
+```
+
+
+
+### 8.2. Read-Through
+
+Read-Through 策略也是常用的缓存模式，其主要特点是由缓存与数据源直接交互，执行读数据的操作。
+
+#### 8.2.1. 读数据
+
+1. 用户向应用程序请求数据。
+2. 应用程序从缓存读取数据。
+3. 如果缓存中有该数据：返回缓存数据给用户【结束】。
+4. 如果缓存中无该数据：由**缓存**从数据源读取数据，并将该数据写入到缓存。
+5. 返回数据给用户【结束】。
+
+```mermaid
+sequenceDiagram
+    
+    actor->>app: 1: request
+	app->>cache: 2: read data
+	Note left of cache: if data in cache
+	cache-->>app: 2.1: return data
+	app-->>actor: 3: response
+	Note left of cache: if data not in cache
+	cache->>datasource: 4: read data
+	datasource-->>cache: 4.1: return data
+	cache->>cache: 4.2: put data
+	cache-->>app: 4.3: return data
+	app-->>actor: 5: response
+```
+
+#### 8.2.2. 代码示例
+
+```java
+/**
+ * 数据读取
+ */
+public User getUser(Long id){
+    // 如果缓存中有该数据：直接返回缓存数据；
+    // 如果缓存没有该数据：缓存内部调用 cacheLoader 从数据源读取数据，并将数据写入到缓存。
+    return cache.get(id, cacheLoader);
+}
+```
+
+
+
+### 8.3. Write-Through
+
+Write-Through 的主要特点是由缓存与数据源交互，数据写入缓存时由缓存同步将数据写入数据源。
+
+#### 8.3.1. 写数据
+
+1. 用户向应用程序请求写入数据。
+2. 应用程序向缓存写入数据。
+3. **缓存**向数据源**同步**写入数据。
+4. **缓存**保存数据。
+5. 返回结果给用户【结束】。
+
+```mermaid
+sequenceDiagram
+    actor->>app: 1: request
+	app->>cache: 2: write data
+	cache->>datasource: 3.1: [sync] write data
+	datasource-->>cache: 3.2: return
+	cache->>cache: 4.write data
+	cache-->>app: 5: return
+	app-->>actor: 6: response
+```
+
+#### 8.3.2. 代码示例
+
+```java
+/**
+ * 数据写入
+ */
+public void saveUser(Long id, User user){
+    // 如果缓存中有该数据：直接返回缓存数据；
+    cache.put(id, user);
+}
+```
+
+> CacheWriter ？？
+>
+> 异步、同步 处理
+
+
+
+### 8.4. Write-Behind
+
+Write-Through 的主要特点是由缓存与数据源交互，数据写入缓存后由缓存异步将数据写入数据源。
+
+#### 8.4.1. 写数据
+
+1. 用户向应用程序请求写入数据。
+2. 应用程序向缓存写入数据。
+3. **缓存**向数据源**异步**写入数据。
+4. **缓存**保存数据。
+5. 返回结果给用户【结束】。
+
+```mermaid
+sequenceDiagram
+    actor->>app: 1: request
+	app->>cache: 2: write data
+	cache-->>datasource: 3.1: [async] write data
+	cache->>cache: 4.write data
+	cache-->>app: 5: return
+	app-->>actor: 6: response
+```
+
+#### 8.4.2. 代码示例
+
+```java
+/**
+ * 数据写入
+ */
+public void saveUser(Long id, User user){
+    // 如果缓存中有该数据：直接返回缓存数据；
+    cache.put(id, user);
+}
+```
+
+> CacheWriter ？？
+>
+> 异步、同步 处理
+
+
+
+### 8.5. Refresh-Ahead
+
+
+
+### 8.6. 小结
+
+
+
+![image-20241117072701776](images/Design/image-20241117072701776.png)

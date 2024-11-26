@@ -42,9 +42,9 @@ public @interface CachePut {
     String value() default "";
 
     /**
-     * SpEL表达式
+     * SpEL表达式，用于判断是否执行缓存操作。
      * <p>
-     * 如果未配置，condition 表达式结果默认为 true。
+     * 如果未配置，默认为 true。
      * <p>
      * 如果 condition 表达式结果为 true，且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (put)
      */
@@ -53,7 +53,7 @@ public @interface CachePut {
     /**
      * SpEL表达式
      * <p>
-     * 如果未配置，unless 表达式结果默认为 false。
+     * 如果未配置，默认为 false。
      * <p>
      * 如果 condition 表达式结果为 true，且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (put)
      */

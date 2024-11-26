@@ -2,7 +2,6 @@ package com.igeeksky.xcache.extension.sync;
 
 
 import com.igeeksky.xcache.common.MessagePublisher;
-import com.igeeksky.xcache.props.SyncType;
 
 import java.util.Set;
 
@@ -17,59 +16,55 @@ public class CacheSyncMonitorImpl implements CacheSyncMonitor {
     private final String sid;
     private final MessagePublisher<CacheSyncMessage> publisher;
 
-    private boolean remove = false;
-    private boolean clear = false;
+    /**
+     * 是否启用数据同步
+     */
+    private boolean enabled = false;
 
     public CacheSyncMonitorImpl(SyncConfig<?> config, MessagePublisher<CacheSyncMessage> publisher) {
         this.sid = config.getSid();
         this.publisher = publisher;
-        SyncType first = config.getFirst();
-        SyncType second = config.getSecond();
-        if (first == SyncType.CLEAR || second == SyncType.CLEAR) {
-            remove = false;
-            clear = true;
-        }
-        if (first == SyncType.ALL || second == SyncType.ALL) {
-            remove = true;
-            clear = true;
+        boolean first = config.getFirst();
+        boolean second = config.getSecond();
+        if (first || second) {
+            enabled = true;
         }
         if (publisher == null) {
-            remove = false;
-            clear = false;
+            enabled = false;
         }
     }
 
     @Override
     public void afterPut(String key) {
-        if (remove) {
+        if (enabled) {
             sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_REMOVE, key));
         }
     }
 
     @Override
     public void afterPutAll(Set<String> keys) {
-        if (remove) {
+        if (enabled) {
             sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_REMOVE, keys));
         }
     }
 
     @Override
     public void afterEvict(String key) {
-        if (remove) {
+        if (enabled) {
             sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_REMOVE, key));
         }
     }
 
     @Override
     public void afterEvictAll(Set<String> keys) {
-        if (remove) {
+        if (enabled) {
             sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_REMOVE, keys));
         }
     }
 
     @Override
     public void afterClear() {
-        if (clear) {
+        if (enabled) {
             sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_CLEAR));
         }
     }

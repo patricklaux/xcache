@@ -466,6 +466,7 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
             cursor = keyScanCursor;
         }
 
+        // TODO 可能会导致效率问题，需要优化
         List<byte[]> keys = keyCommands.keys(matches);
         if (!keys.isEmpty()) {
             Long result = keyCommands.del(keys.toArray(new byte[keys.size()][]));

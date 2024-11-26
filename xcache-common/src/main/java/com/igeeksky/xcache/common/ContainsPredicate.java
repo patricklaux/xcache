@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.extension.contains;
+package com.igeeksky.xcache.common;
 
 /**
  * 判断数据源是否有值 <p>
@@ -9,15 +9,15 @@ package com.igeeksky.xcache.extension.contains;
  * @author Patrick.Lau
  * @since 0.0.3 2021-07-26
  */
+@FunctionalInterface
 public interface ContainsPredicate<K> {
 
     /**
      * 判断数据源是否存在 key 对应的 value
      *
-     * @param cacheName 缓存名称，用于确定数据源
-     * @param key       键
+     * @param key 键
      * @return 数据源存在 key 对应的 value，返回 true，否则返回 false
      */
-    boolean test(String cacheName, K key);
+    boolean test(K key);
 
 }

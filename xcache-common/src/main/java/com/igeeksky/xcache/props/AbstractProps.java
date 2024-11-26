@@ -14,8 +14,6 @@ public abstract class AbstractProps {
 
     private String cacheStat;
 
-    private String containsPredicate;
-
     private SyncProps cacheSync = new SyncProps();
 
     private LockProps cacheLock = new LockProps();
@@ -148,32 +146,6 @@ public abstract class AbstractProps {
     }
 
     /**
-     * ContainsPredicateProviderId
-     * <p>
-     * 用于判断数据源是否存在相应数据。
-     * <p>
-     * 默认值：none
-     * <p>
-     * {@link CacheConstants#DEFAULT_PREDICATE_PROVIDER}
-     * <p>
-     * 调用 {@code cache.get(K key, CacheLoader loader)} 方法时，用于判断数据源是否存在相应数据，从而避免无效的回源查询.
-     * <p>
-     * ContainsPredicate 与具体业务强相关，因此需由用户自行实现，譬如可以采用 BloomFilter.
-     *
-     * @return String – ContainsPredicateProviderId
-     */
-    public String getContainsPredicate() {
-        return containsPredicate;
-    }
-
-    /**
-     * @param containsPredicate ContainsPredicateProviderId
-     */
-    public void setContainsPredicate(String containsPredicate) {
-        this.containsPredicate = containsPredicate;
-    }
-
-    /**
      * 缓存数据同步配置
      * <p>
      * 用于多个缓存实例之间的数据同步。
@@ -252,7 +224,7 @@ public abstract class AbstractProps {
     /**
      * 二级缓存配置
      * <p>
-     * 默认采用 Redis 作为二级缓存（Lettuce 作为客户端）。
+     * 默认无缓存。
      * <p>
      * {@link PropsUtil#defaultExtraStoreProps}
      *
@@ -273,6 +245,8 @@ public abstract class AbstractProps {
      * 三级缓存配置
      * <p>
      * 默认无缓存。
+     * <p>
+     * {@link PropsUtil#defaultExtraStoreProps}
      *
      * @return {@link StoreProps} – 三级缓存配置
      */

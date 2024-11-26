@@ -43,15 +43,13 @@ public @interface Cacheable {
     String key() default "";
 
     /**
-     * SpEL表达式
+     * SpEL表达式，用于判断是否执行缓存操作。
      * <p>
      * 如果未配置，condition 表达式结果默认为 true。
      * <p>
      * 如果 condition 表达式结果为 true，调用被注解方法前执行缓存操作 (get)，<p>
      * 1. 缓存中有值：不再调用被注解方法，直接返回缓存的值；<p>
-     * 2. 缓存中无值：调用被注解方法，然后判断 unless 表达式是否为 false：<p>
-     * 2.1. 如果 unless 表达式结果为 false，缓存被注解方法执行结果；如果 unless 表达式结果为 true，不缓存。<p>
-     * 2.2. 返回被注解方法执行结果。
+     * 2. 缓存中无值：调用被注解方法，然后缓存被注解方法执行结果，返回被注解方法执行结果。
      */
     String condition() default "";
 

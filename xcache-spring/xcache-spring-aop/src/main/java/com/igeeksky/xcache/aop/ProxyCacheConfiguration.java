@@ -11,6 +11,8 @@ import org.springframework.core.type.AnnotationMetadata;
 
 
 /**
+ * 缓存动态代理自动配置类
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-13
  */
