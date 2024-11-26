@@ -793,12 +793,6 @@ sequenceDiagram
 
 
 
-## 7. 缓存扩展
-
-
-
-
-
 ## 8. 缓存模式
 
 ### 8.1. Cache-Aside

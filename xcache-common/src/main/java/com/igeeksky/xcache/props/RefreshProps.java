@@ -88,7 +88,7 @@ public class RefreshProps {
     /**
      * 刷新间隔周期
      * <p>
-     * 默认值：1800000 单位：毫秒
+     * 默认值：2400000 单位：毫秒
      * <p>
      * {@link CacheConstants#DEFAULT_REFRESH_PERIOD}
      * <p>

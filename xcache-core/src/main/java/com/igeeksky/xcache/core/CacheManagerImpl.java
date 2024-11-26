@@ -91,7 +91,7 @@ public class CacheManagerImpl implements CacheManager {
         ContainsPredicate<K> predicate = componentManager.getContainsPredicate(name);
 
         if (CacheBuilder.count(stores) == 0) {
-            return new NoOpCache<>(cacheConfig, cacheLoader, cacheWriter);
+            return new NoOpCache<>(cacheConfig, cacheLoader, cacheWriter, predicate);
         }
 
         CodecConfig<K> keyCodecConfig = this.buildKeyCodecConfig(cacheConfig);

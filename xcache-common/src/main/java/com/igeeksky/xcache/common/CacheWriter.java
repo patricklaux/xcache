@@ -18,6 +18,8 @@ public interface CacheWriter<K, V> {
 
     /**
      * 删除数据源的数据
+     * <p>
+     * 调用 Cache.remove(key) 方法时，会调用此方法
      *
      * @param key 缓存键
      */
@@ -25,6 +27,8 @@ public interface CacheWriter<K, V> {
 
     /**
      * 批量删除数据源的数据
+     * <p>
+     * 调用 Cache.removeAll(keys) 方法时，会调用此方法
      *
      * @param keys 缓存键集合
      */
@@ -32,6 +36,8 @@ public interface CacheWriter<K, V> {
 
     /**
      * 数据存入数据源
+     * <p>
+     * 调用 Cache.put(key, value) 方法时，会调用此方法
      *
      * @param key   缓存键
      * @param value 缓存值
@@ -40,6 +46,8 @@ public interface CacheWriter<K, V> {
 
     /**
      * 批量存入数据源
+     * <p>
+     * 调用 Cache.putAll(keyValues) 方法时，会调用此方法
      *
      * @param keyValues 缓存键值对集合
      */

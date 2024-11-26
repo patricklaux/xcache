@@ -33,7 +33,8 @@ public class NoOpCache<K, V> implements Cache<K, V> {
 
     private final String message;
 
-    public NoOpCache(CacheConfig<K, V> config, CacheLoader<K, V> cacheLoader, CacheWriter<K, V> cacheWriter, ContainsPredicate<K> containsPredicate) {
+    public NoOpCache(CacheConfig<K, V> config, CacheLoader<K, V> cacheLoader,
+                     CacheWriter<K, V> cacheWriter, ContainsPredicate<K> containsPredicate) {
         this.name = config.getName();
         this.keyType = config.getKeyType();
         this.keyParams = config.getKeyParams();

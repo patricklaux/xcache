@@ -180,6 +180,7 @@ public class RedisCacheRefresh implements CacheRefresh {
                         if (!isTimeToRefresh()) return;
 
                         // 3. 从 Redis 获取全部访问记录
+                        // TODO 可能撑爆内存
                         Map<byte[], byte[]> hgetall = connection.hgetall(refreshKey);
                         if (Maps.isEmpty(hgetall)) {
                             return;

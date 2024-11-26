@@ -44,12 +44,12 @@ Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架�
 
 1. Cache：缓存实例。
 2. CacheStore：缓存数据存储，每个缓存实例最多可支持三级缓存数据存储。
-3. CacheStat：缓存指标计数，用于记录缓存方法调用次数及结果。
-4. StatCollector：缓存指标统计信息的采集与发布（可选择发布到日志或 Redis）。
-5. CacheSync：缓存数据同步，用于维护各个缓存实例的数据一致性。
+3. CacheStatMessage：缓存指标统计消息（缓存方法调用次数及结果）。
+4. StatCollector：缓存指标统计消息的采集与发布（可选择发布到 log 或 Redis）。
+5. CacheSyncMessage：缓存数据同步消息，用于维护各个缓存实例的数据一致性。
 6. MQ：消息队列，用于中转数据同步消息或缓存指标统计消息（已有实现采用 Redis Stream）。
-7. CacheWriter：缓存数据回写，当缓存数据发生变化时，将数据写入到数据源。
-8. CacheLoader：回源加载数据，当缓存无数据或需定期刷新时，从数据源加载新数据。
+7. CacheWriter：数据回写，当缓存数据发生变化时，将数据写入数据源。
+8. CacheLoader：回源取值，当缓存无数据或需定期刷新时，从数据源读取数据。
 9. dataSource：数据源。
 
 ### 2.3. 运行环境
@@ -155,7 +155,7 @@ public class UserCacheService {
     public User getUser(Long id) {
         // 1. 首先查询缓存，如果缓存命中，则直接返回缓存数据；
         // 2. 如果缓存未命中，则调用 cacheLoader 从数据源加载数据。
-        return cache.get(id, cacheLoader);
+        return cache.getOrLoad(id, cacheLoader);
     }
 
     /**
@@ -167,7 +167,7 @@ public class UserCacheService {
     public Map<Long, User> getUsers(Set<Long> ids) {
         // 1. 首先查询缓存，如果缓存全部命中，则直接返回缓存数据；
         // 2. 如果缓存全部未命中或部分命中，则调用 cacheLoader 从数据源加载未命中数据。
-        return cache.getAll(ids, this.cacheLoader);
+        return cache.getAllOrLoad(ids, this.cacheLoader);
     }
 
     /**
@@ -221,7 +221,7 @@ public class UserCacheService {
     public void deleteUser(Long id) {
         userDao.delete(id);
         // 删除缓存数据
-        cache.evict(id);
+        cache.remove(id);
     }
 
     /**
@@ -232,7 +232,7 @@ public class UserCacheService {
     public void deleteUsers(Set<Long> ids) {
         userDao.batchDelete(ids);
         // 批量删除缓存数据
-        cache.evictAll(ids);
+        cache.removeAll(ids);
     }
 
     /**
@@ -270,11 +270,11 @@ public class UserCacheService {
 
 提示：
 
-> CacheLoader 有两个接口：一是 load(key)，用于单个回源取值；二是 loadAll(keys)，用于批量回源取值。
+> ``CacheLoader`` 有两个接口：一是 ``load(key)``，用于单个回源取值；二是 ``loadAll(keys)``，用于批量回源取值。
 >
-> cache.get(key, cacheLoader) 方法，单个回源取值时加锁；
+> ``cache.getOrLoad(key, cacheLoader)`` 方法，单个回源取值时加锁；
 >
-> cache.getAll(keys, cacheLoader) 方法，批量回源取值时不加锁，因为批量加锁可能导致死锁。
+> ``cache.getAllOrLoad(keys, cacheLoader)`` 方法，批量回源取值时不加锁，因为批量加锁可能导致死锁。
 
 #### 3.1.4. 小结
 
@@ -284,7 +284,7 @@ public class UserCacheService {
 
 有哪些配置项？有没有默认值？哪些是必填项？哪些是可选项……
 
-鉴于配置项较多且较复杂，因此写了一个单独章节。欲详细了解，请见 [4.缓存配置](#4. 缓存配置)。
+鉴于配置项较多，因此写了一个单独章节。欲详细了解，请见 [4.缓存配置](#4. 缓存配置)。
 
 ### 3.2. 使用 Xcache 注解
 
@@ -336,9 +336,7 @@ xcache: #【1】Xcache 配置的根节点
 
 **说明**：
 
-为了让大家对配置项有进一步了解，这份配置文件增加了一些配置项。
-
-上一配置文件仅使用 Caffeine 作为一级缓存，这份配置文件则增加 Redis 作为二级缓存。
+上一配置文件仅使用 Caffeine 作为一级缓存，这份配置文件则增加了 Redis 作为二级缓存。
 
 1. 首先，【16~21】增加 ``xcache.redis.lettuce`` 配置。
 
@@ -360,7 +358,7 @@ xcache: #【1】Xcache 配置的根节点
 
    **A**：``RedisOperatorFactory`` 仅仅是用于提供执行 Redis 命令的客户端（类似于 Spring 的 ``RedisTemplate``）， ``RedisStoreProvider`` 则是缓存数据操作的抽象实现。
 
-   ``RedisOperatorFactory`` 不仅仅用于缓存数据操作，还用于分布式锁、缓存数据同步、缓存数据刷新……等等功能。
+   ``RedisOperatorFactory`` 不仅用于缓存数据读写操作，还用于分布式锁、缓存数据同步、缓存数据刷新……等等功能。
 
 2. **Q**：为什么 ``RedisOperatorFactory`` 、 ``RedisStoreProvider`` …… 等配置要设计成列表类型？
 
@@ -425,7 +423,7 @@ public class UserCacheService {
     /**
      * 获取单个用户信息
      * <p>
-     * Cacheable 注解，对应 V value = cache.get(K key, CacheLoader<K,V> loader) 方法。
+     * Cacheable 注解，对应 V value = cache.getOrLoad(K key, CacheLoader<K,V> loader) 方法。
      * <p>
      * 如未配置 key 表达式，采用方法的第一个参数作为缓存键；
      * 如已配置 key 表达式，解析该表达式提取键。
@@ -444,7 +442,7 @@ public class UserCacheService {
      * @param id 用户ID
      * @return Optional<User> – 用户信息
      * 
-     * 如方法返回值类型为 Optional，Xcache 将采用 Optional.ofNullable(value) 包装返回值。
+     * 如方法返回值类型为 Optional，Xcache 将自动采用 Optional.ofNullable(value) 包装返回值。
      */
     @Cacheable
     public Optional<User> getOptionalUser(Long id) {
@@ -479,7 +477,7 @@ public class UserCacheService {
     /**
      * 批量获取用户信息
      * <p>
-     * CacheableAll 注解，对应 Map<K,V> results = cache.getAll(Set<K> keys, CacheLoader<K,V> loader) 方法.
+     * CacheableAll 注解，对应 Map<K,V> results = cache.getAllOrLoad(Set<K> keys, CacheLoader<K,V> loader) 方法.
      * 
      * 缓存的键集：Set 类型。
      * 如未配置 keys 表达式，采用方法的第一个参数作为键集；
@@ -610,29 +608,30 @@ public class UserCacheService {
 
 1. 公共参数
 
-   Xcache 的方法级缓存注解一共有 7 个：@Cacheable，@CacheableAll，@CachePut，@CachePutAll，@CacheEvict，@CacheEvictAll，@CacheClear。
+   Xcache 的方法级缓存注解一共有 7 个：``@Cacheable``，``@CacheableAll``，``@CachePut``，``@CachePutAll``，``@CacheEvict``，``@CacheEvictAll``，``@CacheClear``。
 
    这些注解均有 5 个参数：name，keyType，keyParams，valueType，valueParams。
 
-   如果一个类中有多个方法级缓存注解，则可以使用类级缓存注解 @CacheConfig 统一配置公共参数。
+   如果一个类中有多个方法级缓存注解，则可以使用类级缓存注解 ``@CacheConfig`` 统一配置公共参数。
 
 2. 每个注解的具体参数配置和逻辑介绍详见 [5. Xcache 注解](#5. Xcache 注解)
 
 3. 返回值类型
 
-   对于 @Cacheable 和 @CacheableAll 注解，被注解方法的返回值类型除了需与缓存结果类型保持一致外，还可以是 Optional  或 CompletableFuture 类型。
+   对于 ``@Cacheable`` 和 ``@CacheableAll`` 注解，被注解方法的返回值类型除了需与缓存结果类型保持一致外，还可以是 ``Optional`` 或 ``CompletableFuture`` 类型。
 
-   如果是  Optional  或 CompletableFuture 类型，缓存实现会用 Optional.ofNullable(value) 或 CompletableFuture.completedFuture(value)  包装返回值，即使值不存在，也一定不会返回 null。因此被注解方法内部也请勿返回 null，否则将与预期不一致。
+   如果是  ``Optional``  类型，缓存系统会自动用 ``Optional.ofNullable(value)`` 包装缓存中获取到的值。
 
-   Spring cache 注解还支持 Reactor 的 Mono 和 Flux 类型，但 Xcache 注解暂无计划支持。因为 JDK 21 已有相对成熟的虚拟线程，再引入更多的抽象似乎并不是一个好主意。
+   如果是 ``CompletableFuture`` 类型，，缓存系统会自动用 ``CompletableFuture.completedFuture(value)``  包装缓存中获取到的值。
 
-   当然，如果您确实希望既使用 Reactor 的响应式编程范式，又使用 Xcache 相对强大的缓存功能，那么可以引入 ``xcache-spring-adapter-autoconfigure``，将 Xcache 作为 Spring cache 相关接口的具体实现，然后使用 Spring cache 注解即可，详见下一章节：[3.3. 使用 Spring cache 注解](#3.3. 使用 Spring cache 注解)。
+   另，Spring cache 注解还支持 Reactor 的 ``Mono`` 和 ``Flux`` 类型，但 Xcache 注解暂无计划支持。因为 JDK 21 已有相对成熟的虚拟线程，再引入更多的抽象似乎并不是一个好主意。
+   
 
 ### 3.3. 使用 Spring cache 注解
 
 详见 ``xcache-samples-spring-annotation`` 子项目。
 
-如既想要使用更流行的 Spring cache 注解，又想要 Xcache 相对丰富的功能特性，那么，Xcache 提供了  Spring cache 适配模块，可以将 Spring cache 的底层实现替换为 Xcache。
+如既想用 Spring cache 注解，又想要 Xcache 相对丰富的功能特性，那么，Xcache 提供了  Spring cache 适配模块。
 
 #### 3.3.1. 第一步：引入依赖
 
@@ -698,7 +697,9 @@ xcache: #【1】Xcache 配置的根节点
 }
 ```
 
-> 特别提示：这是使用 Spring cache 注解唯一需要修改的特别配置，其余配置与另外两种方式完全相同。
+> 特别提示：
+>
+> 使用 Spring cache 注解唯一需要特别修改的就是序列化配置，其余配置完全相同。
 
 #### 3.3.3. 第三步：使用注解
 
@@ -836,7 +837,7 @@ public class UserCacheService {
 
 此示例演示了如何引入适配依赖将 Xcache 作为 Spring cache 的接口实现，并通过 Spring cache 注解操作缓存。
 
-1. Spring Cache 没有 CacheableAll，CachePutAll，CacheEvictAll 这三个批处理注解。
+1. Spring Cache 没有 ``@CacheableAll``，``@CachePutAll``，``@CacheEvictAll`` 这三个批处理注解。
 
 2. Spring Cache 没有写 key 表达式时，不是使用方法的第一个参数作为键，而是使用所有参数生成 SimpleKey 对象作为键。
 
@@ -850,10 +851,6 @@ public class UserCacheService {
 1. 尽可能多配置项：可全面控制缓存的各种功能逻辑，进行缓存性能优化；
 2. 尽可能少写配置：通过提供默认值和公共配置模板，减少显式书写配置；
 3. 尽可能不改代码：可通过调整配置和增减依赖组件，灵活适配业务逻辑。
-
-当然，越灵活越全面其实也意味着越复杂。
-
-但是，只要掌握其中几个关键逻辑，就会发现其实一切都很简单。
 
 ### 4.1. 总体介绍
 
@@ -1086,15 +1083,15 @@ xcache:
       cache-lock: # 缓存锁配置
         provider: lettuce # LockProviderId（默认值：embed）
         initial-capacity: 128 # HashMap 初始容量（）
-        lease-time: 1000 # 锁租期 （默认值：1000 单位：毫秒）
+        lease-time: 1000 # 锁租期 （默认值：1000 毫秒）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true）
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则会提示参数读取异常）
           test: test
       cache-stat: lettuce # CacheStatProviderId，用于缓存指标信息采集和输出（默认值：log，输出到日志）
       cache-refresh: # 缓存刷新配置
         provider: none # CacheRefreshProviderId（默认值：none，不启用缓存刷新）
-        period: 1000 # 刷新间隔周期（默认值：1800000 单位：毫秒）
-        stop-after-access: 10000 # 某个键最后一次查询后，超过此时限则不再刷新 （默认值：7200000 毫秒）
+        period: 2400000 # 刷新间隔周期（默认值：2400000 毫秒）
+        stop-after-access: 7200000 # 某个键最后一次查询后，超过此时限则不再刷新 （默认值：7200000 毫秒）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，适用于外部刷新实现）
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则会提示参数读取异常）
           test: test
@@ -1315,7 +1312,9 @@ xcache:
 
 
 
-## 5. Xcache 注解
+## 5. 缓存注解
+
+这里的缓存注解指的是 Xcache 定义的注解，非 Spring Cache 注解。
 
 ### 5.1. @Cacheable
 
@@ -1624,17 +1623,18 @@ public User save(long id, User result) {
 
 	/**
      * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值；
-     * 2. 如果缓存未命中，则通过 cacheLoader 回源取值，取值结果先存入缓存，最后返回该值。
-     * 注：回源时内部加锁执行。
+     * 2. 如果缓存未命中，则通过方法传入的 cacheLoader 回源取值，取值结果先存入缓存，最后返回该值。
+     * 
+     * 注：回源取值时将加锁执行。
      */
-    V get(K key, CacheLoader<K, V> cacheLoader);
+    V getOrLoad(K key, CacheLoader<K, V> cacheLoader);
 
 	/**
      * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值。
-     * 2. 如果缓存未命中：
-     * 2.1. 有配置 CacheLoader，则通过 cacheLoader 回源取值，取值结果存入缓存并返回；
-     * 2.2. 未配置 CacheLoader，返回 null。
-     * 注：回源时内部加锁执行。
+     * 2. 如果缓存未命中，通过缓存内部的 cacheLoader 回源取值，取值结果存入缓存并返回；
+     * 
+     * 注1：回源取值时将加锁执行。
+     * 注2：如果缓存内部无 CacheLoader，将抛出异常。
      */
     V getOrLoad(K key);
 
@@ -1650,18 +1650,17 @@ public User save(long id, User result) {
 
     /**
      * 1. 先从缓存取值，如果缓存命中全部数据，返回缓存数据集。
-     * 2. 如果缓存有未命中数据，通过 cacheLoader 回源取值，取值结果先存入缓存，最后返回合并结果集：缓存数据集+回源取值结果集。
-     * 注：批量回源取值不加锁
+     * 2. 如果缓存有未命中数据，通过方法传入的 cacheLoader 回源取值，取值结果先存入缓存，最后返回合并结果集：缓存数据集+回源取值结果集。
+     * 注：批量回源取值不加锁。
      */
-    Map<K,V> getAll(Set<? extends K> keys, CacheLoader<K, V> cacheLoader);
+    Map<K,V> getAllOrLoad(Set<? extends K> keys, CacheLoader<K, V> cacheLoader);
 
     /**
      * 1. 先从缓存取值，如果缓存命中全部数据，返回缓存数据集。
-     * 2. 如果缓存有未命中数据：
-     * 2.1. 有配置 CacheLoader，通过 cacheLoader 回源取值，取值结果先存入缓存，最后返回合并结果集：缓存数据集+回源取值结果集。
-     * 2.2. 未配置 CacheLoader，返回缓存数据集。
+     * 2. 如果有缓存未命中数据，通过缓存内部的 cacheLoader 回源取值，取值结果先存入缓存，最后返回合并结果集：缓存数据集+回源取值结果集。
      * 
-     * 注：批量回源取值不加锁
+     * 注1：批量回源取值不加锁；
+     * 注2：如果缓存内部无 CacheLoader，将抛出异常。
      */
     Map<K,V> getAllOrLoad(Set<? extends K> keys);
 
@@ -1700,7 +1699,7 @@ public User save(long id, User result) {
 1. 可能是数据源无该数据；
 2. 可能是还未缓存该数据。
 
-为了判断数据源是否有该数据，调用者需再次查询数据源。
+为了确定数据源是否有该数据，调用者需查询数据源。
 
 每次返回 ``null`` ，为了确定数据源是否有值，都需回源查询，这无疑会大大增加数据源压力。
 
@@ -1715,7 +1714,7 @@ CacheValue<User> cacheValue = cache.get(id);
 if (cacheValue == null) {
     // 未缓存，从数据源读取数据
     User user = userDao.find(id);
-    // 取值结果存入缓存，如果缓存设置成允许缓存空值，那么下次查询时 cacheValue != null
+    // 取值结果存入缓存，如果缓存设置成允许缓存空值，那么下次查询时 cacheValue 将不为 null
     cache.put(id, user);
     // do something
  } else {
@@ -1724,13 +1723,13 @@ if (cacheValue == null) {
          User user = cacheValue.getValue();
          // do something
      } else {
-         // 已缓存空值，数据源肯定无数据（无需再回源确认是否有数据）
+         // 已缓存，数据源无数据（无需再回源确认）
          // do something
      }
  }
 ```
 
-上面这个示例中，只有 ``cacheValue == null`` 时，才需回源取值，因此可以减少回源次数。
+只有 ``cacheValue == null`` 时，才需回源取值，因此可以减少回源次数。
 
 其它接口如 ``Map<K, CacheValue<V>> getAll(Set<? extends K> keys)``，关于 ``cacheValue`` 的语义也是如此。
 
@@ -1740,9 +1739,9 @@ if (cacheValue == null) {
 >
 > 即，缓存实例至少有一级的缓存数据存储的  ``enable-null-value`` 配置项为 ``true``（默认为  ``true``）。
 
-## 7. 扩展接口
+## 7. 功能扩展
 
-Xcache 提供了一些扩展接口，用于支持不同的缓存模式和特定功能。
+Xcache 提供了一些功能扩展接口，用于支持不同的缓存模式和特定功能。
 
 ### 7.1. 回源取值
 
@@ -1831,7 +1830,7 @@ public class UserCacheService {
     public User getUser(Long id) {
         // 1. 首先查询缓存，如果缓存命中，则直接返回缓存数据；
         // 2. 如果缓存未命中，则由缓存直接调用 cacheLoader 从数据源加载数据。
-        return cache.get(id, cacheLoader);
+        return cache.getOrLoad(id, cacheLoader);
     }
 
     /**
@@ -1843,7 +1842,7 @@ public class UserCacheService {
     public Map<Long, User> getUsers(Set<Long> ids) {
         // 1. 首先查询缓存，如果缓存全部命中，则直接返回缓存数据；
         // 2. 如果缓存全部未命中或部分命中，则调用 cacheLoader 从数据源加载未命中数据。
-        return cache.getAll(ids, this.cacheLoader);
+        return cache.getAllOrLoad(ids, this.cacheLoader);
     }
 
 }
@@ -1851,7 +1850,7 @@ public class UserCacheService {
 
 **用法示例二**：
 
-首先，将 ``UserCacheLoader`` 作为 bean 对象注入到 spring 容器。
+1、``UserCacheLoader`` 作为 bean 对象注入到 spring 容器。
 
 > CacheManager 创建 Cache 对象时，会根据缓存名称查找对应的 CacheLoader，如果与 Cache 同名的 CacheLoader 存在，则将其设为该 Cache 对象的属性。
 
@@ -1859,7 +1858,7 @@ public class UserCacheService {
 @Configuration
 @AutoConfigureBefore(CacheAutoConfiguration.class)
 public class CacheLoaderAutoConfiguration {
-   
+
     @Bean
     CacheLoaderHolder userCacheLoader(UserDao userDao) {
         // 创建一个 CacheLoaderHolder
@@ -1872,9 +1871,11 @@ public class CacheLoaderAutoConfiguration {
 }
 ```
 
-其次，查询数据时，改为调用 ``cache.getOrLoad(key)`` 或 ``cache.getAllOrLoad(keys)`` 方法。
+2、查询数据时，改为调用 ``cache.getOrLoad(key)`` 或 ``cache.getAllOrLoad(keys)`` 方法。
 
-> 当缓存未命中时，Cache 对象将调用内部的 ``CacheLoader`` 从数据源读取数据然后再存入缓存。
+当缓存未命中时，Cache 对象将调用内部的 ``CacheLoader`` 从数据源读取数据然后再存入缓存。
+
+> 注意：调用这两个方法时，如果 CacheLoader 不存在，将抛出异常。
 
 ```java
 @Service
@@ -1883,6 +1884,7 @@ public class UserCacheService {
     private final Cache<Long, User> cache;
 
     public UserCacheService(CacheManager cacheManager) {
+        // 创建名称为 "user" 的 Cache 对象
         this.cache = cacheManager.getOrCreateCache("user", Long.class, User.class);
     }
 
@@ -1906,23 +1908,32 @@ public class UserCacheService {
      */
     public Map<Long, User> getUsers(Set<Long> ids) {
         // 1. 首先查询缓存，如果缓存全部命中，则直接返回缓存数据；
-        // 2. 如果缓存全部未命中或部分命中，则调用 cacheLoader 从数据源加载未命中数据。
+        // 2. 如果存在未命中数据，则调用 cache 对象内部的 cacheLoader 从数据源加载。
         return cache.getAllorLoad(ids);
     }
 
 }
 ```
 
+#### 7.1.3. 小结
 
+以上两个示例中，一是使用方法中传入的 ``CacheLoader`` 回源取值，二是使用注入的 ``CacheLoader`` 回源取值。
+
+这两种方式的使用效果是完全一致的，且两种方式可以混用，用户可以根据业务场景和编程喜好自由选择。
+
+另，如果希望使用缓存数据刷新功能，则必须通过自动配置注入 ``CacheLoader``。
 
 ### 7.2. 数据回写
 
 #### 7.2.1. CacheWriter
 
-``CacheWriter`` 主要用于实现 write-through 和 write-behind 模式，接口定义如下：
+``CacheWriter`` 主要用于实现 write-through 和 write-behind 模式。
+
+Cache 内部在操作（保存、删除）缓存数据之前，如果存在 ``CacheWriter`` 对象，则调用其对应方法将数据更新到数据源。
+
+其接口定义如下：
 
 ```java
-
 /**
  * 数据回写：缓存数据写入数据源
  * <p>
@@ -1936,6 +1947,8 @@ public interface CacheWriter<K, V> {
 
     /**
      * 删除数据源的数据
+     * <p>
+     * 调用 Cache.remove(key) 方法时，会调用此方法
      *
      * @param key 缓存键
      */
@@ -1943,6 +1956,8 @@ public interface CacheWriter<K, V> {
 
     /**
      * 批量删除数据源的数据
+     * <p>
+     * 调用 Cache.removeAll(keys) 方法时，会调用此方法
      *
      * @param keys 缓存键集合
      */
@@ -1950,6 +1965,8 @@ public interface CacheWriter<K, V> {
 
     /**
      * 数据存入数据源
+     * <p>
+     * 调用 Cache.put(key, value) 方法时，会调用此方法
      *
      * @param key   缓存键
      * @param value 缓存值
@@ -1958,6 +1975,8 @@ public interface CacheWriter<K, V> {
 
     /**
      * 批量存入数据源
+     * <p>
+     * 调用 Cache.putAll(keyValues) 方法时，会调用此方法
      *
      * @param keyValues 缓存键值对集合
      */
@@ -1968,19 +1987,88 @@ public interface CacheWriter<K, V> {
 
 #### 7.2.1. 用法示例
 
+``CacheWriter`` 的实现类作为 bean 对象注入到 spring 容器。
 
+> ``CacheManager`` 创建 Cache 对象时，会采用缓存名称查找 ``CacheWriter``，如果与 Cache 同名的 ``CacheWriter`` 存在，则将其设为该 Cache 对象的内部属性。
+
+```java
+@Configuration
+// 此对象的自动配置需要在创建 CacheManager 之前
+@AutoConfigureBefore(CacheAutoConfiguration.class)
+public class CacheWriterAutoConfiguration {
+
+    /**
+     * @param UserBloomFilter 用于判断用户 id 是否存在
+     * 完整的 BloomFilter 实现比较复杂，譬如要考虑 BloomFilter 的实现方式，数据更新的实时性问题等……
+     * 因为跟业务场景强相关，这里仅仅是起个便于理解的名字而已，不作具体实现
+     * 另，不用 BloomFilter，用 Set 等其它数据结构也是可以的
+     */
+    @Bean
+    CacheWriterHolder userCacheWriter(UserDao userDao) {
+        // 创建一个 CacheWriterHolder，其作用是建立缓存名称 与 CacheWriter 的一一对应关系
+        CacheWriterHolder holder = new CacheWriterHolder();
+        
+        // 将 CacheWriter 放入到 holder，键为缓存名称 “user”。
+        holder.put("user", new CacheWriter<Long, User>(){
+
+            @Override
+            public void delete(Long id){
+                // 同步（如果是同步，则为 write-through 模式）
+                userDao.deleteById(id);
+                // 异步（如果是异步，则为 write-behind 模式）
+                // Thread.ofVirtual().start(() -> userDao.deleteById(id));
+            }
+
+            @Override
+            public void deleteAll(Set<Long> ids){
+                // 同步
+                userDao.deleteAllByIds(ids);
+                // 异步
+                // ……
+            }
+
+            @Override
+            public void write(Long id, User user){
+                // 同步
+                userDao.saveOrUpdate(id, user);
+                // 异步
+                // ……
+            }
+
+            @Override
+            public void writeAll(Map<Long, User> keyValues){
+                // 同步
+                userDao.saveOrUpdate(id, user);
+                // 异步
+                // ……
+            }
+
+        });
+        return holder;
+    }
+
+}
+```
+
+用户仅需将 ``CacheWriter`` 实现类作为 bean 注入到 Spring 容器，具体使用由 Cache 对象内部自动处理。
+
+> 另，需特别注意的是：
+>
+> 如果是异步写，当 ``CacheWriter`` 写失败时，需有重试机制；
+>
+> 如果是同步写，当 ``CacheWriter`` 写失败时，需抛出异常。
 
 ### 7.3. 存在断言
 
 #### 7.3.1. ContainsPredicate
 
-cache 内部在调用 ``CacheLoader`` 之前，先使用 ``ContainsPredicate`` 判断数据源是否存在该数据，只有为 ``true`` 时才会调用 ``CacheLoader``，其接口定义如下：
+cache 内部在调用 ``CacheLoader`` 之前，如果存在 ``ContainsPredicate``，先调用  ``ContainsPredicate``  判断数据源是否存在该数据，只有为 ``true`` 时才会调用 ``CacheLoader``，其接口定义如下：
 
 ```java
 /**
  * 判断数据源是否有值 <p>
  * 作用：处理缓存穿透问题 <p>
- * 譬如：定时读取数据源中的所有 Key，然后生成布隆过滤器，每次回源查询数据时可以通过布隆过滤器来判断数据源是否有值
+ * 譬如：预读取数据源中的所有 Key 生成布隆过滤器，每次回源查询数据时可以通过布隆过滤器来判断数据源是否有值
  *
  * @param <K> 键类型
  */
@@ -1998,123 +2086,233 @@ public interface ContainsPredicate<K> {
 }
 ```
 
-#### 7.3.1. 用法示例
+#### 7.3.2. 用法示例
 
+``ContainsPredicate`` 的实现类作为 bean 对象注入到 spring 容器。
 
+> ``CacheManager`` 创建 Cache 对象时，会使用缓存名称查找 ``ContainsPredicate``，如果与 Cache 同名的 ``ContainsPredicate`` 存在，则将其设为该 Cache 对象的内部属性。
+
+```java
+@Configuration
+// 此对象的自动配置需要在创建 CacheManager 之前
+@AutoConfigureBefore(CacheAutoConfiguration.class)
+public class ContainsPredicateAutoConfiguration {
+
+    /**
+     * @param UserBloomFilter 用于判断用户 id 是否存在。
+     * 注：完整的 BloomFilter 实现较复杂，要考虑数据更新的实时性和一致性问题等，
+     * 而且跟业务场景强相关，因此这里仅作演示，不作具体实现。
+     * 另，并非一定要用 BloomFilter，用 Set 等其它数据结构也是可以的。
+     */
+    @Bean
+    ContainsPredicateHolder userContainsPredicate(UserBloomFilter userBloomFilter) {
+        // 创建一个 ContainsPredicateHolder，其作用是建立缓存名称 与 ContainsPredicate 的一一对应关系
+        ContainsPredicateHolder holder = new ContainsPredicateHolder();
+        // 将 ContainsPredicate 放入到 holder，键为缓存名称 “user”。
+        holder.put("user", new ContainsPredicate<Long>(){
+
+            @Override
+            public boolean test(Long id) {
+                return UserBloomFilter.exists(key);
+            }
+
+        });
+        return holder;
+    }
+
+}
+```
+
+用户仅需将 ``ContainsPredicate`` 实现类作为 bean 注入到 Spring 容器，具体使用由 Cache 对象内部自动处理。
 
 ## 8. 缓存模式
 
 ### 8.1. Cache-Aside
 
+Cache-Aside 策略是最常用的缓存模式，其主要特点是缓存对象不与数据源进行直接交互，仅作为旁路逻辑。
 
+#### 8.1.1. 读数据
 
-```mermaid
-sequenceDiagram
-    
-    actor->>app: 1: request data
-	app->>cache: 2: read data from cache
-	cache-->>app: 2.1: return data
-	Note left of app: if data in cache
-	app-->>actor: 3: return data
-	Note left of cache: if data not in cache
-	app->>datasource: 4: read data from datasource
-	datasource-->>app: 4.1: return data
-	app->>cache: 5: put data to cache
-	cache-->>app: 5.1: return
-	app-->>actor: 6: return data
-	
+2. 应用程序从缓存读取数据。
+3. 如果缓存中有该数据，【结束】。
+4. 如果缓存中无该数据，由**应用程序**从数据源读取数据，并将该数据写入到缓存，【结束】。
+
+![image-20241122205329526](images/cache-aside1.png)
+
+#### 8.1.2. 写数据
+
+1. 应用程序将数据写入数据源。
+2. 应用程序将数据写入缓存。
+
+![image-20241122205733264](images/cache-aside2.png)
+
+#### 8.1.3. 代码示例
+
+```java
+/**
+ * 读数据
+ */
+public User getUser(Long id){
+    CacheValue<User> cacheValue = cache.getCacheValue(id);
+    if(cacheValue != null){
+        // 如果缓存中有数据，直接返回缓存数据；
+        return cacheValue.getValue();
+    }
+    // 如果缓存中无数据，从数据源查找数据，并将结果存入缓存
+    User user = userDao.find(id);
+    cache.put(id, user);
+    return user;
+}
+
+/**
+ * 写数据
+ */
+public void updateUser(Long id, User user){
+    // 更新数据源
+    userDao.update(id, user);
+	// 删除缓存数据（或更新缓存数据）
+    cache.remove(id);
+    // cache.put(id, user);
+}
 ```
-
-
 
 ### 8.2. Read-Through
 
+Read-Through 策略也是常用的缓存模式，其主要特点是由**缓存**与数据源直接交互，执行读数据的操作。
 
+#### 8.2.1. 读数据
+
+2. 应用程序从缓存读取数据。
+3. 如果缓存中有该数据：返回缓存数据，【结束】。
+4. 如果缓存中无该数据：由**缓存**从数据源读取数据，并将该数据写入到缓存，【结束】。
+
+![image-20241122210852584](images/read-through.png)
+
+#### 8.2.2. 代码示例
+
+见 [7.1.2. 用法示例](#7.1.2. 用法示例)
 
 ### 8.3. Write-Through
 
+Write-Through 的主要特点是缓存与数据源直接交互，由**缓存**将数据**同步**写入数据源。
 
+#### 8.3.1. 写数据
+
+2. 应用程序向缓存请求写入数据。
+3. **缓存**先将数据**同步**写入数据源。
+4. **缓存**再将数据写入自身存储。
+
+![image-20241122212348666](images/wright-through.png)
+
+#### 8.3.2. 代码示例
+
+见 [7.2.1. 用法示例](#7.2.1. 用法示例)
 
 ### 8.4. Write-Behind
 
+Write-behind 又称为 Wright-back，其主要特点是缓存与数据源直接交互，由**缓存**将数据**异步**写入数据源。
 
+#### 8.4.1. 写数据
+
+1. 应用程序向缓存请求写入数据。
+2. **缓存**先将数据**异步**写入数据源。
+3. **缓存**再将数据写入自身存储。
+
+![image-20241122212749274](images/wright-behind.png)
+
+#### 8.4.2. 代码示例
+
+见 [7.2.1. 用法示例](#7.2.1. 用法示例)
 
 ### 8.5. Refresh-Ahead
 
+Refresh-Ahead，即预刷新，一般会使用独立的线程（进程）在缓存数据过期之前从数据源加载数据并存入缓存。
+
+Xcache 支持 Refresh-Ahead 策略，可以通过配置开启。
+
+```yaml
+xcache: #【2】
+  group: shop #【2】分组名称 (必填)
+  template: #【3】公共模板配置 (必填，仅需配置与默认配置不同的部分)，列表类型，可配置多个模板。
+    - id: t0 #【4】模板ID (必填)，建议将其中一个模板的 id 配置为 t0。
+      cache-refresh: #【5】缓存刷新配置
+        provider: lettuce #【6】使用 id 为 lettuce 的 CacheRefreshProvider 实现缓存数据刷新（即【22】中设定的 id）
+        period: 2400000 #【7】刷新间隔周期（默认值：2400000 毫秒）
+        stop-after-access: 7200000 #【8】某个键最后一次查询后，超过此时限则不再刷新 （默认值：7200000 毫秒）
+        enable-group-prefix: true #【9】是否添加 group 作为前缀（默认值：true，适用于外部刷新实现）
+      first: #【10】一级缓存配置
+        provider: caffeine #【11】使用 id 为 caffeine 的 StoreProvider 作为一级缓存
+        expire-after-write: 3600000 #【12】数据写入后的存活时间（内嵌缓存默认值：3600000 毫秒）
+        enable-random-ttl: true #【13】是否使用随机存活时间（默认值：true）
+      second: #【14】二级缓存配置
+        provider: lettuce #【15】使用 id 为 lettuce 的 StoreProvider 作为二级缓存（即【19】中设定的 id）
+        expire-after-write: 7200000 #【16】数据写入后的存活时间（外部缓存默认值：7200000 毫秒）
+  redis: #【17】Redis 配置
+    store: #【18】RedisStoreProvider 配置
+      - id: lettuce #【19】创建 id 为 lettuce 的 RedisStoreProvider
+        factory: lettuce #【20】指定使用 id 为 lettuce 的 RedisOperatorFactory（即【26】中设定的 id）
+    refresh: #【21】RedisCacheRefreshProvider 配置
+      - id: lettuce #【22】创建 id 为 lettuce 的 RedisCacheRefreshProvider
+        factory: lettuce #【23】指定使用 id 为 lettuce 的 RedisOperatorFactory（即【26】中设定的 id）
+    lettuce: #【24】Lettuce 客户端配置
+      factories: #【25】列表类型，可配置多个
+        - id: lettuce #【26】创建 id 为 lettuce 的 RedisOperatorFactory
+          standalone: #【27】单机模式 或 副本集模式
+            node: 192.168.0.100:6379 #【28】Redis 节点
+```
+
+1、【6】provider：这里指定了缓存刷新的具体实现，配置的可选值有 ``none``，``embed`` 或自定义 id。
+
+- 当配置为 ``none`` 时，即不开启缓存数据刷新。
+- 当配置为  ``embed`` 时，实现类为  ``EmbedCacheRefreshProvider``，其采用本地 ``HashMap`` 记录查询过的 key。当有多个进程实例时，相同的 key 可能会同时存在于多个实例，而且每个进程实例都会调用  ``CacheLoader`` 读取数据。
+- 当配置为自定义 id 时，譬如这里的 ``lettuce`` ，实现类为  ``RedisCacheRefreshProvider``，其采用 Redis 集中存储查询过的 key，因此不会重复，且同一时刻最多只有一个进程实例会调用  ``CacheLoader`` 读取数据。
+
+2、【7】period：这里设定了刷新的间隔周期。我们期望的是在缓存值过期之前刷新数据，因此这个数值要小于最后一级缓存的 expire-after-write 配置值。
+
+缓存数据刷新需用到 Cache 对象内部的 ``CacheLoader`` ，因此需通过自动配置方式注入与缓存同名的 ``CacheLoader``  对象。
 
 
 
+### 8.6. 小结
 
-## 缓存键
+这是五种常见的缓存模式，大家可以根据业务场景选择合适的策略组合。
 
+一般来说，读操作用 Read-Through，写操作用 Cache-Aside，如果需要在数据过期前预刷新，则再加上 Refresh-Ahead 。
 
+## 9. 模块简介
 
-## 缓存值
+为了让项目结构更加清晰，Xcache 拆分为多个子模块，以下是所有模块列表。
 
-
-
-## 序列化
-
-
-
-## 缓存锁
-
-
-
-## 缓存刷新
-
-
-
-
-
-## 概念与定义
-
-内嵌缓存 与 外部缓存
-
-私有缓存 与 共享缓存
-
-本地缓存 与 远程缓存
-
-分散式缓存 与 集中式缓存
-
-单实例缓存 与 分布式缓存
-
-
-
-## 15. 模块说明
-
-Xcache 拆分为很多子模块，一是为了避免引入不必要的依赖，二是便于自定义扩展实现。
-
-| 项目名称                                  | 类型 | 项目说明                                                     |
-| :---------------------------------------- | :--: | :----------------------------------------------------------- |
-| xcache-parent                             | pom  | 所有子项目的最顶层父项目，主要用于统一的项目构建             |
-| xcache-common                             | jar  | 基础公共模块，主要用于定义基础接口、数据对象和配置项         |
-| xcache-core                               | jar  | 核心公共模块，主要用于实现具体的缓存逻辑                     |
-| xcache-annotation                         | jar  | 缓存注解                                                     |
-| xcache-caffeine                           | jar  | 使用 caffeine 实现内嵌缓存                                   |
-| xcache-caffeine-spring-boot-autoconfigure | jar  | xcache-caffeine 模块的 Spring boot 自动配置                  |
-| xcache-dependencies                       | pom  | 所有子项目的父项目，主要用于统一的依赖包管理                 |
-| xcache-extension                          | pom  | 扩展模块的父项目                                             |
-| xcache-extension-codec                    | jar  | 编解码模块的基础接口和基本实现，如希望开发自定义的编解码实现，可依赖此项目 |
-| xcache-extension-common                   | jar  | 可扩展模块的基础接口和基本实现                               |
-| xcache-extension-jackson                  | jar  | 使用 jackson 实现的编解码                                    |
-| xcache-jackson-spring-boot-autoconfigure  | jar  | xcache-extension-jackson 模块的 Spring boot 自动配置         |
-| xcache-lettuce-spring-boot-autoconfigure  | jar  | xcache-redis-lettuce 模块的 Spring boot 自动配置             |
-| xcache-redis                              | pom  | Redis 相关项目的父项目                                       |
-| xcache-redis-common                       | jar  | 如希望开发自定义的 Redis 客户端，可依赖此项目                |
-| xcache-redis-core                         | jar  |                                                              |
-| xcache-redis-jedis                        | jar  |                                                              |
-| xcache-redis-lettuce                      | jar  |                                                              |
-| xcache-redis-spring-boot-autoconfigure    | jar  |                                                              |
-| xcache-spring                             | pom  | spring 相关项目的父项目                                      |
-| xcache-spring-adapter                     | jar  |                                                              |
-| xcache-spring-adapter-autoconfigure       | jar  |                                                              |
-| xcache-spring-aop                         | jar  |                                                              |
-| xcache-spring-boot-autoconfigure          | jar  |                                                              |
-| xcache-spring-boot-starter                | jar  |                                                              |
-| xcache-spring-boot-starter-test           | jar  | 主要用于 Xcache 注解的测试                                   |
-| xcache-spring-adapter-test                | jar  | 主要用于 Spring cache 适配的测试                             |
-| xcache-test                               | pom  | 所有测试项目的直接父项目                                     |
-| xcache-test-base                          | jar  | 主要用于缓存方法的测试，与及基础接口的公共测试用例           |
-| xcache-test-domain                        | jar  | 测试项目的数据对象定义                                       |
+| 项目名称                                  | 类型 | 项目说明                                               |
+| :---------------------------------------- | :--: | :----------------------------------------------------- |
+| xcache-parent                             | pom  | 所有子项目的最顶层父项目，主要用于统一的项目构建。     |
+| xcache-common                             | jar  | 基础模块，主要用于定义基础接口、数据对象和配置项。     |
+| xcache-core                               | jar  | 核心模块，主要用于实现具体的缓存逻辑。                 |
+| xcache-annotation                         | jar  | 缓存注解。                                             |
+| xcache-caffeine                           | jar  | 使用 caffeine 实现内嵌缓存。                           |
+| xcache-caffeine-spring-boot-autoconfigure | jar  | xcache-caffeine 模块的 Spring boot 自动配置。          |
+| xcache-bom                                | pom  | 统一的依赖包管理。                                     |
+| xcache-extension                          | pom  | 扩展模块的父项目。                                     |
+| xcache-extension-codec                    | jar  | 编解码接口。如希望开发自定义实现，可依赖此项目。       |
+| xcache-extension-common                   | jar  | 可扩展模块接口。如希望开发自定义实现，可依赖此项目。   |
+| xcache-extension-jackson                  | jar  | 使用 Jackson 实现的编解码。                            |
+| xcache-jackson-spring-boot-autoconfigure  | jar  | xcache-extension-jackson 模块的 Spring boot 自动配置。 |
+| xcache-lettuce-spring-boot-autoconfigure  | jar  | xcache-redis-lettuce 模块的 Spring boot 自动配置。     |
+| xcache-redis                              | pom  | Redis 相关项目的父项目。                               |
+| xcache-redis-common                       | jar  | Redis 公共接口。如希望开发自定义实现，可依赖此项目。   |
+| xcache-redis-core                         | jar  | Redis 扩展实现。                                       |
+| xcache-redis-jedis                        | jar  | 使用 Jedis 实现 Redis 客户端。                         |
+| xcache-redis-lettuce                      | jar  | 使用 Lettuce 实现 Redis 客户端。                       |
+| xcache-spring                             | pom  | spring 相关项目的父项目。                              |
+| xcache-spring-adapter                     | jar  | 适配 Spring cache。                                    |
+| xcache-spring-adapter-autoconfigure       | jar  | 适配 Spring cache 的自动配置。                         |
+| xcache-spring-aop                         | jar  | 通过 spring-aop 实现对 Xcache 注解的支持。             |
+| xcache-spring-boot-autoconfigure          | jar  | Xcache 核心功能自动配置。                              |
+| xcache-spring-boot-starter                | jar  | Xcache 常用组件集成（Caffeine、Jackson、Lettuce）。    |
+| xcache-redis-spring-boot-autoconfigure    | jar  | Redis 扩展实现的自动配置。                             |
+| xcache-test                               | pom  | 所有测试项目的直接父项目。                             |
+| xcache-spring-boot-starter-test           | jar  | 主要用于 Xcache 注解的测试。                           |
+| xcache-spring-adapter-test                | jar  | 主要用于 Spring cache 适配的测试。                     |
+| xcache-test-base                          | jar  | 主要用于缓存方法的测试，与及基础接口的公共测试用例。   |
+| xcache-test-domain                        | jar  | 测试项目的数据对象定义。                               |
 
