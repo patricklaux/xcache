@@ -66,13 +66,16 @@ public class RedisStringStore<V> implements RedisStore<V> {
 
     @Override
     public void put(String key, V value) {
+        byte[] storeKey = toStoreKey(key);
         byte[] storeValue = this.convertor.toExtraStoreValue(value);
         if (storeValue != null) {
             if (expireAfterWrite <= 0) {
-                checkResult(this.operator.set(toStoreKey(key), storeValue), "put", key, value);
+                checkResult(this.operator.set(storeKey, storeValue), "put", key, value);
             } else {
-                checkResult(this.operator.psetex(toStoreKey(key), timeToLive(), storeValue), "psetex", key, value);
+                checkResult(this.operator.psetex(storeKey, timeToLive(), storeValue), "psetex", key, value);
             }
+        } else {
+            this.operator.del(storeKey);
         }
     }
 
