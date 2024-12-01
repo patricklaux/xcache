@@ -1,15 +1,15 @@
 package com.igeeksky.xcache.annotation.operation;
 
-import com.igeeksky.xcache.annotation.CacheEvict;
+import com.igeeksky.xcache.annotation.CacheRemove;
 import com.igeeksky.xtool.core.lang.StringUtils;
 
 /**
- * 记录 {@link CacheEvict} 注解信息
+ * 记录 {@link CacheRemove} 注解信息
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-14
  */
-public class CacheEvictOperation extends CacheOperation {
+public class CacheRemoveOperation extends CacheOperation {
 
     private final String key;
 
@@ -19,7 +19,7 @@ public class CacheEvictOperation extends CacheOperation {
 
     private final String unless;
 
-    protected CacheEvictOperation(Builder builder) {
+    protected CacheRemoveOperation(Builder builder) {
         super(builder);
         this.key = builder.key;
         this.beforeInvocation = builder.beforeInvocation;
@@ -77,8 +77,8 @@ public class CacheEvictOperation extends CacheOperation {
             return this;
         }
 
-        public CacheEvictOperation build() {
-            return new CacheEvictOperation(this);
+        public CacheRemoveOperation build() {
+            return new CacheRemoveOperation(this);
         }
     }
 
