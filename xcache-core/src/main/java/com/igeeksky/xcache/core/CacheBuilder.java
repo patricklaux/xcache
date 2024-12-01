@@ -57,7 +57,7 @@ public class CacheBuilder<K, V> {
         if (count == 1) {
             return new OneLevelCache<>(cacheConfig, extendConfig, stores);
         }
-        return new NoOpCache<>(cacheConfig, extendConfig.getCacheLoader(), extendConfig.getCacheWriter());
+        return new NoOpCache<>(cacheConfig, extendConfig.getCacheLoader(), extendConfig.getCacheWriter(), extendConfig.getContainsPredicate());
     }
 
     public static int count(Store<?>[] stores) {
