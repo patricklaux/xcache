@@ -23,4 +23,12 @@ public class CacheValue<V> {
         return this.value != null;
     }
 
+    @Override
+    public String toString() {
+        if (value == null) {
+            return "{}";
+        }
+        return "{\"value\":" + value + '}';
+    }
+
 }
