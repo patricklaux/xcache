@@ -161,7 +161,7 @@ public class CacheOperationContext {
         }
 
         // 使用 SpEL 获取 keys 集合
-        Set<Object> keys = (Set<Object>) this.generateKey(operation.getCondition(), false);
+        Set<Object> keys = (Set<Object>) this.generateKey(operation.getKeys(), false);
         if (CollectionUtils.isEmpty(keys)) {
             this.proceed();
             return;
@@ -445,8 +445,7 @@ public class CacheOperationContext {
 
     private Cache<Object, Object> getOrCreateCache(CacheOperation operation) {
         return (Cache<Object, Object>) this.cacheManager.getOrCreateCache(operation.getName(),
-                operation.getKeyType(), operation.getKeyParams(),
-                operation.getValueType(), operation.getValueParams());
+                operation.getKeyType(), operation.getValueType());
     }
 
 }
