@@ -85,14 +85,19 @@ public class RedisHashStore<V> implements RedisStore<V> {
     public void put(String field, V value) {
         byte[] storeField = toStoreField(field);
         byte[] storeValue = this.convertor.toExtraStoreValue(value);
-        if (storeValue == null) {
-            return;
-        }
         if (this.operator.isCluster()) {
             byte[] storeKey = selectStoreKey(storeField);
-            this.operator.hset(storeKey, storeField, storeValue);
+            if (storeValue == null) {
+                this.operator.hdel(storeKey, storeField);
+            } else {
+                this.operator.hset(storeKey, storeField, storeValue);
+            }
         } else {
-            this.operator.hset(hashKey, storeField, storeValue);
+            if (storeValue == null) {
+                this.operator.hdel(hashKey, storeField);
+            } else {
+                this.operator.hset(hashKey, storeField, storeValue);
+            }
         }
     }
 
@@ -101,6 +106,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
         if (this.operator.isCluster()) {
 
             int maximum = getMaximum(keyValues.size());
+            Map<byte[], List<byte[]>> removeKeyFields = Maps.newHashMap();
             Map<byte[], Map<byte[], byte[]>> keyFieldValues = Maps.newHashMap(maximum);
 
             keyValues.forEach((field, value) -> {
@@ -108,23 +114,33 @@ public class RedisHashStore<V> implements RedisStore<V> {
                 // 根据 field 分配到不同的的哈希表
                 byte[] storeKey = selectStoreKey(storeField);
                 byte[] storeValue = this.convertor.toExtraStoreValue(value);
-                if (storeValue != null) {
-                    Map<byte[], byte[]> fieldMap = keyFieldValues.computeIfAbsent(storeKey, k -> new HashMap<>());
-                    fieldMap.put(storeField, storeValue);
+                if (storeValue == null) {
+                    removeKeyFields.computeIfAbsent(storeKey, k -> new ArrayList<>()).add(storeField);
+                } else {
+                    keyFieldValues.computeIfAbsent(storeKey, k -> new HashMap<>()).put(storeField, storeValue);
                 }
             });
-
+            if (!removeKeyFields.isEmpty()) {
+                this.operator.hdel(removeKeyFields);
+            }
             checkResult(this.operator.hmset(keyFieldValues), "hmset");
             return;
         }
 
+        List<byte[]> removeFields = new ArrayList<>();
         Map<byte[], byte[]> fieldValues = Maps.newHashMap(keyValues.size());
         keyValues.forEach((field, value) -> {
+            byte[] storeField = toStoreField(field);
             byte[] storeValue = this.convertor.toExtraStoreValue(value);
-            if (storeValue != null) {
-                fieldValues.put(toStoreField(field), storeValue);
+            if (storeValue == null) {
+                removeFields.add(storeField);
+            } else {
+                fieldValues.put(storeField, storeValue);
             }
         });
+        if (!removeFields.isEmpty()) {
+            this.operator.hdel(hashKey, removeFields.toArray(new byte[0][]));
+        }
         checkResult(this.operator.hmset(hashKey, fieldValues), "hmset");
     }
 
