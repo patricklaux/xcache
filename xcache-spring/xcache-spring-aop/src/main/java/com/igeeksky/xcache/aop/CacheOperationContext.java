@@ -101,14 +101,14 @@ public class CacheOperationContext {
             this.processCachePutAll(cachePutAllOperation, afterInvokeRunners);
         }
 
-        CacheEvictOperation cacheEvictOperation = (CacheEvictOperation) operations.get(CacheEvictOperation.class);
-        if (cacheEvictOperation != null) {
-            this.processCacheEvict(cacheEvictOperation, afterInvokeRunners);
+        CacheRemoveOperation cacheRemoveOperation = (CacheRemoveOperation) operations.get(CacheRemoveOperation.class);
+        if (cacheRemoveOperation != null) {
+            this.processCacheEvict(cacheRemoveOperation, afterInvokeRunners);
         }
 
-        CacheEvictAllOperation cacheEvictAllOperation = (CacheEvictAllOperation) operations.get(CacheEvictAllOperation.class);
-        if (cacheEvictAllOperation != null) {
-            this.processCacheEvictAll(cacheEvictAllOperation, afterInvokeRunners);
+        CacheRemoveAllOperation cacheRemoveAllOperation = (CacheRemoveAllOperation) operations.get(CacheRemoveAllOperation.class);
+        if (cacheRemoveAllOperation != null) {
+            this.processCacheEvictAll(cacheRemoveAllOperation, afterInvokeRunners);
         }
 
         CacheClearOperation cacheClearOperation = (CacheClearOperation) operations.get(CacheClearOperation.class);
@@ -283,7 +283,7 @@ public class CacheOperationContext {
         });
     }
 
-    private void processCacheEvict(CacheEvictOperation operation, List<Runnable> afterInvokeRunners) {
+    private void processCacheEvict(CacheRemoveOperation operation, List<Runnable> afterInvokeRunners) {
         if (this.conditionNotPassing(operation.getCondition())) {
             return;
         }
@@ -300,7 +300,7 @@ public class CacheOperationContext {
         });
     }
 
-    private void doEvict(CacheEvictOperation operation, boolean afterInvocation) {
+    private void doEvict(CacheRemoveOperation operation, boolean afterInvocation) {
         Object key = this.generateKey(operation.getKey(), afterInvocation);
         if (key == null) {
             return;
@@ -308,7 +308,7 @@ public class CacheOperationContext {
         this.getOrCreateCache(operation).remove(key);
     }
 
-    private void processCacheEvictAll(CacheEvictAllOperation operation, List<Runnable> afterInvokeRunners) {
+    private void processCacheEvictAll(CacheRemoveAllOperation operation, List<Runnable> afterInvokeRunners) {
         if (this.conditionNotPassing(operation.getCondition())) {
             return;
         }
@@ -325,7 +325,7 @@ public class CacheOperationContext {
         });
     }
 
-    private void doEvictAll(CacheEvictAllOperation operation, boolean afterInvocation) {
+    private void doEvictAll(CacheRemoveAllOperation operation, boolean afterInvocation) {
         Set<Object> keys = (Set<Object>) this.generateKey(operation.getKeys(), afterInvocation);
         if (CollectionUtils.isEmpty(keys)) {
             return;

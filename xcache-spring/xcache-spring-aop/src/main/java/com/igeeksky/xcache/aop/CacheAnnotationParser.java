@@ -61,26 +61,26 @@ public class CacheAnnotationParser {
             results.add(processCachePutAll(cachePutAll, operation));
         }
 
-        if (method.isAnnotationPresent(CacheEvict.class)) {
+        if (method.isAnnotationPresent(CacheRemove.class)) {
             if (hasCacheable) {
                 throw new IllegalStateException("@CacheEvict and @Cacheable are mutually exclusive");
             }
             if (hasCacheableAll) {
                 throw new IllegalStateException("@CacheEvict and @CacheableAll are mutually exclusive");
             }
-            CacheEvict cacheEvict = method.getAnnotation(CacheEvict.class);
-            results.add(processCacheEvict(cacheEvict, operation));
+            CacheRemove cacheRemove = method.getAnnotation(CacheRemove.class);
+            results.add(processCacheEvict(cacheRemove, operation));
         }
 
-        if (method.isAnnotationPresent(CacheEvictAll.class)) {
+        if (method.isAnnotationPresent(CacheRemoveAll.class)) {
             if (hasCacheable) {
                 throw new IllegalStateException("@CacheEvictAll and @Cacheable are mutually exclusive");
             }
             if (hasCacheableAll) {
                 throw new IllegalStateException("@CacheEvictAll and @CacheableAll are mutually exclusive");
             }
-            CacheEvictAll cacheEvictAll = method.getAnnotation(CacheEvictAll.class);
-            results.add(processCacheEvictAll(cacheEvictAll, operation));
+            CacheRemoveAll cacheRemoveAll = method.getAnnotation(CacheRemoveAll.class);
+            results.add(processCacheEvictAll(cacheRemoveAll, operation));
         }
 
         if (method.isAnnotationPresent(CacheClear.class)) {
@@ -104,8 +104,6 @@ public class CacheAnnotationParser {
                     .name(cacheConfig.name())
                     .keyType(cacheConfig.keyType())
                     .valueType(cacheConfig.valueType())
-                    .keyParams(cacheConfig.keyParams())
-                    .valueParams(cacheConfig.valueParams())
                     .build();
         }
         return null;
@@ -115,9 +113,7 @@ public class CacheAnnotationParser {
         CacheableOperation.Builder builder = CacheableOperation.builder();
         builder.name(cacheable.name())
                 .keyType(cacheable.keyType())
-                .keyParams(cacheable.keyParams())
-                .keyParams(cacheable.keyParams())
-                .valueParams(cacheable.valueParams())
+                .valueType(cacheable.valueType())
                 .cacheOperation(operation);
         return builder.condition(cacheable.condition())
                 .key(cacheable.key())
@@ -128,9 +124,7 @@ public class CacheAnnotationParser {
         CacheableAllOperation.Builder builder = CacheableAllOperation.builder();
         builder.name(cacheableAll.name())
                 .keyType(cacheableAll.keyType())
-                .keyParams(cacheableAll.keyParams())
                 .valueType(cacheableAll.valueType())
-                .valueParams(cacheableAll.valueParams())
                 .cacheOperation(operation);
 
         return builder.condition(cacheableAll.condition())
@@ -142,9 +136,7 @@ public class CacheAnnotationParser {
         CachePutOperation.Builder builder = CachePutOperation.builder();
         builder.name(cachePut.name())
                 .keyType(cachePut.keyType())
-                .keyParams(cachePut.keyParams())
                 .valueType(cachePut.valueType())
-                .valueParams(cachePut.valueParams())
                 .cacheOperation(operation);
 
         return builder.value(cachePut.value())
@@ -158,9 +150,7 @@ public class CacheAnnotationParser {
         CachePutAllOperation.Builder builder = CachePutAllOperation.builder();
         builder.name(cachePutAll.name())
                 .keyType(cachePutAll.keyType())
-                .keyParams(cachePutAll.keyParams())
                 .valueType(cachePutAll.valueType())
-                .valueParams(cachePutAll.valueParams())
                 .cacheOperation(operation);
 
         return builder.condition(cachePutAll.condition())
@@ -169,35 +159,31 @@ public class CacheAnnotationParser {
                 .build();
     }
 
-    private static CacheEvictOperation processCacheEvict(CacheEvict cacheEvict, CacheOperation operation) {
-        CacheEvictOperation.Builder builder = CacheEvictOperation.builder();
-        builder.name(cacheEvict.name())
-                .keyType(cacheEvict.keyType())
-                .keyParams(cacheEvict.keyParams())
-                .valueType(cacheEvict.valueType())
-                .valueParams(cacheEvict.valueParams())
+    private static CacheRemoveOperation processCacheEvict(CacheRemove cacheRemove, CacheOperation operation) {
+        CacheRemoveOperation.Builder builder = CacheRemoveOperation.builder();
+        builder.name(cacheRemove.name())
+                .keyType(cacheRemove.keyType())
+                .valueType(cacheRemove.valueType())
                 .cacheOperation(operation);
 
-        return builder.key(cacheEvict.key())
-                .condition(cacheEvict.condition())
-                .unless(cacheEvict.unless())
-                .beforeInvocation(cacheEvict.beforeInvocation())
+        return builder.key(cacheRemove.key())
+                .condition(cacheRemove.condition())
+                .unless(cacheRemove.unless())
+                .beforeInvocation(cacheRemove.beforeInvocation())
                 .build();
     }
 
-    private static CacheEvictAllOperation processCacheEvictAll(CacheEvictAll cacheEvictAll, CacheOperation operation) {
-        CacheEvictAllOperation.Builder builder = CacheEvictAllOperation.builder();
-        builder.name(cacheEvictAll.name())
-                .keyType(cacheEvictAll.keyType())
-                .keyParams(cacheEvictAll.keyParams())
-                .valueType(cacheEvictAll.valueType())
-                .valueParams(cacheEvictAll.valueParams())
+    private static CacheRemoveAllOperation processCacheEvictAll(CacheRemoveAll cacheRemoveAll, CacheOperation operation) {
+        CacheRemoveAllOperation.Builder builder = CacheRemoveAllOperation.builder();
+        builder.name(cacheRemoveAll.name())
+                .keyType(cacheRemoveAll.keyType())
+                .valueType(cacheRemoveAll.valueType())
                 .cacheOperation(operation);
 
-        return builder.keys(cacheEvictAll.keys())
-                .condition(cacheEvictAll.condition())
-                .unless(cacheEvictAll.unless())
-                .beforeInvocation(cacheEvictAll.beforeInvocation())
+        return builder.keys(cacheRemoveAll.keys())
+                .condition(cacheRemoveAll.condition())
+                .unless(cacheRemoveAll.unless())
+                .beforeInvocation(cacheRemoveAll.beforeInvocation())
                 .build();
     }
 
@@ -205,9 +191,7 @@ public class CacheAnnotationParser {
         CacheClearOperation.Builder builder = CacheClearOperation.builder();
         builder.name(cacheClear.name())
                 .keyType(cacheClear.keyType())
-                .keyParams(cacheClear.keyParams())
                 .valueType(cacheClear.valueType())
-                .valueParams(cacheClear.valueParams())
                 .cacheOperation(operation);
 
         return builder.condition(cacheClear.condition())
