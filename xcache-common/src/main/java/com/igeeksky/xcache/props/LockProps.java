@@ -13,6 +13,12 @@ import java.util.Map;
  */
 public class LockProps {
 
+    /**
+     * 无参构造函数
+     */
+    public LockProps() {
+    }
+
     private String provider;
 
     private Long leaseTime;

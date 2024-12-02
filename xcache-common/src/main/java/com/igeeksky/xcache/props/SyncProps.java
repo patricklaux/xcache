@@ -13,6 +13,12 @@ import java.util.Map;
  */
 public class SyncProps {
 
+    /**
+     * 默认构造函数
+     */
+    public SyncProps() {
+    }
+
     private Boolean first;
 
     private Boolean second;

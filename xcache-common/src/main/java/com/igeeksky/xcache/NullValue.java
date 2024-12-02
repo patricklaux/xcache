@@ -32,6 +32,9 @@ public final class NullValue implements Serializable {
      */
     public static final byte[] INSTANCE_BYTES = INSTANCE_STR.getBytes(StandardCharsets.UTF_8);
 
+    /**
+     * 私有构造函数，单例
+     */
     private NullValue() {
     }
 

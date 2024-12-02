@@ -13,6 +13,12 @@ import java.util.Map;
  */
 public class CompressProps {
 
+    /**
+     * 默认构造函数
+     */
+    public CompressProps() {
+    }
+
     private Integer level;
 
     private Boolean nowrap;

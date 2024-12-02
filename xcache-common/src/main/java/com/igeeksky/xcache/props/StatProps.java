@@ -9,6 +9,12 @@ package com.igeeksky.xcache.props;
 public class StatProps {
 
     /**
+     * 默认构造函数
+     */
+    public StatProps() {
+    }
+
+    /**
      * 缓存统计的时间间隔
      */
     private Long period;
