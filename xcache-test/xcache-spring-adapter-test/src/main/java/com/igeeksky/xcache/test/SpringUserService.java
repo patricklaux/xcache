@@ -25,10 +25,21 @@ public class SpringUserService {
 
     private final Cache<Object, Object> cache;
 
+    /**
+     * 构造函数
+     *
+     * @param cacheManager 缓存管理器
+     */
     public SpringUserService(CacheManager cacheManager) {
         this.cache = cacheManager.getOrCreateCache("user", Object.class, Object.class);
     }
 
+    /**
+     * 根据 key 获取用户数据
+     *
+     * @param key 缓存key
+     * @return 缓存数据
+     */
     public User getUserByCache(Key key) {
         System.out.println("getUserByCache: " + key);
         CacheValue<Object> cacheValue = cache.getCacheValue(key);
@@ -38,16 +49,32 @@ public class SpringUserService {
         return null;
     }
 
+    /**
+     * 保存用户数据
+     *
+     * @param key  缓存key
+     * @param user 用户数据
+     */
     public void saveUserByCache(Key key, User user) {
         System.out.println("saveUserByCache");
         cache.put(key, user);
     }
 
+    /**
+     * 批量保存用户数据
+     *
+     * @param keyValues 缓存key-value
+     */
     public void saveUsersByCache(Map<Key, User> keyValues) {
         System.out.println("saveUsersByCache");
         cache.putAll(keyValues);
     }
 
+    /**
+     * 删除用户数据
+     *
+     * @param key 缓存key
+     */
     public void deleteUserByCache(Key key) {
         cache.remove(key);
     }
