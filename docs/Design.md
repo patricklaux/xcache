@@ -1,6 +1,6 @@
 ## 缓存设计
 
-## 缓存事件广播
+## 数据同步
 
 ### 新增数据（Create）
 
@@ -705,59 +705,6 @@ sequenceDiagram
 
 ## 缓存配置
 
-```yaml
-xcache:
-  group: shop
-  T0:
-    charset: UTF-8
-    cache-type: both
-    local:
-      cache-store: caffeineCacheStoreProvider
-      store-name: caffeine
-      initial-capacity: 1024
-      maximum-size: 2048
-      maximum-weight: 0
-      key-strength: none
-      value-strength: none
-      expire-after-write: 3600000
-      expire-after-access: 300000
-      enable-random-ttl: true
-      enable-null-value: true
-      value-compressor: gzipCompressorProvider
-      value-serializer: jacksonSerializerProvider
-    remote:
-      cache-store: lettuceCacheStoreProvider
-      store-name: redis-string
-      expire-after-write: 7200000
-      enable-key-prefix: true
-      enable-random-ttl: true
-      enable-null-value: true
-      value-compressor: gzipCompressorProvider
-      value-serializer: jacksonSerializerProvider
-    extension:
-      key-convertor: jacksonKeyConvertorProvider
-      cache-lock: localCacheLockProvider
-      cache-lock-size: 128
-      cache-stat: logCacheStatManager
-      cache-sync: lettuceCacheSyncProvider
-      cache-sync-channel: shop
-      cache-sync-serializer: jacksonKeyConvertorProvider
-      cache-loader: none
-      cache-monitors: none
-      contains-predicate: alwaysTruePredicateProvider
-    metadata:
-  caches:
-    - name: user
-      template: T0
-    - name: order
-      template: T0
-  redis:
-    - id:
-  stat:
-    cache-stat-period: 10000
-  sync:
-```
-
 String 类型：未配置，使用默认配置；none，禁用此配置项。
 
 Number 类型：未配置，使用默认配置；0，禁用此配置项。
@@ -781,227 +728,197 @@ sequenceDiagram
 
 
 
-## 缓存锁设计
+## 缓存锁
 
 
 
-## 缓存键转换
+## 缓存键
 
 
 
-## 缓存数据序列化
+## 序列化
 
 
 
-## 8. 缓存模式
+## 数据同步
 
-### 8.1. Cache-Aside
+方案一：只有一级缓存时，同步 key 和 value；当有多级缓存时，仅同步 key。
 
-Cache-Aside 策略是最常用的缓存模式，其主要特点是缓存不与数据源直接交互，仅作为旁路逻辑。
+同步本来就要引入 Redis 或 MQ，既然需要引入这些组件，那么更应该改为多级缓存。
 
-#### 8.1.1. 读数据
+如果实例少，
 
-1. 用户向应用程序请求数据。
-2. 应用程序从缓存读取数据。
-3. 如果缓存中有该数据，直接返回缓存数据给用户【结束】。
-4. 如果缓存中无该数据，由**应用程序**从数据源读取数据，并将该数据写入到缓存。
-5. 返回该数据给用户【结束】。
+如果实例多，同步 key 和 value 容易引起广播风暴，更应该改为多级缓存。
 
-![image-20241116094138874](images/Design/image-20241116094138874.png)
 
-```mermaid
-sequenceDiagram
-    
-    actor->>app: 1: request
-	app->>cache: 2: read data
-	cache-->>app: 2: return data
-	Note left of cache: if data not in cache
-	app->>datasource: 3: read data
-	datasource-->>app: 3: return data
-	app->>cache: 3: put data
-	cache-->>app: 3: return
-	app-->>actor: 4: response data
+
+方案二：只有一级缓存时，不同步；当有多级缓存时，仅同步 key。
+
+
+
+## 缓存刷新
+
+**为什么要设置存活时间**？
+
+1、自动移除无效数据，避免缓存中垃圾数据堆积；
+
+2、可在一定时间周期内感知和反映源数据的变化（一致性）。
+
+3、可在一定时间周期内消除数据异常（容错性）。
+
+**为什么要设置自动刷新**？
+
+
+
+
+
+### 触发条件
+
+**请求触发**
+
+如果是根据请求触发，可仅刷新最后一级缓存，然后返回数据即可。
+
+因为请求到达最后一级缓存，已经说明前面几级缓存无数据，cache 对象会自动回填。
+
+
+
+重计存活时间
+
+是：
+
+如果存活时间内有请求，则不会过期；如果存活时间内无请求，则自动过期。
+
+优点：自动淘汰极不活跃的数据。
+
+缺点：缓存的高级淘汰算法失效，缓存中的大部分是新加载数据。
+
+
+
+否：
+
+无论存活时间内是否有请求，超过存活时间则自动失效。
+
+优点：缓存的高级淘汰算法有效，可以较好地保证缓存的命中率。
+
+缺点：数据失效后不会自动刷新，需在请求时等待回源取值完成。
+
+较好的方式是设置较大的存活时间，通过自动刷新来保证数据一致性，减少请求过程中等待数据回源的次数。
+
+
+
+资源：
+
+需要额外空间来存储刷新时间。
+
+需要额外线程定时删除已失效的刷新键集，否则可能会导致内存溢出。
+
+
+
+**周期触发**
+
+如果是根据时间周期触发，当数据源数据与缓存数据不一致时。
+
+判断值有无变化，如果有变化，则重新写入（或删除原值）；如果无变化，则仅写入最后一级缓存（延长过期时间）。
+
+如果不加判断全部重写，刷新所有级别缓存，会导致各级缓存的算法失效，缓存中的都是新数据。
+
+
+
+重计存活时间
+
+是：
+
+否：
+
+
+
+### Store 加载
+
+<img src="images/Design/image-20241127170636727.png" alt="image-20241127170636727" style="zoom: 33%;" />
+
+
+
+CacheLoader（ContainsPredicate，CacheLock）
+
+CacheRefresh
+
+
+
+**CacheSync**
+
+**CacheStat**
+
+
+
+KeyCodec
+
+ValueCodec
+
+ValueCompressor
+
+
+
+1. 创建 Store 对象时，需先创建扩展对象；
+2. 对于 Caffeine，停止 load 的条件：(1) **达到最大容量**后该 key 根据算法被淘汰；(2) 主动移除该 key。
+3. 对于 Redis，停止 load 的条件：(1) **达到内存容量**后该 key 根据算法被淘汰；(2) 主动移除该 key。
+
+
+
+Redis 程序：
+
+1、zrange key [Limit offset count] 获取条目
+
+2、判断该 key 是否存在于 CacheStore。
+
+2.1、如不存在：删除该条目（zrem key member）【结束】
+
+2.2、如果存在：执行 load。
+
+3、判断 load 结果是否为空：
+
+3.1、如不为空，存入 CacheStore【结束】
+
+3.2、如为空，判断是否允许空值。
+
+4、
+
+
+
+Caffeine 程序：
+
+自动刷新不会延长过期时间，当超过设定的过期时间后，只有再次请求时才加载数据，【无法起到预刷新的效果】。
+
+数据过期仅与 expireAfterWrite 和 expireAfterAccess 有关，与自动刷新无关。
+
+
+
+### Cache 加载
+
+<img src="images/Design/image-20241127170749988.png" alt="image-20241127170749988" style="zoom:25%;" />
+
+
+
+
+
+### 刷新配置
+
+```yaml
+      third: # 三级缓存配置
+        provider: NONE # StoreProviderId（三级缓存默认值：NONE）
+        redis-type: HASH # Redis 命令类型（默认：STRING，如无需过期，可设为 HASH）
+        hash-keys-size: 64
+        expire-after-write: 7200000 # 数据写入后的存活时间（外部缓存默认值：7200000 单位：毫秒）
+        enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，仅适用于外部缓存）
+        enable-random-ttl: true # 是否使用随机存活时间（默认值：true，避免大量的 key 集中过期）
+        enable-null-value: true # 是否允许保存空值（默认值：true）
+        refresh:
+          provider: caffeine
+          refresh-after-write: 0
+          stop-after-access:
+        codec: jackson # 用于值的序列化（外部缓存默认值：jackson）
+        compressor: # 值压缩配置
+          provider: NONE # CompressorProviderId（默认值：NONE，不启用数据压缩）
+          nowrap: false # 是否不携带封装信息（默认值：false，此配置对于 DeflaterCompressor 有效）
+          level: 5 # 压缩级别（默认值：-1，此配置对于 DeflaterCompressor 有效）
 ```
 
-#### 8.1.2. 写数据
-
-1. 用户向应用程序请求写入数据。
-2. 应用程序将数据写入数据源。
-3. 应用程序将数据写入缓存。
-4. 返回结果给用户【结束】。
-
-```mermaid
-sequenceDiagram
-    actor->>app: 1: request
-	app->>datasource: 2: write data
-	datasource-->>app: 2.1: return
-	app->>cache: 3: write data
-	cache-->>app: 3.1: return
-	app-->>actor: 4: response
-```
-
-#### 8.1.3. 代码示例
-
-```java
-/**
- * 数据读取
- */
-public User getUser(Long id){
-    CacheValue<User> cacheValue = cache.getCacheValue(id);
-    if(cacheValue != null){
-        // 如果缓存中有数据，直接返回缓存数据；
-        return cacheValue.getValue();
-    }
-    // 如果缓存中无数据，从数据源查找数据，并将结果存入缓存
-    User user = userDao.find(id);
-    cache.put(id, user);
-    return user;
-}
-
-/**
- * 数据更新
- */
-public void updateUser(Long id, User user){
-    // 更新数据源
-    userDao.update(id, user);
-	// 删除缓存数据（或更新缓存数据）
-    cache.remove(id);
-    // cache.put(id, user);
-}
-```
-
-
-
-### 8.2. Read-Through
-
-Read-Through 策略也是常用的缓存模式，其主要特点是由缓存与数据源直接交互，执行读数据的操作。
-
-#### 8.2.1. 读数据
-
-1. 用户向应用程序请求数据。
-2. 应用程序从缓存读取数据。
-3. 如果缓存中有该数据：返回缓存数据给用户【结束】。
-4. 如果缓存中无该数据：由**缓存**从数据源读取数据，并将该数据写入到缓存。
-5. 返回数据给用户【结束】。
-
-```mermaid
-sequenceDiagram
-    
-    actor->>app: 1: request
-	app->>cache: 2: read data
-	Note left of cache: if data in cache
-	cache-->>app: 2.1: return data
-	app-->>actor: 3: response
-	Note left of cache: if data not in cache
-	cache->>datasource: 4: read data
-	datasource-->>cache: 4.1: return data
-	cache->>cache: 4.2: put data
-	cache-->>app: 4.3: return data
-	app-->>actor: 5: response
-```
-
-#### 8.2.2. 代码示例
-
-```java
-/**
- * 数据读取
- */
-public User getUser(Long id){
-    // 如果缓存中有该数据：直接返回缓存数据；
-    // 如果缓存没有该数据：缓存内部调用 cacheLoader 从数据源读取数据，并将数据写入到缓存。
-    return cache.get(id, cacheLoader);
-}
-```
-
-
-
-### 8.3. Write-Through
-
-Write-Through 的主要特点是由缓存与数据源交互，数据写入缓存时由缓存同步将数据写入数据源。
-
-#### 8.3.1. 写数据
-
-1. 用户向应用程序请求写入数据。
-2. 应用程序向缓存写入数据。
-3. **缓存**向数据源**同步**写入数据。
-4. **缓存**保存数据。
-5. 返回结果给用户【结束】。
-
-```mermaid
-sequenceDiagram
-    actor->>app: 1: request
-	app->>cache: 2: write data
-	cache->>datasource: 3.1: [sync] write data
-	datasource-->>cache: 3.2: return
-	cache->>cache: 4.write data
-	cache-->>app: 5: return
-	app-->>actor: 6: response
-```
-
-#### 8.3.2. 代码示例
-
-```java
-/**
- * 数据写入
- */
-public void saveUser(Long id, User user){
-    // 如果缓存中有该数据：直接返回缓存数据；
-    cache.put(id, user);
-}
-```
-
-> CacheWriter ？？
->
-> 异步、同步 处理
-
-
-
-### 8.4. Write-Behind
-
-Write-Through 的主要特点是由缓存与数据源交互，数据写入缓存后由缓存异步将数据写入数据源。
-
-#### 8.4.1. 写数据
-
-1. 用户向应用程序请求写入数据。
-2. 应用程序向缓存写入数据。
-3. **缓存**向数据源**异步**写入数据。
-4. **缓存**保存数据。
-5. 返回结果给用户【结束】。
-
-```mermaid
-sequenceDiagram
-    actor->>app: 1: request
-	app->>cache: 2: write data
-	cache-->>datasource: 3.1: [async] write data
-	cache->>cache: 4.write data
-	cache-->>app: 5: return
-	app-->>actor: 6: response
-```
-
-#### 8.4.2. 代码示例
-
-```java
-/**
- * 数据写入
- */
-public void saveUser(Long id, User user){
-    // 如果缓存中有该数据：直接返回缓存数据；
-    cache.put(id, user);
-}
-```
-
-> CacheWriter ？？
->
-> 异步、同步 处理
-
-
-
-### 8.5. Refresh-Ahead
-
-
-
-### 8.6. 小结
-
-
-
-![image-20241117072701776](images/Design/image-20241117072701776.png)

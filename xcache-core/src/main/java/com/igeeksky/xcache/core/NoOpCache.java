@@ -24,9 +24,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
 
     private final String name;
     private final Class<K> keyType;
-    private final Class<?>[] keyParams;
     private final Class<V> valueType;
-    private final Class<?>[] valueParams;
     private final CacheLoader<K, V> cacheLoader;
     private final CacheWriter<K, V> cacheWriter;
     private final ContainsPredicate<K> containsPredicate;
@@ -37,9 +35,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
                      CacheWriter<K, V> cacheWriter, ContainsPredicate<K> containsPredicate) {
         this.name = config.getName();
         this.keyType = config.getKeyType();
-        this.keyParams = config.getKeyParams();
         this.valueType = config.getValueType();
-        this.valueParams = config.getValueParams();
         this.cacheLoader = cacheLoader != null ? cacheLoader : NoOpCacheLoader.getInstance();
         this.cacheWriter = cacheWriter != null ? cacheWriter : NoOpCacheWriter.getInstance();
         this.containsPredicate = containsPredicate;
@@ -57,18 +53,8 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public Class<?>[] getKeyParams() {
-        return this.keyParams;
-    }
-
-    @Override
     public Class<V> getValueType() {
         return valueType;
-    }
-
-    @Override
-    public Class<?>[] getValueParams() {
-        return this.valueParams;
     }
 
     @Override
