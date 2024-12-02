@@ -59,6 +59,7 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
 
     private final RedisStringCommands<byte[], byte[]> stringCommands;
     private final RedisHashCommands<byte[], byte[]> hashCommands;
+    private final RedisSortedSetCommands<byte[], byte[]> sortedSetCommands;
     private final RedisKeyCommands<byte[], byte[]> keyCommands;
     private final BaseRedisCommands<byte[], byte[]> baseCommands;
     private final RedisServerCommands<byte[], byte[]> serverCommands;
@@ -83,6 +84,7 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
         RedisCommands<byte[], byte[]> sync = connection.sync();
         this.stringCommands = sync;
         this.hashCommands = sync;
+        this.sortedSetCommands = sync;
         this.keyCommands = sync;
         this.baseCommands = sync;
         this.serverCommands = sync;
@@ -110,6 +112,7 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
         RedisAdvancedClusterCommands<byte[], byte[]> sync = connection.sync();
         this.stringCommands = sync;
         this.hashCommands = sync;
+        this.sortedSetCommands = sync;
         this.keyCommands = sync;
         this.baseCommands = sync;
         this.serverCommands = sync;
@@ -165,6 +168,11 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
     @Override
     public String psetex(byte[] key, long milliseconds, byte[] value) {
         return stringCommands.psetex(key, milliseconds, value);
+    }
+
+    @Override
+    public boolean pexpire(byte[] key, long milliseconds) {
+        return keyCommands.pexpire(key, milliseconds);
     }
 
     @Override
@@ -447,6 +455,73 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
             }
         }
         return num;
+    }
+
+    @Override
+    public long zadd(byte[] key, double score, byte[] member) {
+        return sortedSetCommands.zadd(key, score, member);
+    }
+
+    @Override
+    public long zrem(byte[] key, byte[]... members) {
+        return sortedSetCommands.zrem(key, members);
+    }
+
+    @Override
+    public long zremrangeByRank(byte[] key, long start, long stop) {
+        return sortedSetCommands.zremrangebyrank(key, start, stop);
+    }
+
+    @Override
+    public long zremrangeByScore(byte[] key, double min, double max) {
+        return sortedSetCommands.zremrangebyscore(key, Range.create(min, max));
+    }
+
+    @Override
+    public long zremrangeByLex(byte[] key, byte[] min, byte[] max) {
+        return sortedSetCommands.zremrangebylex(key, Range.create(min, max));
+    }
+
+    @Override
+    public List<KeyValue<byte[], Double>> zrangebyscoreWithScores(byte[] key, double min, double max, long offset, long count) {
+        Range<Double> range = Range.create(min, max);
+        Limit limit = Limit.create(offset, count);
+        List<ScoredValue<byte[]>> scoredValues = sortedSetCommands.zrangebyscoreWithScores(key, range, limit);
+        if (scoredValues.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<KeyValue<byte[], Double>> result = new ArrayList<>(scoredValues.size());
+        for (ScoredValue<byte[]> scoredValue : scoredValues) {
+            if (scoredValue.hasValue()) {
+                result.add(new KeyValue<>(scoredValue.getValue(), scoredValue.getScore()));
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public long zcount(byte[] key, double min, double max) {
+        return 0;
+    }
+
+    @Override
+    public long zcard(byte[] key) {
+        return 0;
+    }
+
+    @Override
+    public long zrevrank(byte[] key, byte[] member) {
+        return 0;
+    }
+
+    @Override
+    public long zrank(byte[] key, byte[] member) {
+        return 0;
+    }
+
+    @Override
+    public double zscore(byte[] key, byte[] member) {
+        return 0;
     }
 
     @Override

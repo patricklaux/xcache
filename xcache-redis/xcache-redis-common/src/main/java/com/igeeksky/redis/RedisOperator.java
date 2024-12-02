@@ -72,6 +72,15 @@ public interface RedisOperator extends AutoCloseable {
     String psetex(byte[] key, long milliseconds, byte[] value);
 
     /**
+     * 设置键的过期时间。
+     *
+     * @param key          键
+     * @param milliseconds 过期时间，单位：毫秒
+     * @return true：设置成功；false：设置失败
+     */
+    boolean pexpire(byte[] key, long milliseconds);
+
+    /**
      * 批量存储键值对。
      *
      * @param keyValues 键值对集合
@@ -180,6 +189,32 @@ public interface RedisOperator extends AutoCloseable {
     long hdel(Map<byte[], List<byte[]>> keyFields);
     // Hash Command --end--
 
+
+    // SortSet Command --start--
+
+    long zadd(byte[] key, double score, byte[] member);
+
+    long zrem(byte[] key, byte[]... members);
+
+    long zremrangeByRank(byte[] key, long start, long stop);
+
+    long zremrangeByScore(byte[] key, double min, double max);
+
+    long zremrangeByLex(byte[] key, byte[] min, byte[] max);
+
+    List<KeyValue<byte[], Double>> zrangebyscoreWithScores(byte[] key, double min, double max, long offset, long count);
+
+    long zcount(byte[] key, double min, double max);
+
+    long zcard(byte[] key);
+
+    long zrevrank(byte[] key, byte[] member);
+
+    long zrank(byte[] key, byte[] member);
+
+    double zscore(byte[] key, byte[] member);
+
+    // SortSet Command --end--
 
     // Stream Command --start--
 
@@ -347,5 +382,6 @@ public interface RedisOperator extends AutoCloseable {
      * @return UNIX时间戳，毫秒
      */
     long timeMillis();
+
     // BaseCommand --end--
 }

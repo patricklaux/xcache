@@ -50,7 +50,7 @@ public class UserService {
         return new User("1", "MethodResult", 18);
     }
 
-    @CacheEvict
+    @CacheRemove
     public void deleteByKey(Key key) {
         System.out.println("deleteByKey:" + key);
     }
@@ -111,7 +111,7 @@ public class UserService {
         return users;
     }
 
-    @CacheEvictAll
+    @CacheRemoveAll
     public void deleteUsers(Set<Key> ids) {
         System.out.println("deleteUsers:" + ids);
     }

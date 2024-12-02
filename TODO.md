@@ -34,4 +34,5 @@
 - [ ] 【开发】 xcache-jedis
 - [ ] 【开发】 ConcurrentHashMap 实现无过期时间的缓存
 - [ ] 【开发】 RedisHashStore 分为两类实现：一是集群模式，二是非集群模式。
+- [ ] 【开发】 RedisHashStore，initKeys 方法，用于初始化缓存的 key 列表，需可配置数量。
 - [ ] 【开发】 缓存接口方法名调整
