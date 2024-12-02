@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * 缓存加载器、缓存写入器自动配置
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/27
  */

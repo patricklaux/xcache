@@ -24,16 +24,8 @@ public class CacheTestCase {
         Assertions.assertEquals(Key.class, cache.getKeyType());
     }
 
-    void getKeyParams() {
-        Assertions.assertEquals(0, cache.getKeyParams().length);
-    }
-
     void getValueType() {
         Assertions.assertEquals(User.class, cache.getValueType());
-    }
-
-    void getValueParams() {
-        Assertions.assertEquals(0, cache.getValueParams().length);
     }
 
     void get() {

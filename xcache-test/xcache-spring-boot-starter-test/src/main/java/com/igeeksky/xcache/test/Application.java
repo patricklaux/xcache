@@ -8,6 +8,8 @@ import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoCo
 
 
 /**
+ * Xcache 注解测试启动程序
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-27
  */

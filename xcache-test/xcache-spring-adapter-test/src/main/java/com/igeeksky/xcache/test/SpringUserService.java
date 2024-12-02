@@ -5,8 +5,6 @@ import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.CacheManager;
 import com.igeeksky.xcache.domain.Key;
 import com.igeeksky.xcache.domain.User;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.Resource;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -16,6 +14,8 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 
 /**
+ * Spring cache 注解测试，用户缓存服务
+ *
  * @author patrick
  * @since 0.0.4 2024/3/15
  */
@@ -23,14 +23,10 @@ import java.util.Map;
 @CacheConfig(cacheNames = "user")
 public class SpringUserService {
 
-    private Cache<Object, Object> cache;
+    private final Cache<Object, Object> cache;
 
-    @Resource
-    private CacheManager cacheManager;
-
-    @PostConstruct
-    public void init() {
-        cache = cacheManager.getOrCreateCache("user", Object.class, Object.class);
+    public SpringUserService(CacheManager cacheManager) {
+        this.cache = cacheManager.getOrCreateCache("user", Object.class, Object.class);
     }
 
     public User getUserByCache(Key key) {
