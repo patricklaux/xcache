@@ -66,12 +66,15 @@ public class RedisStringStore<V> implements RedisStore<V> {
 
     @Override
     public void put(String key, V value) {
+        byte[] storeKey = toStoreKey(key);
         byte[] storeValue = this.convertor.toExtraStoreValue(value);
-        if (storeValue != null) {
+        if (storeValue == null) {
+            this.operator.del(storeKey);
+        } else {
             if (expireAfterWrite <= 0) {
-                checkResult(this.operator.set(toStoreKey(key), storeValue), "put", key, value);
+                checkResult(this.operator.set(storeKey, storeValue), "put", key, value);
             } else {
-                checkResult(this.operator.psetex(toStoreKey(key), timeToLive(), storeValue), "psetex", key, value);
+                checkResult(this.operator.psetex(storeKey, timeToLive(), storeValue), "psetex", key, value);
             }
         }
     }
@@ -79,26 +82,39 @@ public class RedisStringStore<V> implements RedisStore<V> {
     @Override
     public void putAll(Map<? extends String, ? extends V> keyValues) {
         if (expireAfterWrite <= 0) {
-            Map<byte[], byte[]> map = Maps.newHashMap(keyValues.size());
+            List<byte[]> removeKeys = new ArrayList<>();
+            Map<byte[], byte[]> putKeyValues = Maps.newHashMap(keyValues.size());
             keyValues.forEach((k, v) -> {
+                byte[] storeKey = toStoreKey(k);
                 byte[] storeValue = this.convertor.toExtraStoreValue(v);
-                if (storeValue != null) {
-                    map.put(toStoreKey(k), storeValue);
+                if (storeValue == null) {
+                    removeKeys.add(storeKey);
+                } else {
+                    putKeyValues.put(storeKey, storeValue);
                 }
             });
-            checkResult(this.operator.mset(map), "mset");
+            if (!removeKeys.isEmpty()) {
+                this.operator.del(removeKeys.toArray(new byte[0][]));
+            }
+            checkResult(this.operator.mset(putKeyValues), "mset");
             return;
         }
 
-        List<ExpiryKeyValue<byte[], byte[]>> expiryKeyValues = new ArrayList<>(keyValues.size());
+        List<byte[]> removeKeys = new ArrayList<>();
+        List<ExpiryKeyValue<byte[], byte[]>> putKeyValues = new ArrayList<>(keyValues.size());
         keyValues.forEach((k, v) -> {
             byte[] storeValue = this.convertor.toExtraStoreValue(v);
-            if (storeValue != null) {
-                expiryKeyValues.add(new ExpiryKeyValue<>(toStoreKey(k), storeValue, timeToLive()));
+            if (storeValue == null) {
+                removeKeys.add(toStoreKey(k));
+            } else {
+                putKeyValues.add(new ExpiryKeyValue<>(toStoreKey(k), storeValue, timeToLive()));
             }
         });
 
-        checkResult(this.operator.mpsetex(expiryKeyValues), "mset");
+        if (!removeKeys.isEmpty()) {
+            this.operator.del(removeKeys.toArray(new byte[0][]));
+        }
+        checkResult(this.operator.mpsetex(putKeyValues), "mset");
     }
 
     @Override

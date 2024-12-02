@@ -42,19 +42,9 @@ public class CacheConfig<K, V> {
     private final Class<K> keyType;
 
     /**
-     * 键泛型参数
-     */
-    private final Class<?>[] keyParams;
-
-    /**
      * 值类型
      */
     private final Class<V> valueType;
-
-    /**
-     * 值泛型参数
-     */
-    private final Class<?>[] valueParams;
 
     public CacheConfig(Builder<K, V> builder) {
         this.sid = builder.sid;
@@ -62,9 +52,7 @@ public class CacheConfig<K, V> {
         this.group = builder.group;
         this.charset = builder.charset;
         this.keyType = builder.keyType;
-        this.keyParams = builder.keyParams;
         this.valueType = builder.valueType;
-        this.valueParams = builder.valueParams;
     }
 
     public String getName() {
@@ -87,21 +75,12 @@ public class CacheConfig<K, V> {
         return keyType;
     }
 
-    public Class<?>[] getKeyParams() {
-        return keyParams;
-    }
-
     public Class<V> getValueType() {
         return valueType;
     }
 
-    public Class<?>[] getValueParams() {
-        return valueParams;
-    }
-
-    public static <K, V> Builder<K, V> builder(Class<K> keyType, Class<?>[] keyParams,
-                                               Class<V> valueType, Class<?>[] valueParams) {
-        return new Builder<>(keyType, keyParams, valueType, valueParams);
+    public static <K, V> Builder<K, V> builder(Class<K> keyType, Class<V> valueType) {
+        return new Builder<>(keyType, valueType);
     }
 
     public static class Builder<K, V> {
@@ -116,17 +95,11 @@ public class CacheConfig<K, V> {
 
         private final Class<K> keyType;
 
-        private final Class<?>[] keyParams;
-
         private final Class<V> valueType;
 
-        private final Class<?>[] valueParams;
-
-        private Builder(Class<K> keyType, Class<?>[] keyParams, Class<V> valueType, Class<?>[] valueParams) {
+        private Builder(Class<K> keyType, Class<V> valueType) {
             this.keyType = keyType;
-            this.keyParams = keyParams;
             this.valueType = valueType;
-            this.valueParams = valueParams;
         }
 
         public Builder<K, V> sid(String sid) {

@@ -15,10 +15,20 @@ public class CacheProps extends AbstractProps {
 
     private String templateId;
 
+    /**
+     * 默认构造函数
+     */
     public CacheProps() {
+        super();
     }
 
+    /**
+     * 构造函数
+     *
+     * @param name 缓存名称（不能为空）
+     */
     public CacheProps(String name) {
+        super();
         this.name = name;
     }
 

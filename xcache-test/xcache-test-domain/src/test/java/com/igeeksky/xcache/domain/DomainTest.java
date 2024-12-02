@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
+ * toString 方法测试
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-24
  */

@@ -918,7 +918,7 @@ Redis 配置部分，用于创建 Redis 相关的对象。
 
 如果想继续了解 Xcache 有哪些主要的对象类型，哪些需要配置，哪些无需配置，请参见下一节：[4.2. 对象创建与使用](#4.2. 对象创建与使用)
 
-### 4.2. 对象创建与使用
+### 4.2. 对象创建
 
 #### 4.2.1. 对象类型
 
@@ -1427,7 +1427,7 @@ xcache:
 
 #### 5.5.2. 执行逻辑
 
-![cacheEvict](images/cacheEvict.png)
+![cacheRemove](images/cacheRemove.png)
 
 
 
@@ -1451,7 +1451,7 @@ xcache:
 
 #### 5.6.2. 执行逻辑
 
-![cacheEvictAll](images/cacheEvictAll.png)
+![cacheRemoveAll](images/cacheRemoveAll.png)
 
 
 
@@ -2247,6 +2247,7 @@ xcache: #【2】
       second: #【14】二级缓存配置
         provider: lettuce #【15】使用 id 为 lettuce 的 StoreProvider 作为二级缓存（即【19】中设定的 id）
         expire-after-write: 7200000 #【16】数据写入后的存活时间（外部缓存默认值：7200000 毫秒）
+        enable-random-ttl: true #【13】是否使用随机存活时间（默认值：true）
   redis: #【17】Redis 配置
     store: #【18】RedisStoreProvider 配置
       - id: lettuce #【19】创建 id 为 lettuce 的 RedisStoreProvider
@@ -2267,7 +2268,9 @@ xcache: #【2】
 - 当配置为  ``embed`` 时，实现类为  ``EmbedCacheRefreshProvider``，其采用本地 ``HashMap`` 记录查询过的 key。当有多个进程实例时，相同的 key 可能会同时存在于多个实例，而且每个进程实例都会调用  ``CacheLoader`` 读取数据。
 - 当配置为自定义 id 时，譬如这里的 ``lettuce`` ，实现类为  ``RedisCacheRefreshProvider``，其采用 Redis 集中存储查询过的 key，因此不会重复，且同一时刻最多只有一个进程实例会调用  ``CacheLoader`` 读取数据。
 
-2、【7】period：这里设定了刷新的间隔周期。我们期望的是在缓存值过期之前刷新数据，因此这个数值要小于最后一级缓存的 expire-after-write 配置值。
+2、【7】period：这里设定了刷新的间隔周期。
+
+- 我们期望的是在缓存值过期之前刷新数据，因此这个数值要小于最后一级缓存的 expire-after-write 配置值。
 
 缓存数据刷新需用到 Cache 对象内部的 ``CacheLoader`` ，因此需通过自动配置方式注入与缓存同名的 ``CacheLoader``  对象。
 

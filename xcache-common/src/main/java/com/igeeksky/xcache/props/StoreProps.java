@@ -14,6 +14,12 @@ import java.util.Map;
  */
 public class StoreProps {
 
+    /**
+     * 默认构造函数
+     */
+    public StoreProps() {
+    }
+
     private String provider;
 
     private Integer initialCapacity;

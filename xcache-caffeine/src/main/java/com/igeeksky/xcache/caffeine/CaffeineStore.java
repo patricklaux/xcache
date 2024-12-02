@@ -56,6 +56,8 @@ public class CaffeineStore<V> implements Store<V> {
         CacheValue<Object> storeValue = this.convertor.toStoreValue(value);
         if (storeValue != null) {
             store.put(key, storeValue);
+        } else {
+            store.invalidate(key);
         }
     }
 

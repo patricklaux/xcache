@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
+ * 锁休眠策略测试
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/27
  */

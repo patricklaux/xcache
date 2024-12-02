@@ -5,6 +5,8 @@ import com.igeeksky.xcache.domain.User;
 import org.junit.jupiter.api.Assertions;
 
 /**
+ * Cache 公共测试用例
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/9
  */
@@ -24,16 +26,8 @@ public class CacheTestCase {
         Assertions.assertEquals(Key.class, cache.getKeyType());
     }
 
-    void getKeyParams() {
-        Assertions.assertEquals(0, cache.getKeyParams().length);
-    }
-
     void getValueType() {
         Assertions.assertEquals(User.class, cache.getValueType());
-    }
-
-    void getValueParams() {
-        Assertions.assertEquals(0, cache.getValueParams().length);
     }
 
     void get() {

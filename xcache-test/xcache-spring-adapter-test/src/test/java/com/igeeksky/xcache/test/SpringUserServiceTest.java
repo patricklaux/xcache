@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
+ * 测试用户缓存服务
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/9/5
  */

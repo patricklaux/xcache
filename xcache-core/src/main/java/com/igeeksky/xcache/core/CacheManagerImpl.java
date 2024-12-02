@@ -63,32 +63,29 @@ public class CacheManagerImpl implements CacheManager {
     }
 
     @Override
-    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Class<K> keyType, Class<?>[] keyParams,
-                                               Class<V> valueType, Class<?>[] valueParams) {
+    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Class<K> keyType, Class<V> valueType) {
         String name = StringUtils.trimToNull(cacheName);
         requireNonNull(keyType, () -> "keyType must not be null");
         requireNonNull(valueType, () -> "valueType must not be null");
         requireNonNull(name, () -> "cacheName must not be null or empty");
-        return (Cache<K, V>) cached.computeIfAbsent(name, k -> createCache(k, keyType, keyParams,
-                valueType, valueParams));
+        return (Cache<K, V>) cached.computeIfAbsent(name, nameKey -> createCache(nameKey, keyType, valueType));
     }
 
-    private <K, V> Cache<K, V> createCache(String name, Class<K> keyType, Class<?>[] keyParams,
-                                           Class<V> valueType, Class<?>[] valueParams) {
+    private <K, V> Cache<K, V> createCache(String name, Class<K> keyType, Class<V> valueType) {
         // 1. 获取配置
         CacheProps cacheProps = this.getOrCreateCacheProps(name);
 
         // 2. 创建 CacheConfig
-        CacheConfig<K, V> cacheConfig = this.buildCacheConfig(cacheProps, keyType, keyParams, valueType, valueParams);
+        CacheConfig<K, V> cacheConfig = this.buildCacheConfig(cacheProps, keyType, valueType);
+
+        CacheLoader<K, V> cacheLoader = componentManager.getCacheLoader(name);
+        CacheWriter<K, V> cacheWriter = componentManager.getCacheWriter(name);
+        ContainsPredicate<K> predicate = componentManager.getContainsPredicate(name);
 
         Store<V>[] stores = new Store[3];
         stores[0] = this.getStore(cacheProps.getFirst(), cacheConfig);
         stores[1] = this.getStore(cacheProps.getSecond(), cacheConfig);
         stores[2] = this.getStore(cacheProps.getThird(), cacheConfig);
-
-        CacheLoader<K, V> cacheLoader = componentManager.getCacheLoader(name);
-        CacheWriter<K, V> cacheWriter = componentManager.getCacheWriter(name);
-        ContainsPredicate<K> predicate = componentManager.getContainsPredicate(name);
 
         if (CacheBuilder.count(stores) == 0) {
             return new NoOpCache<>(cacheConfig, cacheLoader, cacheWriter, predicate);
@@ -163,9 +160,8 @@ public class CacheManagerImpl implements CacheManager {
         return id != null ? id : CacheConstants.DEFAULT_TEMPLATE_ID;
     }
 
-    private <K, V> CacheConfig<K, V> buildCacheConfig(CacheProps cacheProps, Class<K> keyType, Class<?>[] keyParams,
-                                                      Class<V> valueType, Class<?>[] valueParams) {
-        return CacheConfig.builder(keyType, keyParams, valueType, valueParams)
+    private <K, V> CacheConfig<K, V> buildCacheConfig(CacheProps cacheProps, Class<K> keyType, Class<V> valueType) {
+        return CacheConfig.builder(keyType, valueType)
                 .sid(this.sid)
                 .name(cacheProps.getName())
                 .group(this.group)
@@ -180,7 +176,7 @@ public class CacheManagerImpl implements CacheManager {
         }
 
         String name = cacheConfig.getName();
-        StoreConfig<V> storeConfig = StoreConfig.builder(cacheConfig.getValueType(), cacheConfig.getValueParams())
+        StoreConfig<V> storeConfig = StoreConfig.builder(cacheConfig.getValueType())
                 .name(name)
                 .group(cacheConfig.getGroup())
                 .charset(cacheConfig.getCharset())
@@ -211,7 +207,7 @@ public class CacheManagerImpl implements CacheManager {
     }
 
     private <K, V> Codec<V> getValueCodec(String beanId, CacheConfig<K, V> cacheConfig) {
-        CodecConfig<V> codecConfig = CodecConfig.builder(cacheConfig.getValueType(), cacheConfig.getValueParams())
+        CodecConfig<V> codecConfig = CodecConfig.builder(cacheConfig.getValueType())
                 .name(cacheConfig.getName())
                 .charset(cacheConfig.getCharset())
                 .build();
@@ -261,7 +257,7 @@ public class CacheManagerImpl implements CacheManager {
     }
 
     private <K, V> CodecConfig<K> buildKeyCodecConfig(CacheConfig<K, V> cacheConfig) {
-        return CodecConfig.builder(cacheConfig.getKeyType(), cacheConfig.getKeyParams())
+        return CodecConfig.builder(cacheConfig.getKeyType())
                 .name(cacheConfig.getName())
                 .charset(cacheConfig.getCharset())
                 .build();

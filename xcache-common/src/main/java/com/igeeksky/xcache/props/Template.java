@@ -10,6 +10,13 @@ import com.igeeksky.xtool.core.json.SimpleJSON;
  */
 public class Template extends AbstractProps {
 
+    /**
+     * 默认构造函数
+     */
+    public Template() {
+        super();
+    }
+
     private String id;
 
     /**

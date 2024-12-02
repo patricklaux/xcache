@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
 /**
+ * RedisSpinLock 测试
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/27
  */

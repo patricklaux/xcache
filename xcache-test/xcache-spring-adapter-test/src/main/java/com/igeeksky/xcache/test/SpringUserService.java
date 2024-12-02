@@ -5,8 +5,6 @@ import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.CacheManager;
 import com.igeeksky.xcache.domain.Key;
 import com.igeeksky.xcache.domain.User;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.Resource;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -16,6 +14,8 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 
 /**
+ * Spring cache 注解测试，用户缓存服务
+ *
  * @author patrick
  * @since 0.0.4 2024/3/15
  */
@@ -23,16 +23,23 @@ import java.util.Map;
 @CacheConfig(cacheNames = "user")
 public class SpringUserService {
 
-    private Cache<Object, Object> cache;
+    private final Cache<Object, Object> cache;
 
-    @Resource
-    private CacheManager cacheManager;
-
-    @PostConstruct
-    public void init() {
-        cache = cacheManager.getOrCreateCache("user", Object.class, Object.class);
+    /**
+     * 构造函数
+     *
+     * @param cacheManager 缓存管理器
+     */
+    public SpringUserService(CacheManager cacheManager) {
+        this.cache = cacheManager.getOrCreateCache("user", Object.class, Object.class);
     }
 
+    /**
+     * 根据 key 获取用户数据
+     *
+     * @param key 缓存key
+     * @return 缓存数据
+     */
     public User getUserByCache(Key key) {
         System.out.println("getUserByCache: " + key);
         CacheValue<Object> cacheValue = cache.getCacheValue(key);
@@ -42,16 +49,32 @@ public class SpringUserService {
         return null;
     }
 
+    /**
+     * 保存用户数据
+     *
+     * @param key  缓存key
+     * @param user 用户数据
+     */
     public void saveUserByCache(Key key, User user) {
         System.out.println("saveUserByCache");
         cache.put(key, user);
     }
 
+    /**
+     * 批量保存用户数据
+     *
+     * @param keyValues 缓存key-value
+     */
     public void saveUsersByCache(Map<Key, User> keyValues) {
         System.out.println("saveUsersByCache");
         cache.putAll(keyValues);
     }
 
+    /**
+     * 删除用户数据
+     *
+     * @param key 缓存key
+     */
     public void deleteUserByCache(Key key) {
         cache.remove(key);
     }

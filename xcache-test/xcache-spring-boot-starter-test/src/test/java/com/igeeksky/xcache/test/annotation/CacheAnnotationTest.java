@@ -18,6 +18,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
+ * 注解测试
+ * <p>
  * 测试之前需先启动 redis
  *
  * @author patrick
@@ -101,7 +103,7 @@ public class CacheAnnotationTest {
 
     @Test
     public void cacheableOptionalLoop() {
-        for(int i = 0; i < 10; i++){
+        for (int i = 0; i < 10; i++) {
             cacheableOptional();
         }
     }

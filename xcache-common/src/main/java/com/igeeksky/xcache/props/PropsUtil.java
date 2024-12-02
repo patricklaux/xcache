@@ -37,8 +37,7 @@ public class PropsUtil {
      * @return 初始缓存配置
      */
     public static CacheProps buildCacheProps(String name, Template template) {
-        CacheProps initProps = new CacheProps();
-        initProps.setName(name);
+        CacheProps initProps = new CacheProps(name);
         initProps.setTemplateId(template.getId());
         replaceProps(template, initProps);
         return initProps;

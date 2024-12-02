@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * CaffeineStore 测试
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-12
  */
@@ -33,7 +35,7 @@ class CaffeineStoreTest {
                 .maximumSize(1024)
                 .build();
 
-        StoreConfig<Object> config = StoreConfig.builder(Object.class, null)
+        StoreConfig<Object> config = StoreConfig.builder(Object.class)
                 .enableNullValue(true)
                 .build();
 
@@ -66,7 +68,7 @@ class CaffeineStoreTest {
                 .weigher(Weigher.singletonWeigher())
                 .build();
 
-        StoreConfig<byte[]> storeConfig = StoreConfig.builder(byte[].class, null)
+        StoreConfig<byte[]> storeConfig = StoreConfig.builder(byte[].class)
                 .enableNullValue(true)
                 .build();
 

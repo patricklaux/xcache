@@ -15,6 +15,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
+ * Xcache 注解测试
+ *
  * @author patrick
  * @since 0.0.4 2024/3/15
  */
@@ -24,6 +26,11 @@ public class UserService {
 
     private final Cache<Key, User> cache;
 
+    /**
+     * 构造方法注入
+     *
+     * @param cacheManager CacheManager
+     */
     public UserService(CacheManager cacheManager) {
         this.cache = cacheManager.getOrCreateCache("user", Key.class, User.class);
     }
@@ -50,7 +57,7 @@ public class UserService {
         return new User("1", "MethodResult", 18);
     }
 
-    @CacheEvict
+    @CacheRemove
     public void deleteByKey(Key key) {
         System.out.println("deleteByKey:" + key);
     }
@@ -111,7 +118,7 @@ public class UserService {
         return users;
     }
 
-    @CacheEvictAll
+    @CacheRemoveAll
     public void deleteUsers(Set<Key> ids) {
         System.out.println("deleteUsers:" + ids);
     }

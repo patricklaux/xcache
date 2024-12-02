@@ -8,6 +8,12 @@ package com.igeeksky.xcache.props;
  */
 public abstract class AbstractProps {
 
+    /**
+     * 默认构造函数
+     */
+    public AbstractProps() {
+    }
+
     private String charset;
 
     private String keyCodec;

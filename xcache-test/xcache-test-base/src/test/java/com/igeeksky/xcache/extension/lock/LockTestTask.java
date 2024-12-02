@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.locks.Lock;
 
 /**
+ * 所测试任务
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/27
  */
@@ -19,14 +21,17 @@ public record LockTestTask(LockService lockService, String key) implements Runna
         String lockKey = (key != null) ? key : RandomUtils.nextString(5);
         for (int i = 0; i < 100; i++) {
             Lock lock = lockService.acquire(lockKey);
-            lock.lock();
             try {
-                log.info("LockService-size: {}", lockService.size());
-                log.info("Lock acquired: {}", Thread.currentThread().getName());
+                lock.lock();
+                try {
+                    log.info("LockService-size: {}", lockService.size());
+                    log.info("Lock acquired: {}", Thread.currentThread().getName());
+                } finally {
+                    lock.unlock();
+                }
             } finally {
-                lock.unlock();
+                lockService.release(lockKey);
             }
-            lockService.release(lockKey);
         }
     }
 

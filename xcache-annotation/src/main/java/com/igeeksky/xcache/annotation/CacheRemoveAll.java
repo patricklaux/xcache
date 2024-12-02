@@ -7,7 +7,7 @@ import java.lang.annotation.*;
 /**
  * 缓存注解
  * <p>
- * 添加此注解的方法，将逐出特定的缓存元素。
+ * 添加此注解的方法，将批量逐出特定的缓存元素。
  * <p>
  * 如果一个类中使用多个缓存注解，name, keyType, keyParams, valueType, valueParams
  * 这五个公共属性可用类注解 {@link CacheConfig} 配置，此注解保持默认即可。
@@ -18,28 +18,28 @@ import java.lang.annotation.*;
  * 如使用 maven-compiler-plugin，必须配置：{@code <parameters>true</parameters> }
  *
  * @author Patrick.Lau
- * @since 0.0.4 2023-10-12
+ * @since 0.0.4 2023-10-13
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @Documented
 @Reflective
-public @interface CacheEvict {
+public @interface CacheRemoveAll {
 
     /**
-     * SpEL表达式，用于从参数中提取键。
+     * SpEL表达式，用于从参数中提取键集.
      * <p>
-     * 如果未配置，采用被注解方法的第一个参数作为键。
+     * 如果未配置，采用被注解方法的第一个参数作为键集。
      */
-    String key() default "";
+    String keys() default "";
 
     /**
      * SpEL表达式，用于判断是否执行缓存操作。
      * <p>
      * 如果未配置，condition 表达式结果默认为 true。
      * <p>
-     * 如果 condition 表达式结果为 true，beforeInvocation 为 true ，调用被注解方法前执行缓存操作 (remove) ：<p>
+     * 如果 condition 表达式结果为 true，beforeInvocation 为 true ，调用被注解方法前执行缓存操作 (removeAll) ：<p>
      * 如果 condition 表达式结果为 false，无论 unless 表达式结果是否为 false，一定不会执行缓存操作。
      */
     String condition() default "";
@@ -50,7 +50,7 @@ public @interface CacheEvict {
      * 如果未配置，unless 表达式结果默认为 false。
      * <p>
      * 如果 condition 表达式结果为 true，beforeInvocation 为 false，
-     * 且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (remove)
+     * 且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (removeAll)。
      */
     String unless() default "";
 
@@ -73,22 +73,8 @@ public @interface CacheEvict {
     Class<?> keyType() default Undefined.class;
 
     /**
-     * 键泛型参数
-     * <p>
-     * 用于较复杂的带泛型参数的键类型的序列化处理
-     */
-    Class<?>[] keyParams() default {};
-
-    /**
      * 值类型
      */
     Class<?> valueType() default Undefined.class;
-
-    /**
-     * 值泛型参数
-     * <p>
-     * 用于较复杂的带泛型参数的值类型的序列化处理
-     */
-    Class<?>[] valueParams() default {};
 
 }

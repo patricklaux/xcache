@@ -8,6 +8,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
+ * Lettuce Hash 存储测试
+ *
  * @author patrick
  * @since 0.0.4 2024/5/30
  */

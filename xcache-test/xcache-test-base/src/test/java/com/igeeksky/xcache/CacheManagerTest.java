@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.Executors;
 
 /**
+ * CacheManager 创建测试
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-24
  */
@@ -90,15 +92,4 @@ class CacheManagerTest {
         Assertions.assertNull(cacheValue.getValue());
     }
 
-    @Test
-    void getOrCreateCache() {
-    }
-
-    @Test
-    void getAll() {
-    }
-
-    @Test
-    void getAllCacheNames() {
-    }
 }

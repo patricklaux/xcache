@@ -4,7 +4,6 @@ import com.igeeksky.xcache.annotation.Undefined;
 import com.igeeksky.xtool.core.lang.Assert;
 import com.igeeksky.xtool.core.lang.StringUtils;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -19,18 +18,12 @@ public class CacheOperation {
 
     private final Class<?> keyType;
 
-    private final Class<?>[] keyParams;
-
     private final Class<?> valueType;
-
-    private final Class<?>[] valueParams;
 
     protected CacheOperation(Builder builder) {
         this.name = builder.name;
         this.keyType = builder.keyType;
-        this.keyParams = builder.keyParams;
         this.valueType = builder.valueType;
-        this.valueParams = builder.valueParams;
     }
 
     public String getName() {
@@ -41,16 +34,8 @@ public class CacheOperation {
         return keyType;
     }
 
-    public Class<?>[] getKeyParams() {
-        return keyParams;
-    }
-
     public Class<?> getValueType() {
         return valueType;
-    }
-
-    public Class<?>[] getValueParams() {
-        return valueParams;
     }
 
     public static Builder builder() {
@@ -63,11 +48,7 @@ public class CacheOperation {
 
         private Class<?> keyType;
 
-        private Class<?>[] keyParams;
-
         private Class<?> valueType;
-
-        private Class<?>[] valueParams;
 
         public Builder name(String name) {
             this.name = StringUtils.trimToNull(name);
@@ -81,23 +62,9 @@ public class CacheOperation {
             return this;
         }
 
-        public Builder keyParams(Class<?>[] keyParams) {
-            if (keyParams != null && keyParams.length > 0) {
-                this.keyParams = keyParams;
-            }
-            return this;
-        }
-
         public Builder valueType(Class<?> valueType) {
             if (valueType != null && !valueType.isAssignableFrom(Undefined.class)) {
                 this.valueType = valueType;
-            }
-            return this;
-        }
-
-        public Builder valueParams(Class<?>[] valueParams) {
-            if (valueParams != null && valueParams.length > 0) {
-                this.valueParams = valueParams;
             }
             return this;
         }
@@ -121,20 +88,10 @@ public class CacheOperation {
             }
             this.keyType = operation.keyType;
 
-            if (this.keyParams != null && !Arrays.equals(this.keyParams, operation.keyParams)) {
-                throw new IllegalArgumentException("keyParams must be keep default or same with CacheConfig.keyParams");
-            }
-            this.keyParams = operation.keyParams;
-
             if (this.valueType != null && !Objects.equals(this.valueType, operation.valueType)) {
                 throw new IllegalArgumentException("valueType must be keep default or same with CacheConfig.valueType");
             }
             this.valueType = operation.valueType;
-
-            if (this.valueParams != null && !Arrays.equals(this.valueParams, operation.valueParams)) {
-                throw new IllegalArgumentException("keyParams must be keep default or same with CacheConfig.keyParams");
-            }
-            this.valueParams = operation.valueParams;
         }
 
         public CacheOperation build() {

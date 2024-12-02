@@ -26,9 +26,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
     private final String name;
     private final Class<K> keyType;
-    private final Class<?>[] keyParams;
     private final Class<V> valueType;
-    private final Class<?>[] valueParams;
 
     private final KeyCodec<K> keyCodec;
     private final CacheStatMonitor statMonitor;
@@ -44,9 +42,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     public AbstractCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend) {
         this.name = config.getName();
         this.keyType = config.getKeyType();
-        this.keyParams = config.getKeyParams();
         this.valueType = config.getValueType();
-        this.valueParams = config.getValueParams();
         this.message = "Cache:[" + this.name + "], method:[%s], %s";
 
         this.keyCodec = extend.getKeyCodec();
@@ -72,7 +68,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         // 因此当 cacheLoader 为空时，不能赋值 为 NoopCacheLoader
         this.cacheLoader = cacheLoader;
         this.cacheRefresh = cacheRefresh != null ? cacheRefresh : NoOpCacheRefresh.getInstance();
-        this.cacheRefresh.setConsumer(this::consume);
+        this.cacheRefresh.setConsumer(this::onRefresh);
     }
 
     /**
@@ -82,8 +78,8 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
      *
      * @param storeKey 缓存的键，用于标识缓存项
      */
-    private void consume(String storeKey) {
-        // 从storeKey中恢复出缓存键
+    private void onRefresh(String storeKey) {
+        // 从storeKey中恢复缓存键
         K key = this.fromStoreKey(storeKey);
 
         // 如果断言执行发现数据源不存在数据，则存入空值
@@ -126,18 +122,8 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public Class<?>[] getKeyParams() {
-        return keyParams;
-    }
-
-    @Override
     public Class<V> getValueType() {
         return valueType;
-    }
-
-    @Override
-    public Class<?>[] getValueParams() {
-        return valueParams;
     }
 
     @Override

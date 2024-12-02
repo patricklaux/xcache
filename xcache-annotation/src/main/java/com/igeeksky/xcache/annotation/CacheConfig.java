@@ -26,22 +26,8 @@ public @interface CacheConfig {
     Class<?> keyType() default Undefined.class;
 
     /**
-     * 键泛型参数
-     * <p>
-     * 用于较复杂的带泛型参数的键类型的序列化处理
-     */
-    Class<?>[] keyParams() default {};
-
-    /**
      * 值类型
      */
     Class<?> valueType() default Undefined.class;
-
-    /**
-     * 值泛型参数
-     * <p>
-     * 用于较复杂的带泛型参数的值类型的序列化处理
-     */
-    Class<?>[] valueParams() default {};
 
 }

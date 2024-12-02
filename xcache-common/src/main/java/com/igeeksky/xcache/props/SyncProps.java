@@ -13,6 +13,12 @@ import java.util.Map;
  */
 public class SyncProps {
 
+    /**
+     * 默认构造函数
+     */
+    public SyncProps() {
+    }
+
     private Boolean first;
 
     private Boolean second;
@@ -47,7 +53,9 @@ public class SyncProps {
     }
 
     /**
-     * @param first 数据同步类型
+     * 设置一级缓存是否启用数据同步
+     *
+     * @param first 是否启用数据同步
      */
     public void setFirst(Boolean first) {
         this.first = first;
@@ -69,7 +77,9 @@ public class SyncProps {
     }
 
     /**
-     * @param second 数据同步类型
+     * 设置二级缓存是否启用数据同步
+     *
+     * @param second 是否启用数据同步
      */
     public void setSecond(Boolean second) {
         this.second = second;

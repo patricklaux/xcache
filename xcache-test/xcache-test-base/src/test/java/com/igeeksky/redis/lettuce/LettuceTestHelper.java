@@ -19,6 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
+ * Lettuce 测试辅助类
+ *
  * @author patrick
  * @since 0.0.4 2024/5/30
  */
@@ -84,7 +86,7 @@ public class LettuceTestHelper {
     }
 
     public static StoreConfig<String> createRedisStoreConfig(RedisType redisType) {
-        StoreConfig.Builder<String> builder = StoreConfig.builder(String.class, null);
+        StoreConfig.Builder<String> builder = StoreConfig.builder(String.class);
         return builder.redisType(redisType)
                 .enableGroupPrefix(true)
                 .enableRandomTtl(true)

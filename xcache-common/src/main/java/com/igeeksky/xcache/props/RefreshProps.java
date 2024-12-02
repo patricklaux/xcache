@@ -13,6 +13,12 @@ import java.util.Map;
  */
 public class RefreshProps {
 
+    /**
+     * 默认构造函数
+     */
+    public RefreshProps() {
+    }
+
     private Long period;
 
     private String provider;

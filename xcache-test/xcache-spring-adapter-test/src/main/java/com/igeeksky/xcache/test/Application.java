@@ -8,6 +8,8 @@ import org.springframework.cache.annotation.EnableCaching;
 
 
 /**
+ * 适配 Spring Cache 测试
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-27
  */

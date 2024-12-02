@@ -1,15 +1,15 @@
 package com.igeeksky.xcache.annotation.operation;
 
-import com.igeeksky.xcache.annotation.CacheEvictAll;
+import com.igeeksky.xcache.annotation.CacheRemoveAll;
 import com.igeeksky.xtool.core.lang.StringUtils;
 
 /**
- * 记录 {@link CacheEvictAll} 注解信息
+ * 记录 {@link CacheRemoveAll} 注解信息
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-14
  */
-public class CacheEvictAllOperation extends CacheOperation {
+public class CacheRemoveAllOperation extends CacheOperation {
 
     private final String keys;
 
@@ -19,7 +19,7 @@ public class CacheEvictAllOperation extends CacheOperation {
 
     private final String unless;
 
-    protected CacheEvictAllOperation(Builder builder) {
+    protected CacheRemoveAllOperation(Builder builder) {
         super(builder);
         this.keys = builder.keys;
         this.beforeInvocation = builder.beforeInvocation;
@@ -77,8 +77,8 @@ public class CacheEvictAllOperation extends CacheOperation {
             return this;
         }
 
-        public CacheEvictAllOperation build() {
-            return new CacheEvictAllOperation(this);
+        public CacheRemoveAllOperation build() {
+            return new CacheRemoveAllOperation(this);
         }
     }
 

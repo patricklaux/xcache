@@ -28,25 +28,11 @@ public interface Cache<K, V> extends Base<K, V> {
     Class<K> getKeyType();
 
     /**
-     * 获取缓存键的泛型参数类型
-     *
-     * @return 缓存键的泛型参数类型
-     */
-    Class<?>[] getKeyParams();
-
-    /**
      * 获取缓存值的类型
      *
      * @return 缓存值的类型
      */
     Class<V> getValueType();
-
-    /**
-     * 获取缓存值的泛型参数类型
-     *
-     * @return 缓存值的泛型参数类型
-     */
-    Class<?>[] getValueParams();
 
     /**
      * 获取缓存值
