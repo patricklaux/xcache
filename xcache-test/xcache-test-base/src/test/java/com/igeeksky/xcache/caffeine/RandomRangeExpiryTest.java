@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 
 /**
+ * Caffeine Ëæ»úÊ±¼äÇıÖğ²âÊÔ
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-14
  */

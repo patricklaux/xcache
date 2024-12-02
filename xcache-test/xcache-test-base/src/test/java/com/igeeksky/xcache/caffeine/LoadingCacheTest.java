@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * Caffeine ×Ô¶¯¼ÓÔØ²âÊÔ
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-14
  */

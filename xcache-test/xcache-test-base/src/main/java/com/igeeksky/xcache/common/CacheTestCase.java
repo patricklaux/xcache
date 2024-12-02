@@ -5,6 +5,8 @@ import com.igeeksky.xcache.domain.User;
 import org.junit.jupiter.api.Assertions;
 
 /**
+ * Cache 公共测试用例
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/9
  */

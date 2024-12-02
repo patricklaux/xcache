@@ -8,6 +8,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
+ * CacheManager ◊‘∂Ø≈‰÷√≤‚ ‘
+ *
  * @author patrick
  * @since 0.0.4 2024/6/2
  */

@@ -13,6 +13,8 @@ import java.util.Arrays;
 import java.util.concurrent.*;
 
 /**
+ * ĞéÄâÏß³Ì²âÊÔ
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/27
  */

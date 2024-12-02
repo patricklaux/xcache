@@ -26,6 +26,11 @@ public class UserService {
 
     private final Cache<Key, User> cache;
 
+    /**
+     * 构造方法注入
+     *
+     * @param cacheManager CacheManager
+     */
     public UserService(CacheManager cacheManager) {
         this.cache = cacheManager.getOrCreateCache("user", Key.class, User.class);
     }

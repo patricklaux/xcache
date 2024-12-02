@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Store 公共测试用例
+ *
  * @author patrick
  * @since 1.0.0 2024/5/30
  */

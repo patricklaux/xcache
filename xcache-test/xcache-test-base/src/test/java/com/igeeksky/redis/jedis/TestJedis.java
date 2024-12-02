@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
 
 /**
+ * Jedis »ù´¡²âÊÔ
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-27
  */

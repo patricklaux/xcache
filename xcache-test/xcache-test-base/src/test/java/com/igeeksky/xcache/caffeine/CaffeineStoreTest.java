@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * CaffeineStore ≤‚ ‘
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-12
  */

@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * ≤‚ ‘ Caffeine ª∫¥Ê◊Ó¥Û»›¡ø
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-14
  */
@@ -22,9 +24,7 @@ class CaffeineMaximumTest {
 
     @BeforeEach
     void setUp() {
-        cache = Caffeine.newBuilder()
-                .maximumSize(16)
-                .build();
+        cache = Caffeine.newBuilder().maximumSize(16).build();
     }
 
     @Test
@@ -32,7 +32,7 @@ class CaffeineMaximumTest {
         for (int i = 0; i < 200; i++) {
             cache.put(i, i);
             if (i > 100) {
-                System.out.println(cache.getIfPresent(i-50));
+                System.out.println(cache.getIfPresent(i - 50));
             }
         }
     }

@@ -4,6 +4,8 @@ import com.igeeksky.redis.RedisOperatorTestCase;
 import org.junit.jupiter.api.*;
 
 /**
+ * Lettuce Standalone 操作测试
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/5/8
  */
