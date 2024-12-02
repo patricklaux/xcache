@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * toString ·½·¨²âÊÔ
+ * toString æ–¹æ³•æµ‹è¯•
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-24

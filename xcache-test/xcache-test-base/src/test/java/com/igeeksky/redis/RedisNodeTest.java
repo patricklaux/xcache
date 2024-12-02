@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * RedisNode ÅäÖÃ²âÊÔ
+ * RedisNode é…ç½®æµ‹è¯•
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-06

@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * Lettuce ²âÊÔ¸¨ÖúÀà
+ * Lettuce æµ‹è¯•è¾…åŠ©ç±»
  *
  * @author patrick
  * @since 0.0.4 2024/5/30
