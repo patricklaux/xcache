@@ -26,8 +26,6 @@ public class StoreConfig<V> {
 
     private final Class<V> valueType;
 
-    private final Class<?>[] valueParams;
-
     private final String provider;
 
     // embed
@@ -88,7 +86,6 @@ public class StoreConfig<V> {
         this.group = builder.group;
         this.charset = builder.charset;
         this.valueType = builder.valueType;
-        this.valueParams = builder.valueParams;
         this.provider = builder.provider;
         this.initialCapacity = builder.initialCapacity;
         this.maximumSize = builder.maximumSize;
@@ -122,10 +119,6 @@ public class StoreConfig<V> {
 
     public Class<V> getValueType() {
         return valueType;
-    }
-
-    public Class<?>[] getValueParams() {
-        return valueParams;
     }
 
     public String getProvider() {
@@ -196,8 +189,8 @@ public class StoreConfig<V> {
         return params;
     }
 
-    public static <V> Builder<V> builder(Class<V> valueType, Class<?>[] valueParams) {
-        return new Builder<>(valueType, valueParams);
+    public static <V> Builder<V> builder(Class<V> valueType) {
+        return new Builder<>(valueType);
     }
 
     public static class Builder<V> {
@@ -209,8 +202,6 @@ public class StoreConfig<V> {
         private Charset charset;
 
         private final Class<V> valueType;
-
-        private final Class<?>[] valueParams;
 
         private String provider;
 
@@ -246,9 +237,8 @@ public class StoreConfig<V> {
 
         private final Map<String, Object> params = new HashMap<>();
 
-        private Builder(Class<V> valueType, Class<?>[] valueParams) {
+        private Builder(Class<V> valueType) {
             this.valueType = valueType;
-            this.valueParams = valueParams;
         }
 
         public Builder<V> name(String name) {
