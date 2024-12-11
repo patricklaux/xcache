@@ -56,6 +56,15 @@ public class RedisHashStore<V> implements RedisStore<V> {
     }
 
     @Override
+    public boolean contains(String field) {
+        byte[] storeField = toStoreField(field);
+        if (this.operator.isCluster()) {
+            return this.operator.hexists(selectStoreKey(storeField), storeField);
+        }
+        return this.operator.hexists(hashKey, storeField);
+    }
+
+    @Override
     public CacheValue<V> getCacheValue(String field) {
         byte[] storeField = this.toStoreField(field);
         if (this.operator.isCluster()) {
@@ -105,7 +114,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
     public void putAll(Map<? extends String, ? extends V> keyValues) {
         if (this.operator.isCluster()) {
 
-            int maximum = getMaximum(keyValues.size());
+            int maximum = computeCapacity(keyValues.size());
             Map<byte[], List<byte[]>> removeKeyFields = Maps.newHashMap();
             Map<byte[], Map<byte[], byte[]>> keyFieldValues = Maps.newHashMap(maximum);
 
@@ -226,7 +235,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
     }
 
     private Map<byte[], List<byte[]>> toKeyFields(Set<? extends String> fields) {
-        int maximum = getMaximum(fields.size());
+        int maximum = computeCapacity(fields.size());
         Map<byte[], List<byte[]>> keyFields = Maps.newHashMap(maximum);
         for (String field : fields) {
             byte[] storeField = toStoreField(field);
@@ -237,7 +246,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
         return keyFields;
     }
 
-    private static int getMaximum(int size) {
+    private static int computeCapacity(int size) {
         return Math.min(LENGTH, size / 2);
     }
 

@@ -29,6 +29,11 @@ public class CaffeineStore<V> implements Store<V> {
     }
 
     @Override
+    public boolean contains(String key) {
+        return this.getCacheValue(key) != null;
+    }
+
+    @Override
     public CacheValue<V> getCacheValue(String key) {
         return this.convertor.fromStoreValue(store.getIfPresent(key));
     }

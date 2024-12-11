@@ -14,39 +14,23 @@ import java.util.Map;
  */
 public class RefreshConfig {
 
-    private final String group;
-
-    /**
-     * 缓存名称
-     */
     private final String name;
+
+    private final String group;
 
     private final boolean enableGroupPrefix;
 
     private final String provider;
 
-    /**
-     * 字符集
-     */
     private final Charset charset;
 
     private final String refreshKey;
 
     private final String refreshLockKey;
 
-    private final String refreshPeriodKey;
-
     private final LockService cacheLock;
 
-    /**
-     * 刷新间隔
-     */
-    private final long period;
-
-    /**
-     * 停止刷新时间
-     */
-    private final long stopAfterAccess;
+    private final long refreshPeriod;
 
     private final Map<String, Object> params;
 
@@ -56,18 +40,15 @@ public class RefreshConfig {
         this.charset = builder.charset;
         this.provider = builder.provider;
         this.cacheLock = builder.cacheLock;
-        this.period = builder.period;
-        this.stopAfterAccess = builder.stopAfterAccess;
+        this.refreshPeriod = builder.refreshPeriod;
         this.enableGroupPrefix = builder.enableGroupPrefix;
         this.params = builder.params;
         if (this.enableGroupPrefix) {
             this.refreshKey = "refresh:" + this.group + ":" + this.name;
             this.refreshLockKey = "refresh:lock:" + this.group + ":" + this.name;
-            this.refreshPeriodKey = "refresh:period:" + this.group + ":" + this.name;
         } else {
             this.refreshKey = "refresh:" + this.name;
             this.refreshLockKey = "refresh:lock:" + this.name;
-            this.refreshPeriodKey = "refresh:period:" + this.name;
         }
     }
 
@@ -79,7 +60,7 @@ public class RefreshConfig {
         return group;
     }
 
-    public boolean getEnableGroupPrefix() {
+    public boolean isEnableGroupPrefix() {
         return enableGroupPrefix;
     }
 
@@ -99,20 +80,12 @@ public class RefreshConfig {
         return refreshLockKey;
     }
 
-    public String getRefreshPeriodKey() {
-        return refreshPeriodKey;
-    }
-
     public LockService getCacheLock() {
         return cacheLock;
     }
 
-    public long getPeriod() {
-        return period;
-    }
-
-    public long getStopAfterAccess() {
-        return stopAfterAccess;
+    public long getRefreshPeriod() {
+        return refreshPeriod;
     }
 
     public Map<String, Object> getParams() {
@@ -123,11 +96,16 @@ public class RefreshConfig {
         return new Builder();
     }
 
+    public long getRefreshAfterWrite() {
+        return 100000L;
+    }
+
+    public int getMaxRefreshTasks() {
+        return 10000;
+    }
+
     public static class Builder {
 
-        /**
-         * 缓存名称
-         */
         private String name;
 
         private String group;
@@ -138,15 +116,7 @@ public class RefreshConfig {
 
         private LockService cacheLock;
 
-        /**
-         * 刷新间隔
-         */
-        private long period;
-
-        /**
-         * 停止刷新时间
-         */
-        private long stopAfterAccess;
+        private long refreshPeriod;
 
         private boolean enableGroupPrefix;
 
@@ -172,13 +142,8 @@ public class RefreshConfig {
             return this;
         }
 
-        public Builder period(long period) {
-            this.period = period;
-            return this;
-        }
-
-        public Builder stopAfterAccess(long stopAfterAccess) {
-            this.stopAfterAccess = stopAfterAccess;
+        public Builder refreshPeriod(long refreshPeriod) {
+            this.refreshPeriod = refreshPeriod;
             return this;
         }
 

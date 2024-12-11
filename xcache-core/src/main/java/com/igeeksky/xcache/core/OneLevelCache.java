@@ -41,6 +41,11 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
+    protected boolean contains(String key) {
+        return store.contains(key);
+    }
+
+    @Override
     protected CacheValue<V> doGet(String key) {
         return store.getCacheValue(key);
     }

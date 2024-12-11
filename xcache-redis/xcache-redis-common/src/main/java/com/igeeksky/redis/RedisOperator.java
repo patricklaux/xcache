@@ -1,5 +1,6 @@
 package com.igeeksky.redis;
 
+import com.igeeksky.redis.sorted.ScoredValue;
 import com.igeeksky.redis.stream.AddOptions;
 import com.igeeksky.xtool.core.function.tuple.ExpiryKeyValue;
 import com.igeeksky.xtool.core.function.tuple.KeyValue;
@@ -35,6 +36,8 @@ public interface RedisOperator extends AutoCloseable {
     boolean isOpen();
 
     // String Command --start--
+
+    Long exists(byte[]... keys);
 
     /**
      * 获取指定键的值。
@@ -108,6 +111,8 @@ public interface RedisOperator extends AutoCloseable {
     // String Command --end--
 
     // Hash Command --start--
+
+    boolean hexists(byte[] key, byte[] field);
 
     /**
      * 获取指定键的指定字段的值。
@@ -194,6 +199,8 @@ public interface RedisOperator extends AutoCloseable {
 
     long zadd(byte[] key, double score, byte[] member);
 
+    long zadd(byte[] key, ScoredValue... scoredValues);
+
     long zrem(byte[] key, byte[]... members);
 
     long zremrangeByRank(byte[] key, long start, long stop);
@@ -202,7 +209,9 @@ public interface RedisOperator extends AutoCloseable {
 
     long zremrangeByLex(byte[] key, byte[] min, byte[] max);
 
-    List<KeyValue<byte[], Double>> zrangebyscoreWithScores(byte[] key, double min, double max, long offset, long count);
+    List<byte[]> zrangebyscore(byte[] key, double min, double max, long offset, long count);
+
+    List<ScoredValue> zrangebyscoreWithScores(byte[] key, double min, double max, long offset, long count);
 
     long zcount(byte[] key, double min, double max);
 

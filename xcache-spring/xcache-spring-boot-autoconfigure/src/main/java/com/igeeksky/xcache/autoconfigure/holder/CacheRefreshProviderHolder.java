@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.autoconfigure.holder;
 
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
+import com.igeeksky.xtool.core.io.IOUtils;
 import com.igeeksky.xtool.core.lang.Assert;
 
 import java.util.Collections;
@@ -13,7 +14,7 @@ import java.util.Map;
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-02
  */
-public class CacheRefreshProviderHolder implements Holder<CacheRefreshProvider> {
+public class CacheRefreshProviderHolder implements Holder<CacheRefreshProvider>, AutoCloseable {
 
     private final Map<String, CacheRefreshProvider> map = new HashMap<>();
 
@@ -39,6 +40,11 @@ public class CacheRefreshProviderHolder implements Holder<CacheRefreshProvider> 
     @Override
     public Map<String, CacheRefreshProvider> getAll() {
         return Collections.unmodifiableMap(map);
+    }
+
+    @Override
+    public void close() {
+        map.forEach((name, provider) -> IOUtils.closeQuietly(provider));
     }
 
 }

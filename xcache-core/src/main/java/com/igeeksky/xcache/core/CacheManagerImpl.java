@@ -8,6 +8,7 @@ import com.igeeksky.xcache.extension.codec.CodecProvider;
 import com.igeeksky.xcache.extension.compress.CompressConfig;
 import com.igeeksky.xcache.extension.compress.CompressorProvider;
 import com.igeeksky.xcache.extension.lock.*;
+import com.igeeksky.xcache.extension.refresh.CacheRefresh;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
@@ -325,9 +326,8 @@ public class CacheManagerImpl implements CacheManager {
                 .name(config.getName())
                 .group(config.getGroup())
                 .charset(config.getCharset())
-                .period(props.getPeriod())
+                .refreshPeriod(props.getPeriod())
                 .provider(props.getProvider())
-                .stopAfterAccess(props.getStopAfterAccess())
                 .enableGroupPrefix(props.getEnableGroupPrefix())
                 .params(props.getParams())
                 .cacheLock(lock)

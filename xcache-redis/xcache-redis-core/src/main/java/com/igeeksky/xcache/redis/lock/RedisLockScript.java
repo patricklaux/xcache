@@ -4,11 +4,16 @@ import com.igeeksky.redis.RedisScript;
 import com.igeeksky.redis.ResultType;
 
 /**
+ * Redis 分布式锁脚本
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/17
  */
 public final class RedisLockScript {
 
+    /**
+     * 私有构造方法，禁止实例化
+     */
     private RedisLockScript() {
     }
 

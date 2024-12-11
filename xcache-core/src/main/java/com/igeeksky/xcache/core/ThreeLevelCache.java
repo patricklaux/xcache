@@ -40,6 +40,11 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
+    protected boolean contains(String key) {
+        return stores[LIMIT].contains(key);
+    }
+
+    @Override
     protected CacheValue<V> doGet(String key) {
         for (int i = 0; i < LENGTH; i++) {
             CacheValue<V> cacheValue = stores[i].getCacheValue(key);

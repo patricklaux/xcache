@@ -45,6 +45,11 @@ public class RedisStringStore<V> implements RedisStore<V> {
     }
 
     @Override
+    public boolean contains(String key) {
+        return this.getCacheValue(key) != null;
+    }
+
+    @Override
     public CacheValue<V> getCacheValue(String key) {
         return this.convertor.fromExtraStoreValue(this.operator.get(toStoreKey(key)));
     }

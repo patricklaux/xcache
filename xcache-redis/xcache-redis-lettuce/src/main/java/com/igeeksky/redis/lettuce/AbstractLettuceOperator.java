@@ -4,6 +4,7 @@ import com.igeeksky.redis.RedisOperator;
 import com.igeeksky.redis.RedisScript;
 import com.igeeksky.redis.ResultType;
 import com.igeeksky.redis.stream.AddOptions;
+import com.igeeksky.redis.sorted.ScoredValue;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.concurrent.Futures;
@@ -123,6 +124,11 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
         RedisAdvancedClusterAsyncCommands<byte[], byte[]> async = batchConnection.async();
         this.batchHashCommands = async;
         this.batchStringCommands = async;
+    }
+
+    @Override
+    public Long exists(byte[]... keys) {
+        return keyCommands.exists(keys);
     }
 
     @Override
@@ -263,6 +269,11 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
             }
         }
         return num;
+    }
+
+    @Override
+    public boolean hexists(byte[] key, byte[] field) {
+        return hashCommands.hexists(key, field);
     }
 
     @Override
@@ -462,10 +473,21 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
         return sortedSetCommands.zadd(key, score, member);
     }
 
+    public long zadd(byte[] key, ScoredValue... scoredValues) {
+        int size = scoredValues.length;
+        io.lettuce.core.ScoredValue<byte[]>[] values = new io.lettuce.core.ScoredValue[size];
+        for (int i = 0; i < size; i++) {
+            ScoredValue scoredValue = scoredValues[i];
+            values[i] = io.lettuce.core.ScoredValue.just(scoredValue.getScore(), scoredValue.getValue());
+        }
+        return sortedSetCommands.zadd(key, values);
+    }
+
     @Override
     public long zrem(byte[] key, byte[]... members) {
         return sortedSetCommands.zrem(key, members);
     }
+
 
     @Override
     public long zremrangeByRank(byte[] key, long start, long stop) {
@@ -483,17 +505,22 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
     }
 
     @Override
-    public List<KeyValue<byte[], Double>> zrangebyscoreWithScores(byte[] key, double min, double max, long offset, long count) {
+    public List<byte[]> zrangebyscore(byte[] key, double min, double max, long offset, long count) {
+        return sortedSetCommands.zrangebyscore(key, Range.create(min, max), Limit.create(offset, count));
+    }
+
+    @Override
+    public List<ScoredValue> zrangebyscoreWithScores(byte[] key, double min, double max, long offset, long count) {
         Range<Double> range = Range.create(min, max);
         Limit limit = Limit.create(offset, count);
-        List<ScoredValue<byte[]>> scoredValues = sortedSetCommands.zrangebyscoreWithScores(key, range, limit);
+        List<io.lettuce.core.ScoredValue<byte[]>> scoredValues = sortedSetCommands.zrangebyscoreWithScores(key, range, limit);
         if (scoredValues.isEmpty()) {
             return Collections.emptyList();
         }
-        List<KeyValue<byte[], Double>> result = new ArrayList<>(scoredValues.size());
-        for (ScoredValue<byte[]> scoredValue : scoredValues) {
-            if (scoredValue.hasValue()) {
-                result.add(new KeyValue<>(scoredValue.getValue(), scoredValue.getScore()));
+        List<ScoredValue> result = new ArrayList<>(scoredValues.size());
+        for (io.lettuce.core.ScoredValue<byte[]> scoredValue : scoredValues) {
+            if (scoredValue != null && scoredValue.hasValue()) {
+                result.add(ScoredValue.just(scoredValue.getValue(), scoredValue.getScore()));
             }
         }
         return result;
@@ -501,12 +528,12 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
 
     @Override
     public long zcount(byte[] key, double min, double max) {
-        return 0;
+        return sortedSetCommands.zcount(key, Range.create(min, max));
     }
 
     @Override
     public long zcard(byte[] key) {
-        return 0;
+        return sortedSetCommands.zcard(key);
     }
 
     @Override
@@ -526,7 +553,11 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
 
     @Override
     public long clear(byte[] matches) {
-        long num = 0;
+        long num = doClear(matches, 0);
+        return doClear(matches, num);
+    }
+
+    public long doClear(byte[] matches, long num) {
         ScanCursor cursor = ScanCursor.INITIAL;
         ScanArgs args = ScanArgs.Builder.matches(matches).limit(KEYS_LIMIT);
         while (!cursor.isFinished()) {
@@ -539,15 +570,6 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
                 }
             }
             cursor = keyScanCursor;
-        }
-
-        // TODO 可能会导致效率问题，需要优化
-        List<byte[]> keys = keyCommands.keys(matches);
-        if (!keys.isEmpty()) {
-            Long result = keyCommands.del(keys.toArray(new byte[keys.size()][]));
-            if (result != null) {
-                num += result;
-            }
         }
         return num;
     }

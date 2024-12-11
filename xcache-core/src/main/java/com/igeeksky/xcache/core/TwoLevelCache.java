@@ -49,6 +49,11 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
+    protected boolean contains(String key) {
+        return second.contains(key);
+    }
+
+    @Override
     protected CacheValue<V> doGet(String key) {
         CacheValue<V> cacheValue = first.getCacheValue(key);
         if (cacheValue != null) {

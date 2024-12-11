@@ -1,9 +1,8 @@
 package com.igeeksky.xcache.extension.refresh;
 
-import com.igeeksky.xcache.common.CacheRefresh;
-
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * 缓存刷新代理
@@ -23,23 +22,26 @@ public class NoOpCacheRefresh implements CacheRefresh {
     }
 
     @Override
-    public void access(String key) {
+    public void onPut(String key) {
     }
 
     @Override
-    public void accessAll(Set<String> keys) {
+    public void onPutAll(Set<String> keys) {
     }
 
     @Override
-    public void remove(String key) {
+    public void onRemove(String key) {
     }
 
     @Override
-    public void removeAll(Set<String> keys) {
+    public void onRemoveAll(Set<String> keys) {
     }
 
     @Override
-    public void setConsumer(Consumer<String> consumer) {
+    public void startRefresh(Consumer<String> consumer, Predicate<String> predicate) {
     }
 
+    @Override
+    public void close() throws Exception {
+    }
 }

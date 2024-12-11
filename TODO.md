@@ -37,4 +37,6 @@
 - [ ] 【开发】 RedisHashStore 分为两类实现：一是集群模式，二是非集群模式。
 - [ ] 【开发】 RedisHashStore，initKeys 方法，用于初始化缓存的 key 列表，需可配置数量。
 - [ ] 【开发】 缓存数据刷新策略（根据时间周期触发）
+- [ ] 【开发】 对象惰性初始化（Supplier）
 - [ ] 【测试】 测试 Xcache 注解参数
+- [ ] 【开发】 删除 CacheWriter

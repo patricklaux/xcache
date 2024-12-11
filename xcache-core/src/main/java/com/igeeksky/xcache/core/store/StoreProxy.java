@@ -33,6 +33,11 @@ public class StoreProxy<V> implements Store<V> {
     }
 
     @Override
+    public boolean contains(String key) {
+        return store.contains(key);
+    }
+
+    @Override
     public CacheValue<V> getCacheValue(String key) {
         CacheValue<V> value = store.getCacheValue(key);
         if (value != null) {

@@ -2,7 +2,7 @@ package com.igeeksky.xcache.core;
 
 
 import com.igeeksky.xcache.common.CacheLoader;
-import com.igeeksky.xcache.common.CacheRefresh;
+import com.igeeksky.xcache.extension.refresh.CacheRefresh;
 import com.igeeksky.xcache.common.CacheWriter;
 import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.NoOpContainsPredicate;
