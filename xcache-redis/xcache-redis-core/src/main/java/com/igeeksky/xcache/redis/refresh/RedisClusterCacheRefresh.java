@@ -1,14 +1,13 @@
 package com.igeeksky.xcache.redis.refresh;
 
-import com.igeeksky.redis.CRC16;
 import com.igeeksky.redis.RedisOperator;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.extension.refresh.RefreshTask;
+import com.igeeksky.xcache.redis.RedisClusterHelper;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.function.tuple.Tuples;
 import com.igeeksky.xtool.core.lang.IntegerValue;
-import com.igeeksky.xtool.core.lang.codec.StringCodec;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,35 +25,27 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
 
-    private static final int MINIMUM_KEY_SEQ_SIZE = 32;
-    private static final int MAXIMUM_KEY_SEQ_SIZE = 16384;
-
-    private final int mask;
-    private final int refreshSequenceSize;
-
-    // 集群模式下，用以分散刷新键到不同节点，避免数据倾斜。
-    private final byte[][] refreshKeys;
+    private final RedisClusterHelper clusterHelper;
 
     public RedisClusterCacheRefresh(RefreshConfig config, ScheduledExecutorService scheduler,
                                     ExecutorService executor, RedisOperator operator) {
         super(config, scheduler, executor, operator);
-        this.refreshSequenceSize = keySequenceSizeFor(config.getRefreshSequenceSize());
-        this.mask = this.refreshSequenceSize - 1;
-        this.refreshKeys = initRefreshKeys(this.stringCodec, config.getRefreshKey(), this.refreshSequenceSize);
+        int sequenceSize = config.getRefreshSequenceSize();
+        this.clusterHelper = new RedisClusterHelper(sequenceSize, config.getRefreshKey(), this.stringCodec);
     }
 
     @Override
     public void doPut(String key) {
         byte[] member = stringCodec.encode(key);
-        this.put(new byte[][]{selectRefreshKey(member)}, new byte[][]{refreshAfterWrite, member});
+        this.put(new byte[][]{clusterHelper.selectKey(member)}, new byte[][]{refreshAfterWrite, member});
     }
 
     @Override
     public void doPutAll(Set<String> keys) {
-        Map<byte[], List<byte[]>> map = Maps.newHashMap(calculateCapacity(keys.size()));
+        Map<byte[], List<byte[]>> map = Maps.newHashMap(clusterHelper.calculateCapacity(keys.size()));
         for (String key : keys) {
             byte[] member = stringCodec.encode(key);
-            List<byte[]> values = map.computeIfAbsent(selectRefreshKey(member), k -> {
+            List<byte[]> values = map.computeIfAbsent(clusterHelper.selectKey(member), k -> {
                 List<byte[]> list = new ArrayList<>();
                 list.add(refreshAfterWrite);
                 return list;
@@ -71,15 +62,15 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
     @Override
     public void doRemove(String key) {
         byte[] member = stringCodec.encode(key);
-        this.remove(new byte[][]{selectRefreshKey(member)}, new byte[][]{member});
+        this.remove(new byte[][]{clusterHelper.selectKey(member)}, new byte[][]{member});
     }
 
     @Override
     public void doRemoveAll(Set<String> keys) {
-        Map<byte[], List<byte[]>> map = Maps.newHashMap(calculateCapacity(keys.size()));
+        Map<byte[], List<byte[]>> map = Maps.newHashMap(clusterHelper.calculateCapacity(keys.size()));
         for (String key : keys) {
             byte[] member = stringCodec.encode(key);
-            List<byte[]> values = map.computeIfAbsent(selectRefreshKey(member), k -> new ArrayList<>());
+            List<byte[]> values = map.computeIfAbsent(clusterHelper.selectKey(member), k -> new ArrayList<>());
             values.add(member);
         }
         for (Map.Entry<byte[], List<byte[]>> entry : map.entrySet()) {
@@ -91,19 +82,21 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
 
     protected void refresh() {
         final long now = this.getServerTime();
-        // Future<?>[] 数组的当前写入下标
+        // Future<?>[] 数组的当前可写入位置
         final IntegerValue index = new IntegerValue();
         // 已提交的总任务数
         final IntegerValue total = new IntegerValue();
-        // 最大任务数，当 maximumTasksSize 太小或当前待刷新的键过多，避免序列尾部的键集始终无法刷新
-        final int maximum = Math.max(refreshKeys.length, refreshTasksSize);
-        // maximum / refreshKeys.length，确保每个 SortedSet 都能刷新至少 count 个元素
-        final int count = maximum / refreshKeys.length;
+        // 键的数量
+        final int keysSize = clusterHelper.getSize();
+        // 最大任务数，大于等于键的数量，避免 refreshTasksSize 太小导致键序列末尾的数据始终无法刷新
+        final int maximum = Math.max(keysSize, refreshTasksSize);
+        // maximum / keysSize，确保每个 SortedSet 都能刷新至少 count 个元素
+        final int count = maximum / keysSize;
         // Future<?>[] 数组长度
-        final int length = Math.min(FUTURES_ARRAY_LENGTH, maximum);
+        final int length = Math.min(FUTURES_LENGTH, maximum);
 
         this.tasksList.add(Tuples.of(new Future<?>[length], 0));
-        byte[][] keys = refreshKeys;
+        byte[][] keys = clusterHelper.getKeys();
         while (total.get() < maximum) {
             List<byte[]> unfinishedSets = this.refresh(keys, now, count, length, maximum, total, index);
             if (unfinishedSets.isEmpty()) {
@@ -158,53 +151,6 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
             }
         }
         return unfinishedSets;
-    }
-
-    /**
-     * 预估容量
-     * <p>
-     * 当传入键集时，根据键数量预估合适容量。
-     *
-     * @param size 键数量，用以预估容量
-     * @return 预估容量值
-     */
-    private int calculateCapacity(int size) {
-        // 如果给定大小小于或等于最小键序列大小，则直接返回该大小
-        if (size <= MINIMUM_KEY_SEQ_SIZE) {
-            return size;
-        }
-        // 多个键可能会分布于同一个 SortedSet，因此将键数量除以 2，避免容量过大浪费内存
-        return Math.max(MINIMUM_KEY_SEQ_SIZE, Math.min(refreshSequenceSize, size >>> 1));
-    }
-
-    private byte[] selectRefreshKey(byte[] member) {
-        return refreshKeys[CRC16.crc16(member) & mask];
-    }
-
-    /**
-     * 初始化顺序表名
-     * <p/>
-     * 仅集群模式时使用，用于将键和值分散到不同的节点。
-     *
-     * @return 顺序表名
-     */
-    private static byte[][] initRefreshKeys(StringCodec codec, String refreshKey, int size) {
-        byte[][] keys = new byte[size][];
-        for (int i = 0; i < size; i++) {
-            keys[i] = codec.encode(refreshKey + ":" + i);
-        }
-        return keys;
-    }
-
-    private static int keySequenceSizeFor(int cap) {
-        if (cap <= MINIMUM_KEY_SEQ_SIZE) {
-            return MINIMUM_KEY_SEQ_SIZE;
-        }
-        if (cap >= MAXIMUM_KEY_SEQ_SIZE) {
-            return MAXIMUM_KEY_SEQ_SIZE;
-        }
-        int n = -1 >>> Integer.numberOfLeadingZeros(cap - 1);
-        return (n <= MINIMUM_KEY_SEQ_SIZE) ? MINIMUM_KEY_SEQ_SIZE : (n >= MAXIMUM_KEY_SEQ_SIZE) ? MAXIMUM_KEY_SEQ_SIZE : n + 1;
     }
 
 }

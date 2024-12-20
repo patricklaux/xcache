@@ -192,6 +192,7 @@ public interface RedisOperator extends AutoCloseable {
      * @return 删除的字段数量
      */
     long hdel(Map<byte[], List<byte[]>> keyFields);
+
     // Hash Command --end--
 
 

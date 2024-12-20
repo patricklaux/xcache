@@ -57,6 +57,7 @@ public interface CacheConstants {
     boolean DEFAULT_EXTRA_ENABLE_GROUP_PREFIX = true;
     boolean DEFAULT_EXTRA_ENABLE_RANDOM_TTL = true;
     boolean DEFAULT_EXTRA_ENABLE_NULL_VALUE = true;
+    int DEFAULT_EXTRA_KEY_SEQUENCE_SIZE = 32;
     // 外部缓存默认配置 end
 
 

@@ -191,6 +191,7 @@ public class CacheManagerImpl implements CacheManager {
                 .enableNullValue(storeProps.getEnableNullValue())
                 .enableGroupPrefix(storeProps.getEnableGroupPrefix())
                 .redisType(storeProps.getRedisType())
+                .keySequenceSize(storeProps.getKeySequenceSize())
                 .valueCodec(this.getValueCodec(storeProps.getValueCodec(), cacheConfig))
                 .valueCompressor(this.getCompressor(storeProps.getValueCompressor()))
                 .params(storeProps.getParams())

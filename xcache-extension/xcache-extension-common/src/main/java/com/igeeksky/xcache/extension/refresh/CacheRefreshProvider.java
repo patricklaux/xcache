@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.extension.refresh;
 
 /**
- * 缓存刷新器工厂接口
+ * 缓存刷新工厂接口
  *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/28

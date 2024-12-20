@@ -31,7 +31,7 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
     /**
      * 单个队列最大刷新任务数量
      */
-    protected static final int FUTURES_ARRAY_LENGTH = 1024;
+    protected static final int FUTURES_LENGTH = 1024;
 
     private final Lock lock = new ReentrantLock();
 
@@ -175,6 +175,7 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
             if (!this.lock()) {
                 return;
             }
+            // 提交周期任务：执行锁续期
             newExpireFuture = scheduler.scheduleWithFixedDelay(this::lockNewExpire,
                     refreshThreadPeriod, refreshThreadPeriod, TimeUnit.MILLISECONDS);
             // 3. 判断是否未到达刷新任务的执行时间
@@ -201,6 +202,14 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
      */
     protected abstract void refresh();
 
+    /**
+     * 先解锁后加锁
+     * <p>
+     * 为避免线程启动之前锁已过期，锁的过期时间必须大于刷新线程运行周期。<br>
+     * 锁存续时间 = refreshThreadPeriod + 5000ms
+     *
+     * @return true 加锁成功；false 加锁失败
+     */
     private boolean lock() {
         Boolean locked = this.operator.evalsha(RedisRefreshScript.LOCK, lockKeys, lockArgs);
         return locked != null && locked;
@@ -219,6 +228,9 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
         return this.operator.evalshaReadOnly(RedisRefreshScript.ARRIVED_TASK_TIME, threadPeriodKeys);
     }
 
+    /**
+     * 更新刷新任务的下次执行时间
+     */
     private void updateNextTaskTime() {
         long nextTaskTime = this.operator.evalsha(RedisRefreshScript.UPDATE_TASK_TIME, threadPeriodKeys, threadPeriodArgs);
         if (nextTaskTime <= 0) {
@@ -227,6 +239,12 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
         }
     }
 
+    /**
+     * 添加或更新下次刷新时间
+     *
+     * @param keys keys[0] refreshKey
+     * @param args args[0] refreshAfterWrite args[1~n] members
+     */
     protected void put(byte[][] keys, byte[][] args) {
         long nextRefreshTime = this.operator.evalsha(RedisRefreshScript.PUT, keys, args);
         if (nextRefreshTime <= 0) {
@@ -235,14 +253,33 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
         }
     }
 
+    /**
+     * 删除下次刷新时间
+     *
+     * @param keys keys[0] refreshKey
+     * @param args args[0] refreshAfterWrite args[1~n] members
+     */
     protected void remove(byte[][] keys, byte[][] args) {
         this.operator.evalsha(RedisRefreshScript.REMOVE, keys, args);
     }
 
+    /**
+     * 获取待刷新的 keys
+     *
+     * @param refreshKey 刷新key
+     * @param now        当前时间
+     * @param count      获取数量
+     * @return 待刷新的keys
+     */
     protected List<byte[]> getRefreshMembers(byte[] refreshKey, long now, int count) {
         return this.operator.zrangebyscore(refreshKey, 0, now, 0, count);
     }
 
+    /**
+     * 获取当前服务器时间
+     *
+     * @return 当前服务器时间（单位：毫秒）
+     */
     protected long getServerTime() {
         return this.operator.timeMillis();
     }

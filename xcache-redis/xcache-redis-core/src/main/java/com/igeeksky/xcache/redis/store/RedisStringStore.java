@@ -3,7 +3,7 @@ package com.igeeksky.xcache.redis.store;
 import com.igeeksky.redis.RedisOperator;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.CacheKeyPrefix;
-import com.igeeksky.xcache.core.ExtraStoreValueConvertor;
+import com.igeeksky.xcache.core.ExtraStoreConvertor;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.function.tuple.ExpiryKeyValue;
 import com.igeeksky.xtool.core.function.tuple.KeyValue;
@@ -31,7 +31,7 @@ public class RedisStringStore<V> implements RedisStore<V> {
 
     private final CacheKeyPrefix cacheKeyPrefix;
 
-    private final ExtraStoreValueConvertor<V> convertor;
+    private final ExtraStoreConvertor<V> convertor;
 
     public RedisStringStore(RedisOperator operator, RedisStoreConfig<V> config) {
         this.operator = operator;
@@ -40,7 +40,7 @@ public class RedisStringStore<V> implements RedisStore<V> {
         this.expireAfterWriteMin = (long) (expireAfterWrite * 0.8);
         this.cacheKeyPrefix = new CacheKeyPrefix(config.getGroup(), config.getName(),
                 config.isEnableGroupPrefix(), StringCodec.getInstance(config.getCharset()));
-        this.convertor = new ExtraStoreValueConvertor<>(config.isEnableNullValue(), config.isEnableCompressValue(),
+        this.convertor = new ExtraStoreConvertor<>(config.isEnableNullValue(), config.isEnableCompressValue(),
                 config.getValueCodec(), config.getValueCompressor());
     }
 

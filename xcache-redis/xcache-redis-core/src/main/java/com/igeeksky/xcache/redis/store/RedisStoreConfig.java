@@ -23,6 +23,8 @@ public class RedisStoreConfig<V> {
 
     private final long expireAfterWrite;
 
+    private final int keySequenceSize;
+
     private final boolean enableGroupPrefix;
 
     private final boolean enableRandomTtl;
@@ -45,8 +47,9 @@ public class RedisStoreConfig<V> {
         this.enableRandomTtl = storeConfig.isEnableRandomTtl();
         this.enableNullValue = storeConfig.isEnableNullValue();
         this.enableCompressValue = storeConfig.isEnableCompressValue();
-        this.valueCompressor = storeConfig.getValueCompressor();
         this.valueCodec = storeConfig.getValueCodec();
+        this.valueCompressor = storeConfig.getValueCompressor();
+        this.keySequenceSize = storeConfig.getKeySequenceSize();
     }
 
     public String getName() {
@@ -91,5 +94,9 @@ public class RedisStoreConfig<V> {
 
     public Codec<V> getValueCodec() {
         return valueCodec;
+    }
+
+    public int getKeySequenceSize() {
+        return keySequenceSize;
     }
 }

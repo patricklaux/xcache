@@ -202,6 +202,11 @@ public class PropsUtil {
             to.setRedisType(redisType);
         }
 
+        Integer keySequenceSize = from.getKeySequenceSize();
+        if (keySequenceSize != null) {
+            to.setKeySequenceSize(keySequenceSize);
+        }
+
         String storeProvider = StringUtils.trimToNull(from.getProvider());
         if (storeProvider != null) {
             to.setProvider(storeProvider);
@@ -367,6 +372,7 @@ public class PropsUtil {
     public static StoreProps defaultEmbedStoreProps() {
         StoreProps props = new StoreProps();
         props.setRedisType(RedisType.STRING);
+        props.setKeySequenceSize(CacheConstants.DEFAULT_EXTRA_KEY_SEQUENCE_SIZE);
 
         props.setProvider(CacheConstants.DEFAULT_EMBED_STORE_PROVIDER);
 
@@ -398,6 +404,7 @@ public class PropsUtil {
     public static StoreProps defaultExtraStoreProps() {
         StoreProps props = new StoreProps();
         props.setRedisType(RedisType.STRING);
+        props.setKeySequenceSize(CacheConstants.DEFAULT_EXTRA_KEY_SEQUENCE_SIZE);
 
         props.setProvider(CacheConstants.DEFAULT_EXTRA_STORE_PROVIDER);
 

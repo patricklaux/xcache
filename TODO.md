@@ -29,16 +29,16 @@
 - [X] 【开发】 缓存接口方法名调整
 - [X] 【开发】 删除 CacheWriter
 - [X] 【开发】 Redis Lua 脚本执行失败重加载机制（RedisNoScriptException 异常处理）
+- [X] 【开发】 CacheRefresh 配置
+- [X] 【开发】 RedisHashStore 分为两类实现：一是集群模式，二是非集群模式。
+- [X] 【开发】 RedisHashStore，initKeys 方法，用于初始化缓存的 key 列表，需可配置数量。
 
 ### 待完成任务
 
-- [ ] 【开发】 CacheRefresh 配置
 - [ ] 【文档】 Guide，Reference
 - [ ] 【开发】 补充代码注释
 - [ ] 【开发】 xcache-jedis
 - [ ] 【开发】 ConcurrentHashMap 实现无过期时间的缓存
-- [ ] 【开发】 RedisHashStore 分为两类实现：一是集群模式，二是非集群模式。
-- [ ] 【开发】 RedisHashStore，initKeys 方法，用于初始化缓存的 key 列表，需可配置数量。
 - [ ] 【开发】 缓存数据刷新策略（根据时间周期触发，每次刷新均会延长过期时间）
 - [ ] 【开发】 对象惰性初始化（Supplier）
 - [ ] 【测试】 测试 Xcache 注解参数

@@ -61,7 +61,7 @@ public class RedisCacheRefresh extends AbstractRedisCacheRefresh {
 
     protected void refresh() {
         long now = this.getServerTime();
-        int total = 0, index = 0, count = Math.min(FUTURES_ARRAY_LENGTH, refreshTasksSize);
+        int total = 0, index = 0, count = Math.min(FUTURES_LENGTH, refreshTasksSize);
 
         Future<?>[] futures = new Future<?>[count];
         tasksList.add(Tuples.of(futures, 0));

@@ -9,29 +9,30 @@ import com.igeeksky.xtool.core.lang.compress.Compressor;
 import java.util.Arrays;
 
 /**
- * 外部缓存值转换器
+ * 外部缓存键值转换器
  *
  * @author Patrick.Lau
  * @since 1.0.0 2024/9/18
  */
-public class ExtraStoreValueConvertor<V> {
+public class ExtraStoreConvertor<V> {
 
     private final boolean enableNullValue;
 
     private final boolean enableCompressValue;
 
-    private final Compressor compressor;
     private final Codec<V> codec;
+    private final Compressor compressor;
 
     private final byte[] null_bytes;
 
-    public ExtraStoreValueConvertor(boolean enableNullValue, boolean enableCompressValue,
-                                    Codec<V> codec, Compressor compressor) {
+    public ExtraStoreConvertor(boolean enableNullValue, boolean enableCompressValue,
+                               Codec<V> codec, Compressor compressor) {
         this.enableCompressValue = enableCompressValue;
         this.enableNullValue = enableNullValue;
-        this.compressor = compressor;
         this.codec = codec;
-        this.null_bytes = enableCompressValue ? this.compressor.compress(NullValue.INSTANCE_BYTES) : NullValue.INSTANCE_BYTES;
+        this.compressor = compressor;
+        this.null_bytes = enableCompressValue ? this.compressor.compress(NullValue.INSTANCE_BYTES) :
+                NullValue.INSTANCE_BYTES;
     }
 
     public byte[] toExtraStoreValue(V value) {
@@ -55,10 +56,11 @@ public class ExtraStoreValueConvertor<V> {
             return null;
         }
 
-        if (enableNullValue) {
-            if (Arrays.equals(null_bytes, storeValue)) {
+        if (Arrays.equals(null_bytes, storeValue)) {
+            if (enableNullValue) {
                 return CacheValues.emptyCacheValue();
             }
+            return null;
         }
 
         if (enableCompressValue) {
