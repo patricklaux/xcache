@@ -159,19 +159,29 @@ public class PropsUtil {
             return;
         }
 
-        Long period = from.getPeriod();
-        if (period != null) {
-            to.setPeriod(period);
-        }
-
         String provider = StringUtils.trimToNull(from.getProvider());
         if (provider != null) {
             to.setProvider(provider);
         }
 
-        Long stopAfterAccess = from.getStopAfterAccess();
-        if (stopAfterAccess != null) {
-            to.setStopAfterAccess(stopAfterAccess);
+        Long refreshAfterWrite = from.getRefreshAfterWrite();
+        if (refreshAfterWrite != null) {
+            to.setRefreshAfterWrite(refreshAfterWrite);
+        }
+
+        Integer refreshTasksSize = from.getRefreshTasksSize();
+        if (refreshTasksSize != null) {
+            to.setRefreshTasksSize(refreshTasksSize);
+        }
+
+        Long refreshThreadPeriod = from.getRefreshThreadPeriod();
+        if (refreshThreadPeriod != null) {
+            to.setRefreshThreadPeriod(refreshThreadPeriod);
+        }
+
+        Integer refreshSequenceSize = from.getRefreshSequenceSize();
+        if (refreshSequenceSize != null) {
+            to.setRefreshSequenceSize(refreshSequenceSize);
         }
 
         Boolean enableGroupPrefix = from.getEnableGroupPrefix();
@@ -311,9 +321,11 @@ public class PropsUtil {
      */
     public static RefreshProps defaultRefreshProps() {
         RefreshProps props = new RefreshProps();
-        props.setPeriod(CacheConstants.DEFAULT_REFRESH_PERIOD);
         props.setProvider(CacheConstants.DEFAULT_REFRESH_PROVIDER);
-        props.setStopAfterAccess(CacheConstants.DEFAULT_REFRESH_STOP_AFTER_ACCESS);
+        props.setRefreshAfterWrite(CacheConstants.DEFAULT_REFRESH_AFTER_WRITE);
+        props.setRefreshTasksSize(CacheConstants.DEFAULT_REFRESH_TASKS_SIZE);
+        props.setRefreshThreadPeriod(CacheConstants.DEFAULT_REFRESH_THREAD_PERIOD);
+        props.setRefreshSequenceSize(CacheConstants.DEFAULT_REFRESH_SEQUENCE_SIZE);
         props.setEnableGroupPrefix(CacheConstants.DEFAULT_ENABLE_GROUP_PREFIX);
         return props;
     }

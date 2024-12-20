@@ -28,7 +28,8 @@ import java.util.*;
  */
 public class RedisHashStore<V> implements RedisStore<V> {
 
-    private static final int LENGTH = 16384;
+    private static final int MINIMUM_HASH_SEQ_SIZE = 32;
+    private static final int MAXIMUM_HASH_SEQ_SIZE = 16384;
 
     private final byte[] hashKey;
 
@@ -37,6 +38,10 @@ public class RedisHashStore<V> implements RedisStore<V> {
     private final RedisOperator operator;
 
     private final StringCodec stringCodec;
+
+    // TODO 可配置
+    private final int hashSequenceSize = keySequenceSizeFor(MAXIMUM_HASH_SEQ_SIZE);
+    private final int mask = hashSequenceSize - 1;
 
     private final ExtraStoreValueConvertor<V> convertor;
 
@@ -50,7 +55,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
         }
         CacheKeyPrefix cacheKeyPrefix = new CacheKeyPrefix(config.getGroup(), config.getName(),
                 config.isEnableGroupPrefix(), stringCodec);
-        this.hashKeys = (this.operator.isCluster()) ? initHashKeys(cacheKeyPrefix) : null;
+        this.hashKeys = (this.operator.isCluster()) ? initHashKeys(cacheKeyPrefix, hashSequenceSize) : null;
         this.convertor = new ExtraStoreValueConvertor<>(config.isEnableNullValue(), config.isEnableCompressValue(),
                 config.getValueCodec(), config.getValueCompressor());
     }
@@ -114,7 +119,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
     public void putAll(Map<? extends String, ? extends V> keyValues) {
         if (this.operator.isCluster()) {
 
-            int maximum = computeCapacity(keyValues.size());
+            int maximum = calculateCapacity(keyValues.size(), hashSequenceSize);
             Map<byte[], List<byte[]>> removeKeyFields = Maps.newHashMap();
             Map<byte[], Map<byte[], byte[]>> keyFieldValues = Maps.newHashMap(maximum);
 
@@ -188,34 +193,6 @@ public class RedisHashStore<V> implements RedisStore<V> {
         }
     }
 
-    /**
-     * <p>初始化哈希表名</p>
-     * <p/>
-     * 仅集群模式时使用，可以将键和值分散到不同的节点。
-     *
-     * @return 16384 个哈希表名（group:cache-name:0, group:cache-name:1, ……, group:cache-name:16383）
-     */
-    private static byte[][] initHashKeys(CacheKeyPrefix cacheKeyPrefix) {
-        byte[][] keys = new byte[LENGTH][];
-        for (int i = 0; i < LENGTH; i++) {
-            keys[i] = cacheKeyPrefix.createHashKey(i);
-        }
-        return keys;
-    }
-
-    /**
-     * 根据 field 获取哈希表名称
-     * <p>
-     * 当处于集群模式时，为了避免只访问其中一个节点，因此将根据 field 选择不同的 hash key 来保存。
-     * <p>
-     * hash key 有 16384 个，key 由 cache-name + ":" + [0-16383] 组合而成。
-     *
-     * @param field redis hash field
-     * @return redis hash key
-     */
-    private byte[] selectStoreKey(byte[] field) {
-        return hashKeys[CRC16.crc16(field)];
-    }
 
     private Map<String, CacheValue<V>> toResult(List<KeyValue<byte[], byte[]>> keyValues) {
         if (CollectionUtils.isEmpty(keyValues)) {
@@ -235,7 +212,7 @@ public class RedisHashStore<V> implements RedisStore<V> {
     }
 
     private Map<byte[], List<byte[]>> toKeyFields(Set<? extends String> fields) {
-        int maximum = computeCapacity(fields.size());
+        int maximum = calculateCapacity(fields.size(), hashSequenceSize);
         Map<byte[], List<byte[]>> keyFields = Maps.newHashMap(maximum);
         for (String field : fields) {
             byte[] storeField = toStoreField(field);
@@ -246,8 +223,55 @@ public class RedisHashStore<V> implements RedisStore<V> {
         return keyFields;
     }
 
-    private static int computeCapacity(int size) {
-        return Math.min(LENGTH, size / 2);
+    /**
+     * 预估容量
+     * <p>
+     * 当传入键集时，根据键数量预估合适容量。
+     *
+     * @param size 键数量，用以预估容量
+     * @return 预估容量值
+     */
+    private static int calculateCapacity(int size, int maximum) {
+        // 如果给定大小小于或等于最小键序列大小，则直接返回该大小
+        if (size <= MINIMUM_HASH_SEQ_SIZE) {
+            return size;
+        }
+        // 多个键可能会分布于同一个 HashTable，因此将键数量除以 2，避免容量过大浪费内存
+        return Math.max(MINIMUM_HASH_SEQ_SIZE, Math.min(maximum, size >>> 1));
+    }
+
+    /**
+     * 根据 field 获取哈希表名称
+     * <p>
+     * 当处于集群模式时，为了避免只访问其中一个节点，因此将根据 field 选择不同的 hash key 来保存。
+     * <p>
+     * hash key 有 16384 个，key 由 cache-name + ":" + [0-16383] 组合而成。
+     *
+     * @param field redis hash field
+     * @return redis hash key
+     */
+    private byte[] selectStoreKey(byte[] field) {
+        return hashKeys[CRC16.crc16(field) & mask];
+    }
+
+    /**
+     * <p>初始化哈希表名</p>
+     * <p/>
+     * 仅集群模式时使用，可以将键和值分散到不同的节点。
+     *
+     * @return 16384 个哈希表名（group:cache-name:0, group:cache-name:1, ……, group:cache-name:16383）
+     */
+    private static byte[][] initHashKeys(CacheKeyPrefix cacheKeyPrefix, int size) {
+        byte[][] keys = new byte[size][];
+        for (int i = 0; i < size; i++) {
+            keys[i] = cacheKeyPrefix.createHashKey(i);
+        }
+        return keys;
+    }
+
+    private static int keySequenceSizeFor(int cap) {
+        int n = -1 >>> Integer.numberOfLeadingZeros(cap - 1);
+        return (n <= MINIMUM_HASH_SEQ_SIZE) ? MINIMUM_HASH_SEQ_SIZE : (n >= MAXIMUM_HASH_SEQ_SIZE) ? MAXIMUM_HASH_SEQ_SIZE : n + 1;
     }
 
     private byte[] toStoreField(String field) {

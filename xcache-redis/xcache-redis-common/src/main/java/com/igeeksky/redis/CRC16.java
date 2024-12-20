@@ -97,18 +97,15 @@ public class CRC16 {
     /**
      * Create a CRC16 checksum from the bytes.
      *
-     * @param bytes input bytes
+     * @param buffer input bytes
      * @return CRC16 as integer value
      * @since 4.4
      */
-    public static int crc16(ByteBuffer bytes) {
-
+    public static int crc16(ByteBuffer buffer) {
         int crc = 0x0000;
-
-        while (bytes.hasRemaining()) {
-            crc = doCrc(bytes.get(), crc);
+        while (buffer.hasRemaining()) {
+            crc = doCrc(buffer.get(), crc);
         }
-
         return crc & 0xFFFF;
     }
 

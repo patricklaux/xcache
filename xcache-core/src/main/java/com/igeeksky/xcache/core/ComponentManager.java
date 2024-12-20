@@ -1,11 +1,10 @@
 package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.common.CacheLoader;
-import com.igeeksky.xcache.common.CacheWriter;
+import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.core.store.StoreProvider;
 import com.igeeksky.xcache.extension.codec.CodecProvider;
 import com.igeeksky.xcache.extension.compress.CompressorProvider;
-import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.CacheLockProvider;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
 import com.igeeksky.xcache.extension.stat.CacheStatProvider;
@@ -28,10 +27,6 @@ public interface ComponentManager {
     void addCacheLoader(String name, CacheLoader<?, ?> cacheLoader);
 
     <K, V> CacheLoader<K, V> getCacheLoader(String name);
-
-    void addCacheWriter(String name, CacheWriter<?, ?> cacheWriter);
-
-    <K, V> CacheWriter<K, V> getCacheWriter(String name);
 
     void addProvider(String beanId, CacheLockProvider provider);
 

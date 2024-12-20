@@ -39,7 +39,6 @@ public class RefreshHelper {
                 tasksList.set(i, null);
             }
         }
-        tasksList.clear();
         return false;
     }
 

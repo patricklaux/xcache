@@ -20,56 +20,55 @@ public final class RedisLockScript {
     /**
      * 加锁
      * <p>
-     * KEYS[1] 锁对应的键 <p>
-     * ARGV[1] 锁存续时间 <p>
-     * ARGV[2] sid
+     * KEYS[1] 键 <p>
+     * ARGV[1] sid <p>
+     * ARGV[2] 存续时间
      */
     public static final RedisScript<Long> LOCK_SCRIPT = new RedisScript<>(
             "if (redis.call('exists', KEYS[1]) == 0) then " +
-                    "redis.call('hincrby', KEYS[1], ARGV[2], 1); " +
-                    "redis.call('pexpire', KEYS[1], ARGV[1]); " +
+                    "redis.call('hincrby', KEYS[1], ARGV[1], 1); " +
+                    "redis.call('pexpire', KEYS[1], ARGV[2]); " +
                     "return nil; " +
                     "end; " +
-                    "if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then " +
-                    "redis.call('hincrby', KEYS[1], ARGV[2], 1); " +
-                    "redis.call('pexpire', KEYS[1], ARGV[1]); " +
+                    "if (redis.call('hexists', KEYS[1], ARGV[1]) == 1) then " +
+                    "redis.call('hincrby', KEYS[1], ARGV[1], 1); " +
+                    "redis.call('pexpire', KEYS[1], ARGV[2]); " +
                     "return nil; " +
                     "end; " +
                     "return redis.call('pttl', KEYS[1]);"
             , ResultType.INTEGER);
 
     /**
-     * 释放锁
+     * 解锁
      * <p>
-     * KEYS[1] 锁对应的键 <p>
-     * ARGV[1] 锁存续时间 <p>
-     * ARGV[2] sid
+     * KEYS[1] 键 <p>
+     * ARGV[1] sid <p>
+     * ARGV[2] 存续时间
      */
     public static final RedisScript<Boolean> UNLOCK_SCRIPT = new RedisScript<>(
-            "if (redis.call('hexists', KEYS[1], ARGV[2]) == 0) then " +
+            "if (redis.call('hexists', KEYS[1], ARGV[1]) == 0) then " +
                     "return nil;" +
                     "end; " +
-                    "local counter = redis.call('hincrby', KEYS[1], ARGV[2], -1); " +
+                    "local counter = redis.call('hincrby', KEYS[1], ARGV[1], -1); " +
                     "if (counter > 0) then " +
-                    "redis.call('pexpire', KEYS[1], ARGV[1]); " +
+                    "redis.call('pexpire', KEYS[1], ARGV[2]); " +
                     "return 0; " +
                     "else " +
                     "redis.call('del', KEYS[1]); " +
                     "return 1; " +
-                    "end; " +
-                    "return nil;"
+                    "end; "
             , ResultType.BOOLEAN);
 
     /**
-     * 锁续期
+     * 续期
      * <p>
-     * KEYS[1] 锁对应的键 <p>
-     * ARGV[1] 锁存续时间 <p>
-     * ARGV[2] sid
+     * KEYS[1] 键 <p>
+     * ARGV[1] sid <p>
+     * ARGV[2] 存续时间
      */
-    public static final RedisScript<Boolean> NEW_EXPIRE = new RedisScript<>(
-            "if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then " +
-                    "redis.call('pexpire', KEYS[1], ARGV[1]); " +
+    public static final RedisScript<Boolean> NEW_EXPIRE_SCRIPT = new RedisScript<>(
+            "if (redis.call('hexists', KEYS[1], ARGV[1]) == 1) then " +
+                    "redis.call('pexpire', KEYS[1], ARGV[2]); " +
                     "return 1; " +
                     "end; " +
                     "return 0;"

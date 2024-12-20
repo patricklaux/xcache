@@ -6,38 +6,36 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
- * 缓存刷新
- * <p>
- * 保存所有访问记录，定时使用 consumer 回源读取数据并存入缓存
+ * 缓存数据刷新
  *
  * @author Patrick.Lau
- * @since 1.0.0 2024/6/26
+ * @since 1.0.0
  */
 public interface CacheRefresh extends AutoCloseable {
 
     /**
-     * 保存访问记录
+     * 监听缓存写入事件
      *
      * @param key 键
      */
     void onPut(String key);
 
     /**
-     * 批量保存访问记录
+     * 监听缓存批量写入事件
      *
      * @param keys 键集
      */
     void onPutAll(Set<String> keys);
 
     /**
-     * 移除访问记录
+     * 监听缓存移除事件
      *
      * @param key 键
      */
     void onRemove(String key);
 
     /**
-     * 批量移除访问记录
+     * 监听缓存批量移除事件
      *
      * @param keys 键集
      */

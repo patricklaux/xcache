@@ -2,11 +2,10 @@ package com.igeeksky.xcache.core;
 
 
 import com.igeeksky.xcache.common.CacheLoader;
-import com.igeeksky.xcache.extension.refresh.CacheRefresh;
-import com.igeeksky.xcache.common.CacheWriter;
 import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.NoOpContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
+import com.igeeksky.xcache.extension.refresh.CacheRefresh;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xcache.extension.stat.NoOpCacheStatMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
@@ -26,7 +25,7 @@ public class ExtendConfig<K, V> {
 
     private final KeyCodec<K> keyCodec;
 
-    private final LockService cacheLock;
+    private final LockService lockService;
 
     private final CacheRefresh cacheRefresh;
 
@@ -36,17 +35,14 @@ public class ExtendConfig<K, V> {
 
     private final CacheLoader<K, V> cacheLoader;
 
-    private final CacheWriter<K, V> cacheWriter;
-
     private final ContainsPredicate<K> containsPredicate;
 
     public ExtendConfig(Builder<K, V> builder) {
         this.keyCodec = builder.keyCodec;
-        this.cacheLock = builder.cacheLock;
+        this.lockService = builder.lockService;
         this.statMonitor = builder.statMonitor;
         this.syncMonitor = builder.syncMonitor;
         this.cacheLoader = builder.cacheLoader;
-        this.cacheWriter = builder.cacheWriter;
         this.cacheRefresh = builder.cacheRefresh;
         this.containsPredicate = builder.containsPredicate;
     }
@@ -60,8 +56,8 @@ public class ExtendConfig<K, V> {
      *
      * @return LockService 缓存锁服务，不为空
      */
-    public LockService getCacheLock() {
-        return cacheLock;
+    public LockService getLockService() {
+        return lockService;
     }
 
     /**
@@ -80,15 +76,6 @@ public class ExtendConfig<K, V> {
      */
     public CacheLoader<K, V> getCacheLoader() {
         return cacheLoader;
-    }
-
-    /**
-     * 缓存写入器，用于将数据写入到数据源
-     *
-     * @return 如果有配置，返回配置的写入器；否则返回 null
-     */
-    public CacheWriter<K, V> getCacheWriter() {
-        return cacheWriter;
     }
 
     /**
@@ -140,7 +127,7 @@ public class ExtendConfig<K, V> {
 
         private KeyCodec<K> keyCodec;
 
-        private LockService cacheLock;
+        private LockService lockService;
 
         private CacheRefresh cacheRefresh;
 
@@ -149,8 +136,6 @@ public class ExtendConfig<K, V> {
         private CacheSyncMonitor syncMonitor;
 
         private CacheLoader<K, V> cacheLoader;
-
-        private CacheWriter<K, V> cacheWriter;
 
         private ContainsPredicate<K> containsPredicate;
 
@@ -162,13 +147,8 @@ public class ExtendConfig<K, V> {
             return this;
         }
 
-        public Builder<K, V> cacheWriter(CacheWriter<K, V> cacheWriter) {
-            this.cacheWriter = cacheWriter;
-            return this;
-        }
-
-        public Builder<K, V> cacheLock(LockService cacheLock) {
-            this.cacheLock = cacheLock;
+        public Builder<K, V> lockService(LockService lockService) {
+            this.lockService = lockService;
             return this;
         }
 
@@ -199,7 +179,7 @@ public class ExtendConfig<K, V> {
 
         public ExtendConfig<K, V> build() {
             Assert.notNull(this.keyCodec, "keyCodec must not be null");
-            Assert.notNull(this.cacheLock, "cacheLock must not be null");
+            Assert.notNull(this.lockService, "cacheLock must not be null");
             return new ExtendConfig<>(this);
         }
 

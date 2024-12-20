@@ -1,7 +1,5 @@
 package com.igeeksky.xcache.extension.refresh;
 
-import com.igeeksky.xcache.extension.lock.LockService;
-
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,11 +12,11 @@ import java.util.Map;
  */
 public class RefreshConfig {
 
+    private final String sid;
+
     private final String name;
 
     private final String group;
-
-    private final boolean enableGroupPrefix;
 
     private final String provider;
 
@@ -28,9 +26,17 @@ public class RefreshConfig {
 
     private final String refreshLockKey;
 
-    private final LockService cacheLock;
+    private final String refreshPeriodKey;
 
-    private final long refreshPeriod;
+    private final long refreshThreadPeriod;
+
+    private final int refreshSequenceSize;
+
+    private final int refreshTasksSize;
+
+    private final long refreshAfterWrite;
+
+    private final boolean enableGroupPrefix;
 
     private final Map<String, Object> params;
 
@@ -39,16 +45,21 @@ public class RefreshConfig {
         this.group = builder.group;
         this.charset = builder.charset;
         this.provider = builder.provider;
-        this.cacheLock = builder.cacheLock;
-        this.refreshPeriod = builder.refreshPeriod;
+        this.sid = builder.sid;
+        this.refreshThreadPeriod = builder.refreshThreadPeriod;
+        this.refreshTasksSize = builder.refreshTasksSize;
+        this.refreshAfterWrite = builder.refreshAfterWrite;
+        this.refreshSequenceSize = builder.refreshSequenceSize;
         this.enableGroupPrefix = builder.enableGroupPrefix;
         this.params = builder.params;
         if (this.enableGroupPrefix) {
             this.refreshKey = "refresh:" + this.group + ":" + this.name;
             this.refreshLockKey = "refresh:lock:" + this.group + ":" + this.name;
+            this.refreshPeriodKey = "refresh:period:" + this.group + ":" + this.name;
         } else {
             this.refreshKey = "refresh:" + this.name;
             this.refreshLockKey = "refresh:lock:" + this.name;
+            this.refreshPeriodKey = "refresh:period:" + this.name;
         }
     }
 
@@ -58,10 +69,6 @@ public class RefreshConfig {
 
     public String getGroup() {
         return group;
-    }
-
-    public boolean isEnableGroupPrefix() {
-        return enableGroupPrefix;
     }
 
     public String getProvider() {
@@ -80,12 +87,32 @@ public class RefreshConfig {
         return refreshLockKey;
     }
 
-    public LockService getCacheLock() {
-        return cacheLock;
+    public String getRefreshPeriodKey() {
+        return refreshPeriodKey;
     }
 
-    public long getRefreshPeriod() {
-        return refreshPeriod;
+    public long getRefreshThreadPeriod() {
+        return refreshThreadPeriod;
+    }
+
+    public int getRefreshTasksSize() {
+        return refreshTasksSize;
+    }
+
+    public long getRefreshAfterWrite() {
+        return refreshAfterWrite;
+    }
+
+    public int getRefreshSequenceSize() {
+        return refreshSequenceSize;
+    }
+
+    public String getSid() {
+        return sid;
+    }
+
+    public boolean isEnableGroupPrefix() {
+        return enableGroupPrefix;
     }
 
     public Map<String, Object> getParams() {
@@ -96,31 +123,34 @@ public class RefreshConfig {
         return new Builder();
     }
 
-    public long getRefreshAfterWrite() {
-        return 100000L;
-    }
-
-    public int getMaxRefreshTasks() {
-        return 10000;
-    }
-
     public static class Builder {
+
+        private String sid;
 
         private String name;
 
         private String group;
 
-        private Charset charset;
-
         private String provider;
 
-        private LockService cacheLock;
+        private Charset charset;
 
-        private long refreshPeriod;
+        private int refreshTasksSize;
+
+        private long refreshAfterWrite;
+
+        private int refreshSequenceSize;
+
+        private long refreshThreadPeriod;
 
         private boolean enableGroupPrefix;
 
         private final Map<String, Object> params = new HashMap<>();
+
+        public Builder sid(String sid) {
+            this.sid = sid;
+            return this;
+        }
 
         public Builder name(String name) {
             this.name = name;
@@ -142,13 +172,23 @@ public class RefreshConfig {
             return this;
         }
 
-        public Builder refreshPeriod(long refreshPeriod) {
-            this.refreshPeriod = refreshPeriod;
+        public Builder refreshAfterWrite(long refreshAfterWrite) {
+            this.refreshAfterWrite = refreshAfterWrite;
             return this;
         }
 
-        public Builder cacheLock(LockService cacheLock) {
-            this.cacheLock = cacheLock;
+        public Builder refreshTasksSize(int refreshTasksSize) {
+            this.refreshTasksSize = refreshTasksSize;
+            return this;
+        }
+
+        public Builder refreshThreadPeriod(long refreshThreadPeriod) {
+            this.refreshThreadPeriod = refreshThreadPeriod;
+            return this;
+        }
+
+        public Builder refreshSequenceSize(int refreshSequenceSize) {
+            this.refreshSequenceSize = refreshSequenceSize;
             return this;
         }
 

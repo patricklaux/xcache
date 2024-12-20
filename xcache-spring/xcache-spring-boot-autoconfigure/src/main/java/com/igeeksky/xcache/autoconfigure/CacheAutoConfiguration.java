@@ -42,7 +42,6 @@ public class CacheAutoConfiguration {
                               ObjectProvider<CacheStatProviderHolder> statHolders,
                               ObjectProvider<CacheLockProviderHolder> lockHolders,
                               ObjectProvider<CacheLoaderHolder> loaderHolders,
-                              ObjectProvider<CacheWriterHolder> writerHolders,
                               ObjectProvider<CacheRefreshProviderHolder> refreshHolders,
                               ObjectProvider<CompressorProviderHolder> compressorHolders,
                               ObjectProvider<ContainsPredicateHolder> predicateHolders,
@@ -72,10 +71,6 @@ public class CacheAutoConfiguration {
 
         for (CacheLoaderHolder holder : loaderHolders) {
             holder.getAll().forEach(componentManager::addCacheLoader);
-        }
-
-        for (CacheWriterHolder holder : writerHolders) {
-            holder.getAll().forEach(componentManager::addCacheWriter);
         }
 
         for (CacheRefreshProviderHolder holder : refreshHolders) {

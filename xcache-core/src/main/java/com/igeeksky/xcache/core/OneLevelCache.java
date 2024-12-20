@@ -4,7 +4,6 @@ import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.core.store.StoreProxy;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
-import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xcache.props.StoreLevel;
 
 import java.util.Map;
@@ -22,11 +21,8 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
 
     private final Store<V> store;
 
-    private final CacheSyncMonitor syncMonitor;
-
     public OneLevelCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend, Store<V>[] stores) {
         super(config, extend);
-        this.syncMonitor = extend.getSyncMonitor();
         this.store = getStore(stores, extend.getStatMonitor());
     }
 
@@ -78,7 +74,6 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     @Override
     public void clear() {
         store.clear();
-        syncMonitor.afterClear();
     }
 
 }

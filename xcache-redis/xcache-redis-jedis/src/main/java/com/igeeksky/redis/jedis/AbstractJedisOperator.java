@@ -141,8 +141,8 @@ public abstract class AbstractJedisOperator implements RedisOperator {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T eval(RedisScript<T> script, int keyCount, byte[]... params) {
-        byte[] result = (byte[]) commands.eval(script.getScript(), keyCount, params);
+    public <T> T eval(RedisScript<T> script, int keyCount, byte[][] params) {
+        byte[] result = (byte[]) commands.eval(script.getScriptBytes(), keyCount, params);
         if (ArrayUtils.isEmpty(result)) {
             return null;
         }
@@ -180,7 +180,7 @@ public abstract class AbstractJedisOperator implements RedisOperator {
     }
 
     @Override
-    public <T> T evalReadOnly(RedisScript<T> script, int keyCount, byte[]... params) {
+    public <T> T evalReadOnly(RedisScript<T> script, int keyCount, byte[][] params) {
         return null;
     }
 
@@ -190,7 +190,7 @@ public abstract class AbstractJedisOperator implements RedisOperator {
     }
 
     @Override
-    public <T> T evalsha(RedisScript<T> script, int keyCount, byte[]... params) {
+    public <T> T evalsha(RedisScript<T> script, int keyCount, byte[][] params) {
         return null;
     }
 
@@ -200,7 +200,7 @@ public abstract class AbstractJedisOperator implements RedisOperator {
     }
 
     @Override
-    public <T> T evalshaReadOnly(RedisScript<T> script, int keyCount, byte[]... params) {
+    public <T> T evalshaReadOnly(RedisScript<T> script, int keyCount, byte[][] params) {
         return null;
     }
 
@@ -210,9 +210,21 @@ public abstract class AbstractJedisOperator implements RedisOperator {
     }
 
     @Override
+    public long timeSeconds() {
+        List<String> time = jedis.time();
+        return Long.parseLong(time.getFirst());
+    }
+
+    @Override
     public long timeMillis() {
         List<String> time = jedis.time();
         return (Long.parseLong(time.get(0)) * 1000) + (Long.parseLong(time.get(1)) / 1000);
+    }
+
+    @Override
+    public long timeMicros() {
+        List<String> time = jedis.time();
+        return Long.parseLong(time.get(0)) * 1000 + Long.parseLong(time.get(1));
     }
 
     @Override

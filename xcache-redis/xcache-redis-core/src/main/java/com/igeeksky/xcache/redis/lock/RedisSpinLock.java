@@ -1,7 +1,6 @@
 package com.igeeksky.xcache.redis.lock;
 
 import com.igeeksky.redis.RedisOperator;
-import com.igeeksky.redis.RedisScript;
 import com.igeeksky.xtool.core.lang.codec.StringCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,38 +12,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class RedisSpinLock implements Lock {
 
     private static final Logger log = LoggerFactory.getLogger(RedisSpinLock.class);
-
-    /**
-     * 加锁
-     * <p>
-     * KEYS[1] 锁对应的键 <p>
-     * ARGV[1] 锁存续时间 <p>
-     * ARGV[2] sid + ":" + 线程 id
-     */
-    private static final RedisScript<Long> LOCK_SCRIPT = RedisLockScript.LOCK_SCRIPT;
-
-    /**
-     * 释放锁
-     * <p>
-     * KEYS[1] 锁对应的键 <p>
-     * ARGV[1] 锁存续时间 <p>
-     * ARGV[2] sid + ":" + 线程 id
-     */
-    private static final RedisScript<Boolean> UNLOCK_SCRIPT = RedisLockScript.UNLOCK_SCRIPT;
-
-    /**
-     * 锁续期
-     * <p>
-     * KEYS[1] 锁对应的键 <p>
-     * ARGV[1] 锁存续时间 <p>
-     * ARGV[2] sid + ":" + 线程 id
-     */
-    private static final RedisScript<Boolean> NEW_EXPIRE = RedisLockScript.NEW_EXPIRE;
 
     /**
      * <b>内部加锁解锁顺序</b>：<p>
@@ -71,7 +44,8 @@ public class RedisSpinLock implements Lock {
 
     private final long leaseTime;
 
-    private final byte[][] args = new byte[3][];
+    private final byte[][] keys = new byte[1][];
+    private final byte[][] args = new byte[2][];
 
     private volatile ScheduledFuture<?> future;
 
@@ -88,9 +62,9 @@ public class RedisSpinLock implements Lock {
         this.scheduler = scheduler;
         this.leaseTime = leaseTime;
         this.operator = operator;
-        this.args[0] = codec.encode(key);
+        this.keys[0] = codec.encode(key);
+        this.args[0] = codec.encode(sid);
         this.args[1] = codec.encode(Long.toString(leaseTime));
-        this.args[2] = codec.encode(sid);
     }
 
     protected int decrementAndGet() {
@@ -123,7 +97,7 @@ public class RedisSpinLock implements Lock {
 
             SleepPolicy policy = new SleepPolicy(System.currentTimeMillis() - start);
             while (ttl != null) {
-                Thread.sleep(policy.getNext(ttl));
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(policy.getNext(ttl)));
                 ttl = tryAcquire();
             }
         } catch (Throwable e) {
@@ -157,23 +131,20 @@ public class RedisSpinLock implements Lock {
 
     @Override
     public boolean tryLock(long waitTime, TimeUnit unit) throws InterruptedException {
-        boolean success = innerLock.tryLock(waitTime, unit);
-        if (success) {
+        if (innerLock.tryLock(waitTime, unit)) {
+            boolean success = false;
             try {
-                success = tryLock(unit.toMillis(waitTime));
-            } catch (Throwable e) {
-                innerLock.unlock();
-                throw e;
+                return (success = tryLock(unit.toMillis(waitTime)));
             } finally {
                 if (!success) {
                     innerLock.unlock();
                 }
             }
         }
-        return success;
+        return false;
     }
 
-    private boolean tryLock(long waitTime) throws InterruptedException {
+    private boolean tryLock(long waitTime) {
         long start = System.currentTimeMillis();
         Long ttl = tryAcquire();
         if (ttl == null) {
@@ -188,20 +159,18 @@ public class RedisSpinLock implements Lock {
         SleepPolicy policy = new SleepPolicy(waitTime, usedTime);
 
         while (true) {
-            Thread.sleep(policy.getNext(ttl));
-            ttl = tryAcquire();
-            if (ttl == null) {
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(policy.getNext(ttl)));
+            if ((ttl = tryAcquire()) == null) {
                 return true;
             }
-            usedTime = System.currentTimeMillis() - start;
-            if (usedTime >= waitTime) {
+            if ((System.currentTimeMillis() - start) >= waitTime) {
                 return false;
             }
         }
     }
 
     private Long tryAcquire() {
-        Long result = this.operator.evalsha(LOCK_SCRIPT, 1, this.args);
+        Long result = this.operator.evalsha(RedisLockScript.LOCK_SCRIPT, this.keys, this.args);
         if (result == null && this.future == null) {
             // 如果加锁成功，且没有启动续期任务，则启动一个定时任务，定时续期
             long period = leaseTime / 3;
@@ -213,7 +182,7 @@ public class RedisSpinLock implements Lock {
     @Override
     public void unlock() {
         try {
-            Boolean result = this.operator.evalsha(UNLOCK_SCRIPT, 1, this.args);
+            Boolean result = this.operator.evalsha(RedisLockScript.UNLOCK_SCRIPT, this.keys, this.args);
             // 1. 如果结果为 null，说明 Redis 原来无锁对应的键，释放锁成功
             // 2. 如果结果为 true，说明 Redis 原来有锁对应的键，但锁重入计数已为 0，此次操作已删除键，释放锁成功
             if (result == null || result) {
@@ -245,12 +214,12 @@ public class RedisSpinLock implements Lock {
      */
     @Override
     public Condition newCondition() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("RedisSpinLock unsupported this operation.");
     }
 
     private void execute() {
         try {
-            this.executor.submit(new ExtendExpirationTask(args, operator));
+            this.executor.submit(new ExtendExpirationTask(keys, args, operator));
         } catch (Throwable e) {
             log.error("RedisSpinLock: execute task has failed: {}", e.getMessage(), e);
         }
@@ -259,12 +228,12 @@ public class RedisSpinLock implements Lock {
     /**
      * 计划任务：用于加锁期间自动续期
      */
-    private record ExtendExpirationTask(byte[][] args, RedisOperator operator) implements Runnable {
+    private record ExtendExpirationTask(byte[][] keys, byte[][] args, RedisOperator operator) implements Runnable {
 
         @Override
         public void run() {
             try {
-                Boolean success = this.operator.evalsha(NEW_EXPIRE, 1, this.args);
+                Boolean success = this.operator.evalsha(RedisLockScript.NEW_EXPIRE_SCRIPT, this.keys, this.args);
                 if (log.isDebugEnabled()) {
                     log.debug("extend expiration task result: {}", success);
                 }

@@ -1,5 +1,6 @@
 package com.igeeksky.redis.lettuce;
 
+import com.igeeksky.redis.RedisOperationException;
 import com.igeeksky.redis.RedisOperator;
 import com.igeeksky.redis.RedisScript;
 import com.igeeksky.redis.ResultType;
@@ -606,7 +607,7 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
 
     @Override
     public String scriptLoad(RedisScript<?> script) {
-        String sha1 = scriptingCommands.scriptLoad(script.getScript());
+        String sha1 = scriptingCommands.scriptLoad(script.getScriptBytes());
         if (sha1 != null) {
             script.setSha1(sha1);
         }
@@ -614,14 +615,17 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
     }
 
     @Override
-    public <T> T eval(RedisScript<T> script, int keyCount, byte[]... params) {
-        if (params == null || keyCount == params.length) {
-            return this.eval(script, params);
+    public <T> T eval(RedisScript<T> script, int keyCount, byte[][] params) {
+        checkKeyCount(script, keyCount, params);
+        if (ArrayUtils.isEmpty(params)) {
+            return this.eval(script, null);
         }
-
         byte[][] keys = Arrays.copyOf(params, keyCount);
-        byte[][] args = Arrays.copyOfRange(params, keyCount, params.length);
-        return this.eval(script, keys, args);
+        if (params.length > keyCount) {
+            byte[][] args = Arrays.copyOfRange(params, keyCount, params.length);
+            return this.eval(script, keys, args);
+        }
+        return this.eval(script, keys);
     }
 
     @Override
@@ -629,45 +633,64 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
         ScriptOutputType type = getScriptOutputType(script.getResultType());
         Object result;
         if (ArrayUtils.isEmpty(args)) {
-            result = scriptingCommands.eval(script.getScript(), type, keys);
+            result = scriptingCommands.eval(script.getScriptBytes(), type, keys);
         } else {
-            result = scriptingCommands.eval(script.getScript(), type, keys, args);
+            result = scriptingCommands.eval(script.getScriptBytes(), type, keys, args);
         }
         return processEvalResult(result, type, script.getCodec());
     }
 
     @Override
-    public <T> T evalReadOnly(RedisScript<T> script, int keyCount, byte[]... params) {
-        if (keyCount == params.length) {
-            return this.evalReadOnly(script, params);
+    public <T> T evalReadOnly(RedisScript<T> script, int keyCount, byte[][] params) {
+        checkKeyCount(script, keyCount, params);
+        if (ArrayUtils.isEmpty(params)) {
+            return this.evalReadOnly(script, null);
         }
-
         byte[][] keys = Arrays.copyOf(params, keyCount);
-        byte[][] args = Arrays.copyOfRange(params, keyCount, params.length);
-        return this.evalReadOnly(script, keys, args);
+        if (params.length > keyCount) {
+            byte[][] args = Arrays.copyOfRange(params, keyCount, params.length);
+            return this.evalReadOnly(script, keys, args);
+        }
+        return this.evalReadOnly(script, keys);
     }
 
     @Override
     public <T> T evalReadOnly(RedisScript<T> script, byte[][] keys, byte[]... args) {
         ScriptOutputType type = getScriptOutputType(script.getResultType());
-        Object result = scriptingCommands.evalReadOnly(script.getScript(), type, keys, args);
+        Object result = scriptingCommands.evalReadOnly(script.getScriptBytes(), type, keys, args);
         return processEvalResult(result, type, script.getCodec());
     }
 
     @Override
-    public <T> T evalsha(RedisScript<T> script, int keyCount, byte[]... params) {
-        if (keyCount == params.length) {
-            return this.evalsha(script, params);
+    public <T> T evalsha(RedisScript<T> script, int keyCount, byte[][] params) {
+        checkKeyCount(script, keyCount, params);
+        if (ArrayUtils.isEmpty(params)) {
+            return this.evalsha(script, null);
         }
-
         byte[][] keys = Arrays.copyOf(params, keyCount);
-        byte[][] args = Arrays.copyOfRange(params, keyCount, params.length);
-        return this.evalsha(script, keys, args);
+        if (params.length > keyCount) {
+            byte[][] args = Arrays.copyOfRange(params, keyCount, params.length);
+            return this.evalsha(script, keys, args);
+        }
+        return this.evalsha(script, keys);
     }
 
     @Override
     public <T> T evalsha(RedisScript<T> script, byte[][] keys, byte[]... args) {
         ScriptOutputType type = getScriptOutputType(script.getResultType());
+        try {
+            return this.evalsha(script, type, keys, args);
+        } catch (RedisNoScriptException e) {
+            // 缓存的脚本不存在，则重新加载脚本
+            String sha1 = scriptLoad(script);
+            if (sha1 == null) {
+                throw new RedisOperationException("Failed to load script: " + script.getScript() + e.getMessage(), e);
+            }
+            return this.evalsha(script, type, keys, args);
+        }
+    }
+
+    private <T> T evalsha(RedisScript<T> script, ScriptOutputType type, byte[][] keys, byte[]... args) {
         Object result;
         if (ArrayUtils.isEmpty(args)) {
             result = scriptingCommands.evalsha(script.getSha1(), type, keys);
@@ -678,21 +701,49 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
     }
 
     @Override
-    public <T> T evalshaReadOnly(RedisScript<T> script, int keyCount, byte[]... params) {
-        if (keyCount == params.length) {
-            return this.evalshaReadOnly(script, params);
+    public <T> T evalshaReadOnly(RedisScript<T> script, int keyCount, byte[][] params) {
+        checkKeyCount(script, keyCount, params);
+        if (ArrayUtils.isEmpty(params)) {
+            return this.evalshaReadOnly(script, null);
         }
-
         byte[][] keys = Arrays.copyOf(params, keyCount);
-        byte[][] args = Arrays.copyOfRange(params, keyCount, params.length);
-        return this.evalshaReadOnly(script, keys, args);
+        if (params.length > keyCount) {
+            byte[][] args = Arrays.copyOfRange(params, keyCount, params.length);
+            return this.evalshaReadOnly(script, keys, args);
+        }
+        return this.evalshaReadOnly(script, keys);
     }
 
     @Override
     public <T> T evalshaReadOnly(RedisScript<T> script, byte[][] keys, byte[]... args) {
         ScriptOutputType type = getScriptOutputType(script.getResultType());
+        try {
+            return this.evalshaReadOnly(script, type, keys, args);
+        } catch (RedisNoScriptException e) {
+            // 缓存的脚本不存在，则重新加载脚本
+            String sha1 = this.scriptLoad(script);
+            if (sha1 == null) {
+                throw new RedisOperationException("Failed to load script: " + script.getScript() + e.getMessage(), e);
+            }
+            return this.evalshaReadOnly(script, type, keys, args);
+        }
+    }
+
+    private <T> T evalshaReadOnly(RedisScript<T> script, ScriptOutputType type, byte[][] keys, byte[][] args) {
         Object result = scriptingCommands.evalshaReadOnly(script.getSha1(), type, keys, args);
         return processEvalResult(result, type, script.getCodec());
+    }
+
+    private static <T> void checkKeyCount(RedisScript<T> script, int keyCount, byte[][] params) {
+        if ((params == null && keyCount > 0) || (params != null && params.length < keyCount)) {
+            throw new RedisOperationException("RedisScript:" + script.getScript() + "params.length less than keyCount");
+        }
+    }
+
+    @Override
+    public long timeSeconds() {
+        List<byte[]> time = serverCommands.time();
+        return Long.parseLong(STRING_CODEC.decode(time.getFirst()));
     }
 
     @Override
@@ -701,6 +752,14 @@ public sealed abstract class AbstractLettuceOperator implements RedisOperator
         long seconds = Long.parseLong(STRING_CODEC.decode(time.get(0)));
         long micros = Long.parseLong(STRING_CODEC.decode(time.get(1)));
         return (seconds * 1000) + (micros / 1000);
+    }
+
+    @Override
+    public long timeMicros() {
+        List<byte[]> time = serverCommands.time();
+        long seconds = Long.parseLong(STRING_CODEC.decode(time.get(0)));
+        long micros = Long.parseLong(STRING_CODEC.decode(time.get(1)));
+        return seconds * 1000 + micros;
     }
 
     @Override

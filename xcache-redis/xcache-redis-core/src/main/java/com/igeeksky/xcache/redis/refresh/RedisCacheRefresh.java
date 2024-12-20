@@ -1,7 +1,6 @@
 package com.igeeksky.xcache.redis.refresh;
 
 import com.igeeksky.redis.RedisOperator;
-import com.igeeksky.redis.sorted.ScoredValue;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.extension.refresh.RefreshTask;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
@@ -14,83 +13,77 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
+ * Redis 缓存刷新（非集群模式）
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/29
  */
 public class RedisCacheRefresh extends AbstractRedisCacheRefresh {
 
-    private final byte[] refreshKey;
+    private final byte[][] refreshKey = new byte[1][];
 
     public RedisCacheRefresh(RefreshConfig config, ScheduledExecutorService scheduler, ExecutorService executor,
                              RedisOperator operator) {
         super(config, scheduler, executor, operator);
-        this.refreshKey = this.stringCodec.encode(config.getRefreshKey());
+        this.refreshKey[0] = this.stringCodec.encode(config.getRefreshKey());
     }
 
     @Override
-    public void onPut(String key) {
-        this.operator.zadd(refreshKey, nextRefreshTime(), stringCodec.encode(key));
+    public void doPut(String key) {
+        this.put(refreshKey, new byte[][]{refreshAfterWrite, stringCodec.encode(key)});
     }
 
     @Override
-    public void onPutAll(Set<String> keys) {
+    public void doPutAll(Set<String> keys) {
         int i = 0;
-        long nextRefreshTime = nextRefreshTime();
-        ScoredValue[] values = new ScoredValue[keys.size()];
+        byte[][] args = new byte[keys.size() + 1][];
+        args[0] = refreshAfterWrite;
         for (String key : keys) {
-            values[i++] = ScoredValue.just(stringCodec.encode(key), nextRefreshTime);
+            args[++i] = stringCodec.encode(key);
         }
-        this.operator.zadd(refreshKey, values);
+        this.put(refreshKey, args);
     }
 
     @Override
-    public void onRemove(String key) {
-        this.operator.zrem(refreshKey, stringCodec.encode(key));
+    public void doRemove(String key) {
+        this.remove(refreshKey, new byte[][]{stringCodec.encode(key)});
     }
 
     @Override
-    public void onRemoveAll(Set<String> keys) {
-        int i = 0, size = keys.size();
-        byte[][] values = new byte[size][];
+    public void doRemoveAll(Set<String> keys) {
+        int i = 0;
+        byte[][] args = new byte[keys.size()][];
         for (String key : keys) {
-            values[i++] = stringCodec.encode(key);
+            args[i++] = stringCodec.encode(key);
         }
-        this.operator.zrem(refreshKey, values);
+        this.remove(refreshKey, args);
     }
 
-    protected void refreshNow() {
-        long now = now();
-        int i = 0, j = 0, maximum = Math.min(MAXIMUM, maxRefreshTasks);
+    protected void refresh() {
+        long now = this.getServerTime();
+        int total = 0, index = 0, count = Math.min(FUTURES_ARRAY_LENGTH, refreshTasksSize);
 
-        Future<?>[] futures = new Future<?>[maximum];
+        Future<?>[] futures = new Future<?>[count];
         tasksList.add(Tuples.of(futures, 0));
 
-        while (true) {
+        while (total < refreshTasksSize) {
             // 1. 获取当前需要刷新的缓存键
-            List<byte[]> members = this.operator.zrangebyscore(refreshKey, 0, now, 0, maximum);
+            List<byte[]> members = getRefreshMembers(refreshKey[0], now, count);
             if (CollectionUtils.isEmpty(members)) {
                 break;
             }
-
-            // 2. 先移动到队尾，避免其它实例重复刷新
-            moveToTail(refreshKey, members);
-
+            // 2. 循环刷新每一个键
             for (byte[] member : members) {
                 if (member != null) {
-                    if (j >= maximum) {
-                        j = 0;
-                        futures = new Future<?>[maximum];
+                    if (index >= count) {
+                        index = 0;
+                        futures = new Future<?>[count];
                         tasksList.add(Tuples.of(futures, 0));
                     }
-
-                    String key = stringCodec.decode(member);
-                    futures[j++] = executor.submit(new RefreshTask(this, key, consumer, predicate));
-                    i++;
+                    RefreshTask task = new RefreshTask(this, stringCodec.decode(member), consumer, predicate);
+                    futures[index++] = executor.submit(task);
+                    total++;
                 }
-            }
-
-            if (i + maximum >= maxRefreshTasks) {
-                break;
             }
         }
     }

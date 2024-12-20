@@ -1,8 +1,6 @@
 package com.igeeksky.xcache.redis.refresh;
 
 import com.igeeksky.redis.RedisOperator;
-import com.igeeksky.redis.sorted.ScoredValue;
-import com.igeeksky.xcache.extension.lock.LockService;
 import com.igeeksky.xcache.extension.refresh.CacheRefresh;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.extension.refresh.RefreshHelper;
@@ -13,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -20,6 +19,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
+ * Redis 缓存刷新抽象类
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/29
  */
@@ -30,7 +31,7 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
     /**
      * 单个队列最大刷新任务数量
      */
-    protected static final int MAXIMUM = 1000;
+    protected static final int FUTURES_ARRAY_LENGTH = 1024;
 
     private final Lock lock = new ReentrantLock();
 
@@ -40,29 +41,9 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
     private final String name;
 
     /**
-     * 时间偏移量 = 本地时间 - 服务器时间
-     */
-    private volatile long timeOffset;
-
-    /**
-     * 刷新任务线程运行周期
-     */
-    private final long refreshPeriod;
-
-    /**
-     * 刷新任务锁（保证同一时间仅有一个刷新任务在运行）
-     */
-    private final String refreshLockKey;
-
-    /**
-     * 同一个键的刷新时间间隔
-     */
-    private final long refreshAfterWrite;
-
-    /**
      * 刷新任务队列最大容量
      */
-    protected final int maxRefreshTasks;
+    protected final int refreshTasksSize;
 
     protected final RedisOperator operator;
 
@@ -80,26 +61,85 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
 
     protected final ExecutorService executor;
 
-    private final LockService lockService;
     private final ScheduledExecutorService scheduler;
 
     private volatile ScheduledFuture<?> scheduledFuture;
 
     protected final ArrayList<Tuple2<Future<?>[], Integer>> tasksList = new ArrayList<>();
 
+    /**
+     * 刷新线程运行周期
+     */
+    private final long refreshThreadPeriod;
+
+    private final byte[][] lockKeys = new byte[1][];
+    private final byte[][] lockArgs = new byte[2][];
+
+    private final byte[][] threadPeriodKeys = new byte[1][];    // 刷新线程运行周期的键
+    private final byte[][] threadPeriodArgs = new byte[1][];    // 刷新线程运行周期的时间参数
+
+    protected final byte[] refreshAfterWrite;   // 数据刷新周期
+
     public AbstractRedisCacheRefresh(RefreshConfig config, ScheduledExecutorService scheduler,
                                      ExecutorService executor, RedisOperator operator) {
+        this.stringCodec = StringCodec.getInstance(config.getCharset());
         this.name = config.getName();
-        this.refreshPeriod = config.getRefreshPeriod();
-        this.refreshLockKey = config.getRefreshLockKey();
-        this.maxRefreshTasks = config.getMaxRefreshTasks();
-        this.refreshAfterWrite = config.getRefreshAfterWrite();
+        this.refreshTasksSize = config.getRefreshTasksSize();
+        this.refreshThreadPeriod = config.getRefreshThreadPeriod();
         this.operator = operator;
         this.executor = executor;
         this.scheduler = scheduler;
-        this.lockService = config.getCacheLock();
-        this.stringCodec = StringCodec.getInstance(config.getCharset());
+        this.lockKeys[0] = stringCodec.encode(config.getRefreshLockKey());
+        this.lockArgs[0] = stringCodec.encode(config.getSid());
+        this.lockArgs[1] = stringCodec.encode(Long.toString(refreshThreadPeriod + 5000));
+        this.threadPeriodKeys[0] = stringCodec.encode(config.getRefreshPeriodKey());
+        this.threadPeriodArgs[0] = stringCodec.encode(Long.toString(refreshThreadPeriod));
+        this.refreshAfterWrite = stringCodec.encode(Long.toString(config.getRefreshAfterWrite()));
     }
+
+    @Override
+    public void onPut(String key) {
+        try {
+            this.doPut(key);
+        } catch (Exception e) {
+            log.error("Cache: {} ,CacheRefresh process put_event has error. {}", name, e.getMessage(), e);
+        }
+    }
+
+    protected abstract void doPut(String key);
+
+    @Override
+    public void onPutAll(Set<String> keys) {
+        try {
+            this.doPutAll(keys);
+        } catch (Exception e) {
+            log.error("Cache: {} ,CacheRefresh process put_all_event has error. {}", name, e.getMessage(), e);
+        }
+    }
+
+    protected abstract void doPutAll(Set<String> keys);
+
+    @Override
+    public void onRemove(String key) {
+        try {
+            this.doRemove(key);
+        } catch (Exception e) {
+            log.error("Cache: {} ,CacheRefresh process remove_event has error. {}", name, e.getMessage(), e);
+        }
+    }
+
+    protected abstract void doRemove(String key);
+
+    @Override
+    public void onRemoveAll(Set<String> keys) {
+        try {
+            this.doRemoveAll(keys);
+        } catch (Exception e) {
+            log.error("Cache: {} ,CacheRefresh process remove_all_event has error. {}", name, e.getMessage(), e);
+        }
+    }
+
+    protected abstract void doRemoveAll(Set<String> keys);
 
     @Override
     public void startRefresh(Consumer<String> consumer, Predicate<String> predicate) {
@@ -114,7 +154,7 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
             this.consumer = consumer;
             this.predicate = predicate;
             this.scheduledFuture = scheduler.scheduleWithFixedDelay(this::refreshTask,
-                    refreshPeriod, refreshPeriod, TimeUnit.MILLISECONDS);
+                    refreshThreadPeriod, refreshThreadPeriod, TimeUnit.MILLISECONDS);
         } finally {
             lock.unlock();
         }
@@ -124,62 +164,87 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
      * 启动定时刷新任务
      */
     private void refreshTask() {
+        ScheduledFuture<?> newExpireFuture = null;
         try {
-            // 1. 任务队列是否全部完成
+            // 1. 当前进程任务队列是否全部完成
             if (RefreshHelper.tasksUnfinished(tasksList)) {
+                this.lockNewExpire();
                 return;
             }
-
-            // 2. 开始执行定时刷新任务
-            Lock lock = lockService.acquire(this.refreshLockKey);
-            try {
-                if (lock.tryLock()) {
-                    try {
-                        refreshNow();
-                    } finally {
-                        lock.unlock();
-                    }
-                }
-            } finally {
-                lockService.release(this.refreshLockKey);
+            // 2. 其它进程是否有在执行刷新任务，如果没有则加锁
+            if (!this.lock()) {
+                return;
             }
+            newExpireFuture = scheduler.scheduleWithFixedDelay(this::lockNewExpire,
+                    refreshThreadPeriod, refreshThreadPeriod, TimeUnit.MILLISECONDS);
+            // 3. 判断是否未到达刷新任务的执行时间
+            if (!arrivedNextTaskTime()) {
+                return;
+            }
+            // 4. 读取队列，刷新已到刷新时间的数据
+            refresh();
+            // 5. 更新刷新任务的下次执行时间
+            updateNextTaskTime();
+            // 6. 延长锁的过期时间
+            lockNewExpire();
         } catch (Throwable e) {
             log.error("Cache:{} ,CacheRefresh refresh task has error. {}", name, e.getMessage());
-        }
-    }
-
-    protected abstract void refreshNow();
-
-    protected void moveToTail(byte[] refreshKey, List<byte[]> members) {
-        long nextRefreshTime = nextRefreshTime();
-        List<ScoredValue> scoredValues = new ArrayList<>(members.size());
-        for (byte[] member : members) {
-            if (member != null) {
-                scoredValues.add(ScoredValue.just(member, nextRefreshTime));
+        } finally {
+            if (newExpireFuture != null) {
+                newExpireFuture.cancel(true);
             }
         }
-        this.operator.zadd(refreshKey, scoredValues.toArray(new ScoredValue[0]));
-    }
-
-    protected long now() {
-        return System.currentTimeMillis() - timeOffset;
-    }
-
-    protected long nextRefreshTime() {
-        long nextRefreshTime = now() + refreshAfterWrite;
-        if (nextRefreshTime > 0) {
-            return nextRefreshTime;
-        }
-        throw new IllegalArgumentException("Cache: " + name + ", nextRefreshTime:" + nextRefreshTime + " overflow.");
     }
 
     /**
-     * 设置时间偏移量
-     *
-     * @param timeOffset 时间偏移量（如为正数，则表示本地时间快于服务器时间；如为负数，则表示本地时间慢于服务器时间）
+     * 读取队列，刷新已到刷新时间的数据
      */
-    void setTimeOffset(long timeOffset) {
-        this.timeOffset = timeOffset;
+    protected abstract void refresh();
+
+    private boolean lock() {
+        Boolean locked = this.operator.evalsha(RedisRefreshScript.LOCK, lockKeys, lockArgs);
+        return locked != null && locked;
+    }
+
+    private void lockNewExpire() {
+        this.operator.evalsha(RedisRefreshScript.LOCK_NEW_EXPIRE, lockKeys, lockArgs);
+    }
+
+    /**
+     * 判断是否未到达数据刷新的计划执行时间
+     *
+     * @return true 已到计划时间；false 未到计划时间
+     */
+    private boolean arrivedNextTaskTime() {
+        return this.operator.evalshaReadOnly(RedisRefreshScript.ARRIVED_TASK_TIME, threadPeriodKeys);
+    }
+
+    private void updateNextTaskTime() {
+        long nextTaskTime = this.operator.evalsha(RedisRefreshScript.UPDATE_TASK_TIME, threadPeriodKeys, threadPeriodArgs);
+        if (nextTaskTime <= 0) {
+            log.error("Cache: {} ,CacheRefresh thread next start time must be greater than 0. refreshThreadPeriod: {}, nextTime: {}",
+                    name, refreshThreadPeriod, nextTaskTime);
+        }
+    }
+
+    protected void put(byte[][] keys, byte[][] args) {
+        long nextRefreshTime = this.operator.evalsha(RedisRefreshScript.PUT, keys, args);
+        if (nextRefreshTime <= 0) {
+            log.error("Cache: {} ,CacheRefresh next refresh time must be greater than 0. refreshAfterWrite: {}, nextTime: {}",
+                    name, refreshAfterWrite, nextRefreshTime);
+        }
+    }
+
+    protected void remove(byte[][] keys, byte[][] args) {
+        this.operator.evalsha(RedisRefreshScript.REMOVE, keys, args);
+    }
+
+    protected List<byte[]> getRefreshMembers(byte[] refreshKey, long now, int count) {
+        return this.operator.zrangebyscore(refreshKey, 0, now, 0, count);
+    }
+
+    protected long getServerTime() {
+        return this.operator.timeMillis();
     }
 
     @Override

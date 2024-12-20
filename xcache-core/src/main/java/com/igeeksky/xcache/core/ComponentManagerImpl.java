@@ -1,14 +1,13 @@
 package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.common.CacheLoader;
-import com.igeeksky.xcache.common.CacheWriter;
+import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.core.store.StoreProvider;
 import com.igeeksky.xcache.extension.codec.CodecProvider;
 import com.igeeksky.xcache.extension.codec.JdkCodecProvider;
 import com.igeeksky.xcache.extension.compress.CompressorProvider;
 import com.igeeksky.xcache.extension.compress.DeflaterCompressorProvider;
 import com.igeeksky.xcache.extension.compress.GzipCompressorProvider;
-import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.CacheLockProvider;
 import com.igeeksky.xcache.extension.lock.EmbedCacheLockProvider;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
@@ -39,7 +38,6 @@ public class ComponentManagerImpl implements ComponentManager {
     private final Lock lock = new ReentrantLock();
 
     private final ConcurrentMap<String, CacheLoader<?, ?>> loaders = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CacheWriter<?, ?>> writers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, StoreProvider> stores = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CacheSyncProvider> syncs = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CacheRefreshProvider> refreshes = new ConcurrentHashMap<>();
@@ -77,16 +75,6 @@ public class ComponentManagerImpl implements ComponentManager {
     @Override
     public <K, V> CacheLoader<K, V> getCacheLoader(String name) {
         return (CacheLoader<K, V>) this.loaders.get(name);
-    }
-
-    @Override
-    public void addCacheWriter(String name, CacheWriter<?, ?> cacheWriter) {
-        this.writers.put(name, cacheWriter);
-    }
-
-    @Override
-    public <K, V> CacheWriter<K, V> getCacheWriter(String name) {
-        return (CacheWriter<K, V>) this.writers.get(name);
     }
 
     @Override

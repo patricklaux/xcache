@@ -275,7 +275,7 @@ public interface RedisOperator extends AutoCloseable {
      * @param params   脚本参数列表
      * @return 返回执行脚本的结果。
      */
-    <T> T eval(RedisScript<T> script, int keyCount, byte[]... params);
+    <T> T eval(RedisScript<T> script, int keyCount, byte[][] params);
 
     /**
      * 使用指定的键和参数执行 Lua 脚本。
@@ -297,7 +297,7 @@ public interface RedisOperator extends AutoCloseable {
      * @param params   脚本参数列表
      * @return 返回执行脚本的结果。
      */
-    <T> T evalReadOnly(RedisScript<T> script, int keyCount, byte[]... params);
+    <T> T evalReadOnly(RedisScript<T> script, int keyCount, byte[][] params);
 
     /**
      * 使用指定的键和参数执行只读的 Lua 脚本。
@@ -319,7 +319,7 @@ public interface RedisOperator extends AutoCloseable {
      * @param params   脚本参数列表
      * @return 返回执行脚本的结果
      */
-    <T> T evalsha(RedisScript<T> script, int keyCount, byte[]... params);
+    <T> T evalsha(RedisScript<T> script, int keyCount, byte[][] params);
 
     /**
      * 使用指定的键和参数执行只读的 Lua 脚本。
@@ -341,7 +341,7 @@ public interface RedisOperator extends AutoCloseable {
      * @param params   脚本参数列表
      * @return 返回执行脚本的结果。
      */
-    <T> T evalshaReadOnly(RedisScript<T> script, int keyCount, byte[]... params);
+    <T> T evalshaReadOnly(RedisScript<T> script, int keyCount, byte[][] params);
 
     /**
      * 使用指定的键和参数执行只读的 Lua 脚本。
@@ -388,9 +388,23 @@ public interface RedisOperator extends AutoCloseable {
     /**
      * 获取 Redis 服务器的当前时间戳。
      *
+     * @return UNIX时间戳，秒
+     */
+    long timeSeconds();
+
+    /**
+     * 获取 Redis 服务器的当前时间戳。
+     *
      * @return UNIX时间戳，毫秒
      */
     long timeMillis();
+
+    /**
+     * 获取 Redis 服务器的当前时间戳。
+     *
+     * @return UNIX时间戳，微秒
+     */
+    long timeMicros();
 
     // BaseCommand --end--
 }

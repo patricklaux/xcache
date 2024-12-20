@@ -16,9 +16,14 @@ import java.nio.charset.StandardCharsets;
 public class RedisScript<T> {
 
     /**
+     * Lua 脚本内容序列化数据
+     */
+    private final byte[] scriptBytes;
+
+    /**
      * Lua 脚本内容
      */
-    private final byte[] script;
+    private final String script;
 
     /**
      * 脚本 SHA1 值
@@ -40,10 +45,10 @@ public class RedisScript<T> {
      * <p>
      * 默认使用 {@link ResultType#VALUE}，无编解码，脚本执行返回值为 {@code byte[]}
      *
-     * @param script Lua 脚本
+     * @param scriptBytes Lua 脚本
      */
-    public RedisScript(String script) {
-        this(script, null, ResultType.VALUE);
+    public RedisScript(String scriptBytes) {
+        this(scriptBytes, null, ResultType.VALUE);
     }
 
     /**
@@ -51,11 +56,11 @@ public class RedisScript<T> {
      * <p>
      * 默认使用 {@link ResultType#VALUE}，无编解码，脚本执行返回值为 {@code byte[]}
      *
-     * @param script Lua 脚本
-     * @param codec  编解码器
+     * @param scriptBytes Lua 脚本
+     * @param codec       编解码器
      */
-    public RedisScript(String script, Codec<T> codec) {
-        this(script, codec, ResultType.VALUE);
+    public RedisScript(String scriptBytes, Codec<T> codec) {
+        this(scriptBytes, codec, ResultType.VALUE);
     }
 
     /**
@@ -63,11 +68,11 @@ public class RedisScript<T> {
      * <p>
      * 编解码为空
      *
-     * @param script     Lua 脚本
-     * @param resultType 脚本执行结果类别
+     * @param scriptBytes Lua 脚本
+     * @param resultType  脚本执行结果类别
      */
-    public RedisScript(String script, ResultType resultType) {
-        this(script, null, resultType);
+    public RedisScript(String scriptBytes, ResultType resultType) {
+        this(scriptBytes, null, resultType);
     }
 
     /**
@@ -80,19 +85,24 @@ public class RedisScript<T> {
     public RedisScript(String script, Codec<T> codec, ResultType resultType) {
         Assert.notNull(script, "script must not be null");
         Assert.notNull(resultType, "resultType must not be null");
-        this.script = script.getBytes(StandardCharsets.UTF_8);
+        this.script = script;
+        this.scriptBytes = script.getBytes(StandardCharsets.UTF_8);
         this.sha1 = DigestUtils.sha1(script);
         this.codec = codec;
         this.resultType = resultType;
     }
 
-    /**
-     * 获取脚本内容
-     *
-     * @return {@code byte[]} – 脚本内容
-     */
-    public byte[] getScript() {
+    public String getScript() {
         return script;
+    }
+
+    /**
+     * 获取脚本内容序列化数据
+     *
+     * @return {@code byte[]} – 脚本内容序列化数据
+     */
+    public byte[] getScriptBytes() {
+        return scriptBytes;
     }
 
     /**

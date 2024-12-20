@@ -52,7 +52,7 @@ public class EmbedCacheRefresh implements CacheRefresh {
     /**
      * 单个周期最大刷新任务数量
      */
-    private final int maxRefreshTasks;
+    private final int refreshTasksSize;
 
     /**
      * 键的刷新时间周期
@@ -82,7 +82,7 @@ public class EmbedCacheRefresh implements CacheRefresh {
         this.name = config.getName();
         this.executor = executor;
         this.scheduler = scheduler;
-        this.maxRefreshTasks = config.getMaxRefreshTasks();
+        this.refreshTasksSize = config.getRefreshTasksSize();
         this.refreshAfterWrite = config.getRefreshAfterWrite();
     }
 
@@ -170,14 +170,14 @@ public class EmbedCacheRefresh implements CacheRefresh {
 
     private void refreshNow() {
         long now = System.currentTimeMillis();
-        int i = 0, j = 0, maximum = Math.min(MAXIMUM, maxRefreshTasks);
+        int i = 0, j = 0, maximum = Math.min(MAXIMUM, refreshTasksSize);
 
         Future<?>[] futures = new Future<?>[maximum];
         tasksList.add(Tuples.of(futures, 0));
 
         for (Map.Entry<String, Long> entry : refreshQueue.entrySet()) {
             // 3.1.如果当前元素未到刷新时间，或任务数已达单个周期上限，则退出循环
-            if (now < entry.getValue() || ++i >= maxRefreshTasks) {
+            if (now < entry.getValue() || ++i >= refreshTasksSize) {
                 break;
             }
             // 3.2.先移动到队尾，避免重复刷新

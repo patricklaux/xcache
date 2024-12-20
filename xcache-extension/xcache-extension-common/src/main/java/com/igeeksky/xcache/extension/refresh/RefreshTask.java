@@ -11,7 +11,7 @@ import java.util.function.Predicate;
  *
  * @param cacheRefresh 缓存刷新器
  * @param key          键
- * @param consumer     刷新回调，数据回源取值成功后更新缓存信息
+ * @param consumer     刷新回调（数据回源取值，并更新缓存数据）
  * @param predicate    判断缓存是否包含该键
  */
 public record RefreshTask(CacheRefresh cacheRefresh, String key,
@@ -22,7 +22,7 @@ public record RefreshTask(CacheRefresh cacheRefresh, String key,
     @Override
     public void run() {
         try {
-            // 判断缓存是否包含该键
+            // 判断缓存中是否包含该键
             if (predicate.test(key)) {
                 // 刷新缓存
                 consumer.accept(key);

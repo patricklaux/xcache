@@ -80,7 +80,6 @@ public class CacheManagerImpl implements CacheManager {
         CacheConfig<K, V> cacheConfig = this.buildCacheConfig(cacheProps, keyType, valueType);
 
         CacheLoader<K, V> cacheLoader = componentManager.getCacheLoader(name);
-        CacheWriter<K, V> cacheWriter = componentManager.getCacheWriter(name);
         ContainsPredicate<K> predicate = componentManager.getContainsPredicate(name);
 
         Store<V>[] stores = new Store[3];
@@ -89,16 +88,16 @@ public class CacheManagerImpl implements CacheManager {
         stores[2] = this.getStore(cacheProps.getThird(), cacheConfig);
 
         if (CacheBuilder.count(stores) == 0) {
-            return new NoOpCache<>(cacheConfig, cacheLoader, cacheWriter, predicate);
+            return new NoOpCache<>(cacheConfig, cacheLoader, predicate);
         }
 
         CodecConfig<K> keyCodecConfig = this.buildKeyCodecConfig(cacheConfig);
         KeyCodec<K> keyCodec = this.getKeyCodec(cacheProps.getKeyCodec(), keyCodecConfig);
 
         LockConfig lockConfig = this.buildLockConfig(cacheProps.getCacheLock(), cacheConfig);
-        LockService cacheLock = this.getCacheLock(lockConfig);
+        LockService lockService = this.getLockService(lockConfig);
 
-        RefreshConfig refreshConfig = this.buildRefreshConfig(cacheProps.getCacheRefresh(), cacheLock, cacheConfig);
+        RefreshConfig refreshConfig = this.buildRefreshConfig(cacheProps.getCacheRefresh(), lockService, cacheConfig);
         CacheRefresh cacheRefresh = this.getCacheRefresh(refreshConfig);
 
         StatConfig statConfig = this.buildStatConfig(cacheProps.getCacheStat(), cacheConfig);
@@ -109,8 +108,7 @@ public class CacheManagerImpl implements CacheManager {
 
         ExtendConfig.Builder<K, V> extendBuilder = ExtendConfig.builder();
         extendBuilder.cacheLoader(cacheLoader)
-                .cacheWriter(cacheWriter)
-                .cacheLock(cacheLock)
+                .lockService(lockService)
                 .keyCodec(keyCodec)
                 .statMonitor(statMonitor)
                 .syncMonitor(syncMonitor)
@@ -302,7 +300,7 @@ public class CacheManagerImpl implements CacheManager {
      * <p>如果未配置，默认返回 {@link EmbedLockService}</p>
      * <p>如果配置错误，抛出异常 {@link CacheConfigException} </p>
      */
-    private LockService getCacheLock(LockConfig config) {
+    private LockService getLockService(LockConfig config) {
         String beanId = config.getProvider();
         if (beanId == null) {
             return EmbedCacheLockProvider.getInstance().get(config);
@@ -321,16 +319,19 @@ public class CacheManagerImpl implements CacheManager {
         return cacheLock;
     }
 
-    private <K, V> RefreshConfig buildRefreshConfig(RefreshProps props, LockService lock, CacheConfig<K, V> config) {
+    private <K, V> RefreshConfig buildRefreshConfig(RefreshProps props, LockService lockService, CacheConfig<K, V> config) {
         return RefreshConfig.builder()
+                .sid(config.getSid())
                 .name(config.getName())
                 .group(config.getGroup())
                 .charset(config.getCharset())
-                .refreshPeriod(props.getPeriod())
                 .provider(props.getProvider())
+                .refreshTasksSize(props.getRefreshTasksSize())
+                .refreshAfterWrite(props.getRefreshAfterWrite())
+                .refreshThreadPeriod(props.getRefreshThreadPeriod())
+                .refreshSequenceSize(props.getRefreshSequenceSize())
                 .enableGroupPrefix(props.getEnableGroupPrefix())
                 .params(props.getParams())
-                .cacheLock(lock)
                 .build();
     }
 

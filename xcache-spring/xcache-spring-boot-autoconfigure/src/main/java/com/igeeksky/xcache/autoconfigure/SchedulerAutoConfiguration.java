@@ -42,12 +42,12 @@ public class SchedulerAutoConfiguration {
     @Bean
     public ScheduledExecutorService scheduler() {
         // 根据配置属性动态确定线程池的核心大小
-        int coreSize = getCorePoolSize(schedulerProperties.getCorePoolSize());
+        int corePoolSize = getCorePoolSize(schedulerProperties.getCorePoolSize());
         // 创建一个线程工厂，用于生成具有统一前缀名称的线程
         ThreadFactory threadFactory = new PlatformThreadFactory("cache-scheduler-thread-");
         // 使用指定的核心线程数、线程工厂和拒绝策略创建ScheduledThreadPoolExecutor实例
         // 当任务提交过多，线程池无法处理时，采取AbortPolicy策略，即抛出RejectedExecutionException异常
-        return new ScheduledThreadPoolExecutor(coreSize, threadFactory, new ThreadPoolExecutor.AbortPolicy());
+        return new ScheduledThreadPoolExecutor(corePoolSize, threadFactory);
     }
 
     private int getCorePoolSize(Integer corePoolSize) {

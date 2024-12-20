@@ -1090,9 +1090,11 @@ xcache:
       cache-stat: lettuce # CacheStatProviderId，用于缓存指标信息采集和输出（默认值：log，输出到日志）
       cache-refresh: # 缓存刷新配置
         provider: none # CacheRefreshProviderId（默认值：none，不启用缓存刷新）
-        period: 2400000 # 刷新间隔周期（默认值：2400000 毫秒）
-        stop-after-access: 7200000 # 某个键最后一次查询后，超过此时限则不再刷新 （默认值：7200000 毫秒）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，适用于外部刷新实现）
+        refresh-after-write: 3600000 # （默认值：3600000 毫秒）
+        refresh-tasks-size: 16384
+        refresh-sequence-size: 32
+        refresh-thread-period: 10000 # 刷新间隔周期（默认值：10000 毫秒）
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则会提示参数读取异常）
           test: test
       cache-sync: # 缓存同步配置

@@ -1,7 +1,9 @@
 package com.igeeksky.xcache.core;
 
-import com.igeeksky.xcache.common.*;
-import com.igeeksky.xcache.extension.NoOpCacheWriter;
+import com.igeeksky.xcache.common.Cache;
+import com.igeeksky.xcache.common.CacheLoader;
+import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
 import com.igeeksky.xcache.extension.refresh.CacheRefresh;
 import com.igeeksky.xcache.extension.refresh.NoOpCacheRefresh;
@@ -9,6 +11,8 @@ import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.collection.Sets;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -34,7 +38,6 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
     private CacheRefresh cacheRefresh;
     private CacheLoader<K, V> cacheLoader;
-    private CacheWriter<K, V> cacheWriter;
     private final LockService lockService;
     private final ContainsPredicate<K> containsPredicate;
 
@@ -49,15 +52,9 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         this.keyCodec = extend.getKeyCodec();
         this.statMonitor = extend.getStatMonitor();
 
-        this.lockService = extend.getCacheLock();
+        this.lockService = extend.getLockService();
         this.containsPredicate = extend.getContainsPredicate();
-
-        this.setCacheWriter(extend.getCacheWriter());
         this.setCacheRefresh(extend.getCacheRefresh(), extend.getCacheLoader());
-    }
-
-    private void setCacheWriter(CacheWriter<K, V> cacheWriter) {
-        this.cacheWriter = cacheWriter != null ? cacheWriter : NoOpCacheWriter.getInstance();
     }
 
     private void setCacheRefresh(CacheRefresh cacheRefresh, CacheLoader<K, V> cacheLoader) {
@@ -95,12 +92,8 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             // 尝试获取锁，以确保在并发环境下只有一个线程能加载数据
             if (lock.tryLock()) {
                 try {
-                    // 调用缓存加载器加载数据
-                    V value = this.cacheLoader.load(key);
-                    // 将加载的数据放入缓存
-                    this.doPut(storeKey, value);
-                    // 更新统计信息
-                    this.incLoads(value);
+                    // 调用缓存加载器加载数据，并将结果存入缓存，并记录统计信息
+                    this.doPutAndRefresh(storeKey, this.cacheLoader.load(key));
                 } finally {
                     // 释放锁
                     lock.unlock();
@@ -132,25 +125,19 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     @Override
     public V get(K key) {
         requireNonNull(key, "get", "key must not be null.");
-        CacheValue<V> cacheValue = this.doGetAndAccess(key);
+        CacheValue<V> cacheValue = this.doGet(this.toStoreKey(key));
         return (cacheValue != null) ? cacheValue.getValue() : null;
     }
 
     @Override
     public CacheValue<V> getCacheValue(K key) {
         requireNonNull(key, "getCacheValue", "key must not be null.");
-        return this.doGetAndAccess(key);
+        return this.doGet(this.toStoreKey(key));
     }
 
     @Override
     public V getOrLoad(K key) {
         return this.doGetOrLoad(key, this.cacheLoader, "getOrLoad");
-    }
-
-    private CacheValue<V> doGetAndAccess(K key) {
-        String storeKey = this.toStoreKey(key);
-        this.cacheRefresh.onPut(storeKey);
-        return this.doGet(storeKey);
     }
 
     @Override
@@ -163,8 +150,6 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         requireNonNull(cacheLoader, method, "cacheLoader must not be null");
 
         String storeKey = this.toStoreKey(key);
-        this.cacheRefresh.onPut(storeKey);
-
         CacheValue<V> cacheValue = this.doGet(storeKey);
         if (cacheValue != null) {
             return cacheValue.getValue();
@@ -188,8 +173,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
                     return cacheValue.getValue();
                 }
                 V value = cacheLoader.load(key);
-                this.doPut(storeKey, value);
-                this.incLoads(value);
+                this.doPutAndRefresh(storeKey, cacheLoader.load(key));
                 return value;
             } finally {
                 lock.unlock();
@@ -201,7 +185,17 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
     protected abstract CacheValue<V> doGet(String key);
 
-    private void incLoads(V value) {
+    /**
+     * 1.数据存入缓存 <br>
+     * 2.执行刷新逻辑<br>
+     * 3.记录统计信息
+     *
+     * @param storeKey 缓存键
+     * @param value    缓存值
+     */
+    private void doPutAndRefresh(String storeKey, V value) {
+        this.doPut(storeKey, value);
+        this.cacheRefresh.onPut(storeKey);
         if (value != null) {
             this.statMonitor.incHitLoads(1);
         } else {
@@ -311,11 +305,14 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         // 5. 回源取值结果存入缓存
         this.doPutAll(toCache);
 
-        // 6. 记录回源成功/失败次数
+        // 6. 执行刷新逻辑
+        this.cacheRefresh.onPutAll(keyMapping.keySet());
+
+        // 7. 记录回源成功/失败次数
         this.statMonitor.incHitLoads(hitLoads);
         this.statMonitor.incMissLoads(totalLoads - hitLoads);
 
-        // 7. 返回最终结果集
+        // 8. 返回最终结果集
         return result;
     }
 
@@ -333,7 +330,6 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             requireNonNull(key, method, "keys has null element.");
             keyMapping.put(toStoreKey(key), key);
         }
-        this.cacheRefresh.onPutAll(keyMapping.keySet());
         return keyMapping;
     }
 
@@ -388,8 +384,9 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     @Override
     public void put(K key, V value) {
         requireNonNull(key, "put", "key must not be null.");
-        this.cacheWriter.write(key, value);
-        this.doPut(toStoreKey(key), value);
+        String storeKey = toStoreKey(key);
+        this.doPut(storeKey, value);
+        this.cacheRefresh.onPut(storeKey);
     }
 
     protected abstract void doPut(String key, V value);
@@ -407,8 +404,8 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             kvs.put(toStoreKey(key), value);
         });
 
-        this.cacheWriter.writeAll(keyValues);
         this.doPutAll(kvs);
+        this.cacheRefresh.onPutAll(kvs.keySet());
     }
 
     protected abstract void doPutAll(Map<String, ? extends V> keyValues);
@@ -418,7 +415,6 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         requireNonNull(key, "evict", "key must not be null.");
         String storeKey = toStoreKey(key);
 
-        this.cacheWriter.delete(key);
         this.doRemove(storeKey);
         this.cacheRefresh.onRemove(storeKey);
     }
@@ -437,8 +433,6 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             requireNonNull(key, "evictAll", "keys has null element.");
             storeKeys.add(toStoreKey(key));
         }
-
-        this.cacheWriter.deleteAll(keys);
         this.doRemoveAll(storeKeys);
         this.cacheRefresh.onRemoveAll(storeKeys);
     }

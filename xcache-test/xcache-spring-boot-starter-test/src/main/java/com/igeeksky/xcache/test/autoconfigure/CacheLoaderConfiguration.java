@@ -2,9 +2,7 @@ package com.igeeksky.xcache.test.autoconfigure;
 
 import com.igeeksky.xcache.autoconfigure.CacheAutoConfiguration;
 import com.igeeksky.xcache.autoconfigure.holder.CacheLoaderHolder;
-import com.igeeksky.xcache.autoconfigure.holder.CacheWriterHolder;
 import com.igeeksky.xcache.common.CacheLoader;
-import com.igeeksky.xcache.common.CacheWriter;
 import com.igeeksky.xcache.domain.Key;
 import com.igeeksky.xcache.domain.User;
 import com.igeeksky.xtool.core.collection.Maps;
@@ -15,7 +13,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * 缓存加载器、缓存写入器自动配置
@@ -25,7 +22,7 @@ import java.util.Set;
  */
 @Configuration
 @AutoConfigureBefore(CacheAutoConfiguration.class)
-public class CacheLoaderWriterConfiguration {
+public class CacheLoaderConfiguration {
 
     /**
      * 模拟数据库
@@ -35,7 +32,7 @@ public class CacheLoaderWriterConfiguration {
      */
     private final Map<Key, User> database = Maps.newConcurrentHashMap();
 
-    private static final Logger log = LoggerFactory.getLogger(CacheLoaderWriterConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(CacheLoaderConfiguration.class);
 
     @Bean
     Map<Key, User> database() {
@@ -50,43 +47,6 @@ public class CacheLoaderWriterConfiguration {
             return database.get(key);
         };
         holder.put("user", cacheLoader);
-        return holder;
-    }
-
-    @Bean
-    CacheWriterHolder cacheWriter() {
-
-        CacheWriterHolder holder = new CacheWriterHolder();
-
-        CacheWriter<Key, User> cacheWriter = new CacheWriter<>() {
-
-            @Override
-            public void delete(Key key) {
-                database.remove(key);
-                log.info("CacheWriter:delete key: {}", key);
-            }
-
-            @Override
-            public void deleteAll(Set<? extends Key> keys) {
-                keys.forEach(database::remove);
-                log.info("CacheWriter:deleteAll keys: {}", keys);
-            }
-
-            @Override
-            public void write(Key key, User value) {
-                database.put(key, value);
-                log.info("CacheWriter:write key: {}, value: {}", key, value);
-            }
-
-            @Override
-            public void writeAll(Map<? extends Key, ? extends User> keyValues) {
-                database.putAll(keyValues);
-                log.info("CacheWriter:writeAll keyValues: {}", keyValues);
-            }
-
-        };
-
-        holder.put("user", cacheWriter);
         return holder;
     }
 

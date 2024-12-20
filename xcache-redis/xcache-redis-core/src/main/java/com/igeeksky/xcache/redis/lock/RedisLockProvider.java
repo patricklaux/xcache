@@ -21,14 +21,14 @@ import java.util.concurrent.locks.ReentrantLock;
 public class RedisLockProvider implements CacheLockProvider {
 
     /**
-     * 脚本是否加载完成
-     */
-    private volatile boolean loadedScript = false;
-
-    /**
      * 锁对象，用于锁住加载脚本的线程
      */
     private final Lock lock = new ReentrantLock();
+
+    /**
+     * 脚本是否加载完成
+     */
+    private volatile boolean loadedScript = false;
 
     private final ScheduledExecutorService scheduler;
     private final ExecutorService executor;
@@ -48,7 +48,7 @@ public class RedisLockProvider implements CacheLockProvider {
                 if (!loadedScript) {
                     operator.scriptLoad(RedisLockScript.LOCK_SCRIPT);
                     operator.scriptLoad(RedisLockScript.UNLOCK_SCRIPT);
-                    operator.scriptLoad(RedisLockScript.NEW_EXPIRE);
+                    operator.scriptLoad(RedisLockScript.NEW_EXPIRE_SCRIPT);
                     loadedScript = true;
                 }
             } finally {

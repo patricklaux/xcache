@@ -1,9 +1,11 @@
 package com.igeeksky.xcache.core;
 
 
-import com.igeeksky.xcache.common.*;
+import com.igeeksky.xcache.common.Cache;
+import com.igeeksky.xcache.common.CacheLoader;
+import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.NoOpCacheLoader;
-import com.igeeksky.xcache.extension.NoOpCacheWriter;
 import com.igeeksky.xtool.core.collection.Maps;
 
 import java.util.HashSet;
@@ -26,18 +28,15 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     private final Class<K> keyType;
     private final Class<V> valueType;
     private final CacheLoader<K, V> cacheLoader;
-    private final CacheWriter<K, V> cacheWriter;
     private final ContainsPredicate<K> containsPredicate;
 
     private final String message;
 
-    public NoOpCache(CacheConfig<K, V> config, CacheLoader<K, V> cacheLoader,
-                     CacheWriter<K, V> cacheWriter, ContainsPredicate<K> containsPredicate) {
+    public NoOpCache(CacheConfig<K, V> config, CacheLoader<K, V> cacheLoader, ContainsPredicate<K> containsPredicate) {
         this.name = config.getName();
         this.keyType = config.getKeyType();
         this.valueType = config.getValueType();
         this.cacheLoader = cacheLoader != null ? cacheLoader : NoOpCacheLoader.getInstance();
-        this.cacheWriter = cacheWriter != null ? cacheWriter : NoOpCacheWriter.getInstance();
         this.containsPredicate = containsPredicate;
         this.message = "Cache:[" + this.name + "], method:[%s], %s";
     }
@@ -124,25 +123,21 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     @Override
     public void put(K key, V value) {
         requireNonNull(key, "put", "key must not be null");
-        this.cacheWriter.write(key, value);
     }
 
     @Override
     public void putAll(Map<? extends K, ? extends V> keyValues) {
         requireNonNull(keyValues, "putAll", "keyValues must not be null");
-        this.cacheWriter.writeAll(keyValues);
     }
 
     @Override
     public void remove(K key) {
         requireNonNull(key, "evict", "key must not be null");
-        this.cacheWriter.delete(key);
     }
 
     @Override
     public void removeAll(Set<? extends K> keys) {
         requireNonNull(keys, "evictAll", "keys must not be null");
-        this.cacheWriter.deleteAll(keys);
     }
 
     @Override
