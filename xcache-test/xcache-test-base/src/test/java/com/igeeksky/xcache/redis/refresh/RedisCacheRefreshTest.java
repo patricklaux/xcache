@@ -9,6 +9,8 @@ import io.lettuce.core.codec.ByteArrayCodec;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -23,6 +25,7 @@ import java.util.concurrent.locks.LockSupport;
  */
 public class RedisCacheRefreshTest {
 
+    private static final Logger log = LoggerFactory.getLogger(RedisCacheRefreshTest.class);
     private static RedisCacheRefresh refresh1;
     private static RedisCacheRefresh refresh2;
     private static RedisOperatorProxy operatorProxy;
@@ -32,7 +35,7 @@ public class RedisCacheRefreshTest {
     static void beforeAll() {
         redisOperator = LettuceTestHelper.createStandaloneFactory().redisOperator(ByteArrayCodec.INSTANCE);
         operatorProxy = new LettuceOperatorProxy(redisOperator);
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
         ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
         RefreshConfig.Builder builder = RefreshConfig.builder();
@@ -41,7 +44,7 @@ public class RedisCacheRefreshTest {
                 .charset(StandardCharsets.UTF_8)
                 .provider("test")
                 .refreshTasksSize(10)
-                .refreshAfterWrite(3000)
+                .refreshAfterWrite(50)
                 .refreshThreadPeriod(1000)
                 .refreshSequenceSize(32)
                 .enableGroupPrefix(true);
@@ -51,12 +54,12 @@ public class RedisCacheRefreshTest {
         refresh1 = new RedisCacheRefresh(config1, scheduler, executor, operatorProxy, 2000);
         refresh2 = new RedisCacheRefresh(config2, scheduler, executor, operatorProxy, 2000);
         refresh1.startRefresh(key -> {
-            System.out.println("refresh1:" + key);
-            LockSupport.parkNanos(Duration.ofMillis(2000).toNanos());
+            log.info("refresh1:{}", key);
+            // LockSupport.parkNanos(Duration.ofMillis(100).toNanos());
         }, key -> true);
         refresh2.startRefresh(key -> {
-            System.out.println("refresh2:" + key);
-            LockSupport.parkNanos(Duration.ofMillis(2000).toNanos());
+            log.info("refresh2:{}", key);
+            // LockSupport.parkNanos(Duration.ofMillis(100).toNanos());
         }, key -> true);
     }
 

@@ -4,6 +4,7 @@ import com.igeeksky.xcache.extension.refresh.CacheRefresh;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.extension.refresh.RefreshHelper;
 import com.igeeksky.xredis.common.*;
+import com.igeeksky.xtool.core.lang.RandomUtils;
 import com.igeeksky.xtool.core.lang.codec.StringCodec;
 import com.igeeksky.xtool.core.tuple.Tuple2;
 import org.slf4j.Logger;
@@ -12,7 +13,9 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -54,8 +57,20 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
 
     private final byte[][] lockKeys = new byte[1][];
     private final byte[][] lockArgs = new byte[2][];
-    private final byte[][] threadPeriodKeys = new byte[1][];    // 刷新线程运行周期的键
-    private final byte[][] threadPeriodArgs = new byte[1][];    // 刷新线程运行周期的时间参数
+    // private final byte[][] threadPeriodKeys = new byte[1][];    // 刷新线程运行周期的键
+    // private final byte[][] threadPeriodArgs = new byte[1][];    // 刷新线程运行周期的时间参数
+
+    /**
+     * 锁状态：<br>
+     * 0~8：未加锁；<br>
+     * 9：需解锁；<br>
+     * 10：已加锁，任务执行期间，任务队列未完成，锁需要定时续期。<br>
+     * <p>
+     * 只有当状态递减到 0 时，才允许重新启动刷新任务。<br>
+     * 引入锁状态，是为了将 {@code refreshThreadPeriod} 时间周期切分为 10份，缩短锁存续时间，让其它进程实例可以更快地获取锁，
+     * 从而实现数据刷新过程较为平缓，避免出现大的刷新波峰。
+     */
+    private final AtomicInteger lockState = new AtomicInteger(0);
 
     /**
      * 刷新任务最大数量
@@ -96,8 +111,8 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
         this.lockArgs[0] = stringCodec.encode(config.getSid());
         long leaseTime = getLockLeaseTime(refreshThreadPeriod);
         this.lockArgs[1] = stringCodec.encode(Long.toString(leaseTime));
-        this.threadPeriodKeys[0] = stringCodec.encode(config.getRefreshPeriodKey());
-        this.threadPeriodArgs[0] = stringCodec.encode(Long.toString(refreshThreadPeriod));
+        // this.threadPeriodKeys[0] = stringCodec.encode(config.getRefreshPeriodKey());
+        // this.threadPeriodArgs[0] = stringCodec.encode(Long.toString(refreshThreadPeriod));
     }
 
     @Override
@@ -112,50 +127,43 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
             }
             this.consumer = consumer;
             this.predicate = predicate;
+            long delay = Math.max(1, refreshThreadPeriod / 10);
             this.scheduledFuture = scheduler.scheduleWithFixedDelay(this::refreshTask,
-                    refreshThreadPeriod, refreshThreadPeriod, TimeUnit.MILLISECONDS);
+                    delay, delay, TimeUnit.MILLISECONDS);
         } finally {
             lock.unlock();
         }
     }
 
     /**
-     * 启动定时刷新任务
+     * 定时刷新任务
      */
     private void refreshTask() {
         ScheduledFuture<?> extendExpireFuture = null;
         try {
             // 1. 当前进程任务队列是否已全部完成
-            if (RefreshHelper.tasksUnfinished(tasksList)) {
+            if (lockState.get() > 9 && RefreshHelper.tasksUnfinished(tasksList)) {
                 this.extendLockExpire();
+                return;
+            }
+            // 2. 如果状态递减到 0，则重新启动刷新任务，否则返回
+            int state = lockState.decrementAndGet();
+            if (state > 0) {
+                if (state >= 9) {
+                    this.unlock();
+                }
                 return;
             }
             // 2. 如果无其它进程正在执行刷新任务，加锁成功；否则加锁失败，返回
             if (!this.tryLock()) {
                 return;
             }
-            // 3. 判断是否未到达刷新任务的执行时间
-            // if (!arrivedNextTaskTime()) {
-            //     this.unlock();
-            //     return;
-            // }
-            // 4. 成功加锁后，任务执行期间，锁需要定时续期
+            lockState.set(10);
+            // 3. 成功加锁后，任务执行期间，锁需要定时续期
             extendExpireFuture = scheduler.scheduleWithFixedDelay(this::extendLockExpire,
                     refreshThreadPeriod, refreshThreadPeriod, TimeUnit.MILLISECONDS);
-            // 5. 读取队列，刷新已到刷新时间的数据
+            // 4. 读取队列，刷新已到刷新时间的数据
             doRefresh();
-            // 6. 更新刷新线程下次启动时间
-            // 此方法并非必要的
-            // 1. 除非 RedisServer 随机驱逐有过期时间元素，恰好删除了 LockKey，才需要限定线程启动时间的方式来保证多个实例不会同时刷新。
-            // 2. 即使 RedisServer 随机驱逐有过期时间元素，恰好删除了 LockKey，可能会多一个实例执行刷新，可能会重复刷新，但刷新逻辑不受影响。
-            // 3. 如果限定了任务启动时间，每一个缓存实例会与 RedisServer 多出 5 次交互。
-            // updateNextTaskTime();
-            // 7. 延长锁的过期时间
-            if (RefreshHelper.tasksUnfinished(tasksList)) {
-                this.extendLockExpire();
-            } else {
-                this.unlock();
-            }
         } catch (Throwable e) {
             log.error("Cache:{}, CacheRefresh task has error[1]. {}", name, e.getMessage());
         } finally {
@@ -180,7 +188,8 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
      * @return 锁的过期时间
      */
     private static long getLockLeaseTime(long refreshThreadPeriod) {
-        return refreshThreadPeriod + Math.min(2000, Math.max(500, refreshThreadPeriod / 10));
+        // return refreshThreadPeriod + Math.min(2000, Math.max(500, refreshThreadPeriod / 10));
+        return refreshThreadPeriod;
     }
 
     /**
@@ -189,6 +198,7 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
      * @return true 加锁成功；false 加锁失败
      */
     private boolean tryLock() {
+        LockSupport.parkNanos(RandomUtils.nextLong(100000, 500000));
         CompletableFuture<Boolean> future = this.operator.evalsha(RedisRefreshScript.LOCK, lockKeys, lockArgs);
         return RedisFutureHelper.get(future.thenApply(locked -> locked != null && locked), batchTimeout);
     }
@@ -203,8 +213,9 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
                 log.warn("Cache: {}, sid: {}, CacheRefresh unlock failed.", name, sid);
                 return;
             }
-            if (log.isInfoEnabled()) {
-                log.info("Cache: {}, sid: {}, CacheRefresh unlock result: true", name, sid);
+            // log.info("Cache: {}, sid: {}, state:{}, CacheRefresh unlock result: true", name, sid, lockState.get());
+            if (log.isDebugEnabled()) {
+                log.debug("Cache: {}, sid: {}, CacheRefresh unlock result: true", name, sid);
             }
         });
     }
@@ -220,31 +231,8 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
                         log.warn("Cache: {}, sid: {}, CacheRefresh extend lock expire failed.", name, sid);
                         return;
                     }
-                    if (log.isInfoEnabled()) {
-                        log.info("Cache: {}, sid: {}, CacheRefresh extend lock expire result: true", name, sid);
-                    }
-                });
-    }
-
-    /**
-     * 判断是否未到达数据刷新的计划执行时间
-     *
-     * @return true 已到计划时间；false 未到计划时间
-     */
-    private boolean arrivedNextTaskTime() {
-        CompletableFuture<Boolean> future = this.operator.evalsha(RedisRefreshScript.ARRIVED_TASK_TIME,
-                threadPeriodKeys);
-        return RedisFutureHelper.get(future, batchTimeout);
-    }
-
-    /**
-     * 更新刷新任务的下次执行时间
-     */
-    private void updateNextTaskTime() {
-        this.operator.evalsha(RedisRefreshScript.UPDATE_TASK_TIME, threadPeriodKeys, threadPeriodArgs)
-                .whenComplete((status, t) -> {
-                    if (t != null) {
-                        log.error("Cache: {}, sid: {}, CacheRefresh update next task time failed. ", name, sid, t);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Cache: {}, sid: {}, CacheRefresh extend lock expire result: true", name, sid);
                     }
                 });
     }

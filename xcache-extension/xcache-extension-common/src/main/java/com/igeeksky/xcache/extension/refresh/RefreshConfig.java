@@ -1,5 +1,7 @@
 package com.igeeksky.xcache.extension.refresh;
 
+import com.igeeksky.xtool.core.lang.Assert;
+
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -183,6 +185,7 @@ public class RefreshConfig {
         }
 
         public Builder refreshThreadPeriod(int refreshThreadPeriod) {
+            Assert.isTrue(refreshThreadPeriod >= 10, "refreshThreadPeriod must be greater than or equal to 10");
             this.refreshThreadPeriod = refreshThreadPeriod;
             return this;
         }
