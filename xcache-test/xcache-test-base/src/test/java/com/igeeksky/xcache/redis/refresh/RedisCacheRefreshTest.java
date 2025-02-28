@@ -41,22 +41,22 @@ public class RedisCacheRefreshTest {
                 .charset(StandardCharsets.UTF_8)
                 .provider("test")
                 .refreshTasksSize(10)
-                .refreshAfterWrite(500)
-                .refreshThreadPeriod(2000)
+                .refreshAfterWrite(3000)
+                .refreshThreadPeriod(1000)
                 .refreshSequenceSize(32)
                 .enableGroupPrefix(true);
         RefreshConfig config1 = builder.sid("test1").build();
-        RefreshConfig config2 = builder.sid("test2").refreshThreadPeriod(1999).build();
+        RefreshConfig config2 = builder.sid("test2").refreshThreadPeriod(1000).build();
 
         refresh1 = new RedisCacheRefresh(config1, scheduler, executor, operatorProxy, 2000);
         refresh2 = new RedisCacheRefresh(config2, scheduler, executor, operatorProxy, 2000);
         refresh1.startRefresh(key -> {
             System.out.println("refresh1:" + key);
-            LockSupport.parkNanos(Duration.ofMillis(1000).toNanos());
+            LockSupport.parkNanos(Duration.ofMillis(2000).toNanos());
         }, key -> true);
         refresh2.startRefresh(key -> {
             System.out.println("refresh2:" + key);
-            LockSupport.parkNanos(Duration.ofMillis(1000).toNanos());
+            LockSupport.parkNanos(Duration.ofMillis(2000).toNanos());
         }, key -> true);
     }
 

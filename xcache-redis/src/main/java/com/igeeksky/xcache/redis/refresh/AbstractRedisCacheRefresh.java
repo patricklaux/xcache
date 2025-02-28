@@ -145,6 +145,10 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
             // 5. 读取队列，刷新已到刷新时间的数据
             doRefresh();
             // 6. 更新刷新线程下次启动时间
+            // 此方法并非必要的
+            // 1. 除非 RedisServer 随机驱逐有过期时间元素，恰好删除了 LockKey，才需要限定线程启动时间的方式来保证多个实例不会同时刷新。
+            // 2. 即使 RedisServer 随机驱逐有过期时间元素，恰好删除了 LockKey，可能会多一个实例执行刷新，可能会重复刷新，但刷新逻辑不受影响。
+            // 3. 如果限定了任务启动时间，每一个缓存实例会与 RedisServer 多出 5 次交互。
             // updateNextTaskTime();
             // 7. 延长锁的过期时间
             if (RefreshHelper.tasksUnfinished(tasksList)) {
@@ -199,8 +203,8 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
                 log.warn("Cache: {}, sid: {}, CacheRefresh unlock failed.", name, sid);
                 return;
             }
-            if (log.isDebugEnabled()) {
-                log.debug("Cache: {}, sid: {}, CacheRefresh unlock result: true", name, sid);
+            if (log.isInfoEnabled()) {
+                log.info("Cache: {}, sid: {}, CacheRefresh unlock result: true", name, sid);
             }
         });
     }
