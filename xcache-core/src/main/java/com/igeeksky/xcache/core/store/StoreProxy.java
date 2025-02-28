@@ -7,6 +7,7 @@ import com.igeeksky.xcache.props.StoreLevel;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 缓存代理类
@@ -34,31 +35,66 @@ public class StoreProxy<V> implements Store<V> {
 
     @Override
     public CacheValue<V> getCacheValue(String key) {
-        CacheValue<V> value = store.getCacheValue(key);
-        if (value != null) {
+        CacheValue<V> cacheValue = store.getCacheValue(key);
+        if (cacheValue != null) {
             statMonitor.incHits(level, 1L);
         } else {
             statMonitor.incMisses(level, 1L);
         }
-        return value;
+        return cacheValue;
+    }
+
+    @Override
+    public CompletableFuture<CacheValue<V>> asyncGetCacheValue(String key) {
+        return store.asyncGetCacheValue(key)
+                .whenCompleteAsync((cacheValue, throwable) -> {
+                    if (throwable == null) {
+                        if (cacheValue != null) {
+                            statMonitor.incHits(level, 1L);
+                        } else {
+                            statMonitor.incMisses(level, 1L);
+                        }
+                    }
+                });
     }
 
     @Override
     public Map<String, CacheValue<V>> getAllCacheValues(Set<? extends String> keys) {
         int total = keys.size();
         Map<String, CacheValue<V>> result = store.getAllCacheValues(keys);
-
         int hits = result.size();
         statMonitor.incHits(level, hits);
         statMonitor.incMisses(level, total - hits);
-
         return result;
+    }
+
+    @Override
+    public CompletableFuture<Map<String, CacheValue<V>>> asyncGetAllCacheValues(Set<? extends String> keys) {
+        int total = keys.size();
+        return store.asyncGetAllCacheValues(keys)
+                .whenCompleteAsync((result, throwable) -> {
+                    if (throwable == null) {
+                        int hits = result.size();
+                        statMonitor.incHits(level, hits);
+                        statMonitor.incMisses(level, total - hits);
+                    }
+                });
     }
 
     @Override
     public void put(String key, V value) {
         store.put(key, value);
         statMonitor.incPuts(level, 1L);
+    }
+
+    @Override
+    public CompletableFuture<Void> asyncPut(String key, V value) {
+        return this.store.asyncPut(key, value)
+                .whenCompleteAsync((vod, throwable) -> {
+                    if (throwable == null) {
+                        statMonitor.incPuts(level, 1L);
+                    }
+                });
     }
 
     @Override
@@ -69,9 +105,30 @@ public class StoreProxy<V> implements Store<V> {
     }
 
     @Override
+    public CompletableFuture<Void> asyncPutAll(Map<? extends String, ? extends V> keyValues) {
+        int size = keyValues.size();
+        return store.asyncPutAll(keyValues)
+                .whenCompleteAsync((vod, throwable) -> {
+                    if (throwable == null) {
+                        statMonitor.incPuts(level, size);
+                    }
+                });
+    }
+
+    @Override
     public void remove(String key) {
         store.remove(key);
         statMonitor.incRemovals(level, 1L);
+    }
+
+    @Override
+    public CompletableFuture<Void> asyncRemove(String key) {
+        return store.asyncRemove(key)
+                .whenCompleteAsync((vod, throwable) -> {
+                    if (throwable == null) {
+                        statMonitor.incRemovals(level, 1L);
+                    }
+                });
     }
 
     @Override
@@ -79,6 +136,17 @@ public class StoreProxy<V> implements Store<V> {
         int size = keys.size();
         store.removeAll(keys);
         statMonitor.incRemovals(level, size);
+    }
+
+    @Override
+    public CompletableFuture<Void> asyncRemoveAll(Set<? extends String> keys) {
+        int size = keys.size();
+        return store.asyncRemoveAll(keys)
+                .whenCompleteAsync((vod, throwable) -> {
+                    if (throwable == null) {
+                        statMonitor.incRemovals(level, size);
+                    }
+                });
     }
 
     @Override

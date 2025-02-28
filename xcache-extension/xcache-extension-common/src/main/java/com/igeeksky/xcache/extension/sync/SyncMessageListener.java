@@ -38,10 +38,12 @@ public class SyncMessageListener<V> implements MessageListener<CacheSyncMessage>
         this.enabled = firstEnabled || secondEnabled;
     }
 
-    public void onMessage(CacheSyncMessage message) {
+    public void accept(CacheSyncMessage message) {
         if (log.isDebugEnabled()) {
             log.debug("onMessage: {}", message);
         }
+
+        log.info("onMessage: {}", message);
 
         if (!enabled) return;
 

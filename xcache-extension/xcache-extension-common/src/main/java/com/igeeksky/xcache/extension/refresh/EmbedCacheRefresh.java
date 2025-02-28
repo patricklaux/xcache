@@ -1,27 +1,31 @@
 package com.igeeksky.xcache.extension.refresh;
 
 
-import com.igeeksky.xcache.common.CacheRefresh;
+import com.igeeksky.xtool.core.tuple.Tuple2;
+import com.igeeksky.xtool.core.tuple.Tuple3;
+import com.igeeksky.xtool.core.tuple.Tuples;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * <b>嵌入式缓存刷新</b>
  * <p>
  * 适用于嵌入式缓存 <p>
- * 1. 每个应用实例缓存均需独立刷新，即使是同一数据，也可能会被不同实例刷新多次。
+ * 1. 每个应用实例缓存均需独立刷新，同一数据如果存在于不同实例，那么会被多个实例刷新。
  * 因此会有较多回源访问次数，数据源需预留好足够的资源余量。<p>
  * 2. 此对象实例内部使用 HashMap 维护所有访问过的 key，因此会占用本机内存空间。
  * <p>
- * 对于外部缓存，如果是 Redis，建议使用 { com.igeeksky.xcache.redis.refresh.RedisCacheRefresh }
+ * 对于外部缓存，如果是 Redis，建议使用 {@code com.igeeksky.xcache.redis.refresh.RedisCacheRefresh }
  *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/23
@@ -31,112 +35,166 @@ public class EmbedCacheRefresh implements CacheRefresh {
     private static final Logger log = LoggerFactory.getLogger(EmbedCacheRefresh.class);
 
     /**
+     * 刷新任务分批的 Future 数组长度
+     */
+    private static final int FUTURES_LENGTH = 1024;
+
+    /**
      * 缓存名称
      */
     private final String name;
 
     /**
-     * 刷新间隔周期
+     * 单个周期最大刷新任务数量
      */
-    private final long period;
+    private final int refreshTasksSize;
 
     /**
-     * 最后访问之后达到预设时间则停止刷新
+     * 键的刷新时间周期
      */
-    private final long stopAfterAccess;
+    private final long refreshAfterWrite;
 
-    private Consumer<String> consumer;
+    /**
+     * 刷新线程运行周期
+     */
+    private final long refreshThreadPeriod;
+
     private final ExecutorService executor;
     private final ScheduledExecutorService scheduler;
 
-    private final Map<String, Long> accessed = new ConcurrentHashMap<>(128);
+    private volatile Consumer<String> consumer;
+    private volatile Predicate<String> predicate;
 
-    private final AtomicReference<Future<?>[]> futuresRef = new AtomicReference<>();
+    /**
+     * 刷新队列（因为只有一个定时任务线程执行读写操作，所以无需考虑线程安全问题）
+     */
+    private final LinkedHashMap<String, Long> refreshQueue = new LinkedHashMap<>();
+
+    /**
+     * 临时队列
+     */
+    private final ConcurrentLinkedQueue<Tuple3<String, Long, RefreshEventType>> buffer = new ConcurrentLinkedQueue<>();
+
+    private final Lock lock = new ReentrantLock();
+    private volatile ScheduledFuture<?> scheduledFuture;
+    private final ArrayList<Tuple2<Future<?>[], Integer>> tasksList = new ArrayList<>();
 
     public EmbedCacheRefresh(RefreshConfig config, ScheduledExecutorService scheduler, ExecutorService executor) {
         this.name = config.getName();
-        this.period = config.getPeriod();
-        this.stopAfterAccess = config.getStopAfterAccess();
-        this.scheduler = scheduler;
         this.executor = executor;
+        this.scheduler = scheduler;
+        this.refreshTasksSize = config.getRefreshTasksSize();
+        this.refreshAfterWrite = config.getRefreshAfterWrite();
+        this.refreshThreadPeriod = config.getRefreshThreadPeriod();
     }
 
     @Override
-    public void access(String key) {
-        accessed.put(key, getTtl());
+    public void onPut(String key) {
+        this.buffer.offer(Tuples.of(key, nextRefreshTime(), RefreshEventType.PUT));
     }
 
     @Override
-    public void accessAll(Set<String> keys) {
-        long ttl = getTtl();
-        keys.forEach(key -> accessed.put(key, ttl));
+    public void onPutAll(Set<String> keys) {
+        long nextRefreshTime = nextRefreshTime();
+        keys.forEach(key -> this.buffer.offer(Tuples.of(key, nextRefreshTime, RefreshEventType.PUT)));
     }
 
-    private long getTtl() {
-        long ttl = System.currentTimeMillis() + stopAfterAccess;
-        if (ttl > 0) {
-            return ttl;
+    @Override
+    public void onRemove(String key) {
+        this.buffer.offer(Tuples.of(key, 0L, RefreshEventType.REMOVE));
+    }
+
+    @Override
+    public void onRemoveAll(Set<String> keys) {
+        keys.forEach(this::onRemove);
+    }
+
+    private long nextRefreshTime() {
+        return System.currentTimeMillis() + refreshAfterWrite;
+    }
+
+    @Override
+    public void startRefresh(Consumer<String> consumer, Predicate<String> predicate) {
+        if (this.scheduledFuture != null) {
+            throw new IllegalStateException("Cache: " + name + ", CacheRefresh has been started.");
         }
-        return Long.MAX_VALUE;
-    }
-
-    @Override
-    public void remove(String key) {
-        accessed.remove(key);
-    }
-
-    @Override
-    public void removeAll(Set<String> keys) {
-        keys.forEach(accessed::remove);
-    }
-
-    @Override
-    public void setConsumer(Consumer<String> consumer) {
-        this.consumer = consumer;
-        this.scheduler.scheduleWithFixedDelay(this::syncDataSource, period, period, TimeUnit.MILLISECONDS);
+        lock.lock();
+        try {
+            if (this.scheduledFuture != null) {
+                throw new IllegalStateException("Cache: " + name + ", CacheRefresh has been started.");
+            }
+            this.consumer = consumer;
+            this.predicate = predicate;
+            this.scheduledFuture = this.scheduler.scheduleWithFixedDelay(this::refreshTask,
+                    refreshThreadPeriod, refreshThreadPeriod, TimeUnit.MILLISECONDS);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
-     * 是否要加锁执行嵌入式的缓存刷新任务？ <p>
-     * 采用嵌入式的缓存刷新，应该是只有嵌入式缓存，各应用实例均需独立执行数据刷新任务。 <p>
-     * 1. 采用本地锁，无法阻止其它实例同时执行数据刷新任务。 <p>
-     * 2. 采用分布式锁，能阻止其它应用实例同时刷新，但需执行 Futures.awaitAll(tasks)，
-     * 等待所有任务完成，scheduler 的线程会持续被占用，影响同一应用中其它缓存的数据刷新任务，
-     * 严重的情况下可能会导致任务堆积，出现 oom 异常。
-     * 更大的问题是，无论是否会执行 Futures.awaitAll(tasks)，
-     * 都可能会导致其它实例因为无法获取锁而跳过某次数据刷新任务，从而导致数据过期。
-     * <p>
-     * 因此，不加锁执行数据刷新任务
+     * 定时刷新任务
      */
-    private void syncDataSource() {
+    private void refreshTask() {
         try {
-            // 1. 执行新任务之前，先判断上次的任务队列是否已经执行完毕
-            // 如果未完成则退出当前任务（数据源压力过大，再执行刷新任务只会堵塞更严重，甚至可能会导致进程崩溃）
-            if (!this.checkRefreshTasks(futuresRef, period)) {
-                log.error("Cache:[{}], Timed out waiting for refreshTasks to complete", name);
+            // 1. 任务队列是否已经完成
+            if (RefreshHelper.tasksUnfinished(tasksList)) {
                 return;
             }
 
-            // 2. 循环判断每个键是否需要执行数据刷新任务
-            List<Future<?>> tasks = new ArrayList<>(accessed.size());
+            // 2.临时队列数据迁移至刷新队列
+            transferKeys();
 
-            long now = System.currentTimeMillis();
-            for (Map.Entry<String, Long> entry : accessed.entrySet()) {
-                if (entry == null) continue;
-
-                // 2.1. 删除超过最大访问时限的键
-                if (now > entry.getValue()) {
-                    accessed.remove(entry.getKey());
-                    continue;
-                }
-                // 2.2. 回源执行缓存数据刷新任务
-                tasks.add(this.executor.submit(new RefreshTask(entry.getKey(), this.consumer)));
-            }
-
-            // 3. 保存任务队列，
-            this.futuresRef.set(tasks.toArray(new Future<?>[0]));
+            // 3.处理当前时刻需要刷新的数据
+            doRefresh();
         } catch (Throwable e) {
-            log.error("CacheRefresh has error. {}", e.getMessage());
+            log.error("Cache:{} ,CacheRefresh refresh task has error. {}", name, e.getMessage());
+        }
+    }
+
+    /**
+     * 临时队列数据迁移至刷新队列
+     */
+    private void transferKeys() {
+        Tuple3<String, Long, RefreshEventType> tuple;
+        while ((tuple = buffer.poll()) != null) {
+            if (tuple.getT3() == RefreshEventType.PUT) {
+                refreshQueue.putLast(tuple.getT1(), tuple.getT2());
+            } else {
+                refreshQueue.remove(tuple.getT1());
+            }
+        }
+    }
+
+    private void doRefresh() {
+        long now = System.currentTimeMillis();
+        int i = 0, j = 0, maximum = Math.min(FUTURES_LENGTH, refreshTasksSize);
+
+        Future<?>[] futures = new Future<?>[maximum];
+        tasksList.add(Tuples.of(futures, 0));
+
+        for (Map.Entry<String, Long> entry : refreshQueue.entrySet()) {
+            // 3.1.如果当前元素未到刷新时间，或任务数已达单个周期上限，则退出循环
+            if (now < entry.getValue() || ++i >= refreshTasksSize) {
+                break;
+            }
+            // 3.2.执行 put 操作，放入缓冲队列，更新刷新时间，避免下次循环重复刷新（相当于移动 refreshQueue 队尾）
+            this.onPut(entry.getKey());
+            // 3.3.如果刷新任务数量达到单个容器上限，则创建新的容器
+            if (j >= maximum) {
+                j = 0;
+                futures = new Future<?>[maximum];
+                tasksList.add(Tuples.of(futures, 0));
+            }
+            // 3.4.提交刷新任务
+            futures[j++] = executor.submit(new RefreshTask(this, entry.getKey(), consumer, predicate));
+        }
+    }
+
+    @Override
+    public void close() {
+        if (scheduledFuture != null) {
+            scheduledFuture.cancel(false);
         }
     }
 

@@ -4,11 +4,11 @@ import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.core.store.StoreProxy;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
-import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xcache.props.StoreLevel;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 仅有一级缓存时，使用此实现类
@@ -22,11 +22,8 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
 
     private final Store<V> store;
 
-    private final CacheSyncMonitor syncMonitor;
-
     public OneLevelCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend, Store<V>[] stores) {
         super(config, extend);
-        this.syncMonitor = extend.getSyncMonitor();
         this.store = getStore(stores, extend.getStatMonitor());
     }
 
@@ -41,8 +38,18 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
+    protected boolean contains(String key) {
+        return store.getCacheValue(key) != null;
+    }
+
+    @Override
     protected CacheValue<V> doGet(String key) {
         return store.getCacheValue(key);
+    }
+
+    @Override
+    protected CompletableFuture<CacheValue<V>> doAsyncGet(String storeKey) {
+        return store.asyncGetCacheValue(storeKey);
     }
 
     @Override
@@ -51,8 +58,18 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
+    protected CompletableFuture<Map<String, CacheValue<V>>> doAsyncGetAll(Set<String> keys) {
+        return store.asyncGetAllCacheValues(keys);
+    }
+
+    @Override
     protected void doPut(String key, V value) {
         store.put(key, value);
+    }
+
+    @Override
+    protected CompletableFuture<Void> doAsyncPut(String key, V value) {
+        return store.asyncPut(key, value);
     }
 
     @Override
@@ -61,8 +78,18 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
+    protected CompletableFuture<Void> doAsyncPutAll(Map<String, ? extends V> keyValues) {
+        return store.asyncPutAll(keyValues);
+    }
+
+    @Override
     protected void doRemove(String key) {
         store.remove(key);
+    }
+
+    @Override
+    protected CompletableFuture<Void> doAsyncRemove(String key) {
+        return store.asyncRemove(key);
     }
 
     @Override
@@ -71,9 +98,13 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
+    protected CompletableFuture<Void> doAsyncRemoveAll(Set<String> keys) {
+        return store.asyncRemoveAll(keys);
+    }
+
+    @Override
     public void clear() {
         store.clear();
-        syncMonitor.afterClear();
     }
 
 }

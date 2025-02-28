@@ -46,9 +46,9 @@ public class StoreProps {
 
     private Boolean enableGroupPrefix;
 
-    private Boolean enableNamePrefix;
-
     private RedisType redisType;
+
+    private Integer keySequenceSize;
 
     private final Map<String, Object> params = new HashMap<>();
 
@@ -77,7 +77,7 @@ public class StoreProps {
     }
 
     /**
-     * Redis 命令类型
+     * Redis 数据存储类型
      * <p>
      * 可选值：<br>
      * STRING（默认值） – 优点：可以设置过期时间；缺点：key 长，耗内存，缓存数据清空操作复杂。<br>
@@ -85,19 +85,58 @@ public class StoreProps {
      * <p>
      * {@link CacheConstants#DEFAULT_EXTRA_REDIS_TYPE}
      *
-     * @return {@link RedisType} – Redis 命令类型
+     * @return {@link RedisType} – Redis 数据存储类型
      */
     public RedisType getRedisType() {
         return redisType;
     }
 
     /**
-     * 设置 Redis 命令类型
+     * 设置 Redis 数据存储类型
      *
-     * @param redisType Redis 命令类型
+     * @param redisType Redis 数据存储类型
      */
     public void setRedisType(RedisType redisType) {
         this.redisType = redisType;
+    }
+
+    /**
+     * Hash键序列数量
+     * <p>
+     * 仅适用于 Redis 集群模式，且数据存储类型为 Hash，其它模式下此配置无意义。
+     * <p>
+     * 默认值：32 <br>
+     * {@link CacheConstants#DEFAULT_EXTRA_KEY_SEQUENCE_SIZE}
+     * <p>
+     * 当 Redis 为集群模式时，为了让数据尽可能均匀分布于各个 Redis 节点，会创建多个 HashTable。<br>
+     * 读取或保存数据时，使用 crc16 算法计算 key 的哈希值，然后取余 {@code key-sequence-size} 以选择使用哪个 HashTable。
+     * <p>
+     * <b>示例：</b><p>
+     * 设 {@code {group: shop, name: user, key-sequence-size: 32, enable-group-prefix: true}}，那么 Redis 中会创建
+     * {@code ["shop:user:0"、"shop:user:1", "shop:user:2", ……, "shop:user:30", "shop:user:31"]}
+     * 共 32个 HashTable。
+     * <p>
+     * <b>注意：</b><p>
+     * 1、Redis 集群节点数越多，此配置值应越大。<br>
+     * 2、最小值为 32，最大值为 16384。<br>
+     * 3、此值应为 2 的 n 次方，如 32、64、128、256 等。<br>
+     * 4、配置值不宜过小：过小会导致数据存储倾斜。<br>
+     * 5、配置值不宜过大：过大会导致网络请求过多。<br>
+     * 建议 {@code key-sequence-size ≈ (集群节点数量 × 4)}
+     *
+     * @return {@link Integer} - Hash键序列数量
+     */
+    public Integer getKeySequenceSize() {
+        return keySequenceSize;
+    }
+
+    /**
+     * 设置 Hash键序列数量
+     *
+     * @param keySequenceSize Hash键序列数量
+     */
+    public void setKeySequenceSize(Integer keySequenceSize) {
+        this.keySequenceSize = keySequenceSize;
     }
 
     /**
@@ -451,4 +490,5 @@ public class StoreProps {
     public String toString() {
         return SimpleJSON.toJSONString(this);
     }
+
 }

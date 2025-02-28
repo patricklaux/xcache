@@ -1,6 +1,10 @@
 package com.igeeksky.xcache.extension.stat;
 
+import com.igeeksky.xtool.core.concurrent.VirtualThreadFactory;
+
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -13,7 +17,8 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class LogCacheStatProvider extends AbstractCacheStatProvider {
 
-    private static final LogStatMessagePublisher publisher = LogStatMessagePublisher.getInstance();
+    private static final ExecutorService EXECUTOR = executor();
+    private static final LogStatMessagePublisher PUBLISHER = LogStatMessagePublisher.getInstance();
 
     public LogCacheStatProvider(ScheduledExecutorService scheduler, long period) {
         super(scheduler, period);
@@ -28,10 +33,16 @@ public class LogCacheStatProvider extends AbstractCacheStatProvider {
      */
     @Override
     public void publish(List<CacheStatMessage> messages) {
-        // 遍历消息列表，并打印每个消息的内容
-        for (CacheStatMessage message : messages) {
-            publisher.publish(message);
-        }
+        EXECUTOR.submit(() -> {
+            // 遍历消息列表，并打印每个消息的内容
+            for (CacheStatMessage message : messages) {
+                PUBLISHER.publish(message);
+            }
+        });
+    }
+
+    private static ExecutorService executor() {
+        return Executors.newThreadPerTaskExecutor(new VirtualThreadFactory("cache-stat-thread-"));
     }
 
 }

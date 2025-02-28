@@ -1,3 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.igeeksky.xcache.autoconfigure.redis.RedisAutoConfiguration, \
-com.igeeksky.xcache.autoconfigure.redis.RedisProperties
+com.igeeksky.xcache.autoconfigure.redis.LettuceCacheAutoConfiguration

@@ -824,11 +824,33 @@ sequenceDiagram
 
 
 
-重计存活时间
+重计存活时间（rewrite-live-time）
 
 是：
 
 否：
+
+
+
+### 终止条件
+
+#### 内部条件
+
+存活时间（stop-after-write）
+
+
+
+
+
+空闲时间（stop-after-access）
+
+
+
+
+
+#### 外部条件
+
+键被驱逐（stop-after-evict）
 
 
 

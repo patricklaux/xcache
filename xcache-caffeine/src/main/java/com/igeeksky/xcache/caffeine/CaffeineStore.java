@@ -9,6 +9,7 @@ import com.igeeksky.xtool.core.collection.Maps;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Caffeine 作为存储层
@@ -30,25 +31,37 @@ public class CaffeineStore<V> implements Store<V> {
 
     @Override
     public CacheValue<V> getCacheValue(String key) {
-        return this.convertor.fromStoreValue(store.getIfPresent(key));
+        CacheValue<Object> storeValue = this.store.getIfPresent(key);
+        if (storeValue != null) {
+            return this.convertor.fromStoreValue(storeValue);
+        }
+        return null;
+    }
+
+    @Override
+    public CompletableFuture<CacheValue<V>> asyncGetCacheValue(String key) {
+        return CompletableFuture.completedFuture(this.getCacheValue(key));
     }
 
     @Override
     public Map<String, CacheValue<V>> getAllCacheValues(Set<? extends String> keys) {
-        Map<String, CacheValue<Object>> kvs = store.getAllPresent(keys);
-        if (Maps.isEmpty(kvs)) {
-            return Maps.newHashMap(0);
+        Map<String, CacheValue<Object>> keyValues = store.getAllPresent(keys);
+        if (Maps.isEmpty(keyValues)) {
+            return Maps.newHashMap();
         }
-
-        Map<String, CacheValue<V>> result = Maps.newHashMap(kvs.size());
-        kvs.forEach((key, storeValue) -> {
-            CacheValue<V> cacheValue = this.convertor.fromStoreValue(storeValue);
+        Map<String, CacheValue<V>> result = Maps.newHashMap(keyValues.size());
+        keyValues.forEach((key, value) -> {
+            CacheValue<V> cacheValue = this.convertor.fromStoreValue(value);
             if (cacheValue != null) {
                 result.put(key, cacheValue);
             }
         });
-
         return result;
+    }
+
+    @Override
+    public CompletableFuture<Map<String, CacheValue<V>>> asyncGetAllCacheValues(Set<? extends String> keys) {
+        return CompletableFuture.completedFuture(this.getAllCacheValues(keys));
     }
 
     @Override
@@ -62,8 +75,24 @@ public class CaffeineStore<V> implements Store<V> {
     }
 
     @Override
+    public CompletableFuture<Void> asyncPut(String key, V value) {
+        return CompletableFuture.supplyAsync(() -> {
+            this.put(key, value);
+            return null;
+        });
+    }
+
+    @Override
     public void putAll(Map<? extends String, ? extends V> keyValues) {
         keyValues.forEach(this::put);
+    }
+
+    @Override
+    public CompletableFuture<Void> asyncPutAll(Map<? extends String, ? extends V> keyValues) {
+        return CompletableFuture.supplyAsync(() -> {
+            this.putAll(keyValues);
+            return null;
+        });
     }
 
     @Override
@@ -72,8 +101,24 @@ public class CaffeineStore<V> implements Store<V> {
     }
 
     @Override
+    public CompletableFuture<Void> asyncRemove(String key) {
+        return CompletableFuture.supplyAsync(() -> {
+            this.remove(key);
+            return null;
+        });
+    }
+
+    @Override
     public void removeAll(Set<? extends String> keys) {
         store.invalidateAll(keys);
+    }
+
+    @Override
+    public CompletableFuture<Void> asyncRemoveAll(Set<? extends String> keys) {
+        return CompletableFuture.supplyAsync(() -> {
+            this.removeAll(keys);
+            return null;
+        });
     }
 
     @Override

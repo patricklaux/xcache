@@ -1,17 +1,23 @@
 package com.igeeksky.xcache.core;
 
-import com.igeeksky.xcache.common.*;
-import com.igeeksky.xcache.extension.NoOpCacheWriter;
+import com.igeeksky.xcache.common.Cache;
+import com.igeeksky.xcache.common.CacheLoader;
+import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
+import com.igeeksky.xcache.extension.refresh.CacheRefresh;
 import com.igeeksky.xcache.extension.refresh.NoOpCacheRefresh;
 import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.collection.Sets;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -24,6 +30,7 @@ import java.util.concurrent.locks.Lock;
  */
 public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
+    private static final Logger log = LoggerFactory.getLogger(AbstractCache.class);
     private final String name;
     private final Class<K> keyType;
     private final Class<V> valueType;
@@ -33,7 +40,6 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
     private CacheRefresh cacheRefresh;
     private CacheLoader<K, V> cacheLoader;
-    private CacheWriter<K, V> cacheWriter;
     private final LockService lockService;
     private final ContainsPredicate<K> containsPredicate;
 
@@ -43,32 +49,25 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         this.name = config.getName();
         this.keyType = config.getKeyType();
         this.valueType = config.getValueType();
-        this.message = "Cache:[" + this.name + "], method:[%s], %s";
+        this.message = "Cache:[" + this.name + "], %s";
 
         this.keyCodec = extend.getKeyCodec();
         this.statMonitor = extend.getStatMonitor();
 
-        this.lockService = extend.getCacheLock();
+        this.lockService = extend.getLockService();
         this.containsPredicate = extend.getContainsPredicate();
-
-        this.setCacheWriter(extend.getCacheWriter());
         this.setCacheRefresh(extend.getCacheRefresh(), extend.getCacheLoader());
-    }
-
-    private void setCacheWriter(CacheWriter<K, V> cacheWriter) {
-        this.cacheWriter = cacheWriter != null ? cacheWriter : NoOpCacheWriter.getInstance();
     }
 
     private void setCacheRefresh(CacheRefresh cacheRefresh, CacheLoader<K, V> cacheLoader) {
         if (cacheRefresh != null) {
-            requireNonNull(cacheLoader, "setCacheRefresh",
-                    "Cache refresh depends on the cache loader, cacheLoader must not be null");
+            requireNonNull(cacheLoader, "Cache refresh depends on the cache loader, cacheLoader must not be null");
         }
         // 此抽象类的 cacheLoader 在 getOrLoad 和 getOrLoadAll 方法中需要根据是否为空来判断是否加锁数据回源
         // 因此当 cacheLoader 为空时，不能赋值 为 NoopCacheLoader
         this.cacheLoader = cacheLoader;
         this.cacheRefresh = cacheRefresh != null ? cacheRefresh : NoOpCacheRefresh.getInstance();
-        this.cacheRefresh.setConsumer(this::onRefresh);
+        this.cacheRefresh.startRefresh(this::refresh, this::contains);
     }
 
     /**
@@ -76,15 +75,15 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
      * <p>
      * 根据传入的 key，回源查询并存入缓存
      *
-     * @param storeKey 缓存的键，用于标识缓存项
+     * @param storeKey 缓存键
      */
-    private void onRefresh(String storeKey) {
+    private void refresh(String storeKey) {
         // 从storeKey中恢复缓存键
         K key = this.fromStoreKey(storeKey);
 
         // 如果断言执行发现数据源不存在数据，则存入空值
         if (!this.containsPredicate.test(key)) {
-            this.doPut(storeKey, null);
+            this.doAsyncPut(storeKey, null);
             return;
         }
 
@@ -94,12 +93,14 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             // 尝试获取锁，以确保在并发环境下只有一个线程能加载数据
             if (lock.tryLock()) {
                 try {
-                    // 调用缓存加载器加载数据
+                    // 调用缓存加载器加载数据，并将结果存入缓存，并记录统计信息
                     V value = this.cacheLoader.load(key);
-                    // 将加载的数据放入缓存
-                    this.doPut(storeKey, value);
-                    // 更新统计信息
-                    this.incLoads(value);
+                    this.doAsyncPut(storeKey, value);
+                    if (value != null) {
+                        this.statMonitor.incHitLoads(1);
+                    } else {
+                        this.statMonitor.incMissLoads(1);
+                    }
                 } finally {
                     // 释放锁
                     lock.unlock();
@@ -110,6 +111,14 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             this.lockService.release(storeKey);
         }
     }
+
+    /**
+     * 最后一级缓存是否存在键对应的值
+     *
+     * @param storeKey 缓存键
+     * @return {@code true} 存在； {@code false} 不存在
+     */
+    protected abstract boolean contains(String storeKey);
 
     @Override
     public String getName() {
@@ -128,51 +137,81 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
     @Override
     public V get(K key) {
-        requireNonNull(key, "get", "key must not be null.");
-        CacheValue<V> cacheValue = this.doGetAndAccess(key);
+        CacheValue<V> cacheValue = this.getCacheValue(key);
         return (cacheValue != null) ? cacheValue.getValue() : null;
     }
 
     @Override
+    public CompletableFuture<V> asyncGet(K key) {
+        return this.asyncGetCacheValue(key)
+                .thenApply(cacheValue -> (cacheValue != null) ? cacheValue.getValue() : null);
+    }
+
+    @Override
     public CacheValue<V> getCacheValue(K key) {
-        requireNonNull(key, "getCacheValue", "key must not be null.");
-        return this.doGetAndAccess(key);
+        requireNonNull(key, "key must not be null.");
+        return this.doGet(this.toStoreKey(key));
+    }
+
+    @Override
+    public CompletableFuture<CacheValue<V>> asyncGetCacheValue(K key) {
+        if (key == null) {
+            return this.requireNonNull("key must not be null.");
+        }
+        return CompletableFuture.completedFuture(this.toStoreKey(key)).thenCompose(this::doAsyncGet);
     }
 
     @Override
     public V getOrLoad(K key) {
-        return this.doGetOrLoad(key, this.cacheLoader, "getOrLoad");
+        if (this.cacheLoader == null) {
+            return this.get(key);
+        }
+        return this.getOrLoad(key, this.cacheLoader);
     }
 
-    private CacheValue<V> doGetAndAccess(K key) {
-        String storeKey = this.toStoreKey(key);
-        this.cacheRefresh.access(storeKey);
-        return this.doGet(storeKey);
+    @Override
+    public CompletableFuture<V> asyncGetOrLoad(K key) {
+        if (this.cacheLoader == null) {
+            return this.asyncGet(key);
+        }
+        return this.asyncGetOrLoad(key, this.cacheLoader);
     }
 
     @Override
     public V getOrLoad(K key, CacheLoader<K, V> cacheLoader) {
-        return this.doGetOrLoad(key, cacheLoader, "get");
-    }
-
-    private V doGetOrLoad(K key, CacheLoader<K, V> cacheLoader, String method) {
-        requireNonNull(key, method, "key must not be null.");
-        requireNonNull(cacheLoader, method, "cacheLoader must not be null");
-
+        requireNonNull(key, "key must not be null.");
+        requireNonNull(cacheLoader, "cacheLoader must not be null");
         String storeKey = this.toStoreKey(key);
-        this.cacheRefresh.access(storeKey);
-
         CacheValue<V> cacheValue = this.doGet(storeKey);
         if (cacheValue != null) {
             return cacheValue.getValue();
         }
-
-        if (!this.containsPredicate.test(key)) {
-            this.doPut(storeKey, null);
-            return null;
+        if (this.containsPredicate.test(key)) {
+            return this.load(key, storeKey, cacheLoader);
         }
+        return null;
+    }
 
-        return this.load(key, storeKey, cacheLoader);
+    @Override
+    public CompletableFuture<V> asyncGetOrLoad(K key, CacheLoader<K, V> cacheLoader) {
+        if (key == null) {
+            return this.requireNonNull("key must not be null.");
+        }
+        if (cacheLoader == null) {
+            return this.requireNonNull("cacheLoader must not be null.");
+        }
+        return CompletableFuture.completedFuture(this.toStoreKey(key))
+                .thenCompose(storeKey -> this.doAsyncGet(storeKey)
+                        .thenApply(cacheValue -> {
+                            if (cacheValue != null) {
+                                return cacheValue.getValue();
+                            }
+                            if (this.containsPredicate.test(key)) {
+                                return this.load(key, storeKey, cacheLoader);
+                            }
+                            return null;
+                        })
+                );
     }
 
     private V load(K key, String storeKey, CacheLoader<K, V> cacheLoader) {
@@ -185,8 +224,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
                     return cacheValue.getValue();
                 }
                 V value = cacheLoader.load(key);
-                this.doPut(storeKey, value);
-                this.incLoads(value);
+                this.doPutAndRefresh(storeKey, value);
                 return value;
             } finally {
                 lock.unlock();
@@ -196,126 +234,231 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         }
     }
 
-    protected abstract CacheValue<V> doGet(String key);
-
-    private void incLoads(V value) {
-        if (value != null) {
-            this.statMonitor.incHitLoads(1);
-        } else {
-            this.statMonitor.incMissLoads(1);
-        }
-    }
-
     @Override
     public Map<K, CacheValue<V>> getAllCacheValues(Set<? extends K> keys) {
-        String method = "getAllCacheValues";
-        requireNonNull(keys, method, "keys must not be null.");
-
+        requireNonNull(keys, "keys must not be null.");
         if (keys.isEmpty()) {
             return Maps.newHashMap(0);
         }
+        Map<String, K> keyMapping = this.createKeyMapping(keys);
+        return this.saveToWrapperResult(keyMapping, this.doGetAll(keyMapping.keySet()));
+    }
 
-        // 1. 建立原生Key 和 缓存Key 之间的映射
-        Map<String, K> keyMapping = this.createKeyMapping(keys, method);
-
-        // 2. 从缓存中读取数据
-        Map<String, CacheValue<V>> cacheValues = this.doGetAll(keyMapping.keySet());
-
-        // 3. 原生Key 替换 缓存Key，保留缓存命中的结果
-        Map<K, CacheValue<V>> result = Maps.newHashMap(cacheValues.size());
-        cacheValues.forEach((storeKey, cacheValue) -> {
-            if (cacheValue != null) {
-                result.put(keyMapping.get(storeKey), cacheValue);
-            }
-        });
-
-        return result;
+    @Override
+    public CompletableFuture<Map<K, CacheValue<V>>> asyncGetAllCacheValues(Set<? extends K> keys) {
+        if (keys == null) {
+            return requireNonNull("keys must not be null.");
+        }
+        if (keys.isEmpty()) {
+            return CompletableFuture.completedFuture(Maps.newHashMap(0));
+        }
+        return CompletableFuture.completedFuture(keys)
+                .thenApply(this::createKeyMapping)
+                .thenCompose(keyMapping -> {
+                    Set<String> keySet = keyMapping.keySet();
+                    return this.doAsyncGetAll(keySet)
+                            .thenApply(cacheValues -> this.saveToWrapperResult(keyMapping, cacheValues));
+                });
     }
 
     @Override
     public Map<K, V> getAll(Set<? extends K> keys) {
-        String method = "getAll";
-        requireNonNull(keys, method, "keys must not be null.");
-
+        requireNonNull(keys, "keys must not be null.");
         if (keys.isEmpty()) {
             return Maps.newHashMap(0);
         }
+        Map<String, K> keyMapping = this.createKeyMapping(keys);
+        Map<String, CacheValue<V>> cacheValues = this.doGetAll(keyMapping.keySet());
+        return this.saveToResult(keyMapping, cacheValues, cacheValues.size());
+    }
 
-        // 1. 建立原生Key 和 缓存Key 之间的映射
-        Map<String, K> keyMapping = this.createKeyMapping(keys, method);
-
-        // 2. 从缓存中读取数据
-        return this.doGetAll(keyMapping, false);
+    @Override
+    public CompletableFuture<Map<K, V>> asyncGetAll(Set<? extends K> keys) {
+        if (keys == null) {
+            return this.requireNonNull("keys must not be null.");
+        }
+        if (keys.isEmpty()) {
+            return CompletableFuture.completedFuture(Maps.newHashMap(0));
+        }
+        return CompletableFuture.completedFuture(keys)
+                .thenApply(this::createKeyMapping)
+                .thenCompose(keyMapping -> {
+                    Set<String> keySet = keyMapping.keySet();
+                    return this.doAsyncGetAll(keySet)
+                            .thenApply(cacheValues -> this.saveToResult(keyMapping, cacheValues, cacheValues.size()));
+                });
     }
 
     @Override
     public Map<K, V> getAllOrLoad(Set<? extends K> keys) {
+        if (this.cacheLoader == null) {
+            return this.getAll(keys);
+        }
         return this.getAllOrLoad(keys, this.cacheLoader);
     }
 
     @Override
-    public Map<K, V> getAllOrLoad(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
-        String method = "getAllOrLoad";
-        requireNonNull(keys, method, "keys must not be null.");
-        requireNonNull(cacheLoader, method, "cacheLoader must not be null.");
+    public CompletableFuture<Map<K, V>> asyncGetAllOrLoad(Set<? extends K> keys) {
+        if (this.cacheLoader == null) {
+            return this.asyncGetAll(keys);
+        }
+        return this.asyncGetAllOrLoad(keys, this.cacheLoader);
+    }
 
+    @Override
+    public Map<K, V> getAllOrLoad(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
+        requireNonNull(keys, "keys must not be null.");
+        requireNonNull(cacheLoader, "cacheLoader must not be null.");
         if (keys.isEmpty()) {
             return Maps.newHashMap(0);
         }
-
-        // 建立原生键 和 缓存键 的映射
-        Map<String, K> keyMapping = this.createKeyMapping(keys, method);
-
-        // 缓存取值 或 回源取值
-        return this.doGetAllOrLoad(keyMapping, cacheLoader);
+        Map<String, K> keyMapping = this.createKeyMapping(keys);
+        Map<String, CacheValue<V>> cacheValues = this.doGetAll(keyMapping.keySet());
+        Map<K, V> result = this.saveToResult(keyMapping, cacheValues, keyMapping.size());
+        return this.loadAndSaveToResult(result, keyMapping, cacheLoader);
     }
 
-    /**
-     * 1. 先从缓存中取值；
-     * 2. 缓存未命中数据，则通过 CacheLoader 回源取值。
-     *
-     * @param cacheLoader 数据加载器，可以为空。
-     * @return 最终结果集（缓存结果集 + 数据源结果集），仅保留有值的结果
-     */
-    private Map<K, V> doGetAllOrLoad(Map<String, K> keyMapping, CacheLoader<K, V> cacheLoader) {
-        // 1. 缓存取值
-        Map<K, V> result = this.doGetAll(keyMapping, true);
-
-        // 2. 如果缓存已命中全部数据，直接返回缓存结果集
-        if (keyMapping.isEmpty()) {
-            return result;
+    @Override
+    public CompletableFuture<Map<K, V>> asyncGetAllOrLoad(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
+        if (keys == null) {
+            return this.requireNonNull("keys must not be null.");
         }
-
-        // 3. 回源取值
-        int totalLoads = keyMapping.size(), hitLoads = 0;
-        Map<K, V> loaded = this.loadAll(keyMapping, cacheLoader);
-
-        // 用于将回源取值结果保存到缓存
-        Map<String, V> toCache = Maps.newHashMap(totalLoads);
-
-        // 4. 回源取值结果存入最终结果集
-        for (Map.Entry<String, K> entry : keyMapping.entrySet()) {
-            String storeKey = entry.getKey();
-            K key = entry.getValue();
-            V val = loaded.get(key);
-            if (val != null) {
-                result.put(key, val);
-                ++hitLoads;
-            }
-            toCache.put(storeKey, val);
+        if (cacheLoader == null) {
+            return this.requireNonNull("cacheLoader must not be null.");
         }
-
-        // 5. 回源取值结果存入缓存
-        this.doPutAll(toCache);
-
-        // 6. 记录回源成功/失败次数
-        this.statMonitor.incHitLoads(hitLoads);
-        this.statMonitor.incMissLoads(totalLoads - hitLoads);
-
-        // 7. 返回最终结果集
-        return result;
+        if (keys.isEmpty()) {
+            return CompletableFuture.completedFuture(Maps.newHashMap(0));
+        }
+        return CompletableFuture.completedFuture(keys)
+                .thenApply(this::createKeyMapping)
+                .thenCompose(keyMapping -> {
+                    Set<String> keySet = keyMapping.keySet();
+                    return this.doAsyncGetAll(keySet)
+                            .thenApply(cacheValues -> this.saveToResult(keyMapping, cacheValues, keyMapping.size()))
+                            .thenApply(result -> this.loadAndSaveToResult(result, keyMapping, cacheLoader));
+                });
     }
 
+    @Override
+    public void put(K key, V value) {
+        requireNonNull(key, "key must not be null.");
+        String storeKey = this.toStoreKey(key);
+        this.doPut(storeKey, value);
+        this.cacheRefresh.onPut(storeKey);
+    }
+
+    @Override
+    public CompletableFuture<Void> asyncPut(K key, V value) {
+        if (key == null) {
+            return this.requireNonNull("key must not be null.");
+        }
+        String storeKey = this.toStoreKey(key);
+        return this.doAsyncPut(storeKey, value).whenCompleteAsync((vod, t) -> this.cacheRefresh.onPut(storeKey));
+    }
+
+    @Override
+    public void putAll(Map<? extends K, ? extends V> keyValues) {
+        requireNonNull(keyValues, "keyValues must not be null.");
+        if (keyValues.isEmpty()) {
+            return;
+        }
+        Map<String, V> kvs = this.toStoreKeyValues(keyValues);
+        this.doPutAll(kvs);
+        this.cacheRefresh.onPutAll(kvs.keySet());
+    }
+
+    @Override
+    public CompletableFuture<Void> asyncPutAll(Map<? extends K, ? extends V> keyValues) {
+        if (keyValues == null) {
+            return this.requireNonNull("keyValues must not be null.");
+        }
+        if (keyValues.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+        return CompletableFuture.completedFuture(keyValues)
+                .thenApply(this::toStoreKeyValues)
+                .whenCompleteAsync((kvs, t) -> this.cacheRefresh.onPutAll(kvs.keySet()))
+                .thenCompose(this::doAsyncPutAll);
+    }
+
+
+    @Override
+    public void remove(K key) {
+        requireNonNull(key, "key must not be null.");
+        String storeKey = this.toStoreKey(key);
+
+        this.doRemove(storeKey);
+        this.cacheRefresh.onRemove(storeKey);
+    }
+
+    @Override
+    public CompletableFuture<Void> asyncRemove(K key) {
+        if (key == null) {
+            return this.requireNonNull("key must not be null.");
+        }
+        String storeKey = this.toStoreKey(key);
+        return this.doAsyncRemove(storeKey).whenCompleteAsync((vod, t) -> this.cacheRefresh.onRemove(storeKey));
+    }
+
+    @Override
+    public void removeAll(Set<? extends K> keys) {
+        requireNonNull(keys, "keys must not be null.");
+        if (keys.isEmpty()) {
+            return;
+        }
+        Set<String> storeKeys = toStoreKeys(keys);
+        this.doRemoveAll(storeKeys);
+        this.cacheRefresh.onRemoveAll(storeKeys);
+    }
+
+    @Override
+    public CompletableFuture<Void> asyncRemoveAll(Set<? extends K> keys) {
+        if (keys == null) {
+            return this.requireNonNull("keys must not be null.");
+        }
+        if (keys.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+        Set<String> storeKeys = toStoreKeys(keys);
+        return this.doAsyncRemoveAll(storeKeys).whenCompleteAsync((vod, t) -> this.cacheRefresh.onRemoveAll(storeKeys));
+    }
+
+    private Map<String, V> toStoreKeyValues(Map<? extends K, ? extends V> keyValues) {
+        Map<String, V> kvs = Maps.newHashMap(keyValues.size());
+        keyValues.forEach((key, value) -> {
+            requireNonNull(key, "keyValues has null element.");
+            kvs.put(toStoreKey(key), value);
+        });
+        return kvs;
+    }
+
+    private Set<String> toStoreKeys(Set<? extends K> keys) {
+        Set<String> storeKeys = HashSet.newHashSet(keys.size());
+        for (K key : keys) {
+            requireNonNull(key, "keys has null element.");
+            storeKeys.add(toStoreKey(key));
+        }
+        return storeKeys;
+    }
+
+    private String toStoreKey(K key) {
+        return this.keyCodec.encode(key);
+    }
+
+    private K fromStoreKey(String storeKey) {
+        return this.keyCodec.decode(storeKey);
+    }
+
+    private void requireNonNull(Object obj, String tips) {
+        if (obj == null) {
+            throw new IllegalArgumentException(String.format(this.message, tips));
+        }
+    }
+
+    private <T> CompletableFuture<T> requireNonNull(String tips) {
+        String msg = String.format(this.message, tips);
+        return CompletableFuture.failedFuture(new IllegalArgumentException(msg));
+    }
 
     /**
      * 1. 创建 “原生键” 与 “缓存键” 的映射；<p>
@@ -324,44 +467,67 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
      * @param keys 输入的键集合
      * @return 返回一个 Map对象，其键为缓存键，值为原始键
      */
-    private Map<String, K> createKeyMapping(Set<? extends K> keys, String method) {
+    private Map<String, K> createKeyMapping(Set<? extends K> keys) {
         Map<String, K> keyMapping = Maps.newHashMap(keys.size());
         for (K key : keys) {
-            requireNonNull(key, method, "keys has null element.");
+            requireNonNull(key, "keys has null element.");
             keyMapping.put(toStoreKey(key), key);
         }
-        this.cacheRefresh.accessAll(keyMapping.keySet());
         return keyMapping;
     }
 
-    /**
-     * 1. 从缓存获取缓存值；<p>
-     * 2. 删除已缓存的键集。
-     *
-     * @param keyMapping 原生键 与 缓存键 之间的映射
-     * @return 缓存结果集
-     */
-    private Map<K, V> doGetAll(Map<String, K> keyMapping, boolean hasLoader) {
-        // 1. 缓存取值
-        Map<String, CacheValue<V>> cacheValues = this.doGetAll(keyMapping.keySet());
+    private Map<K, V> loadAndSaveToResult(Map<K, V> result, Map<String, K> keyMapping, CacheLoader<K, V> cacheLoader) {
+        // 1. 如果缓存已命中全部数据，直接返回缓存结果集
+        if (keyMapping.isEmpty()) {
+            return result;
+        }
+        // 2. 回源取值
+        int hitLoads = 0;
+        Map<K, V> loaded = this.loadAll(keyMapping, cacheLoader);
+        // 3. 用于将回源取值结果存入缓存
+        Map<String, V> toCache = Maps.newHashMap(keyMapping.size());
+        // 4. 回源取值结果存入最终结果集
+        for (Map.Entry<String, K> entry : keyMapping.entrySet()) {
+            String storeKey = entry.getKey();
+            K key = entry.getValue();
+            V value = loaded.get(key);
+            toCache.put(storeKey, value);
+            if (value != null) {
+                result.put(key, value);
+                ++hitLoads;
+            }
+        }
+        // 5. 缓存回源取值结果
+        this.doPutAndRefresh(toCache, hitLoads);
+        // 6. 返回最终结果集
+        return result;
+    }
 
-        // 2. 创建 键值对集合：如果有 cacheLoader，集合大小为原生键集合大小；否则为缓存结果集大小
-        Map<K, V> result = Maps.newHashMap(hasLoader ? keyMapping.size() : cacheValues.size());
-
-        // 3. 转换缓存结果集
-        // 3.1. 缓存键转为原生键；
-        // 3.2. 仅保留有值的结果；
-        // 3.3. 移除缓存命中的键。
-        cacheValues.forEach((storeKey, cacheValue) -> {
+    private Map<K, V> saveToResult(Map<String, K> keyMapping, Map<String, CacheValue<V>> cacheValues, int size) {
+        Map<K, V> result = Maps.newHashMap(size);
+        for (Map.Entry<String, CacheValue<V>> entry : cacheValues.entrySet()) {
+            String storeKey = entry.getKey();
+            CacheValue<V> cacheValue = entry.getValue();
             if (cacheValue != null) {
                 K key = keyMapping.remove(storeKey);
                 if (cacheValue.hasValue()) {
                     result.put(key, cacheValue.getValue());
                 }
             }
-        });
+        }
+        return result;
+    }
 
-        // 4. 返回缓存结果集
+    private Map<K, CacheValue<V>> saveToWrapperResult(Map<String, K> keyMapping, Map<String, CacheValue<V>> cacheValues) {
+        Map<K, CacheValue<V>> result = Maps.newHashMap(cacheValues.size());
+        for (Map.Entry<String, CacheValue<V>> entry : cacheValues.entrySet()) {
+            String storeKey = entry.getKey();
+            CacheValue<V> cacheValue = entry.getValue();
+            if (cacheValue != null) {
+                K key = keyMapping.remove(storeKey);
+                result.put(key, cacheValue);
+            }
+        }
         return result;
     }
 
@@ -372,88 +538,71 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
                 keys.add(key);
             }
         });
-
         if (keys.isEmpty()) {
             return Maps.newHashMap(0);
         }
-
         return cacheLoader.loadAll(keys);
     }
 
+    /**
+     * 1.数据存入缓存 <br>
+     * 2.执行刷新逻辑<br>
+     * 3.记录统计信息
+     *
+     * @param keyValues 回源取值结果集
+     * @param hitLoads  回源命中数量
+     */
+    private void doPutAndRefresh(Map<String, V> keyValues, int hitLoads) {
+        int totalLoads = keyValues.size();
+        // 5. 回源取值结果存入缓存
+        this.doPutAll(keyValues);
+        // 6. 执行刷新逻辑
+        this.cacheRefresh.onPutAll(keyValues.keySet());
+        // 7. 记录回源成功/失败次数
+        this.statMonitor.incHitLoads(hitLoads);
+        this.statMonitor.incMissLoads(totalLoads - hitLoads);
+    }
+
+    /**
+     * 1.数据存入缓存 <br>
+     * 2.执行刷新逻辑<br>
+     * 3.记录统计信息
+     *
+     * @param storeKey 缓存键
+     * @param value    缓存值
+     */
+    private void doPutAndRefresh(String storeKey, V value) {
+        this.doPut(storeKey, value);
+        this.cacheRefresh.onPut(storeKey);
+        if (value != null) {
+            this.statMonitor.incHitLoads(1);
+        } else {
+            this.statMonitor.incMissLoads(1);
+        }
+    }
+
+    protected abstract CacheValue<V> doGet(String key);
+
+    protected abstract CompletableFuture<CacheValue<V>> doAsyncGet(String storeKey);
+
     protected abstract Map<String, CacheValue<V>> doGetAll(Set<String> keys);
 
-    @Override
-    public void put(K key, V value) {
-        requireNonNull(key, "put", "key must not be null.");
-        this.cacheWriter.write(key, value);
-        this.doPut(toStoreKey(key), value);
-    }
+    protected abstract CompletableFuture<Map<String, CacheValue<V>>> doAsyncGetAll(Set<String> keys);
 
     protected abstract void doPut(String key, V value);
 
-    @Override
-    public void putAll(Map<? extends K, ? extends V> keyValues) {
-        requireNonNull(keyValues, "putAll", "keyValues must not be null.");
-        if (keyValues.isEmpty()) {
-            return;
-        }
-
-        Map<String, V> kvs = Maps.newHashMap(keyValues.size());
-        keyValues.forEach((key, value) -> {
-            requireNonNull(key, "putAll", "keyValues has null element.");
-            kvs.put(toStoreKey(key), value);
-        });
-
-        this.cacheWriter.writeAll(keyValues);
-        this.doPutAll(kvs);
-    }
+    protected abstract CompletableFuture<Void> doAsyncPut(String key, V value);
 
     protected abstract void doPutAll(Map<String, ? extends V> keyValues);
 
-    @Override
-    public void remove(K key) {
-        requireNonNull(key, "evict", "key must not be null.");
-        String storeKey = toStoreKey(key);
-
-        this.cacheWriter.delete(key);
-        this.doRemove(storeKey);
-        this.cacheRefresh.remove(storeKey);
-    }
+    protected abstract CompletableFuture<Void> doAsyncPutAll(Map<String, ? extends V> keyValues);
 
     protected abstract void doRemove(String key);
 
-    @Override
-    public void removeAll(Set<? extends K> keys) {
-        requireNonNull(keys, "evictAll", "keys must not be null.");
-        if (keys.isEmpty()) {
-            return;
-        }
-
-        Set<String> set = HashSet.newHashSet(keys.size());
-        for (K key : keys) {
-            requireNonNull(key, "evictAll", "keys has null element.");
-            set.add(toStoreKey(key));
-        }
-
-        this.cacheWriter.deleteAll(keys);
-        this.doRemoveAll(set);
-        this.cacheRefresh.removeAll(set);
-    }
+    protected abstract CompletableFuture<Void> doAsyncRemove(String key);
 
     protected abstract void doRemoveAll(Set<String> keys);
 
-    protected String toStoreKey(K key) {
-        return this.keyCodec.encode(key);
-    }
-
-    protected K fromStoreKey(String storeKey) {
-        return this.keyCodec.decode(storeKey);
-    }
-
-    protected void requireNonNull(Object obj, String method, String tips) {
-        if (obj == null) {
-            throw new IllegalArgumentException(String.format(this.message, method, tips));
-        }
-    }
+    protected abstract CompletableFuture<Void> doAsyncRemoveAll(Set<String> keys);
 
 }

@@ -1,5 +1,7 @@
 package com.igeeksky.xcache.extension.sync;
 
+import java.nio.charset.Charset;
+
 /**
  * 缓存数据同步器工厂接口
  *
@@ -14,7 +16,7 @@ public interface CacheSyncProvider {
      * @param channel  缓存数据同步通道
      * @param consumer 消费者
      */
-    <V> void register(String channel, SyncMessageListener<V> consumer);
+    <V> void register(String channel, Charset charset, SyncMessageListener<V> consumer);
 
     /**
      * 获取缓存数据同步监控器

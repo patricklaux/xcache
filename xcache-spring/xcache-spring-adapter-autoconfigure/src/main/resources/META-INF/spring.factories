@@ -1,3 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.igeeksky.xcache.autoconfigure.SpringCacheAutoConfiguration, \
-com.igeeksky.xcache.autoconfigure.GenericJacksonCodecAutoConfiguration
+com.igeeksky.xcache.autoconfigure.SpringCacheAutoConfiguration

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
  */
 class EmbedLockServiceTest {
 
-    private final String key = "test-lock";
+    private static final String key = "test-lock";
 
     @Test
     void lock() throws InterruptedException {

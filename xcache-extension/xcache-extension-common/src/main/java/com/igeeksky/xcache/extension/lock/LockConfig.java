@@ -3,6 +3,7 @@ package com.igeeksky.xcache.extension.lock;
 import com.igeeksky.xtool.core.lang.Assert;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -104,7 +105,7 @@ public class LockConfig {
         private String sid;
         private String name;
         private String group;
-        private Charset charset;
+        private Charset charset = StandardCharsets.UTF_8;
         private String provider;
         private boolean enableGroupPrefix;
         private int initialCapacity;

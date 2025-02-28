@@ -18,8 +18,14 @@ import org.springframework.cache.annotation.EnableCaching;
         exclude = {RedisRepositoriesAutoConfiguration.class, RedisAutoConfiguration.class})
 public class Application {
 
+    /**
+     * 程序入口
+     * 使用Spring Boot框架启动应用程序
+     *
+     * @param args 命令行参数
+     */
     public static void main(String[] args) {
-        SpringApplication.run(Application.class);
+        SpringApplication.run(Application.class, args);
     }
 
 }

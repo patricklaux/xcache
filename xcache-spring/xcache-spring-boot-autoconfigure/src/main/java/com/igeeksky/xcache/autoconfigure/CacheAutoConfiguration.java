@@ -1,8 +1,11 @@
 package com.igeeksky.xcache.autoconfigure;
 
 
-import com.igeeksky.xcache.autoconfigure.holder.*;
-import com.igeeksky.xcache.core.*;
+import com.igeeksky.xcache.autoconfigure.register.*;
+import com.igeeksky.xcache.core.CacheManager;
+import com.igeeksky.xcache.core.CacheManagerConfig;
+import com.igeeksky.xcache.core.CacheManagerImpl;
+import com.igeeksky.xcache.core.ComponentManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -36,58 +39,53 @@ public class CacheAutoConfiguration {
 
     @Bean("xcacheManager")
     @ConditionalOnMissingBean(CacheManager.class)
-    CacheManager cacheManager(ObjectProvider<StoreProviderHolder> storeHolders,
-                              ObjectProvider<CodecProviderHolder> codecHolders,
-                              ObjectProvider<CacheSyncProviderHolder> syncHolders,
-                              ObjectProvider<CacheStatProviderHolder> statHolders,
-                              ObjectProvider<CacheLockProviderHolder> lockHolders,
-                              ObjectProvider<CacheLoaderHolder> loaderHolders,
-                              ObjectProvider<CacheWriterHolder> writerHolders,
-                              ObjectProvider<CacheRefreshProviderHolder> refreshHolders,
-                              ObjectProvider<CompressorProviderHolder> compressorHolders,
-                              ObjectProvider<ContainsPredicateHolder> predicateHolders,
+    CacheManager cacheManager(ObjectProvider<StoreProviderRegister> storeHolders,
+                              ObjectProvider<CodecProviderRegister> codecHolders,
+                              ObjectProvider<CacheSyncProviderRegister> syncHolders,
+                              ObjectProvider<CacheStatProviderRegister> statHolders,
+                              ObjectProvider<CacheLockProviderRegister> lockHolders,
+                              ObjectProvider<CacheLoaderRegister> loaderHolders,
+                              ObjectProvider<CacheRefreshProviderRegister> refreshHolders,
+                              ObjectProvider<CompressorProviderRegister> compressorHolders,
+                              ObjectProvider<ContainsPredicateRegister> predicateHolders,
                               ScheduledExecutorService scheduler) {
 
-        ComponentManager componentManager = new ComponentManagerImpl(scheduler, cacheProperties.getStat());
+        ComponentManager componentManager = new ComponentManager(scheduler, cacheProperties.getStat());
 
-        for (StoreProviderHolder holder : storeHolders) {
-            holder.getAll().forEach(componentManager::addProvider);
-        }
-
-        for (CodecProviderHolder holder : codecHolders) {
-            holder.getAll().forEach(componentManager::addProvider);
-        }
-
-        for (CacheSyncProviderHolder holder : syncHolders) {
-            holder.getAll().forEach(componentManager::addProvider);
-        }
-
-        for (CacheStatProviderHolder holder : statHolders) {
-            holder.getAll().forEach(componentManager::addProvider);
-        }
-
-        for (CacheLockProviderHolder holder : lockHolders) {
-            holder.getAll().forEach(componentManager::addProvider);
-        }
-
-        for (CacheLoaderHolder holder : loaderHolders) {
+        for (CacheLoaderRegister holder : loaderHolders) {
             holder.getAll().forEach(componentManager::addCacheLoader);
         }
 
-        for (CacheWriterHolder holder : writerHolders) {
-            holder.getAll().forEach(componentManager::addCacheWriter);
-        }
-
-        for (CacheRefreshProviderHolder holder : refreshHolders) {
-            holder.getAll().forEach(componentManager::addProvider);
-        }
-
-        for (CompressorProviderHolder holder : compressorHolders) {
-            holder.getAll().forEach(componentManager::addProvider);
-        }
-
-        for (ContainsPredicateHolder holder : predicateHolders) {
+        for (ContainsPredicateRegister holder : predicateHolders) {
             holder.getAll().forEach(componentManager::addContainsPredicate);
+        }
+
+        for (StoreProviderRegister holder : storeHolders) {
+            holder.getAll().forEach(componentManager::addStoreProvider);
+        }
+
+        for (CodecProviderRegister holder : codecHolders) {
+            holder.getAll().forEach(componentManager::addCodecProvider);
+        }
+
+        for (CacheSyncProviderRegister holder : syncHolders) {
+            holder.getAll().forEach(componentManager::addSyncProvider);
+        }
+
+        for (CacheStatProviderRegister holder : statHolders) {
+            holder.getAll().forEach(componentManager::addStatProvider);
+        }
+
+        for (CacheLockProviderRegister holder : lockHolders) {
+            holder.getAll().forEach(componentManager::addLockProvider);
+        }
+
+        for (CacheRefreshProviderRegister holder : refreshHolders) {
+            holder.getAll().forEach(componentManager::addRefreshProvider);
+        }
+
+        for (CompressorProviderRegister holder : compressorHolders) {
+            holder.getAll().forEach(componentManager::addCompressorProvider);
         }
 
         CacheManagerConfig managerConfig = CacheManagerConfig.builder()

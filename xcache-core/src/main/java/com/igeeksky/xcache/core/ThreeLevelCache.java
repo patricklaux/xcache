@@ -11,6 +11,7 @@ import com.igeeksky.xtool.core.collection.Maps;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 三级组合缓存
@@ -20,13 +21,11 @@ import java.util.Set;
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-03
  */
-@SuppressWarnings("unchecked")
 public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
 
-    private static final int LIMIT = 2;
     private static final int LENGTH = 3;
-
     private final CacheSyncMonitor syncMonitor;
+    @SuppressWarnings("unchecked")
     private final Store<V>[] stores = new Store[LENGTH];
 
     public ThreeLevelCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend, Store<V>[] stores) {
@@ -40,101 +39,219 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
+    protected boolean contains(String key) {
+        return stores[2].getCacheValue(key) != null;
+    }
+
+    @Override
     protected CacheValue<V> doGet(String key) {
-        for (int i = 0; i < LENGTH; i++) {
-            CacheValue<V> cacheValue = stores[i].getCacheValue(key);
-            if (cacheValue != null) {
-                if (i > 0) {
-                    for (int j = i - 1; j >= 0; j--) {
-                        stores[j].put(key, cacheValue.getValue());
-                    }
-                }
-                return cacheValue;
-            }
+        CacheValue<V> cacheValue = stores[0].getCacheValue(key);
+        if (cacheValue != null) {
+            return cacheValue;
         }
-        return null;
+        cacheValue = stores[1].getCacheValue(key);
+        if (cacheValue != null) {
+            stores[0].put(key, cacheValue.getValue());
+            return cacheValue;
+        }
+        cacheValue = stores[2].getCacheValue(key);
+        if (cacheValue != null) {
+            stores[1].put(key, cacheValue.getValue());
+            stores[0].put(key, cacheValue.getValue());
+        }
+        return cacheValue;
+    }
+
+    @Override
+    protected CompletableFuture<CacheValue<V>> doAsyncGet(String storeKey) {
+        return stores[0].asyncGetCacheValue(storeKey)
+                .thenCompose(firstValue -> {
+                    if (firstValue != null) {
+                        return CompletableFuture.completedFuture(firstValue);
+                    }
+                    return stores[1].asyncGetCacheValue(storeKey)
+                            .thenCompose(secondValue -> {
+                                if (secondValue != null) {
+                                    stores[0].asyncPut(storeKey, secondValue.getValue());
+                                    return CompletableFuture.completedFuture(secondValue);
+                                }
+                                return stores[2].asyncGetCacheValue(storeKey)
+                                        .whenComplete((thirdValue, t) -> {
+                                            if (thirdValue != null) {
+                                                V value = thirdValue.getValue();
+                                                stores[1].asyncPut(storeKey, value)
+                                                        .thenCompose(vod -> stores[0].asyncPut(storeKey, value));
+                                            }
+                                        });
+                            });
+                });
     }
 
     @Override
     protected Map<String, CacheValue<V>> doGetAll(Set<String> keys) {
         Set<String> cloneKeys = new HashSet<>(keys);
-        Map<String, CacheValue<V>> result = Maps.newHashMap(keys.size());
+        Map<String, CacheValue<V>> result = addToResult(stores[0].getAllCacheValues(cloneKeys), cloneKeys, keys.size());
+        if (cloneKeys.isEmpty()) {
+            return result;
+        }
+        addToResult(result, cloneKeys, stores[1].getAllCacheValues(cloneKeys), stores[0]);
+        if (cloneKeys.isEmpty()) {
+            return result;
+        }
+        addToResult(result, cloneKeys, stores[2].getAllCacheValues(cloneKeys), stores[0], stores[1]);
+        return result;
+    }
 
-        Map<String, V> saveToLower = null;
-        for (int i = 0; i < LENGTH; i++) {
-            Store<V> store = stores[i];
-            Map<String, CacheValue<V>> cacheValues = store.getAllCacheValues(cloneKeys);
-            if (Maps.isEmpty(cacheValues)) {
-                continue;
-            }
+    @Override
+    protected CompletableFuture<Map<String, CacheValue<V>>> doAsyncGetAll(Set<String> keys) {
+        Set<String> cloneKeys = new HashSet<>(keys);
+        return stores[0].asyncGetAllCacheValues(cloneKeys)
+                .thenCompose(firstAll -> {
+                    Map<String, CacheValue<V>> result = addToResult(firstAll, cloneKeys, keys.size());
+                    if (cloneKeys.isEmpty()) {
+                        return CompletableFuture.completedFuture(result);
+                    }
+                    return stores[1].asyncGetAllCacheValues(cloneKeys)
+                            .thenCompose(secondAll -> {
+                                addToResult(result, cloneKeys, secondAll, stores[0]);
+                                if (cloneKeys.isEmpty()) {
+                                    return CompletableFuture.completedFuture(result);
+                                }
+                                return stores[2].asyncGetAllCacheValues(cloneKeys)
+                                        .thenApply(thirdAll -> {
+                                            addToResult(result, cloneKeys, thirdAll, stores[0], stores[1]);
+                                            return result;
+                                        });
+                            });
+                });
+    }
 
-            if (i > 0) {
-                saveToLower = Maps.newHashMap(cacheValues.size());
+    private static <V> Map<String, CacheValue<V>> addToResult(Map<String, CacheValue<V>> firstAll,
+                                                              Set<String> cloneKeys, int size) {
+        Map<String, CacheValue<V>> result = Maps.newHashMap(size);
+        if (Maps.isNotEmpty(firstAll)) {
+            for (Map.Entry<String, CacheValue<V>> entry : firstAll.entrySet()) {
+                String key = entry.getKey();
+                CacheValue<V> cacheValue = entry.getValue();
+                if (cacheValue != null) {
+                    result.put(key, cacheValue);
+                    cloneKeys.remove(key);
+                }
             }
+        }
+        return result;
+    }
+
+    @SafeVarargs
+    private static <V> void addToResult(Map<String, CacheValue<V>> result, Set<String> cloneKeys,
+                                        Map<String, CacheValue<V>> cacheValues, Store<V>... lowerStores) {
+        if (Maps.isNotEmpty(cacheValues)) {
+            Map<String, V> saveToLower = Maps.newHashMap(cacheValues.size());
             for (Map.Entry<String, CacheValue<V>> entry : cacheValues.entrySet()) {
                 String key = entry.getKey();
                 CacheValue<V> cacheValue = entry.getValue();
                 if (cacheValue != null) {
                     result.put(key, cacheValue);
                     cloneKeys.remove(key);
-                    if (saveToLower != null) {
-                        saveToLower.put(key, cacheValue.getValue());
-                    }
+                    saveToLower.put(key, cacheValue.getValue());
                 }
             }
-
-            if (saveToLower != null) {
-                for (int j = i - 1; j >= 0; j--) {
-                    stores[j].putAll(saveToLower);
+            // 高层缓存数据保存到低层缓存
+            if (Maps.isNotEmpty(saveToLower)) {
+                CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
+                for (int i = lowerStores.length - 1; i >= 0; i--) {
+                    Store<V> store = lowerStores[i];
+                    future = future.thenCompose(ignored -> store.asyncPutAll(saveToLower));
                 }
-                saveToLower = null;
-            }
-
-            if (cloneKeys.isEmpty()) {
-                return result;
             }
         }
-
-        return result;
     }
 
     @Override
     protected void doPut(String key, V value) {
-        for (int j = LIMIT; j >= 0; j--) {
-            stores[j].put(key, value);
-        }
+        stores[2].put(key, value);
+        stores[1].put(key, value);
+        stores[0].put(key, value);
         syncMonitor.afterPut(key);
     }
 
     @Override
+    protected CompletableFuture<Void> doAsyncPut(String key, V value) {
+        return stores[2].asyncPut(key, value)
+                .thenCompose(ignored -> stores[1].asyncPut(key, value))
+                .thenCompose(ignored -> stores[0].asyncPut(key, value))
+                .whenCompleteAsync((ignored, throwable) -> {
+                    if (throwable == null) {
+                        syncMonitor.afterPut(key);
+                    }
+                });
+    }
+
+    @Override
     protected void doPutAll(Map<String, ? extends V> keyValues) {
-        for (int j = LIMIT; j >= 0; j--) {
-            stores[j].putAll(keyValues);
-        }
+        stores[2].putAll(keyValues);
+        stores[1].putAll(keyValues);
+        stores[0].putAll(keyValues);
         syncMonitor.afterPutAll(keyValues.keySet());
     }
 
     @Override
+    protected CompletableFuture<Void> doAsyncPutAll(Map<String, ? extends V> keyValues) {
+        return stores[2].asyncPutAll(keyValues)
+                .thenCompose(ignored -> stores[1].asyncPutAll(keyValues))
+                .thenCompose(ignored -> stores[0].asyncPutAll(keyValues))
+                .whenCompleteAsync((ignored, throwable) -> {
+                    if (throwable == null) {
+                        syncMonitor.afterPutAll(keyValues.keySet());
+                    }
+                });
+    }
+
+    @Override
     protected void doRemove(String key) {
-        for (int j = LIMIT; j >= 0; j--) {
-            stores[j].remove(key);
-        }
-        syncMonitor.afterEvict(key);
+        stores[2].remove(key);
+        stores[1].remove(key);
+        stores[0].remove(key);
+        syncMonitor.afterRemove(key);
+    }
+
+    @Override
+    protected CompletableFuture<Void> doAsyncRemove(String key) {
+        return stores[2].asyncRemove(key)
+                .thenCompose(ignored -> stores[1].asyncRemove(key))
+                .thenCompose(ignored -> stores[0].asyncRemove(key))
+                .whenCompleteAsync((ignored, throwable) -> {
+                    if (throwable == null) {
+                        syncMonitor.afterRemove(key);
+                    }
+                });
     }
 
     @Override
     protected void doRemoveAll(Set<String> keys) {
-        for (int j = LIMIT; j >= 0; j--) {
-            stores[j].removeAll(keys);
-        }
-        syncMonitor.afterEvictAll(keys);
+        stores[2].removeAll(keys);
+        stores[1].removeAll(keys);
+        stores[0].removeAll(keys);
+        syncMonitor.afterRemoveAll(keys);
+    }
+
+    @Override
+    protected CompletableFuture<Void> doAsyncRemoveAll(Set<String> keys) {
+        return stores[2].asyncRemoveAll(keys)
+                .thenCompose(ignored -> stores[1].asyncRemoveAll(keys))
+                .thenCompose(ignored -> stores[0].asyncRemoveAll(keys))
+                .whenCompleteAsync((ignored, throwable) -> {
+                    if (throwable == null) {
+                        syncMonitor.afterRemoveAll(keys);
+                    }
+                });
     }
 
     @Override
     public void clear() {
-        for (int j = LIMIT; j >= 0; j--) {
-            stores[j].clear();
-        }
+        stores[2].clear();
+        stores[1].clear();
+        stores[0].clear();
         syncMonitor.afterClear();
     }
 

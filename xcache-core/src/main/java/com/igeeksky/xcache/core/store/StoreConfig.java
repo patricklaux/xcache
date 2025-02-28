@@ -73,6 +73,9 @@ public class StoreConfig<V> {
     // extra
     private final RedisType redisType;
 
+    // extra
+    private final int keySequenceSize;
+
     /**
      * 扩展参数0，用于自定义的 StoreProvider
      * <p>
@@ -102,6 +105,7 @@ public class StoreConfig<V> {
         this.valueCompressor = builder.valueCompressor;
         this.valueCodec = builder.valueCodec;
         this.redisType = builder.redisType;
+        this.keySequenceSize = builder.keySequenceSize;
         this.params = builder.params;
     }
 
@@ -193,6 +197,10 @@ public class StoreConfig<V> {
         return new Builder<>(valueType);
     }
 
+    public int getKeySequenceSize() {
+        return keySequenceSize;
+    }
+
     public static class Builder<V> {
 
         private String name;
@@ -234,6 +242,8 @@ public class StoreConfig<V> {
         private Codec<V> valueCodec;
 
         private RedisType redisType;
+
+        private int keySequenceSize;
 
         private final Map<String, Object> params = new HashMap<>();
 
@@ -325,6 +335,11 @@ public class StoreConfig<V> {
 
         public Builder<V> redisType(RedisType redisType) {
             this.redisType = redisType;
+            return this;
+        }
+
+        public Builder<V> keySequenceSize(int keySequenceSize) {
+            this.keySequenceSize = keySequenceSize;
             return this;
         }
 

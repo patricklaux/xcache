@@ -159,19 +159,29 @@ public class PropsUtil {
             return;
         }
 
-        Long period = from.getPeriod();
-        if (period != null) {
-            to.setPeriod(period);
-        }
-
         String provider = StringUtils.trimToNull(from.getProvider());
         if (provider != null) {
             to.setProvider(provider);
         }
 
-        Long stopAfterAccess = from.getStopAfterAccess();
-        if (stopAfterAccess != null) {
-            to.setStopAfterAccess(stopAfterAccess);
+        Integer refreshAfterWrite = from.getRefreshAfterWrite();
+        if (refreshAfterWrite != null) {
+            to.setRefreshAfterWrite(refreshAfterWrite);
+        }
+
+        Integer refreshTasksSize = from.getRefreshTasksSize();
+        if (refreshTasksSize != null) {
+            to.setRefreshTasksSize(refreshTasksSize);
+        }
+
+        Integer refreshThreadPeriod = from.getRefreshThreadPeriod();
+        if (refreshThreadPeriod != null) {
+            to.setRefreshThreadPeriod(refreshThreadPeriod);
+        }
+
+        Integer refreshSequenceSize = from.getRefreshSequenceSize();
+        if (refreshSequenceSize != null) {
+            to.setRefreshSequenceSize(refreshSequenceSize);
         }
 
         Boolean enableGroupPrefix = from.getEnableGroupPrefix();
@@ -195,6 +205,11 @@ public class PropsUtil {
         String storeProvider = StringUtils.trimToNull(from.getProvider());
         if (storeProvider != null) {
             to.setProvider(storeProvider);
+        }
+
+        Integer keySequenceSize = from.getKeySequenceSize();
+        if (keySequenceSize != null) {
+            to.setKeySequenceSize(keySequenceSize);
         }
 
         Integer initialCapacity = from.getInitialCapacity();
@@ -311,9 +326,11 @@ public class PropsUtil {
      */
     public static RefreshProps defaultRefreshProps() {
         RefreshProps props = new RefreshProps();
-        props.setPeriod(CacheConstants.DEFAULT_REFRESH_PERIOD);
         props.setProvider(CacheConstants.DEFAULT_REFRESH_PROVIDER);
-        props.setStopAfterAccess(CacheConstants.DEFAULT_REFRESH_STOP_AFTER_ACCESS);
+        props.setRefreshAfterWrite(CacheConstants.DEFAULT_REFRESH_AFTER_WRITE);
+        props.setRefreshTasksSize(CacheConstants.DEFAULT_REFRESH_TASKS_SIZE);
+        props.setRefreshThreadPeriod(CacheConstants.DEFAULT_REFRESH_THREAD_PERIOD);
+        props.setRefreshSequenceSize(CacheConstants.DEFAULT_REFRESH_SEQUENCE_SIZE);
         props.setEnableGroupPrefix(CacheConstants.DEFAULT_ENABLE_GROUP_PREFIX);
         return props;
     }
@@ -354,9 +371,10 @@ public class PropsUtil {
      */
     public static StoreProps defaultEmbedStoreProps() {
         StoreProps props = new StoreProps();
-        props.setRedisType(RedisType.STRING);
-
         props.setProvider(CacheConstants.DEFAULT_EMBED_STORE_PROVIDER);
+
+        props.setRedisType(RedisType.STRING);
+        props.setKeySequenceSize(CacheConstants.DEFAULT_EXTRA_KEY_SEQUENCE_SIZE);
 
         props.setInitialCapacity(CacheConstants.DEFAULT_EMBED_INITIAL_CAPACITY);
         props.setMaximumSize(CacheConstants.DEFAULT_EMBED_MAXIMUM_SIZE);
@@ -385,9 +403,11 @@ public class PropsUtil {
      */
     public static StoreProps defaultExtraStoreProps() {
         StoreProps props = new StoreProps();
-        props.setRedisType(RedisType.STRING);
 
         props.setProvider(CacheConstants.DEFAULT_EXTRA_STORE_PROVIDER);
+
+        props.setRedisType(RedisType.STRING);
+        props.setKeySequenceSize(CacheConstants.DEFAULT_EXTRA_KEY_SEQUENCE_SIZE);
 
         props.setInitialCapacity(CacheConstants.DEFAULT_EMBED_INITIAL_CAPACITY);
         props.setMaximumSize(CacheConstants.DEFAULT_EMBED_MAXIMUM_SIZE);

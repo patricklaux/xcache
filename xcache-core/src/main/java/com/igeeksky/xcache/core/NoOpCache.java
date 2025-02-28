@@ -1,14 +1,17 @@
 package com.igeeksky.xcache.core;
 
 
-import com.igeeksky.xcache.common.*;
+import com.igeeksky.xcache.common.Cache;
+import com.igeeksky.xcache.common.CacheLoader;
+import com.igeeksky.xcache.common.CacheValue;
+import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.NoOpCacheLoader;
-import com.igeeksky.xcache.extension.NoOpCacheWriter;
 import com.igeeksky.xtool.core.collection.Maps;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 无操作缓存
@@ -26,20 +29,17 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     private final Class<K> keyType;
     private final Class<V> valueType;
     private final CacheLoader<K, V> cacheLoader;
-    private final CacheWriter<K, V> cacheWriter;
     private final ContainsPredicate<K> containsPredicate;
 
     private final String message;
 
-    public NoOpCache(CacheConfig<K, V> config, CacheLoader<K, V> cacheLoader,
-                     CacheWriter<K, V> cacheWriter, ContainsPredicate<K> containsPredicate) {
+    public NoOpCache(CacheConfig<K, V> config, CacheLoader<K, V> cacheLoader, ContainsPredicate<K> containsPredicate) {
         this.name = config.getName();
         this.keyType = config.getKeyType();
         this.valueType = config.getValueType();
         this.cacheLoader = cacheLoader != null ? cacheLoader : NoOpCacheLoader.getInstance();
-        this.cacheWriter = cacheWriter != null ? cacheWriter : NoOpCacheWriter.getInstance();
         this.containsPredicate = containsPredicate;
-        this.message = "Cache:[" + this.name + "], method:[%s], %s";
+        this.message = "Cache:[" + this.name + "], %s";
     }
 
     @Override
@@ -59,14 +59,30 @@ public class NoOpCache<K, V> implements Cache<K, V> {
 
     @Override
     public V get(K key) {
-        requireNonNull(key, "get", "key must not be null");
+        requireNonNull(key, "key must not be null");
         return null;
     }
 
     @Override
+    public CompletableFuture<V> asyncGet(K key) {
+        if (key == null) {
+            return this.requireNonNull("key must not be null.");
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Override
     public CacheValue<V> getCacheValue(K key) {
-        requireNonNull(key, "get", "key must not be null");
+        requireNonNull(key, "key must not be null");
         return null;
+    }
+
+    @Override
+    public CompletableFuture<CacheValue<V>> asyncGetCacheValue(K key) {
+        if (key == null) {
+            return this.requireNonNull("key must not be null.");
+        }
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
@@ -75,9 +91,14 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
+    public CompletableFuture<V> asyncGetOrLoad(K key) {
+        return this.asyncGetOrLoad(key, this.cacheLoader);
+    }
+
+    @Override
     public V getOrLoad(K key, CacheLoader<K, V> cacheLoader) {
-        requireNonNull(key, "getOrLoad", "key must not be null");
-        requireNonNull(cacheLoader, "getOrLoad", "cacheLoader must not be null");
+        requireNonNull(key, "key must not be null");
+        requireNonNull(cacheLoader, "cacheLoader must not be null");
 
         if (this.containsPredicate != null) {
             if (this.containsPredicate.test(key)) {
@@ -89,15 +110,48 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
+    public CompletableFuture<V> asyncGetOrLoad(K key, CacheLoader<K, V> cacheLoader) {
+        if (key == null) {
+            return this.requireNonNull("key must not be null.");
+        }
+        if (cacheLoader == null) {
+            return this.requireNonNull("cacheLoader must not be null.");
+        }
+        if (this.containsPredicate != null) {
+            if (this.containsPredicate.test(key)) {
+                return CompletableFuture.completedFuture(key).thenApply(cacheLoader::load);
+            }
+            return CompletableFuture.completedFuture(null);
+        }
+        return CompletableFuture.completedFuture(key).thenApply(cacheLoader::load);
+    }
+
+    @Override
     public Map<K, V> getAll(Set<? extends K> keys) {
-        requireNonNull(keys, "getAll", "keys must not be null");
+        requireNonNull(keys, "keys must not be null");
         return Maps.newHashMap(0);
     }
 
     @Override
+    public CompletableFuture<Map<K, V>> asyncGetAll(Set<? extends K> keys) {
+        if (keys == null) {
+            return this.requireNonNull("keys must not be null.");
+        }
+        return CompletableFuture.completedFuture(Maps.newHashMap(0));
+    }
+
+    @Override
     public Map<K, CacheValue<V>> getAllCacheValues(Set<? extends K> keys) {
-        requireNonNull(keys, "getAll", "keys must not be null");
+        requireNonNull(keys, "keys must not be null");
         return Maps.newHashMap(0);
+    }
+
+    @Override
+    public CompletableFuture<Map<K, CacheValue<V>>> asyncGetAllCacheValues(Set<? extends K> keys) {
+        if (keys == null) {
+            return this.requireNonNull("keys must not be null.");
+        }
+        return CompletableFuture.completedFuture(Maps.newHashMap(0));
     }
 
     @Override
@@ -106,9 +160,14 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
+    public CompletableFuture<Map<K, V>> asyncGetAllOrLoad(Set<? extends K> keys) {
+        return this.asyncGetAllOrLoad(keys, this.cacheLoader);
+    }
+
+    @Override
     public Map<K, V> getAllOrLoad(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
-        requireNonNull(keys, "getAllOrLoad", "keys must not be null");
-        requireNonNull(cacheLoader, "getAllOrLoad", "cacheLoader must not be null");
+        requireNonNull(keys, "keys must not be null");
+        requireNonNull(cacheLoader, "cacheLoader must not be null");
         if (this.containsPredicate != null) {
             Set<K> exists = HashSet.newHashSet(keys.size());
             keys.forEach(key -> {
@@ -122,27 +181,78 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
+    public CompletableFuture<Map<K, V>> asyncGetAllOrLoad(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
+        if (keys == null) {
+            return this.requireNonNull("keys must not be null.");
+        }
+        if (cacheLoader == null) {
+            return this.requireNonNull("cacheLoader must not be null.");
+        }
+        if (this.containsPredicate != null) {
+            return CompletableFuture.completedFuture(keys)
+                    .thenApply(ks -> {
+                        Set<K> exists = HashSet.newHashSet(ks.size());
+                        ks.forEach(key -> {
+                            if (this.containsPredicate.test(key)) {
+                                exists.add(key);
+                            }
+                        });
+                        return cacheLoader.loadAll(exists);
+                    });
+        }
+        return CompletableFuture.completedFuture(keys).thenApply(cacheLoader::loadAll);
+    }
+
+    @Override
     public void put(K key, V value) {
-        requireNonNull(key, "put", "key must not be null");
-        this.cacheWriter.write(key, value);
+        requireNonNull(key, "key must not be null");
+    }
+
+    @Override
+    public CompletableFuture<Void> asyncPut(K key, V value) {
+        if (key == null) {
+            return this.requireNonNull("key must not be null.");
+        }
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
     public void putAll(Map<? extends K, ? extends V> keyValues) {
-        requireNonNull(keyValues, "putAll", "keyValues must not be null");
-        this.cacheWriter.writeAll(keyValues);
+        requireNonNull(keyValues, "keyValues must not be null");
+    }
+
+    @Override
+    public CompletableFuture<Void> asyncPutAll(Map<? extends K, ? extends V> keyValues) {
+        if (keyValues == null) {
+            return this.requireNonNull("keyValues must not be null.");
+        }
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
     public void remove(K key) {
-        requireNonNull(key, "evict", "key must not be null");
-        this.cacheWriter.delete(key);
+        requireNonNull(key, "key must not be null");
+    }
+
+    @Override
+    public CompletableFuture<Void> asyncRemove(K key) {
+        if (key == null) {
+            return this.requireNonNull("key must not be null.");
+        }
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
     public void removeAll(Set<? extends K> keys) {
-        requireNonNull(keys, "evictAll", "keys must not be null");
-        this.cacheWriter.deleteAll(keys);
+        requireNonNull(keys, "keys must not be null");
+    }
+
+    @Override
+    public CompletableFuture<Void> asyncRemoveAll(Set<? extends K> keys) {
+        if (keys == null) {
+            return this.requireNonNull("keys must not be null.");
+        }
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
@@ -150,10 +260,15 @@ public class NoOpCache<K, V> implements Cache<K, V> {
         // do nothing
     }
 
-    private void requireNonNull(Object obj, String method, String tips) {
+    private void requireNonNull(Object obj, String tips) {
         if (obj == null) {
-            throw new IllegalArgumentException(String.format(message, method, tips));
+            throw new IllegalArgumentException(String.format(message, tips));
         }
+    }
+
+    private <T> CompletableFuture<T> requireNonNull(String tips) {
+        String msg = String.format(this.message, tips);
+        return CompletableFuture.failedFuture(new IllegalArgumentException(msg));
     }
 
 }

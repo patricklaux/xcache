@@ -8,6 +8,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
+ * 缓存数据同步消息
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-11
  */

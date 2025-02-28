@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.extension.lock;
 
 /**
- * 缓存锁工厂，用于获取 {@link LockService}
+ * 锁工厂，用于获取 {@link LockService}
  *
  * @author Patrick.Lau
  * @since 0.0.3 2021-07-26

@@ -1,7 +1,5 @@
 package com.igeeksky.xcache.extension.refresh;
 
-import com.igeeksky.xcache.extension.lock.LockService;
-
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,20 +12,14 @@ import java.util.Map;
  */
 public class RefreshConfig {
 
-    private final String group;
+    private final String sid;
 
-    /**
-     * 缓存名称
-     */
     private final String name;
 
-    private final boolean enableGroupPrefix;
+    private final String group;
 
     private final String provider;
 
-    /**
-     * 字符集
-     */
     private final Charset charset;
 
     private final String refreshKey;
@@ -36,17 +28,15 @@ public class RefreshConfig {
 
     private final String refreshPeriodKey;
 
-    private final LockService cacheLock;
+    private final int refreshThreadPeriod;
 
-    /**
-     * 刷新间隔
-     */
-    private final long period;
+    private final int refreshSequenceSize;
 
-    /**
-     * 停止刷新时间
-     */
-    private final long stopAfterAccess;
+    private final int refreshTasksSize;
+
+    private final int refreshAfterWrite;
+
+    private final boolean enableGroupPrefix;
 
     private final Map<String, Object> params;
 
@@ -55,9 +45,11 @@ public class RefreshConfig {
         this.group = builder.group;
         this.charset = builder.charset;
         this.provider = builder.provider;
-        this.cacheLock = builder.cacheLock;
-        this.period = builder.period;
-        this.stopAfterAccess = builder.stopAfterAccess;
+        this.sid = builder.sid;
+        this.refreshThreadPeriod = builder.refreshThreadPeriod;
+        this.refreshTasksSize = builder.refreshTasksSize;
+        this.refreshAfterWrite = builder.refreshAfterWrite;
+        this.refreshSequenceSize = builder.refreshSequenceSize;
         this.enableGroupPrefix = builder.enableGroupPrefix;
         this.params = builder.params;
         if (this.enableGroupPrefix) {
@@ -77,10 +69,6 @@ public class RefreshConfig {
 
     public String getGroup() {
         return group;
-    }
-
-    public boolean getEnableGroupPrefix() {
-        return enableGroupPrefix;
     }
 
     public String getProvider() {
@@ -103,16 +91,28 @@ public class RefreshConfig {
         return refreshPeriodKey;
     }
 
-    public LockService getCacheLock() {
-        return cacheLock;
+    public long getRefreshThreadPeriod() {
+        return refreshThreadPeriod;
     }
 
-    public long getPeriod() {
-        return period;
+    public int getRefreshTasksSize() {
+        return refreshTasksSize;
     }
 
-    public long getStopAfterAccess() {
-        return stopAfterAccess;
+    public int getRefreshAfterWrite() {
+        return refreshAfterWrite;
+    }
+
+    public int getRefreshSequenceSize() {
+        return refreshSequenceSize;
+    }
+
+    public String getSid() {
+        return sid;
+    }
+
+    public boolean isEnableGroupPrefix() {
+        return enableGroupPrefix;
     }
 
     public Map<String, Object> getParams() {
@@ -125,32 +125,32 @@ public class RefreshConfig {
 
     public static class Builder {
 
-        /**
-         * 缓存名称
-         */
+        private String sid;
+
         private String name;
 
         private String group;
 
-        private Charset charset;
-
         private String provider;
 
-        private LockService cacheLock;
+        private Charset charset;
 
-        /**
-         * 刷新间隔
-         */
-        private long period;
+        private int refreshTasksSize;
 
-        /**
-         * 停止刷新时间
-         */
-        private long stopAfterAccess;
+        private int refreshAfterWrite;
+
+        private int refreshSequenceSize;
+
+        private int refreshThreadPeriod;
 
         private boolean enableGroupPrefix;
 
         private final Map<String, Object> params = new HashMap<>();
+
+        public Builder sid(String sid) {
+            this.sid = sid;
+            return this;
+        }
 
         public Builder name(String name) {
             this.name = name;
@@ -172,18 +172,23 @@ public class RefreshConfig {
             return this;
         }
 
-        public Builder period(long period) {
-            this.period = period;
+        public Builder refreshAfterWrite(int refreshAfterWrite) {
+            this.refreshAfterWrite = refreshAfterWrite;
             return this;
         }
 
-        public Builder stopAfterAccess(long stopAfterAccess) {
-            this.stopAfterAccess = stopAfterAccess;
+        public Builder refreshTasksSize(int refreshTasksSize) {
+            this.refreshTasksSize = refreshTasksSize;
             return this;
         }
 
-        public Builder cacheLock(LockService cacheLock) {
-            this.cacheLock = cacheLock;
+        public Builder refreshThreadPeriod(int refreshThreadPeriod) {
+            this.refreshThreadPeriod = refreshThreadPeriod;
+            return this;
+        }
+
+        public Builder refreshSequenceSize(int refreshSequenceSize) {
+            this.refreshSequenceSize = refreshSequenceSize;
             return this;
         }
 

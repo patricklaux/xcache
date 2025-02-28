@@ -2,25 +2,28 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>xcache-bom</artifactId>
-        <groupId>com.igeeksky.xcache</groupId>
-        <version>${revision}</version>
-        <relativePath>../xcache-bom</relativePath>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.igeeksky.xcache</groupId>
+        <artifactId>xcache-bom</artifactId>
+        <relativePath>../xcache-bom</relativePath>
+        <version>${revision}</version>
+    </parent>
 
     <artifactId>xcache-redis</artifactId>
     <name>xcache redis</name>
     <description>${project.name}</description>
     <url>https://github.com/patricklaux/xcache</url>
-    <packaging>pom</packaging>
 
-    <modules>
-        <module>xcache-redis-common</module>
-        <module>xcache-redis-core</module>
-        <module>xcache-redis-lettuce</module>
-        <module>xcache-redis-jedis</module>
-    </modules>
+    <dependencies>
+        <dependency>
+            <groupId>com.igeeksky.xcache</groupId>
+            <artifactId>xcache-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.igeeksky.xredis</groupId>
+            <artifactId>xredis-common</artifactId>
+        </dependency>
+    </dependencies>
 
 </project>

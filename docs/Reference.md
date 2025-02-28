@@ -1010,17 +1010,17 @@ xcache: #【1】Xcache 配置的根节点
   template: #【3】公共模板配置 (必填)
     - id: t0 #【4】模板ID (必填)
       cache-lock: #【5】缓存锁配置
-        provider: lettuce #【6】使用 id 为 lettuce 的 LockProvider（即【31】中设定的 id）
-      cache-stat: lettuce #【9】使用 id 为 lettuce 的 CacheStatProvider（即【33】中设定的 id）
+        provider: lettuce #【6】使用 id 为 lettuce 的 LockProvider（即【29】中设定的 id）
+      cache-stat: lettuce #【9】使用 id 为 lettuce 的 CacheStatProvider（即【29】中设定的 id）
       cache-refresh: #【10】缓存刷新配置
-        provider: lettuce #【11】使用 id 为 lettuce 的 CacheRefreshProvider（即【36】中设定的 id）
+        provider: lettuce #【11】使用 id 为 lettuce 的 CacheRefreshProvider（即【29】中设定的 id）
       cache-sync: #【7】缓存同步配置
-        provider: lettuce #【8】使用 id 为 lettuce 的 CacheSyncProvider（即【39】中设定的 id）
+        provider: lettuce #【8】使用 id 为 lettuce 的 CacheSyncProvider（即【29】中设定的 id）
       key-codec: jackson #【12】使用 id 为 jackson 的 CodecProvider（预设id）
       first: #【13】一级缓存配置
         provider: caffeine #【14】使用 id 为 caffeine 的 StoreProvider（预设id）
       second: #【15】二级缓存配置
-        provider: lettuce #【16】使用 id 为 lettuce 的 StoreProvider（即【28】中设定的 id）
+        provider: lettuce #【16】使用 id 为 lettuce 的 StoreProvider（即【29】中设定的 id）
         value-codec: jackson #【17】使用 id 为 jackson 的 CodecProvider（预设id）
         value-compressor: #【18】值压缩配置
           provider: gzip #【19】使用 id 为 gzip 的 CompressorProvider（预设id）
@@ -1031,29 +1031,11 @@ xcache: #【1】Xcache 配置的根节点
   scheduler: #【24】ScheduledExecutorService 配置
     core-pool-size: 1 #【25】定时任务调度器核心线程数
   redis: #【26】Redis 配置
-    store: #【27】RedisStoreProvider 配置
-      - id: lettuce #【28】创建 id 为 lettuce 的 RedisStoreProvider
-        factory: lettuce #【29】指定使用 id 为 lettuce 的 RedisOperatorFactory（即【47】中设定的 id）
-    lock: #【30】RedisLockProvider 配置
-      - id: lettuce #【31】创建 id 为 lettuce 的 RedisLockProvider
-        factory: lettuce #【32】指定使用 id 为 lettuce 的 RedisOperatorFactory（即【47】中设定的 id）
-    stat: #【33】RedisCacheStatProvider 配置
-      - id: lettuce #【34】创建 id 为 lettuce 的 RedisCacheStatProvider
-        factory: lettuce #【35】指定使用 id 为 lettuce 的 RedisOperatorFactory（即【47】中设定的 id）
-    refresh: #【36】RedisCacheRefreshProvider 配置
-      - id: lettuce #【37】创建 id 为 lettuce 的 RedisCacheRefreshProvider
-        factory: lettuce #【38】指定使用 id 为 lettuce 的 RedisOperatorFactory（即【47】中设定的 id）
-    sync: #【39】RedisCacheSyncProvider 配置
-      - id: lettuce #【40】创建 id 为 lettuce 的 RedisCacheSyncProvider
-        listener: lettuce #【41】指定使用 id 为 lettuce 的 StreamListenerContainer（即【43】中设定的 id）
-    listener: #【42】StreamListenerContainer 配置
-      - id: lettuce #【43】创建 id 为 lettuce 的 StreamListenerContainer
-        factory: lettuce #【44】指定使用 id 为 lettuce 的 RedisOperatorFactory（即【47】中设定的 id）
-    lettuce: #【45】Lettuce 客户端配置
-      factories: #【46】列表类型，可配置多个
-        - id: lettuce #【47】创建 id 为 lettuce 的 RedisOperatorFactory
-          standalone: #【48】单机模式 或 副本集模式
-            node: 127.0.0.1:6379 #【49】Redis 节点
+    lettuce: #【27】Lettuce 客户端配置
+      factories: #【28】列表类型，可配置多个
+        - id: lettuce #【29】创建 id 为 lettuce 的 RedisOperatorFactory
+          standalone: #【30】单机模式 或 副本集模式
+            node: 127.0.0.1:6379 #【31】Redis 节点
 ```
 
 总之，如果要使用某个对象类型作为具体功能实现，那么：
@@ -1090,9 +1072,11 @@ xcache:
       cache-stat: lettuce # CacheStatProviderId，用于缓存指标信息采集和输出（默认值：log，输出到日志）
       cache-refresh: # 缓存刷新配置
         provider: none # CacheRefreshProviderId（默认值：none，不启用缓存刷新）
-        period: 2400000 # 刷新间隔周期（默认值：2400000 毫秒）
-        stop-after-access: 7200000 # 某个键最后一次查询后，超过此时限则不再刷新 （默认值：7200000 毫秒）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，适用于外部刷新实现）
+        refresh-after-write: 3600000 # （默认值：3600000 毫秒）
+        refresh-tasks-size: 16384
+        refresh-sequence-size: 32
+        refresh-thread-period: 10000 # 刷新间隔周期（默认值：10000 毫秒）
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则会提示参数读取异常）
           test: test
       cache-sync: # 缓存同步配置
@@ -1162,35 +1146,19 @@ xcache:
   scheduler: # 调度器配置
     core-pool-size: 1 # 定时任务调度器核心线程数，如未配置，则使用 (核心数 / 8)，最小为 1。
   redis: # Redis 配置（如不使用 Redis，可直接删除此配置项；如未配置，则不会生成相应的实例对象）
-    charset: UTF-8 # 字符集，用于数据同步消息和缓存指标消息的编解码（默认值：UTF-8）
-    store: # RedisStoreProvider 配置，列表类型，可配置零至多个
-      - id: lettuce #  要创建的 RedisStoreProvider 的 id（必填）
-        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
-    lock: # RedisLockProvider 配置，列表类型，可配置零至多个
-      - id: lettuce # 要创建的 RedisLockProvider  的 id（必填）
-        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
-    stat: # RedisCacheStatProvider 配置，列表类型，可配置零至多个
-      # 另，RedisCacheStat 只负责发送统计指标信息到指定的 channel，具体的统计汇总需用户自行实现
-      - id: lettuce # 要创建的 RedisCacheStatProvider 的 id（必填）
-        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
-        period: 60000 # 缓存指标统计的时间间隔（默认值：60000，单位：毫秒）
-        max-len: 10000 # Redis stream 最大长度（默认值：10000，采用近似裁剪，实际长度可能略大于配置值）
-        enable-group-prefix: false # 是否附加 group 作为后缀（默认值：false）
-    refresh: # RedisCacheRefreshProvider 配置，，列表类型，可配置多个
-      - id: lettuce # 要创建的 RedisCacheRefreshProvider 的 id（必填）
-        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
-    sync: # RedisCacheSyncProvider 配置，列表类型，可配置零至多个
-      - id: lettuce # 需要创建的 RedisCacheSyncProvider 的 id
-        listener: lettuce # （）
-    listener: # StreamListenerContainer 配置，列表类型，可配置零至多个
-      - id: lettuce # 要创建的 StreamListenerContainer 的 id（必填）
-        factory: lettuce # 指定使用的 RedisOperatorFactory 的 id（必填）
-        block: 10 # 读取 Stream 时的阻塞时长（默认值： 10 单位：毫秒）
-        delay: 1000 # 当次同步任务结束后，下次任务开始前的延迟时长（默认值： 10 单位：毫秒）
-        count: 1000 # 同步任务每次从 Stream 读取的最大消息数量（默认值： 1000）
     lettuce: # Lettuce 客户端配置
       factories: # 考虑到一个应用可能会使用多套 Redis，因此采用列表类型，可配置多个
         - id: lettuce # RedisOperatorFactory 唯一标识（默认值：lettuce）
+          stat: # RedisCacheStatProvider 配置
+            # 另，RedisCacheStat 只负责发送统计指标信息到指定的 channel，具体的统计汇总需用户自行实现
+            period: 60000 # 缓存指标统计的时间间隔（默认值：60000，单位：毫秒）
+            max-len: 10000 # Redis stream 最大长度（默认值：10000，采用近似裁剪，实际长度可能略大于配置值）
+            charset: UTF-8 # 字符集，用于缓存统计指标消息的编解码（默认值：UTF-8）
+            enable-group-prefix: false # 是否附加 group 作为后缀（默认值：false）
+          listener: # StreamListenerContainer 配置
+            block: 10 # 读取 Stream 时的阻塞时长（默认值： 10 单位：毫秒）
+            count: 1000 # 同步任务每次从 Stream 读取的最大消息数量（默认值： 1000）
+            period: 1000 # 当次同步任务结束后，下次任务开始前的间隔时长（默认值： 10 单位：毫秒）
           standalone: # 单机模式 或 副本集模式
             # 这里为了演示 standalone，sentinel，cluster 分别如何配置，所以三种配置都存在，实际只需保留真正使用的其中一种
             # 当三种配置都存在时，那么优先使用 sentinel 配置，其次 cluster，最后 standalone
