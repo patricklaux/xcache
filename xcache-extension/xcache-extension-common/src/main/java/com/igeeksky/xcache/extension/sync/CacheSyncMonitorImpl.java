@@ -49,14 +49,14 @@ public class CacheSyncMonitorImpl implements CacheSyncMonitor {
     }
 
     @Override
-    public void afterEvict(String key) {
+    public void afterRemove(String key) {
         if (enabled) {
             sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_REMOVE, key));
         }
     }
 
     @Override
-    public void afterEvictAll(Set<String> keys) {
+    public void afterRemoveAll(Set<String> keys) {
         if (enabled) {
             sendMessage(new CacheSyncMessage(sid, CacheSyncMessage.TYPE_REMOVE, keys));
         }

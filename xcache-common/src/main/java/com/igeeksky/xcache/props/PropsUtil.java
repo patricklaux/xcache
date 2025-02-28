@@ -164,7 +164,7 @@ public class PropsUtil {
             to.setProvider(provider);
         }
 
-        Long refreshAfterWrite = from.getRefreshAfterWrite();
+        Integer refreshAfterWrite = from.getRefreshAfterWrite();
         if (refreshAfterWrite != null) {
             to.setRefreshAfterWrite(refreshAfterWrite);
         }
@@ -174,7 +174,7 @@ public class PropsUtil {
             to.setRefreshTasksSize(refreshTasksSize);
         }
 
-        Long refreshThreadPeriod = from.getRefreshThreadPeriod();
+        Integer refreshThreadPeriod = from.getRefreshThreadPeriod();
         if (refreshThreadPeriod != null) {
             to.setRefreshThreadPeriod(refreshThreadPeriod);
         }
@@ -202,14 +202,14 @@ public class PropsUtil {
             to.setRedisType(redisType);
         }
 
-        Integer keySequenceSize = from.getKeySequenceSize();
-        if (keySequenceSize != null) {
-            to.setKeySequenceSize(keySequenceSize);
-        }
-
         String storeProvider = StringUtils.trimToNull(from.getProvider());
         if (storeProvider != null) {
             to.setProvider(storeProvider);
+        }
+
+        Integer keySequenceSize = from.getKeySequenceSize();
+        if (keySequenceSize != null) {
+            to.setKeySequenceSize(keySequenceSize);
         }
 
         Integer initialCapacity = from.getInitialCapacity();
@@ -371,10 +371,10 @@ public class PropsUtil {
      */
     public static StoreProps defaultEmbedStoreProps() {
         StoreProps props = new StoreProps();
+        props.setProvider(CacheConstants.DEFAULT_EMBED_STORE_PROVIDER);
+
         props.setRedisType(RedisType.STRING);
         props.setKeySequenceSize(CacheConstants.DEFAULT_EXTRA_KEY_SEQUENCE_SIZE);
-
-        props.setProvider(CacheConstants.DEFAULT_EMBED_STORE_PROVIDER);
 
         props.setInitialCapacity(CacheConstants.DEFAULT_EMBED_INITIAL_CAPACITY);
         props.setMaximumSize(CacheConstants.DEFAULT_EMBED_MAXIMUM_SIZE);
@@ -403,10 +403,11 @@ public class PropsUtil {
      */
     public static StoreProps defaultExtraStoreProps() {
         StoreProps props = new StoreProps();
-        props.setRedisType(RedisType.STRING);
-        props.setKeySequenceSize(CacheConstants.DEFAULT_EXTRA_KEY_SEQUENCE_SIZE);
 
         props.setProvider(CacheConstants.DEFAULT_EXTRA_STORE_PROVIDER);
+
+        props.setRedisType(RedisType.STRING);
+        props.setKeySequenceSize(CacheConstants.DEFAULT_EXTRA_KEY_SEQUENCE_SIZE);
 
         props.setInitialCapacity(CacheConstants.DEFAULT_EMBED_INITIAL_CAPACITY);
         props.setMaximumSize(CacheConstants.DEFAULT_EMBED_MAXIMUM_SIZE);

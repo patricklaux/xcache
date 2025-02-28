@@ -11,12 +11,4 @@ package com.igeeksky.xcache.common;
  */
 public interface Store<V> extends Base<String, V> {
 
-    /**
-     * 判断缓存中是否存在指定键的缓存值
-     *
-     * @param key 缓存键
-     * @return 存在返回true，否则返回false
-     */
-    boolean contains(String key);
-
 }

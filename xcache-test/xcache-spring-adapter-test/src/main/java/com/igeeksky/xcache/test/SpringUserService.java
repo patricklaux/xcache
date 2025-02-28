@@ -41,6 +41,7 @@ public class SpringUserService {
      * @return 缓存数据
      */
     public User getUserByCache(Key key) {
+
         System.out.println("getUserByCache: " + key);
         CacheValue<Object> cacheValue = cache.getCacheValue(key);
         if (cacheValue != null) {

@@ -1,14 +1,19 @@
 package com.igeeksky.xcache.redis.lock;
 
-import com.igeeksky.redis.lettuce.LettuceStandaloneFactory;
-import com.igeeksky.redis.lettuce.LettuceTestHelper;
+
 import com.igeeksky.xcache.extension.lock.LockConfig;
 import com.igeeksky.xcache.extension.lock.LockTestTask;
+import com.igeeksky.xcache.redis.LettuceTestHelper;
+import com.igeeksky.xredis.lettuce.LettuceOperatorProxy;
+import com.igeeksky.xredis.lettuce.api.RedisOperator;
+import com.igeeksky.xredis.lettuce.api.RedisOperatorFactory;
+import io.lettuce.core.codec.ByteArrayCodec;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -24,33 +29,35 @@ import java.util.concurrent.locks.Condition;
 class RedisSpinLockTest {
 
     private static final String key = "test-lock";
-    private static LettuceStandaloneFactory lettuceStandaloneFactory;
     private static RedisLockService lockService;
+    private static RedisOperatorFactory redisOperatorFactory;
 
     @BeforeAll
     static void beforeAll() {
         LockConfig config = LockConfig.builder()
                 .sid(UUID.randomUUID().toString())
                 .name("user")
+                .group("shop")
+                .charset(StandardCharsets.UTF_8)
+                .enableGroupPrefix(true)
                 .provider("redis")
                 .initialCapacity(64)
-                .group("shop")
-                .enableGroupPrefix(true)
                 .leaseTime(10000)
                 .build();
 
-        lettuceStandaloneFactory = LettuceTestHelper.createStandaloneFactory();
+        redisOperatorFactory = LettuceTestHelper.createStandaloneFactory();
 
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-        RedisLockProvider provider = new RedisLockProvider(scheduler, lettuceStandaloneFactory);
-
+        RedisOperator<byte[], byte[]> redisOperator = redisOperatorFactory.redisOperator(ByteArrayCodec.INSTANCE);
+        LettuceOperatorProxy operatorProxy = new LettuceOperatorProxy(10000, redisOperator);
+        RedisLockProvider provider = new RedisLockProvider(operatorProxy, scheduler, 60000);
         lockService = provider.get(config);
     }
 
     @AfterAll
     static void afterAll() {
-        lettuceStandaloneFactory.close();
+        redisOperatorFactory.shutdown();
     }
 
     @Test

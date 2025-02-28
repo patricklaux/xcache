@@ -2,7 +2,6 @@ package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.NullValue;
 import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.common.CacheValues;
 import com.igeeksky.xtool.core.lang.codec.Codec;
 import com.igeeksky.xtool.core.lang.compress.Compressor;
 
@@ -58,7 +57,7 @@ public class ExtraStoreConvertor<V> {
 
         if (Arrays.equals(null_bytes, storeValue)) {
             if (enableNullValue) {
-                return CacheValues.emptyCacheValue();
+                return CacheValue.empty();
             }
             return null;
         }
@@ -67,7 +66,7 @@ public class ExtraStoreConvertor<V> {
             storeValue = compressor.decompress(storeValue);
         }
 
-        return CacheValues.newCacheValue(codec.decode(storeValue));
+        return CacheValue.create(codec.decode(storeValue));
     }
 
 }

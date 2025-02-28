@@ -17,8 +17,17 @@
     <url>https://github.com/patricklaux/xcache</url>
 
     <properties>
-        <spring.boot.version>3.3.5</spring.boot.version>
-        <xtool.version>1.0.20</xtool.version>
+        <xtool.version>1.1.3</xtool.version>
+        <xredis.version>0.9.6</xredis.version>
+        <caffeine.version>3.1.8</caffeine.version>
+        <spring.version>6.2.2</spring.version>
+        <spring.boot.version>3.4.3</spring.boot.version>
+        <junit.version>5.11.4</junit.version>
+        <jackson.version>2.18.2</jackson.version>
+        <slf4j.version>2.0.16</slf4j.version>
+        <log4j.version>2.24.3</log4j.version>
+        <logback.version>1.5.16</logback.version>
+        <lettuce.version>6.5.4.RELEASE</lettuce.version>
     </properties>
 
     <dependencyManagement>
@@ -63,22 +72,7 @@
             <!-- xcache-redis -->
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-redis-core</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-redis-common</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-redis-lettuce</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-redis-jedis</artifactId>
+                <artifactId>xcache-redis</artifactId>
                 <version>${revision}</version>
             </dependency>
             <!-- xcache-spring -->
@@ -100,11 +94,6 @@
             <dependency>
                 <groupId>com.igeeksky.xcache</groupId>
                 <artifactId>xcache-caffeine-spring-boot-autoconfigure</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.igeeksky.xcache</groupId>
-                <artifactId>xcache-lettuce-spring-boot-autoconfigure</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
@@ -156,11 +145,29 @@
                 <version>${xtool.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.igeeksky.xredis</groupId>
+                <artifactId>xredis</artifactId>
+                <version>${xredis.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.lettuce</groupId>
+                <artifactId>lettuce-core</artifactId>
+                <version>${lettuce.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
                 <version>${spring.boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>io.lettuce</groupId>
+                        <artifactId>lettuce-core</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>

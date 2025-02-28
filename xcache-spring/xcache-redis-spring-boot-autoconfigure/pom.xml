@@ -17,7 +17,11 @@
     <dependencies>
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-redis-core</artifactId>
+            <artifactId>xcache-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.igeeksky.xredis</groupId>
+            <artifactId>xredis-lettuce-resources-autoconfigure</artifactId>
         </dependency>
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
@@ -26,16 +30,19 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure-processor</artifactId>
+            <version>${spring.boot.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
+            <version>${spring.boot.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
+            <version>${spring.boot.version}</version>
             <optional>true</optional>
         </dependency>
     </dependencies>

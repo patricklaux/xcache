@@ -29,14 +29,14 @@ public interface CacheSyncMonitor {
      *
      * @param key 缓存键
      */
-    void afterEvict(String key);
+    void afterRemove(String key);
 
     /**
      * 监听缓存数据批量逐出事件
      *
      * @param keys 缓存键
      */
-    void afterEvictAll(Set<String> keys);
+    void afterRemoveAll(Set<String> keys);
 
     /**
      * 监听缓存清空事件

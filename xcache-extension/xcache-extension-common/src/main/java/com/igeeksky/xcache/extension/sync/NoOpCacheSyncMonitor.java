@@ -25,11 +25,11 @@ public class NoOpCacheSyncMonitor implements CacheSyncMonitor {
     }
 
     @Override
-    public void afterEvict(String key) {
+    public void afterRemove(String key) {
     }
 
     @Override
-    public void afterEvictAll(Set<String> keys) {
+    public void afterRemoveAll(Set<String> keys) {
     }
 
     @Override

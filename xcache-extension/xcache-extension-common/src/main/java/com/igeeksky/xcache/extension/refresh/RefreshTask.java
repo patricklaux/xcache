@@ -11,8 +11,10 @@ import java.util.function.Predicate;
  *
  * @param cacheRefresh 缓存刷新器
  * @param key          键
- * @param consumer     刷新回调（数据回源取值，并更新缓存数据）
- * @param predicate    判断缓存是否包含该键
+ * @param consumer     用以执行回源查询并将回源结果写入缓存
+ * @param predicate    用以判断缓存是否存在键对应的值：如果此 {@code predicate} 返回 true，执行数据刷新；否则，不再继续刷新。 <br>
+ *                     1. 缓存存储系统可能会根据特定算法清除某些访问频率较低的键，增加此判断可以避免缓存算法失效，导致命中率降低； <br>
+ *                     2. {@link CacheRefresh#onRemove} 执行异常，导致未能移除无需再刷新的键，增加此判断可及时清理垃圾键集。
  */
 public record RefreshTask(CacheRefresh cacheRefresh, String key,
                           Consumer<String> consumer, Predicate<String> predicate) implements Runnable {
@@ -22,12 +24,11 @@ public record RefreshTask(CacheRefresh cacheRefresh, String key,
     @Override
     public void run() {
         try {
-            // 判断缓存中是否包含该键
             if (predicate.test(key)) {
-                // 刷新缓存
+                // 刷新数据
                 consumer.accept(key);
             } else {
-                // 刷新队列删除该键
+                // 停止刷新
                 cacheRefresh.onRemove(key);
             }
         } catch (Throwable e) {

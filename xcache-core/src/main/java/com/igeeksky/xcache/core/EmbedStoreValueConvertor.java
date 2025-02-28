@@ -1,7 +1,6 @@
 package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xcache.common.CacheValues;
 import com.igeeksky.xtool.core.lang.codec.Codec;
 import com.igeeksky.xtool.core.lang.compress.Compressor;
 
@@ -32,7 +31,7 @@ public class EmbedStoreValueConvertor<V> {
     public CacheValue<Object> toStoreValue(V value) {
         if (null == value) {
             if (enableNullValue) {
-                return CacheValues.emptyCacheValue();
+                return CacheValue.empty();
             }
             return null;
         }
@@ -41,9 +40,9 @@ public class EmbedStoreValueConvertor<V> {
             if (enableCompressValue) {
                 innerValue = compressor.compress(innerValue);
             }
-            return CacheValues.newCacheValue(innerValue);
+            return CacheValue.create(innerValue);
         }
-        return CacheValues.newCacheValue(value);
+        return CacheValue.create(value);
     }
 
     @SuppressWarnings("unchecked")
@@ -62,7 +61,7 @@ public class EmbedStoreValueConvertor<V> {
             if (enableCompressValue) {
                 innerValue = compressor.decompress(innerValue);
             }
-            return CacheValues.newCacheValue(codec.decode(innerValue));
+            return CacheValue.create(codec.decode(innerValue));
         }
         return (CacheValue<V>) storeValue;
     }

@@ -11,6 +11,7 @@ import com.igeeksky.xtool.core.collection.Maps;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -50,7 +51,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected boolean contains(String key) {
-        return second.contains(key);
+        return second.getCacheValue(key) != null;
     }
 
     @Override
@@ -69,44 +70,83 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
+    protected CompletableFuture<CacheValue<V>> doAsyncGet(String storeKey) {
+        return first.asyncGetCacheValue(storeKey)
+                .thenCompose(firstValue -> {
+                    if (firstValue != null) {
+                        return CompletableFuture.completedFuture(firstValue);
+                    }
+                    return second.asyncGetCacheValue(storeKey)
+                            .whenComplete((secondValue, t) -> {
+                                if (secondValue != null) {
+                                    first.asyncPut(storeKey, secondValue.getValue());
+                                }
+                            });
+                });
+    }
+
+    @Override
     protected Map<String, CacheValue<V>> doGetAll(Set<String> keys) {
         // 复制键集
         Set<String> cloneKeys = new HashSet<>(keys);
-        // 最终结果集
-        Map<String, CacheValue<V>> result = Maps.newHashMap(keys.size());
+        // 从一级缓存查询数据，并添加到最终结果集
+        Map<String, CacheValue<V>> result = addToResult(first.getAllCacheValues(cloneKeys), cloneKeys, keys.size());
+        // 如果键集已经为空，直接返回最终结果集（一级缓存已查询到所有数据）
+        if (cloneKeys.isEmpty()) {
+            return result;
+        }
+        // 从二级缓存查询数据，并添加到最终结果集
+        return addToResult(result, second.getAllCacheValues(cloneKeys), first);
+    }
 
-        // 从一级缓存查询数据
-        Map<String, CacheValue<V>> firstAll = first.getAllCacheValues(cloneKeys);
+    @Override
+    protected CompletableFuture<Map<String, CacheValue<V>>> doAsyncGetAll(Set<String> keys) {
+        Set<String> cloneKeys = new HashSet<>(keys);
+        return first.asyncGetAllCacheValues(cloneKeys)
+                .thenCompose(firstAll -> {
+                    Map<String, CacheValue<V>> result = addToResult(firstAll, cloneKeys, keys.size());
+                    if (cloneKeys.isEmpty()) {
+                        return CompletableFuture.completedFuture(result);
+                    }
+                    return second.asyncGetAllCacheValues(cloneKeys)
+                            .thenApply((secondAll) -> addToResult(result, secondAll, first));
+                });
+    }
+
+    private static <V> Map<String, CacheValue<V>> addToResult(Map<String, CacheValue<V>> firstAll,
+                                                              Set<String> cloneKeys, int size) {
+        Map<String, CacheValue<V>> result = Maps.newHashMap(size);
         if (Maps.isNotEmpty(firstAll)) {
-            firstAll.forEach((key, cacheValue) -> {
+            for (Map.Entry<String, CacheValue<V>> entry : firstAll.entrySet()) {
+                String key = entry.getKey();
+                CacheValue<V> cacheValue = entry.getValue();
                 if (cacheValue != null) {
                     result.put(key, cacheValue);
                     cloneKeys.remove(key);
                 }
-            });
-
-            if (cloneKeys.isEmpty()) {
-                return result;
             }
         }
+        return result;
+    }
 
-        // 从二级缓存查询数据
-        Map<String, CacheValue<V>> secondAll = second.getAllCacheValues(cloneKeys);
+    private static <V> Map<String, CacheValue<V>> addToResult(Map<String, CacheValue<V>> result,
+                                                              Map<String, CacheValue<V>> secondAll,
+                                                              Store<V> first) {
         if (Maps.isNotEmpty(secondAll)) {
             Map<String, V> saveToLower = Maps.newHashMap(secondAll.size());
-            secondAll.forEach((key, cacheValue) -> {
+            for (Map.Entry<String, CacheValue<V>> entry : secondAll.entrySet()) {
+                String key = entry.getKey();
+                CacheValue<V> cacheValue = entry.getValue();
                 if (cacheValue != null) {
                     result.put(key, cacheValue);
                     saveToLower.put(key, cacheValue.getValue());
                 }
-            });
+            }
             // 二级缓存数据保存到一级缓存
             if (Maps.isNotEmpty(saveToLower)) {
-                first.putAll(saveToLower);
+                first.asyncPutAll(saveToLower);
             }
         }
-
-        // 返回最终结果集
         return result;
     }
 
@@ -118,6 +158,17 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
+    protected CompletableFuture<Void> doAsyncPut(String key, V value) {
+        return second.asyncPut(key, value)
+                .thenCompose(vod -> first.asyncPut(key, value))
+                .whenCompleteAsync((vod, throwable) -> {
+                    if (throwable == null) {
+                        syncMonitor.afterPut(key);
+                    }
+                });
+    }
+
+    @Override
     protected void doPutAll(Map<String, ? extends V> keyValues) {
         second.putAll(keyValues);
         first.putAll(keyValues);
@@ -125,17 +176,50 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
+    protected CompletableFuture<Void> doAsyncPutAll(Map<String, ? extends V> keyValues) {
+        return second.asyncPutAll(keyValues)
+                .whenCompleteAsync((vod, throwable) -> {
+                    if (throwable == null) {
+                        syncMonitor.afterPutAll(keyValues.keySet());
+                    }
+                })
+                .thenCompose(vod -> first.asyncPutAll(keyValues));
+    }
+
+    @Override
     protected void doRemove(String key) {
         second.remove(key);
         first.remove(key);
-        syncMonitor.afterEvict(key);
+        syncMonitor.afterRemove(key);
+    }
+
+    @Override
+    protected CompletableFuture<Void> doAsyncRemove(String key) {
+        return second.asyncRemove(key)
+                .whenCompleteAsync((vod, throwable) -> {
+                    if (throwable == null) {
+                        syncMonitor.afterRemove(key);
+                    }
+                })
+                .thenCompose(vod -> first.asyncRemove(key));
     }
 
     @Override
     protected void doRemoveAll(Set<String> keys) {
         second.removeAll(keys);
         first.removeAll(keys);
-        syncMonitor.afterEvictAll(keys);
+        syncMonitor.afterRemoveAll(keys);
+    }
+
+    @Override
+    protected CompletableFuture<Void> doAsyncRemoveAll(Set<String> keys) {
+        return second.asyncRemoveAll(keys)
+                .whenCompleteAsync((vod, throwable) -> {
+                    if (throwable == null) {
+                        syncMonitor.afterRemoveAll(keys);
+                    }
+                })
+                .thenCompose(vod -> first.asyncRemoveAll(keys));
     }
 
     @Override

@@ -97,7 +97,7 @@ public class CacheManagerImpl implements CacheManager {
         LockConfig lockConfig = this.buildLockConfig(cacheProps.getCacheLock(), cacheConfig);
         LockService lockService = this.getLockService(lockConfig);
 
-        RefreshConfig refreshConfig = this.buildRefreshConfig(cacheProps.getCacheRefresh(), lockService, cacheConfig);
+        RefreshConfig refreshConfig = this.buildRefreshConfig(cacheProps.getCacheRefresh(), cacheConfig);
         CacheRefresh cacheRefresh = this.getCacheRefresh(refreshConfig);
 
         StatConfig statConfig = this.buildStatConfig(cacheProps.getCacheStat(), cacheConfig);
@@ -320,7 +320,7 @@ public class CacheManagerImpl implements CacheManager {
         return cacheLock;
     }
 
-    private <K, V> RefreshConfig buildRefreshConfig(RefreshProps props, LockService lockService, CacheConfig<K, V> config) {
+    private <K, V> RefreshConfig buildRefreshConfig(RefreshProps props, CacheConfig<K, V> config) {
         return RefreshConfig.builder()
                 .sid(config.getSid())
                 .name(config.getName())
@@ -404,7 +404,7 @@ public class CacheManagerImpl implements CacheManager {
         CacheSyncProvider provider = componentManager.getSyncProvider(beanId);
         requireNonNull(provider, () -> "CacheSyncProvider:[" + beanId + "] is undefined");
 
-        provider.register(config.getChannel(), new SyncMessageListener<>(config));
+        provider.register(config.getChannel(), config.getCharset(), new SyncMessageListener<>(config));
 
         CacheSyncMonitor monitor = provider.getMonitor(config);
         requireNonNull(monitor, () -> "Unable to get monitor from provider:[" + beanId + "].");

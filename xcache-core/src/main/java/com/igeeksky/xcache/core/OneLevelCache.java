@@ -8,6 +8,7 @@ import com.igeeksky.xcache.props.StoreLevel;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 仅有一级缓存时，使用此实现类
@@ -38,7 +39,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected boolean contains(String key) {
-        return store.contains(key);
+        return store.getCacheValue(key) != null;
     }
 
     @Override
@@ -47,8 +48,18 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
+    protected CompletableFuture<CacheValue<V>> doAsyncGet(String storeKey) {
+        return store.asyncGetCacheValue(storeKey);
+    }
+
+    @Override
     protected Map<String, CacheValue<V>> doGetAll(Set<String> keys) {
         return store.getAllCacheValues(keys);
+    }
+
+    @Override
+    protected CompletableFuture<Map<String, CacheValue<V>>> doAsyncGetAll(Set<String> keys) {
+        return store.asyncGetAllCacheValues(keys);
     }
 
     @Override
@@ -57,8 +68,18 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
+    protected CompletableFuture<Void> doAsyncPut(String key, V value) {
+        return store.asyncPut(key, value);
+    }
+
+    @Override
     protected void doPutAll(Map<String, ? extends V> keyValues) {
         store.putAll(keyValues);
+    }
+
+    @Override
+    protected CompletableFuture<Void> doAsyncPutAll(Map<String, ? extends V> keyValues) {
+        return store.asyncPutAll(keyValues);
     }
 
     @Override
@@ -67,8 +88,18 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
+    protected CompletableFuture<Void> doAsyncRemove(String key) {
+        return store.asyncRemove(key);
+    }
+
+    @Override
     protected void doRemoveAll(Set<String> keys) {
         store.removeAll(keys);
+    }
+
+    @Override
+    protected CompletableFuture<Void> doAsyncRemoveAll(Set<String> keys) {
+        return store.asyncRemoveAll(keys);
     }
 
     @Override

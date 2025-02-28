@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.extension.refresh;
 
 import com.igeeksky.xtool.core.concurrent.Futures;
-import com.igeeksky.xtool.core.function.tuple.Tuple2;
+import com.igeeksky.xtool.core.tuple.Tuple2;
 
 import java.util.ArrayList;
 import java.util.concurrent.Future;
@@ -12,7 +12,7 @@ import java.util.concurrent.Future;
  * @author Patrick.Lau
  * @since 1.0.0 2024/12/10
  */
-public class RefreshHelper {
+public abstract class RefreshHelper {
 
     /**
      * 私有构造器

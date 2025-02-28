@@ -6,7 +6,8 @@ import com.igeeksky.xcache.common.Cache;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.CacheManagerConfig;
 import com.igeeksky.xcache.core.CacheManagerImpl;
-import com.igeeksky.xcache.core.ComponentManagerImpl;
+import com.igeeksky.xcache.core.ComponentManager;
+import com.igeeksky.xcache.core.SingletonSupplier;
 import com.igeeksky.xcache.domain.User;
 import com.igeeksky.xcache.extension.jackson.JacksonCodecProvider;
 import com.igeeksky.xcache.props.*;
@@ -52,9 +53,11 @@ class CacheManagerTest {
         StatProps statProps = new StatProps();
         statProps.setPeriod(5000L);
 
-        ComponentManagerImpl componentManager = new ComponentManagerImpl(Executors.newSingleThreadScheduledExecutor(), statProps);
-        componentManager.addProvider(CacheConstants.JACKSON_CODEC, JacksonCodecProvider.getInstance());
-        componentManager.addProvider(CacheConstants.CAFFEINE_STORE, new CaffeineStoreProvider(null, null));
+        ComponentManager componentManager = new ComponentManager(Executors.newSingleThreadScheduledExecutor(), statProps);
+        componentManager.addCodecProvider(CacheConstants.JACKSON_CODEC, JacksonCodecProvider::getInstance);
+        componentManager.addStoreProvider(CacheConstants.CAFFEINE_STORE, SingletonSupplier.of(() ->
+                new CaffeineStoreProvider(null, null)
+        ));
 
         CacheManagerConfig managerConfig = CacheManagerConfig.builder()
                 .group(group)

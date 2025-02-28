@@ -48,7 +48,7 @@ public class StoreProps {
 
     private RedisType redisType;
 
-    private int keySequenceSize;
+    private Integer keySequenceSize;
 
     private final Map<String, Object> params = new HashMap<>();
 

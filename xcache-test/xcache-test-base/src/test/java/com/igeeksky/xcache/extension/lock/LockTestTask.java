@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.locks.Lock;
 
 /**
- * 所测试任务
+ * 锁测试任务
  *
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/27

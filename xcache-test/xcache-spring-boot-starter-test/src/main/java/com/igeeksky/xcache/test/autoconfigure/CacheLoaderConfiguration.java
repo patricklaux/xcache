@@ -1,8 +1,9 @@
 package com.igeeksky.xcache.test.autoconfigure;
 
 import com.igeeksky.xcache.autoconfigure.CacheAutoConfiguration;
-import com.igeeksky.xcache.autoconfigure.holder.CacheLoaderHolder;
+import com.igeeksky.xcache.autoconfigure.register.CacheLoaderRegister;
 import com.igeeksky.xcache.common.CacheLoader;
+import com.igeeksky.xcache.core.SingletonSupplier;
 import com.igeeksky.xcache.domain.Key;
 import com.igeeksky.xcache.domain.User;
 import com.igeeksky.xtool.core.collection.Maps;
@@ -40,13 +41,12 @@ public class CacheLoaderConfiguration {
     }
 
     @Bean
-    CacheLoaderHolder cacheLoader() {
-        CacheLoaderHolder holder = new CacheLoaderHolder();
-        CacheLoader<Key, User> cacheLoader = key -> {
+    CacheLoaderRegister cacheLoader() {
+        CacheLoaderRegister holder = new CacheLoaderRegister();
+        holder.put("user", SingletonSupplier.of(() -> (CacheLoader<Key, User>) key -> {
             log.info("CacheLoader:load key: {}", key);
             return database.get(key);
-        };
-        holder.put("user", cacheLoader);
+        }));
         return holder;
     }
 

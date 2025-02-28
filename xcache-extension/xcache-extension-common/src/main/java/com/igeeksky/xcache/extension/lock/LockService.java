@@ -3,7 +3,7 @@ package com.igeeksky.xcache.extension.lock;
 import java.util.concurrent.locks.Lock;
 
 /**
- * 缓存锁服务
+ * 锁服务
  * <p>
  * 用于管理锁对象的申请和释放
  *
@@ -39,6 +39,7 @@ public interface LockService {
      * }</pre>
      *
      * @param key 键
+     * @return {@link Lock} – 锁对象
      */
     Lock acquire(String key);
 
@@ -51,5 +52,11 @@ public interface LockService {
      */
     void release(String key);
 
+    /**
+     * 获取锁对象数量
+     *
+     * @return {@code int} – 锁对象数量
+     */
     int size();
+
 }

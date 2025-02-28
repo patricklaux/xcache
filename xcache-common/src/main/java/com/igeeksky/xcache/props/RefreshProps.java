@@ -21,11 +21,11 @@ public class RefreshProps {
 
     private String provider;
 
-    private Long refreshAfterWrite;
+    private Integer refreshAfterWrite;
 
     private Integer refreshTasksSize;
 
-    private Long refreshThreadPeriod;
+    private Integer refreshThreadPeriod;
 
     private Integer refreshSequenceSize;
 
@@ -79,9 +79,9 @@ public class RefreshProps {
      * 另，当使用 {@code RedisCacheRefresh} 进行缓存刷新，刷新周期计算依赖于 RedisServer 时间。
      * 如 RedisServer 时间异常，则可能会导致刷新任务不执行。
      *
-     * @return {@link Long} - 数据刷新周期
+     * @return {@link Integer} - 数据刷新周期
      */
-    public Long getRefreshAfterWrite() {
+    public Integer getRefreshAfterWrite() {
         return refreshAfterWrite;
     }
 
@@ -90,7 +90,7 @@ public class RefreshProps {
      *
      * @param refreshAfterWrite 数据刷新周期
      */
-    public void setRefreshAfterWrite(Long refreshAfterWrite) {
+    public void setRefreshAfterWrite(Integer refreshAfterWrite) {
         this.refreshAfterWrite = refreshAfterWrite;
     }
 
@@ -144,9 +144,9 @@ public class RefreshProps {
      * <p>
      * 如配置为 10000，那么刷新线程每隔 10000 毫秒运行一次，检查是否有数据已到刷新周期，有则执行刷新操作。
      *
-     * @return {@link Long} - 刷新线程运行周期
+     * @return {@link Integer} - 刷新线程运行周期
      */
-    public Long getRefreshThreadPeriod() {
+    public Integer getRefreshThreadPeriod() {
         return refreshThreadPeriod;
     }
 
@@ -155,7 +155,7 @@ public class RefreshProps {
      *
      * @param refreshThreadPeriod 刷新线程运行周期
      */
-    public void setRefreshThreadPeriod(Long refreshThreadPeriod) {
+    public void setRefreshThreadPeriod(Integer refreshThreadPeriod) {
         this.refreshThreadPeriod = refreshThreadPeriod;
     }
 

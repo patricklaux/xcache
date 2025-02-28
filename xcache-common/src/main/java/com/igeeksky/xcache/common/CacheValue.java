@@ -9,6 +9,8 @@ package com.igeeksky.xcache.common;
  */
 public class CacheValue<V> {
 
+    private static final CacheValue<?> EMPTY_CACHE_VALUE = new CacheValue<>(null);
+
     private final V value;
 
     public CacheValue(V value) {
@@ -23,12 +25,21 @@ public class CacheValue<V> {
         return this.value != null;
     }
 
+    @SuppressWarnings("unchecked")
+    public static <V> CacheValue<V> empty() {
+        return (CacheValue<V>) EMPTY_CACHE_VALUE;
+    }
+
+    public static <V> CacheValue<V> create(V value) {
+        return new CacheValue<>(value);
+    }
+
     @Override
     public String toString() {
         if (value == null) {
             return "{}";
         }
-        return "{\"value\":" + value + '}';
+        return "{\"value\":" + value + "}";
     }
 
 }

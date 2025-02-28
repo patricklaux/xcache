@@ -17,15 +17,11 @@
     <dependencies>
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-redis-core</artifactId>
+            <artifactId>xcache-redis</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-redis-lettuce</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.igeeksky.xcache</groupId>
-            <artifactId>xcache-redis-jedis</artifactId>
+            <groupId>com.igeeksky.xredis</groupId>
+            <artifactId>xredis-lettuce</artifactId>
         </dependency>
         <dependency>
             <groupId>com.igeeksky.xcache</groupId>
@@ -42,18 +38,22 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-to-slf4j</artifactId>
+            <version>${log4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jul-to-slf4j</artifactId>
+            <version>${slf4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
         </dependency>
     </dependencies>
 

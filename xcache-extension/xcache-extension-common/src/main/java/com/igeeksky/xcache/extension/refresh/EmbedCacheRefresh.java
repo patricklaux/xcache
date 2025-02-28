@@ -1,9 +1,9 @@
 package com.igeeksky.xcache.extension.refresh;
 
 
-import com.igeeksky.xtool.core.function.tuple.Tuple2;
-import com.igeeksky.xtool.core.function.tuple.Tuple3;
-import com.igeeksky.xtool.core.function.tuple.Tuples;
+import com.igeeksky.xtool.core.tuple.Tuple2;
+import com.igeeksky.xtool.core.tuple.Tuple3;
+import com.igeeksky.xtool.core.tuple.Tuples;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,11 +21,11 @@ import java.util.function.Predicate;
  * <b>嵌入式缓存刷新</b>
  * <p>
  * 适用于嵌入式缓存 <p>
- * 1. 每个应用实例缓存均需独立刷新，即使是同一数据，也可能会被不同实例刷新多次。
+ * 1. 每个应用实例缓存均需独立刷新，同一数据如果存在于不同实例，那么会被多个实例刷新。
  * 因此会有较多回源访问次数，数据源需预留好足够的资源余量。<p>
  * 2. 此对象实例内部使用 HashMap 维护所有访问过的 key，因此会占用本机内存空间。
  * <p>
- * 对于外部缓存，如果是 Redis，建议使用 { com.igeeksky.xcache.redis.refresh.RedisCacheRefresh }
+ * 对于外部缓存，如果是 Redis，建议使用 {@code com.igeeksky.xcache.redis.refresh.RedisCacheRefresh }
  *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/23
@@ -35,14 +35,9 @@ public class EmbedCacheRefresh implements CacheRefresh {
     private static final Logger log = LoggerFactory.getLogger(EmbedCacheRefresh.class);
 
     /**
-     * 刷新任务线程运行周期
+     * 刷新任务分批的 Future 数组长度
      */
-    private static final long TASK_DELAY = 1000;
-
-    /**
-     * 单个队列最大刷新任务数量
-     */
-    private static final int MAXIMUM = 1000;
+    private static final int FUTURES_LENGTH = 1024;
 
     /**
      * 缓存名称
@@ -59,13 +54,19 @@ public class EmbedCacheRefresh implements CacheRefresh {
      */
     private final long refreshAfterWrite;
 
-    private Consumer<String> consumer;
-    private Predicate<String> predicate;
+    /**
+     * 刷新线程运行周期
+     */
+    private final long refreshThreadPeriod;
+
     private final ExecutorService executor;
     private final ScheduledExecutorService scheduler;
 
+    private volatile Consumer<String> consumer;
+    private volatile Predicate<String> predicate;
+
     /**
-     * 刷新队列
+     * 刷新队列（因为只有一个定时任务线程执行读写操作，所以无需考虑线程安全问题）
      */
     private final LinkedHashMap<String, Long> refreshQueue = new LinkedHashMap<>();
 
@@ -84,6 +85,7 @@ public class EmbedCacheRefresh implements CacheRefresh {
         this.scheduler = scheduler;
         this.refreshTasksSize = config.getRefreshTasksSize();
         this.refreshAfterWrite = config.getRefreshAfterWrite();
+        this.refreshThreadPeriod = config.getRefreshThreadPeriod();
     }
 
     @Override
@@ -108,11 +110,7 @@ public class EmbedCacheRefresh implements CacheRefresh {
     }
 
     private long nextRefreshTime() {
-        long nextRefreshTime = System.currentTimeMillis() + refreshAfterWrite;
-        if (nextRefreshTime > 0) {
-            return nextRefreshTime;
-        }
-        throw new IllegalArgumentException("Cache: " + name + ", nextRefreshTime:" + nextRefreshTime + " overflow.");
+        return System.currentTimeMillis() + refreshAfterWrite;
     }
 
     @Override
@@ -128,7 +126,7 @@ public class EmbedCacheRefresh implements CacheRefresh {
             this.consumer = consumer;
             this.predicate = predicate;
             this.scheduledFuture = this.scheduler.scheduleWithFixedDelay(this::refreshTask,
-                    TASK_DELAY, TASK_DELAY, TimeUnit.MILLISECONDS);
+                    refreshThreadPeriod, refreshThreadPeriod, TimeUnit.MILLISECONDS);
         } finally {
             lock.unlock();
         }
@@ -148,7 +146,7 @@ public class EmbedCacheRefresh implements CacheRefresh {
             transferKeys();
 
             // 3.处理当前时刻需要刷新的数据
-            refreshNow();
+            doRefresh();
         } catch (Throwable e) {
             log.error("Cache:{} ,CacheRefresh refresh task has error. {}", name, e.getMessage());
         }
@@ -168,9 +166,9 @@ public class EmbedCacheRefresh implements CacheRefresh {
         }
     }
 
-    private void refreshNow() {
+    private void doRefresh() {
         long now = System.currentTimeMillis();
-        int i = 0, j = 0, maximum = Math.min(MAXIMUM, refreshTasksSize);
+        int i = 0, j = 0, maximum = Math.min(FUTURES_LENGTH, refreshTasksSize);
 
         Future<?>[] futures = new Future<?>[maximum];
         tasksList.add(Tuples.of(futures, 0));
@@ -180,7 +178,7 @@ public class EmbedCacheRefresh implements CacheRefresh {
             if (now < entry.getValue() || ++i >= refreshTasksSize) {
                 break;
             }
-            // 3.2.先移动到队尾，避免重复刷新
+            // 3.2.执行 put 操作，放入缓冲队列，更新刷新时间，避免下次循环重复刷新（相当于移动 refreshQueue 队尾）
             this.onPut(entry.getKey());
             // 3.3.如果刷新任务数量达到单个容器上限，则创建新的容器
             if (j >= maximum) {

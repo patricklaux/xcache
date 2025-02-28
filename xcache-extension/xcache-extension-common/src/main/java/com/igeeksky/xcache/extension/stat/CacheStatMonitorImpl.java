@@ -13,8 +13,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class CacheStatMonitorImpl implements CacheStatMonitor {
 
-    private final String group;
     private final String name;
+    private final String group;
 
     private final AtomicLong hitLoads = new AtomicLong();
     private final AtomicLong missLoads = new AtomicLong();

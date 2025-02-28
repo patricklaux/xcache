@@ -18,13 +18,13 @@ import org.springframework.core.type.AnnotationMetadata;
  */
 @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 @Configuration(proxyBeanMethods = false)
-public class ProxyCacheConfiguration implements ImportAware {
+class ProxyCacheConfiguration implements ImportAware {
 
     private AnnotationAttributes enableCache;
 
     @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     @Bean(CacheOperationAdvisor.CACHE_ADVISOR_BEAN_NAME)
-    public CacheOperationAdvisor cacheOperationAdvisor(CacheOperationSource source, CacheInterceptor advice) {
+    CacheOperationAdvisor cacheOperationAdvisor(CacheOperationSource source, CacheInterceptor advice) {
         // CacheAnnotationParser
         CacheOperationAdvisor advisor = new CacheOperationAdvisor(source, advice);
         advisor.setAdviceBeanName(CacheInterceptor.CACHE_INTERCEPTOR_BEAN_NAME);
@@ -38,13 +38,13 @@ public class ProxyCacheConfiguration implements ImportAware {
 
     @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     @Bean(CacheOperationSource.CACHE_OPERATION_SOURCE_BEAN_NAME)
-    public CacheOperationSource cacheOperationSource() {
+    CacheOperationSource cacheOperationSource() {
         return new CacheOperationSource();
     }
 
     @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     @Bean(CacheInterceptor.CACHE_INTERCEPTOR_BEAN_NAME)
-    public CacheInterceptor cacheInterceptor(CacheManager cacheManager) {
+    CacheInterceptor cacheInterceptor(CacheManager cacheManager) {
         return new CacheInterceptor(cacheManager);
     }
 

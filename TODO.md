@@ -32,14 +32,32 @@
 - [X] 【开发】 CacheRefresh 配置
 - [X] 【开发】 RedisHashStore 分为两类实现：一是集群模式，二是非集群模式。
 - [X] 【开发】 RedisHashStore，initKeys 方法，用于初始化缓存的 key 列表，需可配置数量。
+- [X] 【开发】 缓存数据刷新策略（根据时间周期触发，每次刷新均会延长过期时间）
+- [X] 【开发】 对象惰性初始化（SingletonSupplier）
+- [X] 【开发】 Lettuce(stat,sync,stream,...) autoconfiguration（SingletonSupplier）
+- [X] 【开发】 由于确定 StreamMessageCodec 不会改变数组，所以使用 ByteArray 而非 ImmutableByteArray，解决数组复制效率问题
+- [X] 【开发】 RedisSortedSetCommand
+- [X] 【开发】 RedisCommandInterface
+- [X] 【开发】 RedisHashStore 增加过期时间，判断 RedisServer 版本是否大于 7.4.0
+- [X] 【开发】 Store 异步执行
+- [X] 【开发】 RetrySink -- pausePull, pausePush
+- [X] 【开发】 Lettuce JSON 配置（无需处理，用户可以使用 ClientOptionsBuilderCustomizer 注入 JSONParser ）
+- [X] 【开发】 Lettuce RedisOperator 每次新建实例问题（通过 RedisHolder 和 SingletonSupplier 解决）
+- [X] 【开发】 Stream：分成 StreamContainer 和 StreamGenericContainer
+- [X] 【思考】 所有缓存统一 Charset？（默认 UTF-8，但可配置）
+- [X] 【思考】 StreamPublisher 是否需要失败重试？ (无需重试机制，重试需在业务端处理)
+- [X] 【开发】 xcache-bom dependencyManagement 去除第三方依赖，避免依赖传递
+- [X] 【开发】 StreamOptions(long or Long ？选择 long)，SpringBoot 当配置项为空时返回默认值，无法覆盖为空值。
+- [X] 【开发】 xcache-bom dependencyManagement lettuce 6.5.4.RELEASE
 
 ### 待完成任务
 
-- [ ] 【文档】 Guide，Reference
+- [ ] 【开发】 ⭐ batchSize, batchTimeout 配置
+- [ ] 【文档】 ⭐ XRedis 文档 README.md，Reference.md
+- [ ] 【测试】 ⭐ RedisCacheRefresh 脚本
+- [ ] 【文档】 ⭐ README.md，Reference.md，application.xml
+- [ ] 【思考】 ⭐ Xcache：ComponentManager, LettuceHolder close, closeAsync 释放资源
 - [ ] 【开发】 补充代码注释
-- [ ] 【开发】 xcache-jedis
 - [ ] 【开发】 ConcurrentHashMap 实现无过期时间的缓存
-- [ ] 【开发】 缓存数据刷新策略（根据时间周期触发，每次刷新均会延长过期时间）
-- [ ] 【开发】 对象惰性初始化（Supplier）
 - [ ] 【测试】 测试 Xcache 注解参数
-- [ ] 【测试】 RedisSpinLock
+

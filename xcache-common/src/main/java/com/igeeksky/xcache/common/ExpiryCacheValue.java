@@ -9,23 +9,23 @@ package com.igeeksky.xcache.common;
  */
 public class ExpiryCacheValue<V> extends CacheValue<V> {
 
-    private volatile long expiryTime;
+    private volatile long expiry;
 
     public ExpiryCacheValue(V value) {
         super(value);
     }
 
-    public ExpiryCacheValue(V value, long expiryTime) {
+    public ExpiryCacheValue(V value, long expiry) {
         super(value);
-        this.expiryTime = expiryTime;
+        this.expiry = expiry;
     }
 
-    public long getExpiryTime() {
-        return expiryTime;
+    public long getExpiry() {
+        return expiry;
     }
 
-    public void setExpiryTime(long expiryTime) {
-        this.expiryTime = expiryTime;
+    public void setExpiry(long expiry) {
+        this.expiry = expiry;
     }
 
 }

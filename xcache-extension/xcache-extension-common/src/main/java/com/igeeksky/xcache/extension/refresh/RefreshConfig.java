@@ -28,13 +28,13 @@ public class RefreshConfig {
 
     private final String refreshPeriodKey;
 
-    private final long refreshThreadPeriod;
+    private final int refreshThreadPeriod;
 
     private final int refreshSequenceSize;
 
     private final int refreshTasksSize;
 
-    private final long refreshAfterWrite;
+    private final int refreshAfterWrite;
 
     private final boolean enableGroupPrefix;
 
@@ -99,7 +99,7 @@ public class RefreshConfig {
         return refreshTasksSize;
     }
 
-    public long getRefreshAfterWrite() {
+    public int getRefreshAfterWrite() {
         return refreshAfterWrite;
     }
 
@@ -137,11 +137,11 @@ public class RefreshConfig {
 
         private int refreshTasksSize;
 
-        private long refreshAfterWrite;
+        private int refreshAfterWrite;
 
         private int refreshSequenceSize;
 
-        private long refreshThreadPeriod;
+        private int refreshThreadPeriod;
 
         private boolean enableGroupPrefix;
 
@@ -172,7 +172,7 @@ public class RefreshConfig {
             return this;
         }
 
-        public Builder refreshAfterWrite(long refreshAfterWrite) {
+        public Builder refreshAfterWrite(int refreshAfterWrite) {
             this.refreshAfterWrite = refreshAfterWrite;
             return this;
         }
@@ -182,7 +182,7 @@ public class RefreshConfig {
             return this;
         }
 
-        public Builder refreshThreadPeriod(long refreshThreadPeriod) {
+        public Builder refreshThreadPeriod(int refreshThreadPeriod) {
             this.refreshThreadPeriod = refreshThreadPeriod;
             return this;
         }
