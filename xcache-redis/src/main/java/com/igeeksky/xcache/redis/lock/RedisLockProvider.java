@@ -15,19 +15,17 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class RedisLockProvider implements CacheLockProvider {
 
-    private final long batchTimeout;
     private final RedisOperatorProxy operator;
     private final ScheduledExecutorService scheduler;
 
-    public RedisLockProvider(RedisOperatorProxy operator, ScheduledExecutorService scheduler, long batchTimeout) {
+    public RedisLockProvider(RedisOperatorProxy operator, ScheduledExecutorService scheduler) {
         this.operator = operator;
         this.scheduler = scheduler;
-        this.batchTimeout = batchTimeout;
     }
 
     @Override
     public RedisLockService get(LockConfig config) {
-        return new RedisLockService(config, operator, scheduler, batchTimeout);
+        return new RedisLockService(config, operator, scheduler);
     }
 
 }

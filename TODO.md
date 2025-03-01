@@ -57,6 +57,7 @@
 - [ ] 【测试】 ⭐ RedisCacheRefresh 脚本
 - [ ] 【文档】 ⭐ README.md，Reference.md，application.xml
 - [ ] 【思考】 ⭐ Xcache：ComponentManager, LettuceHolder close, closeAsync 释放资源
+- [ ] 【思考】 ⭐ getRefreshMembers 增加偏移？
 - [ ] 【开发】 补充代码注释
 - [ ] 【开发】 ConcurrentHashMap 实现无过期时间的缓存
 - [ ] 【测试】 测试 Xcache 注解参数

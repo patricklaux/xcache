@@ -5,11 +5,7 @@ import com.igeeksky.xcache.core.store.StoreConfig;
 import com.igeeksky.xcache.extension.jackson.JacksonCodec;
 import com.igeeksky.xcache.props.RedisType;
 import com.igeeksky.xcache.redis.store.RedisStoreProvider;
-import com.igeeksky.xredis.lettuce.LettuceOperator;
-import com.igeeksky.xredis.lettuce.LettuceOperatorProxy;
-import com.igeeksky.xredis.lettuce.LettuceSentinelFactory;
-import com.igeeksky.xredis.lettuce.LettuceStandaloneFactory;
-import com.igeeksky.xredis.lettuce.cluster.LettuceClusterFactory;
+import com.igeeksky.xredis.lettuce.*;
 import com.igeeksky.xredis.lettuce.config.LettuceClusterConfig;
 import com.igeeksky.xredis.lettuce.config.LettuceSentinelConfig;
 import com.igeeksky.xredis.lettuce.config.LettuceStandaloneConfig;
@@ -40,7 +36,7 @@ public class LettuceTestHelper {
     public static RedisStoreProvider createStandaloneRedisStoreProvider() {
         LettuceStandaloneFactory factory = createStandaloneFactory();
         LettuceOperator<byte[], byte[]> redisOperator = factory.redisOperator(ByteArrayCodec.INSTANCE);
-        return new RedisStoreProvider(new LettuceOperatorProxy(10000, redisOperator), 60000);
+        return new RedisStoreProvider(new LettuceOperatorProxy(10000, 60000, redisOperator));
     }
 
     public static LettuceStandaloneFactory createStandaloneFactory() {

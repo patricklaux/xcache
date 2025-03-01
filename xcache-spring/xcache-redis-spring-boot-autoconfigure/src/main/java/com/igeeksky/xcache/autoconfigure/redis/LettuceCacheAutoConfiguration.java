@@ -23,12 +23,12 @@ import com.igeeksky.xcache.redis.store.RedisStoreProvider;
 import com.igeeksky.xcache.redis.sync.RedisCacheSyncProvider;
 import com.igeeksky.xredis.common.stream.StreamOperator;
 import com.igeeksky.xredis.common.stream.container.StreamContainer;
+import com.igeeksky.xredis.lettuce.LettuceClusterFactory;
 import com.igeeksky.xredis.lettuce.LettuceOperatorProxy;
 import com.igeeksky.xredis.lettuce.LettuceSentinelFactory;
 import com.igeeksky.xredis.lettuce.LettuceStandaloneFactory;
 import com.igeeksky.xredis.lettuce.autoconfigure.ClientOptionsHelper;
 import com.igeeksky.xredis.lettuce.autoconfigure.ClientResourcesHolder;
-import com.igeeksky.xredis.lettuce.cluster.LettuceClusterFactory;
 import com.igeeksky.xredis.lettuce.config.ClientOptionsBuilderCustomizer;
 import com.igeeksky.xredis.lettuce.config.LettuceClusterConfig;
 import com.igeeksky.xredis.lettuce.config.LettuceSentinelConfig;
@@ -109,7 +109,7 @@ public class LettuceCacheAutoConfiguration {
                 ClientOptions options = ClientOptionsHelper.clientOptions(config.getId(),
                         sentinel.getClientOptions(), customizers);
                 LettuceSentinelFactory factory = new LettuceSentinelFactory(config, options, clientResources.get());
-                register.put(config.getId(), new LettuceHolder(lettuce, factory, scheduler));
+                register.put(config.getId(), new LettuceHolder(lettuce, config.getTimeout(), factory, scheduler));
                 continue;
             }
             LettuceCluster cluster = lettuce.getCluster();
@@ -118,7 +118,7 @@ public class LettuceCacheAutoConfiguration {
                 ClusterClientOptions options = ClientOptionsHelper.clusterClientOptions(config.getId(),
                         cluster.getClientOptions(), customizers);
                 LettuceClusterFactory factory = new LettuceClusterFactory(config, options, clientResources.get());
-                register.put(config.getId(), new LettuceHolder(lettuce, factory, scheduler));
+                register.put(config.getId(), new LettuceHolder(lettuce, config.getTimeout(), factory, scheduler));
                 continue;
             }
             LettuceStandalone standalone = lettuce.getStandalone();
@@ -127,7 +127,7 @@ public class LettuceCacheAutoConfiguration {
                 ClientOptions options = ClientOptionsHelper.clientOptions(config.getId(),
                         standalone.getClientOptions(), customizers);
                 LettuceStandaloneFactory factory = new LettuceStandaloneFactory(config, options, clientResources.get());
-                register.put(config.getId(), new LettuceHolder(lettuce, factory, scheduler));
+                register.put(config.getId(), new LettuceHolder(lettuce, config.getTimeout(), factory, scheduler));
                 continue;
             }
             throw new CacheConfigException("xcache.redis.lettuce:[" + id + "] init error." + lettuce);
@@ -180,14 +180,12 @@ public class LettuceCacheAutoConfiguration {
     }
 
     private static Supplier<StoreProvider> createStoreProvider(LettuceHolder holder) {
-        long batchTimeout = holder.getBatchTimeout();
         SingletonSupplier<LettuceOperatorProxy> proxySupplier = holder.getRedisOperatorProxySupplier();
-        return SingletonSupplier.of(() -> new RedisStoreProvider(proxySupplier.get(), batchTimeout));
+        return SingletonSupplier.of(() -> new RedisStoreProvider(proxySupplier.get()));
     }
 
     private static Supplier<CacheSyncProvider> createSyncProvider(LettuceHolder holder,
                                                                   ObjectProvider<CodecProviderRegister> providers) {
-        long batchTimeout = holder.getBatchTimeout();
         String codec = holder.getSyncOptions().getCodec();
         SingletonSupplier<StreamOperator<byte[], byte[]>> operatorSupplier = holder.getStreamOperatorSupplier();
         SingletonSupplier<StreamContainer<byte[], byte[]>> containerSupplier = holder.getStreamContainerSupplier();
@@ -195,21 +193,19 @@ public class LettuceCacheAutoConfiguration {
             CodecProvider codecProvider = getCodecProvider(codec, providers);
             StreamOperator<byte[], byte[]> streamOperator = operatorSupplier.get();
             StreamContainer<byte[], byte[]> streamContainer = containerSupplier.get();
-            return new RedisCacheSyncProvider(streamOperator, streamContainer, codecProvider, batchTimeout);
+            return new RedisCacheSyncProvider(streamOperator, streamContainer, codecProvider);
         });
     }
 
     private static Supplier<CacheLockProvider> createLockProvider(LettuceHolder holder, ScheduledExecutorService scheduler) {
-        long batchTimeout = holder.getBatchTimeout();
         SingletonSupplier<LettuceOperatorProxy> proxySupplier = holder.getRedisOperatorProxySupplier();
-        return SingletonSupplier.of(() -> new RedisLockProvider(proxySupplier.get(), scheduler, batchTimeout));
+        return SingletonSupplier.of(() -> new RedisLockProvider(proxySupplier.get(), scheduler));
     }
 
     private static Supplier<CacheRefreshProvider> createRefreshProvider(LettuceHolder holder,
                                                                         ScheduledExecutorService scheduler) {
-        long batchTimeout = holder.getBatchTimeout();
         SingletonSupplier<LettuceOperatorProxy> proxySupplier = holder.getRedisOperatorProxySupplier();
-        return SingletonSupplier.of(() -> new RedisCacheRefreshProvider(proxySupplier.get(), scheduler, batchTimeout));
+        return SingletonSupplier.of(() -> new RedisCacheRefreshProvider(proxySupplier.get(), scheduler));
     }
 
     private static Supplier<CacheStatProvider> createStatProvider(LettuceHolder holder, ScheduledExecutorService scheduler,

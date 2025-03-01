@@ -20,21 +20,19 @@ public class RedisLockService implements LockService {
     private final String sid;
     private final String prefix;
     private final long leaseTime;
-    private final long batchTimeout;
 
     private final StringCodec codec;
 
     private final RedisOperatorProxy operator;
     private final ScheduledExecutorService scheduler;
 
-    public RedisLockService(LockConfig config, RedisOperatorProxy operator, ScheduledExecutorService scheduler, long batchTimeout) {
+    public RedisLockService(LockConfig config, RedisOperatorProxy operator, ScheduledExecutorService scheduler) {
         this.operator = operator;
         this.scheduler = scheduler;
 
         this.sid = config.getSid();
         this.prefix = config.getPrefix();
         this.leaseTime = config.getLeaseTime();
-        this.batchTimeout = batchTimeout;
 
         this.codec = StringCodec.getInstance(config.getCharset());
         this.locks = Maps.newConcurrentHashMap(config.getInitialCapacity());
@@ -45,7 +43,7 @@ public class RedisLockService implements LockService {
         return locks.compute(key, (k, lock) -> {
             if (lock == null) {
                 // 锁不存在，创建并返回新锁。
-                return new RedisSpinLock(prefix + key, sid, leaseTime, batchTimeout, codec, operator, scheduler);
+                return new RedisSpinLock(prefix + key, sid, leaseTime, codec, operator, scheduler);
             }
             // 锁已存在，增加其使用计数并返回该锁。
             lock.increment();

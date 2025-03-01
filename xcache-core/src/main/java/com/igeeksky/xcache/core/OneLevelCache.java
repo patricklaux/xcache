@@ -49,7 +49,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected CompletableFuture<CacheValue<V>> doAsyncGet(String storeKey) {
-        return store.asyncGetCacheValue(storeKey);
+        return store.getCacheValueAsync(storeKey);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected CompletableFuture<Map<String, CacheValue<V>>> doAsyncGetAll(Set<String> keys) {
-        return store.asyncGetAllCacheValues(keys);
+        return store.getAllCacheValuesAsync(keys);
     }
 
     @Override
@@ -69,7 +69,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected CompletableFuture<Void> doAsyncPut(String key, V value) {
-        return store.asyncPut(key, value);
+        return store.putAsync(key, value);
     }
 
     @Override
@@ -79,7 +79,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected CompletableFuture<Void> doAsyncPutAll(Map<String, ? extends V> keyValues) {
-        return store.asyncPutAll(keyValues);
+        return store.putAllAsync(keyValues);
     }
 
     @Override
@@ -89,7 +89,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected CompletableFuture<Void> doAsyncRemove(String key) {
-        return store.asyncRemove(key);
+        return store.removeAsync(key);
     }
 
     @Override
@@ -99,7 +99,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected CompletableFuture<Void> doAsyncRemoveAll(Set<String> keys) {
-        return store.asyncRemoveAll(keys);
+        return store.removeAllAsync(keys);
     }
 
     @Override

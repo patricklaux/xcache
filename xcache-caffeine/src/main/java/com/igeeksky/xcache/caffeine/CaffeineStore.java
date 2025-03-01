@@ -39,7 +39,7 @@ public class CaffeineStore<V> implements Store<V> {
     }
 
     @Override
-    public CompletableFuture<CacheValue<V>> asyncGetCacheValue(String key) {
+    public CompletableFuture<CacheValue<V>> getCacheValueAsync(String key) {
         return CompletableFuture.completedFuture(this.getCacheValue(key));
     }
 
@@ -60,7 +60,7 @@ public class CaffeineStore<V> implements Store<V> {
     }
 
     @Override
-    public CompletableFuture<Map<String, CacheValue<V>>> asyncGetAllCacheValues(Set<? extends String> keys) {
+    public CompletableFuture<Map<String, CacheValue<V>>> getAllCacheValuesAsync(Set<? extends String> keys) {
         return CompletableFuture.completedFuture(this.getAllCacheValues(keys));
     }
 
@@ -75,7 +75,7 @@ public class CaffeineStore<V> implements Store<V> {
     }
 
     @Override
-    public CompletableFuture<Void> asyncPut(String key, V value) {
+    public CompletableFuture<Void> putAsync(String key, V value) {
         return CompletableFuture.supplyAsync(() -> {
             this.put(key, value);
             return null;
@@ -88,7 +88,7 @@ public class CaffeineStore<V> implements Store<V> {
     }
 
     @Override
-    public CompletableFuture<Void> asyncPutAll(Map<? extends String, ? extends V> keyValues) {
+    public CompletableFuture<Void> putAllAsync(Map<? extends String, ? extends V> keyValues) {
         return CompletableFuture.supplyAsync(() -> {
             this.putAll(keyValues);
             return null;
@@ -101,7 +101,7 @@ public class CaffeineStore<V> implements Store<V> {
     }
 
     @Override
-    public CompletableFuture<Void> asyncRemove(String key) {
+    public CompletableFuture<Void> removeAsync(String key) {
         return CompletableFuture.supplyAsync(() -> {
             this.remove(key);
             return null;
@@ -114,7 +114,7 @@ public class CaffeineStore<V> implements Store<V> {
     }
 
     @Override
-    public CompletableFuture<Void> asyncRemoveAll(Set<? extends String> keys) {
+    public CompletableFuture<Void> removeAllAsync(Set<? extends String> keys) {
         return CompletableFuture.supplyAsync(() -> {
             this.removeAll(keys);
             return null;

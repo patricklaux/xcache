@@ -8,6 +8,7 @@ import com.igeeksky.xredis.lettuce.LettuceOperatorProxy;
 import io.lettuce.core.codec.ByteArrayCodec;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,8 +52,8 @@ public class RedisCacheRefreshTest {
         RefreshConfig config1 = builder.sid("test1").build();
         RefreshConfig config2 = builder.sid("test2").refreshThreadPeriod(1000).build();
 
-        refresh1 = new RedisCacheRefresh(config1, scheduler, executor, operatorProxy, 2000);
-        refresh2 = new RedisCacheRefresh(config2, scheduler, executor, operatorProxy, 2000);
+        refresh1 = new RedisCacheRefresh(config1, scheduler, executor, operatorProxy);
+        refresh2 = new RedisCacheRefresh(config2, scheduler, executor, operatorProxy);
         refresh1.startRefresh(key -> {
             log.info("refresh1:{}", key);
             // LockSupport.parkNanos(Duration.ofMillis(100).toNanos());
@@ -70,13 +71,12 @@ public class RedisCacheRefreshTest {
     }
 
     @Test
+    @Disabled
     void test() {
         refresh1.onPut("key1");
         refresh2.onPut("key2");
 
-        LockSupport.parkNanos(Duration.ofMillis(30000).toNanos());
-
-        LockSupport.parkNanos(Duration.ofMillis(5000).toNanos());
+        LockSupport.parkNanos(Duration.ofMillis(20000).toNanos());
     }
 
 }

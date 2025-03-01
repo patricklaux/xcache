@@ -64,7 +64,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<V> asyncGet(K key) {
+    public CompletableFuture<V> getAsync(K key) {
         if (key == null) {
             return this.requireNonNull("key must not be null.");
         }
@@ -78,7 +78,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<CacheValue<V>> asyncGetCacheValue(K key) {
+    public CompletableFuture<CacheValue<V>> getCacheValueAsync(K key) {
         if (key == null) {
             return this.requireNonNull("key must not be null.");
         }
@@ -91,8 +91,8 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<V> asyncGetOrLoad(K key) {
-        return this.asyncGetOrLoad(key, this.cacheLoader);
+    public CompletableFuture<V> getOrLoadAsync(K key) {
+        return this.getOrLoadAsync(key, this.cacheLoader);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<V> asyncGetOrLoad(K key, CacheLoader<K, V> cacheLoader) {
+    public CompletableFuture<V> getOrLoadAsync(K key, CacheLoader<K, V> cacheLoader) {
         if (key == null) {
             return this.requireNonNull("key must not be null.");
         }
@@ -133,7 +133,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Map<K, V>> asyncGetAll(Set<? extends K> keys) {
+    public CompletableFuture<Map<K, V>> getAllAsync(Set<? extends K> keys) {
         if (keys == null) {
             return this.requireNonNull("keys must not be null.");
         }
@@ -147,7 +147,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Map<K, CacheValue<V>>> asyncGetAllCacheValues(Set<? extends K> keys) {
+    public CompletableFuture<Map<K, CacheValue<V>>> getAllCacheValuesAsync(Set<? extends K> keys) {
         if (keys == null) {
             return this.requireNonNull("keys must not be null.");
         }
@@ -160,8 +160,8 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Map<K, V>> asyncGetAllOrLoad(Set<? extends K> keys) {
-        return this.asyncGetAllOrLoad(keys, this.cacheLoader);
+    public CompletableFuture<Map<K, V>> getAllOrLoadAsync(Set<? extends K> keys) {
+        return this.getAllOrLoadAsync(keys, this.cacheLoader);
     }
 
     @Override
@@ -181,7 +181,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Map<K, V>> asyncGetAllOrLoad(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
+    public CompletableFuture<Map<K, V>> getAllOrLoadAsync(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
         if (keys == null) {
             return this.requireNonNull("keys must not be null.");
         }
@@ -209,7 +209,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Void> asyncPut(K key, V value) {
+    public CompletableFuture<Void> putAsync(K key, V value) {
         if (key == null) {
             return this.requireNonNull("key must not be null.");
         }
@@ -222,7 +222,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Void> asyncPutAll(Map<? extends K, ? extends V> keyValues) {
+    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> keyValues) {
         if (keyValues == null) {
             return this.requireNonNull("keyValues must not be null.");
         }
@@ -235,7 +235,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Void> asyncRemove(K key) {
+    public CompletableFuture<Void> removeAsync(K key) {
         if (key == null) {
             return this.requireNonNull("key must not be null.");
         }
@@ -248,7 +248,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Void> asyncRemoveAll(Set<? extends K> keys) {
+    public CompletableFuture<Void> removeAllAsync(Set<? extends K> keys) {
         if (keys == null) {
             return this.requireNonNull("keys must not be null.");
         }

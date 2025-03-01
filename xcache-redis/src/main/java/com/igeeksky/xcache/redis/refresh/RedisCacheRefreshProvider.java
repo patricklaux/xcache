@@ -23,29 +23,25 @@ public class RedisCacheRefreshProvider implements CacheRefreshProvider {
 
     private final Map<String, AbstractRedisCacheRefresh> container = new ConcurrentHashMap<>();
 
-    private final long batchTimeout;
     private final RedisOperatorProxy operator;
     private final ExecutorService executor;
     private final ScheduledExecutorService scheduler;
 
-    public RedisCacheRefreshProvider(RedisOperatorProxy operator, ScheduledExecutorService scheduler,
-                                     long batchTimeout) {
+    public RedisCacheRefreshProvider(RedisOperatorProxy operator, ScheduledExecutorService scheduler) {
         Assert.notNull(operator, "RedisOperatorProxy must not be null");
         Assert.notNull(scheduler, "ScheduledExecutorService must not be null");
-        Assert.isTrue(batchTimeout > 0, "batchTimeout must be greater than 0");
         this.operator = operator;
         this.executor = executor();
         this.scheduler = scheduler;
-        this.batchTimeout = batchTimeout;
     }
 
     @Override
     public AbstractRedisCacheRefresh getCacheRefresh(RefreshConfig config) {
         return this.container.computeIfAbsent(config.getName(), name -> {
             if (this.operator.isCluster()) {
-                return new RedisClusterCacheRefresh(config, scheduler, executor, operator, batchTimeout);
+                return new RedisClusterCacheRefresh(config, scheduler, executor, operator);
             } else {
-                return new RedisCacheRefresh(config, scheduler, executor, operator, batchTimeout);
+                return new RedisCacheRefresh(config, scheduler, executor, operator);
             }
         });
     }

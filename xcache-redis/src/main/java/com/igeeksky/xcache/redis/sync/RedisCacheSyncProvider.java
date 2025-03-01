@@ -3,7 +3,6 @@ package com.igeeksky.xcache.redis.sync;
 import com.igeeksky.xcache.extension.codec.CodecProvider;
 import com.igeeksky.xcache.extension.sync.*;
 import com.igeeksky.xredis.common.ByteArrayTimeConvertor;
-import com.igeeksky.xredis.common.RedisFutureHelper;
 import com.igeeksky.xredis.common.flow.RetrySubscription;
 import com.igeeksky.xredis.common.flow.Subscriber;
 import com.igeeksky.xredis.common.flow.Subscription;
@@ -19,7 +18,6 @@ import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -34,7 +32,6 @@ public class RedisCacheSyncProvider implements CacheSyncProvider {
 
     private final Map<Charset, RedisCacheSyncMessageCodec> messageCodecMap = new ConcurrentHashMap<>();
 
-    private final long batchTimeout;
     private final CodecProvider codecProvider;
     private final StreamOperator<byte[], byte[]> operator;
     private final StreamContainer<byte[], byte[]> container;
@@ -42,20 +39,19 @@ public class RedisCacheSyncProvider implements CacheSyncProvider {
     /**
      * 创建 Redis 缓存数据同步工厂类
      *
-     * @param operator  Redis 流信息操作
-     * @param container Redis 流信息接收
+     * @param operator      Redis 流信息操作
+     * @param container     Redis 流信息接收
+     * @param codecProvider 编解码器工厂
      */
     public RedisCacheSyncProvider(StreamOperator<byte[], byte[]> operator,
                                   StreamContainer<byte[], byte[]> container,
-                                  CodecProvider codecProvider,
-                                  long batchTimeout) {
+                                  CodecProvider codecProvider) {
         Assert.notNull(operator, "RedisOperator must not be null");
         Assert.notNull(container, "StreamContainer must not be null");
         Assert.notNull(codecProvider, "CodecProvider must not be null");
         this.operator = operator;
         this.container = container;
         this.codecProvider = codecProvider;
-        this.batchTimeout = batchTimeout;
     }
 
     /**
@@ -67,10 +63,8 @@ public class RedisCacheSyncProvider implements CacheSyncProvider {
      */
     @Override
     public <V> void register(String channel, Charset charset, SyncMessageListener<V> listener) {
-        // 获取 Redis 主机时间作为起始 ID（缓存实际启用是在此方法完成之后，因此不会遗漏消息）
-        CompletableFuture<String> future = this.operator.timeMillis(ByteArrayTimeConvertor.getInstance())
-                .thenApply(millis -> millis + "-0");
-        String startId = RedisFutureHelper.get(future, batchTimeout);
+        // 获取 Redis 主机时间作为起始 ID（缓存被使用是在此方法完成之后，因此不会遗漏消息）
+        String startId = this.operator.timeMillis(ByteArrayTimeConvertor.getInstance()) + "-0";
 
         // 使用获取的起始ID和监听器创建一个消息消费者，并将其注册到监控器中。
         RedisCacheSyncMessageCodec codec = this.getCacheSyncMessageCodec(charset);

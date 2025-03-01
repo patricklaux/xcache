@@ -2,7 +2,7 @@ package com.igeeksky.xcache.redis.refresh;
 
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.extension.refresh.RefreshTask;
-import com.igeeksky.xredis.common.RedisFutureHelper;
+import com.igeeksky.xredis.common.RedisHelper;
 import com.igeeksky.xredis.common.RedisOperatorProxy;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.tuple.Tuples;
@@ -25,8 +25,8 @@ public class RedisCacheRefresh extends AbstractRedisCacheRefresh {
     private final byte[] refreshKey;
 
     public RedisCacheRefresh(RefreshConfig config, ScheduledExecutorService scheduler, ExecutorService executor,
-                             RedisOperatorProxy operator, long batchTimeout) {
-        super(config, scheduler, executor, operator, batchTimeout);
+                             RedisOperatorProxy operator) {
+        super(config, scheduler, executor, operator);
         this.refreshKey = this.stringCodec.encode(config.getRefreshKey());
     }
 
@@ -86,7 +86,7 @@ public class RedisCacheRefresh extends AbstractRedisCacheRefresh {
                 }
             }
             // 3. 同步更新刷新时间，避免下次循环重复刷新（移动到队尾）
-            RedisFutureHelper.get(this.put(refreshKey, members), batchTimeout);
+            RedisHelper.get(this.put(refreshKey, members), syncTimeout);
         }
     }
 

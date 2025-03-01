@@ -24,8 +24,6 @@ public class LettuceHolder {
 
     private static final ByteArrayCodec CODEC = ByteArrayCodec.INSTANCE;
 
-    private final long batchTimeout;
-
     private final RedisOperatorFactory factory;
 
     private final RedisStatOptions statOptions;
@@ -40,18 +38,18 @@ public class LettuceHolder {
 
     private final SingletonSupplier<StreamContainer<byte[], byte[]>> streamContainerSupplier;
 
-    public LettuceHolder(LettuceConfig config, RedisOperatorFactory factory, ScheduledExecutorService scheduler) {
+    public LettuceHolder(LettuceConfig config, long timeout,
+                         RedisOperatorFactory factory, ScheduledExecutorService scheduler) {
         this.factory = factory;
         this.statOptions = (config.getStat() != null) ? config.getStat() : new RedisStatOptions();
         this.syncOptions = (config.getSync() != null) ? config.getSync() : new RedisSyncOptions();
         int batchSize = config.getBatchSize();
-        this.batchTimeout = config.getBatchTimeout();
         StreamOptions streamOptions = (config.getStream() != null) ? config.getStream() : new StreamOptions();
 
         this.redisOperatorSupplier = SingletonSupplier.of(() -> factory.redisOperator(CODEC));
         this.redisOperatorProxySupplier = SingletonSupplier.of(() -> {
             RedisOperator<byte[], byte[]> redisOperator = this.redisOperatorSupplier.get();
-            return new LettuceOperatorProxy(batchSize, redisOperator);
+            return new LettuceOperatorProxy(batchSize, timeout, redisOperator);
         });
         this.streamOperatorSupplier = SingletonSupplier.of(() -> {
             RedisOperator<byte[], byte[]> redisOperator = this.redisOperatorSupplier.get();
@@ -62,10 +60,6 @@ public class LettuceHolder {
             ReadOptions readOptions = new ReadOptions(block, streamOptions.getCount(), false);
             return factory.streamContainer(CODEC, scheduler, streamOptions.getInterval(), readOptions);
         });
-    }
-
-    public long getBatchTimeout() {
-        return batchTimeout;
     }
 
     public RedisOperatorFactory getFactory() {

@@ -3,7 +3,7 @@ package com.igeeksky.xcache.redis.refresh;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.extension.refresh.RefreshTask;
 import com.igeeksky.xcache.redis.RedisClusterHelper;
-import com.igeeksky.xredis.common.RedisFutureHelper;
+import com.igeeksky.xredis.common.RedisHelper;
 import com.igeeksky.xredis.common.RedisOperatorProxy;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.collection.Maps;
@@ -25,8 +25,8 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
     private final RedisClusterHelper clusterHelper;
 
     public RedisClusterCacheRefresh(RefreshConfig config, ScheduledExecutorService scheduler,
-                                    ExecutorService executor, RedisOperatorProxy operator, long batchTimeout) {
-        super(config, scheduler, executor, operator, batchTimeout);
+                                    ExecutorService executor, RedisOperatorProxy operator) {
+        super(config, scheduler, executor, operator);
         String refreshKey = config.getRefreshKey();
         int sequenceSize = config.getRefreshSequenceSize();
         this.clusterHelper = new RedisClusterHelper(sequenceSize, refreshKey, this.stringCodec);
@@ -121,7 +121,7 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
                     }
                 }
                 // 4. 同步更新刷新时间，避免下次循环再次刷新（移动到队尾）
-                RedisFutureHelper.get(this.put(refreshKey, members), batchTimeout);
+                RedisHelper.get(this.put(refreshKey, members), syncTimeout);
             }
         }
     }
