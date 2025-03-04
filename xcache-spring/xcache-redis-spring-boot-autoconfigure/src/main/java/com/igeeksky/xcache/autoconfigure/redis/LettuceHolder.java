@@ -57,7 +57,7 @@ public class LettuceHolder {
         });
         this.streamContainerSupplier = SingletonSupplier.of(() -> {
             Long block = (streamOptions.getBlock() < 0) ? null : streamOptions.getBlock();
-            ReadOptions readOptions = new ReadOptions(block, streamOptions.getCount(), false);
+            ReadOptions readOptions = ReadOptions.from(block, streamOptions.getCount());
             return factory.streamContainer(CODEC, scheduler, streamOptions.getInterval(), readOptions);
         });
     }

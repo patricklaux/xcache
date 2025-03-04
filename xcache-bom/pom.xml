@@ -17,10 +17,10 @@
     <url>https://github.com/patricklaux/xcache</url>
 
     <properties>
-        <xtool.version>1.1.3</xtool.version>
-        <xredis.version>0.9.6</xredis.version>
+        <xtool.version>1.1.4</xtool.version>
+        <xredis.version>1.0.0</xredis.version>
         <caffeine.version>3.1.8</caffeine.version>
-        <spring.version>6.2.2</spring.version>
+        <spring.version>6.2.3</spring.version>
         <spring.boot.version>3.4.3</spring.boot.version>
         <junit.version>5.11.4</junit.version>
         <jackson.version>2.18.2</jackson.version>
@@ -156,19 +156,19 @@
                 <artifactId>lettuce-core</artifactId>
                 <version>${lettuce.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring.boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>io.lettuce</groupId>
-                        <artifactId>lettuce-core</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>org.springframework.boot</groupId>-->
+<!--                <artifactId>spring-boot-dependencies</artifactId>-->
+<!--                <version>${spring.boot.version}</version>-->
+<!--                <type>pom</type>-->
+<!--                <scope>import</scope>-->
+<!--                <exclusions>-->
+<!--                    <exclusion>-->
+<!--                        <groupId>io.lettuce</groupId>-->
+<!--                        <artifactId>lettuce-core</artifactId>-->
+<!--                    </exclusion>-->
+<!--                </exclusions>-->
+<!--            </dependency>-->
         </dependencies>
     </dependencyManagement>
 
