@@ -30,7 +30,7 @@ public class RedisCacheSyncProvider implements CacheSyncProvider {
 
     private static final Logger log = LoggerFactory.getLogger(RedisCacheSyncProvider.class);
 
-    private final Map<Charset, RedisCacheSyncMessageCodec> messageCodecMap = new ConcurrentHashMap<>();
+    private final Map<Charset, RedisCacheSyncMessageCodec> messageCodecs = new ConcurrentHashMap<>();
 
     private final CodecProvider codecProvider;
     private final StreamOperator<byte[], byte[]> operator;
@@ -108,7 +108,7 @@ public class RedisCacheSyncProvider implements CacheSyncProvider {
      * @return {@link RedisCacheSyncMessageCodec} – 用于对缓存同步消息进行编码和解码
      */
     private RedisCacheSyncMessageCodec getCacheSyncMessageCodec(Charset charset) {
-        return messageCodecMap.computeIfAbsent(charset, charset1 -> {
+        return messageCodecs.computeIfAbsent(charset, charset1 -> {
             StringCodec stringCodec = StringCodec.getInstance(charset1);
             Codec<Set<String>> setCodec = codecProvider.getSetCodec(charset1, String.class);
             return new RedisCacheSyncMessageCodec(setCodec, stringCodec);

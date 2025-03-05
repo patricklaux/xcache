@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.autoconfigure.register;
 
 import com.igeeksky.xcache.common.ContainsPredicate;
+import com.igeeksky.xcache.core.SingletonSupplier;
 import com.igeeksky.xtool.core.lang.Assert;
 
 import java.util.Collections;
@@ -14,9 +15,9 @@ import java.util.function.Supplier;
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-02
  */
-public class ContainsPredicateRegister implements Register<Supplier<ContainsPredicate<?>>> {
+public class ContainsPredicateRegister implements Register<SingletonSupplier<ContainsPredicate<?>>> {
 
-    private final Map<String, Supplier<ContainsPredicate<?>>> map = new HashMap<>();
+    private final Map<String, SingletonSupplier<ContainsPredicate<?>>> map = new HashMap<>();
 
     /**
      * 默认构造函数
@@ -27,18 +28,18 @@ public class ContainsPredicateRegister implements Register<Supplier<ContainsPred
     }
 
     @Override
-    public void put(String name, Supplier<ContainsPredicate<?>> predicate) {
+    public void put(String name, SingletonSupplier<ContainsPredicate<?>> predicate) {
         Supplier<ContainsPredicate<?>> old = map.put(name, predicate);
         Assert.isTrue(old == null, () -> "ContainsPredicate: [" + name + "] duplicate id.");
     }
 
     @Override
-    public Supplier<ContainsPredicate<?>> get(String beanId) {
+    public SingletonSupplier<ContainsPredicate<?>> get(String beanId) {
         return map.get(beanId);
     }
 
     @Override
-    public Map<String, Supplier<ContainsPredicate<?>>> getAll() {
+    public Map<String, SingletonSupplier<ContainsPredicate<?>>> getAll() {
         return Collections.unmodifiableMap(map);
     }
 

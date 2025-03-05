@@ -83,7 +83,7 @@ public interface CacheConstants {
     long DEFAULT_SYNC_MAX_LEN = 10000;
 
     String DEFAULT_STAT_PROVIDER = LOG_CACHE_STAT;
-    long DEFAULT_STAT_PERIOD = 60000;
+    long DEFAULT_STAT_INTERVAL = 60000;
 
     // 扩展属性默认配置 end
 

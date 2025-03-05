@@ -20,8 +20,8 @@ public class LogCacheStatProvider extends AbstractCacheStatProvider {
     private static final ExecutorService EXECUTOR = executor();
     private static final LogStatMessagePublisher PUBLISHER = LogStatMessagePublisher.getInstance();
 
-    public LogCacheStatProvider(ScheduledExecutorService scheduler, long period) {
-        super(scheduler, period);
+    public LogCacheStatProvider(ScheduledExecutorService scheduler, long interval) {
+        super(scheduler, interval);
     }
 
     /**
@@ -42,7 +42,7 @@ public class LogCacheStatProvider extends AbstractCacheStatProvider {
     }
 
     private static ExecutorService executor() {
-        return Executors.newThreadPerTaskExecutor(new VirtualThreadFactory("cache-stat-thread-"));
+        return Executors.newThreadPerTaskExecutor(new VirtualThreadFactory("v-log-stat-"));
     }
 
 }

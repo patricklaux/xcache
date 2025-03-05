@@ -57,8 +57,6 @@ xcache:
       second: # 二级缓存配置
         provider: lettuce # StoreProviderId（默认值：none）
         redis-type: STRING # Redis 命令类型（默认：STRING，如无需过期，可设为 HASH）
-        timeout: 10000
-        batch-size: 10000
         expire-after-write: 7200000 # 数据写入后的存活时间（外部缓存默认值：7200000 单位：毫秒）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，仅适用于外部缓存）
         enable-random-ttl: true # 是否使用随机存活时间（默认值：true，避免大量的 key 集中过期）
@@ -93,8 +91,7 @@ xcache:
       template-id: t0 # 模板id（默认值：t0，如未配置，默认从 id 为 t0 的模板中复制配置项）
       # …… 其余配置项与模板配置相同，所以直接省略
       # 另，如此缓存配置与 id 为 t0 的模板配置完全相同，name 与 template-id 其实也可以省略。
-  stat: # 缓存指标统计配置（对象类型为 LogCacheStatProvider，id 为预设的 log）
-    period: 60000 # 缓存指标采集的时间间隔（默认值：60000 单位：毫秒）
+  log-stat-interval: 60000 # 缓存指标采集的时间间隔（默认值：60000 单位：毫秒）
   scheduler: # 调度器配置
     core-pool-size: 1 # 定时任务调度器核心线程数，如未配置，则使用 (核心数 / 8)，最小为 1。
   redis: # Redis 配置（如不使用 Redis，可直接删除此配置项；如未配置，则不会生成相应的实例对象）
@@ -110,14 +107,14 @@ xcache:
         stream: # StreamContainer 配置
           block: -1 # 读取 Stream 时的阻塞时长（默认值： 10 单位：毫秒）
           count: 1000 # 同步任务每次从 Stream 读取的最大消息数量（默认值： 1000）
-          delay: 1000 # 当次同步任务结束后，下次任务开始前的间隔时长（默认值： 10 单位：毫秒）
+          interval: 10 # 当次同步任务结束后，下次任务开始前的间隔时长（默认值： 10 单位：毫秒）
         sync:
           codec: jackson # 缓存数据同步消息编解码
         standalone: # 单机模式 或 副本集模式
           # 这里为了演示 standalone，sentinel，cluster 分别如何配置，所以三种配置都存在，实际只需保留真正使用的其中一种
           # 当三种配置都存在时，那么优先使用 sentinel 配置，其次 cluster，最后 standalone
           node: 127.0.0.1:6379 # Redis 节点，支持 UnixSocket 方式
-          nodes: socket:/tmp/redis.sock, 127.0.0.1:6380 # Redis 节点列表
+          nodes: socket:/tmp/redis.sock, 127.0.0.1:6378 # Redis 节点列表
           read-from: # 读节点选择策略（默认值：UPSTREAM，仅从主节点读取数据）
           username: # Redis 用户名
           password: # Redis 密码

@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.autoconfigure.register;
 
+import com.igeeksky.xcache.core.SingletonSupplier;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
 import com.igeeksky.xtool.core.io.IOUtils;
 import com.igeeksky.xtool.core.lang.Assert;
@@ -15,9 +16,9 @@ import java.util.function.Supplier;
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-02
  */
-public class CacheRefreshProviderRegister implements Register<Supplier<CacheRefreshProvider>>, AutoCloseable {
+public class CacheRefreshProviderRegister implements Register<SingletonSupplier<CacheRefreshProvider>> {
 
-    private final Map<String, Supplier<CacheRefreshProvider>> map = new HashMap<>();
+    private final Map<String, SingletonSupplier<CacheRefreshProvider>> map = new HashMap<>();
 
     /**
      * 默认构造函数
@@ -28,24 +29,23 @@ public class CacheRefreshProviderRegister implements Register<Supplier<CacheRefr
     }
 
     @Override
-    public void put(String beanId, Supplier<CacheRefreshProvider> provider) {
+    public void put(String beanId, SingletonSupplier<CacheRefreshProvider> provider) {
         Supplier<CacheRefreshProvider> old = map.put(beanId, provider);
         Assert.isTrue(old == null, () -> "CacheRefreshProvider: [" + beanId + "] duplicate id.");
     }
 
     @Override
-    public Supplier<CacheRefreshProvider> get(String beanId) {
+    public SingletonSupplier<CacheRefreshProvider> get(String beanId) {
         return map.get(beanId);
     }
 
     @Override
-    public Map<String, Supplier<CacheRefreshProvider>> getAll() {
+    public Map<String, SingletonSupplier<CacheRefreshProvider>> getAll() {
         return Collections.unmodifiableMap(map);
     }
 
-    @Override
-    public void close() {
-        map.forEach((name, provider) -> IOUtils.closeQuietly(provider.get()));
+    public void shutdown() {
+        map.forEach((name, supplier) -> IOUtils.closeQuietly(supplier.getIfPresent()));
     }
 
 }

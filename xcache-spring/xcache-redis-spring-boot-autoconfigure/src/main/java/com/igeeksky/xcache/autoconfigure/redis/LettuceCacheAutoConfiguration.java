@@ -84,10 +84,9 @@ public class LettuceCacheAutoConfiguration {
         if (log.isDebugEnabled()) {
             log.debug("xcache.redis.lettuce:{}", lettuceCacheProperties.getLettuce());
         }
-        System.out.println(lettuceCacheProperties);
     }
 
-    @Bean
+    @Bean(destroyMethod = "shutdown")
     LettuceRegister lettuceRegister(ClientResourcesHolder clientResources, ScheduledExecutorService scheduler,
                                     ObjectProvider<ClientOptionsBuilderCustomizer> customizers) {
 
@@ -98,39 +97,39 @@ public class LettuceCacheAutoConfiguration {
             return register;
         }
 
-        for (LettuceConfig lettuce : lettuces) {
-            String id = StringUtils.trimToNull(lettuce.getId());
+        for (LettuceConfig lettuceConfig : lettuces) {
+            String id = StringUtils.trimToNull(lettuceConfig.getId());
             if (id == null) {
-                throw new CacheConfigException("xcache.redis.lettuce:[" + lettuce + "], id must not be null or empty");
+                throw new CacheConfigException("xcache.redis.lettuce:[" + lettuceConfig + "], id must not be null or empty");
             }
-            LettuceSentinel sentinel = lettuce.getSentinel();
+            LettuceSentinel sentinel = lettuceConfig.getSentinel();
             if (sentinel != null) {
-                LettuceSentinelConfig config = LettuceConfigHelper.createConfig(id, sentinel);
-                ClientOptions options = ClientOptionsHelper.clientOptions(config.getId(),
+                LettuceSentinelConfig sentinelConfig = LettuceConfigHelper.createConfig(id, sentinel);
+                ClientOptions options = ClientOptionsHelper.clientOptions(sentinelConfig.getId(),
                         sentinel.getClientOptions(), customizers);
-                LettuceSentinelFactory factory = new LettuceSentinelFactory(config, options, clientResources.get());
-                register.put(config.getId(), new LettuceHolder(lettuce, config.getTimeout(), factory, scheduler));
+                LettuceSentinelFactory factory = new LettuceSentinelFactory(sentinelConfig, options, clientResources.get());
+                register.put(sentinelConfig.getId(), new LettuceHolder(sentinelConfig, lettuceConfig, factory, scheduler));
                 continue;
             }
-            LettuceCluster cluster = lettuce.getCluster();
+            LettuceCluster cluster = lettuceConfig.getCluster();
             if (cluster != null) {
                 LettuceClusterConfig config = LettuceConfigHelper.createConfig(id, cluster);
                 ClusterClientOptions options = ClientOptionsHelper.clusterClientOptions(config.getId(),
                         cluster.getClientOptions(), customizers);
                 LettuceClusterFactory factory = new LettuceClusterFactory(config, options, clientResources.get());
-                register.put(config.getId(), new LettuceHolder(lettuce, config.getTimeout(), factory, scheduler));
+                register.put(config.getId(), new LettuceHolder(config, lettuceConfig, factory, scheduler));
                 continue;
             }
-            LettuceStandalone standalone = lettuce.getStandalone();
+            LettuceStandalone standalone = lettuceConfig.getStandalone();
             if (standalone != null) {
                 LettuceStandaloneConfig config = LettuceConfigHelper.createConfig(id, standalone);
                 ClientOptions options = ClientOptionsHelper.clientOptions(config.getId(),
                         standalone.getClientOptions(), customizers);
                 LettuceStandaloneFactory factory = new LettuceStandaloneFactory(config, options, clientResources.get());
-                register.put(config.getId(), new LettuceHolder(lettuce, config.getTimeout(), factory, scheduler));
+                register.put(config.getId(), new LettuceHolder(config, lettuceConfig, factory, scheduler));
                 continue;
             }
-            throw new CacheConfigException("xcache.redis.lettuce:[" + id + "] init error." + lettuce);
+            throw new CacheConfigException("xcache.redis.lettuce:[" + id + "] init error." + lettuceConfig);
         }
         return register;
     }
@@ -179,13 +178,13 @@ public class LettuceCacheAutoConfiguration {
         return register;
     }
 
-    private static Supplier<StoreProvider> createStoreProvider(LettuceHolder holder) {
+    private static SingletonSupplier<StoreProvider> createStoreProvider(LettuceHolder holder) {
         SingletonSupplier<LettuceOperatorProxy> proxySupplier = holder.getRedisOperatorProxySupplier();
         return SingletonSupplier.of(() -> new RedisStoreProvider(proxySupplier.get()));
     }
 
-    private static Supplier<CacheSyncProvider> createSyncProvider(LettuceHolder holder,
-                                                                  ObjectProvider<CodecProviderRegister> providers) {
+    private static SingletonSupplier<CacheSyncProvider> createSyncProvider(LettuceHolder holder,
+                                                                           ObjectProvider<CodecProviderRegister> providers) {
         String codec = holder.getSyncOptions().getCodec();
         SingletonSupplier<StreamOperator<byte[], byte[]>> operatorSupplier = holder.getStreamOperatorSupplier();
         SingletonSupplier<StreamContainer<byte[], byte[]>> containerSupplier = holder.getStreamContainerSupplier();
@@ -197,19 +196,19 @@ public class LettuceCacheAutoConfiguration {
         });
     }
 
-    private static Supplier<CacheLockProvider> createLockProvider(LettuceHolder holder, ScheduledExecutorService scheduler) {
+    private static SingletonSupplier<CacheLockProvider> createLockProvider(LettuceHolder holder, ScheduledExecutorService scheduler) {
         SingletonSupplier<LettuceOperatorProxy> proxySupplier = holder.getRedisOperatorProxySupplier();
         return SingletonSupplier.of(() -> new RedisLockProvider(proxySupplier.get(), scheduler));
     }
 
-    private static Supplier<CacheRefreshProvider> createRefreshProvider(LettuceHolder holder,
-                                                                        ScheduledExecutorService scheduler) {
+    private static SingletonSupplier<CacheRefreshProvider> createRefreshProvider(LettuceHolder holder,
+                                                                                 ScheduledExecutorService scheduler) {
         SingletonSupplier<LettuceOperatorProxy> proxySupplier = holder.getRedisOperatorProxySupplier();
         return SingletonSupplier.of(() -> new RedisCacheRefreshProvider(proxySupplier.get(), scheduler));
     }
 
-    private static Supplier<CacheStatProvider> createStatProvider(LettuceHolder holder, ScheduledExecutorService scheduler,
-                                                                  String group, ObjectProvider<CodecProviderRegister> providers) {
+    private static SingletonSupplier<CacheStatProvider> createStatProvider(LettuceHolder holder, ScheduledExecutorService scheduler,
+                                                                           String group, ObjectProvider<CodecProviderRegister> providers) {
         RedisStatOptions options = holder.getStatOptions();
         RedisCacheStatMessageCodec statMessageCodec = createStatMessageCodec(options, providers);
         SingletonSupplier<StreamOperator<byte[], byte[]>> streamOperatorSupplier = holder.getStreamOperatorSupplier();

@@ -8,10 +8,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 注册 Lettuce 相关对象
+ *
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-29
  */
-public class LettuceRegister implements Register<LettuceHolder>, AutoCloseable {
+public class LettuceRegister implements Register<LettuceHolder> {
 
     private final Map<String, LettuceHolder> map = new HashMap<>();
 
@@ -31,8 +33,7 @@ public class LettuceRegister implements Register<LettuceHolder>, AutoCloseable {
         return Collections.unmodifiableMap(map);
     }
 
-    @Override
-    public void close() {
+    public void shutdown() {
         map.forEach((k, holder) -> {
             try {
                 holder.shutdown();

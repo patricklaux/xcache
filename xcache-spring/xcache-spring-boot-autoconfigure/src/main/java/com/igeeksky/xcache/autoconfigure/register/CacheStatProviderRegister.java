@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.autoconfigure.register;
 
+import com.igeeksky.xcache.core.SingletonSupplier;
 import com.igeeksky.xcache.extension.stat.CacheStatProvider;
 import com.igeeksky.xtool.core.io.IOUtils;
 import com.igeeksky.xtool.core.lang.Assert;
@@ -7,7 +8,6 @@ import com.igeeksky.xtool.core.lang.Assert;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 
 /**
  * 用于向 CacheManager 注册 CacheStatProvider
@@ -15,9 +15,9 @@ import java.util.function.Supplier;
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-02
  */
-public class CacheStatProviderRegister implements Register<Supplier<CacheStatProvider>>, AutoCloseable {
+public class CacheStatProviderRegister implements Register<SingletonSupplier<CacheStatProvider>> {
 
-    private final Map<String, Supplier<CacheStatProvider>> map = new HashMap<>();
+    private final Map<String, SingletonSupplier<CacheStatProvider>> map = new HashMap<>();
 
     /**
      * 默认构造函数
@@ -28,24 +28,23 @@ public class CacheStatProviderRegister implements Register<Supplier<CacheStatPro
     }
 
     @Override
-    public void put(String beanId, Supplier<CacheStatProvider> provider) {
-        Supplier<CacheStatProvider> old = map.put(beanId, provider);
+    public void put(String beanId, SingletonSupplier<CacheStatProvider> supplier) {
+        SingletonSupplier<CacheStatProvider> old = map.put(beanId, supplier);
         Assert.isTrue(old == null, () -> "CacheStatProvider: [" + beanId + "] duplicate id.");
     }
 
     @Override
-    public Supplier<CacheStatProvider> get(String beanId) {
+    public SingletonSupplier<CacheStatProvider> get(String beanId) {
         return map.get(beanId);
     }
 
     @Override
-    public Map<String, Supplier<CacheStatProvider>> getAll() {
+    public Map<String, SingletonSupplier<CacheStatProvider>> getAll() {
         return Collections.unmodifiableMap(map);
     }
 
-    @Override
-    public void close() {
-        map.forEach((name, provider) -> IOUtils.closeQuietly(provider.get()));
+    public void shutdown() {
+        map.forEach((id, supplier) -> IOUtils.closeQuietly(supplier.getIfPresent()));
     }
 
 }

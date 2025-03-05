@@ -55,8 +55,9 @@
 
 ### 待完成任务
 
-- [ ] 【文档】 application.xml，README.md，Reference.md
-- [ ] 【思考】 Xcache：ComponentManager, LettuceHolder close, closeAsync 释放资源
+- [ ] 【开发】 资源释放
+- [ ] 【思考】 RedisSpinLock future.whenComplete() 打印日志消耗 Lettuce 线程资源问题
+- [ ] 【文档】 application.yml，README.md，Reference.md
 - [ ] 【思考】 RedisCacheRefresh：getRefreshMembers 增加偏移，去除同步代码？
 - [ ] 【测试】 测试 Xcache 注解参数
 

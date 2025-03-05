@@ -8,6 +8,7 @@ import com.igeeksky.xredis.lettuce.LettuceOperatorProxy;
 import com.igeeksky.xredis.lettuce.LettuceStreamOperator;
 import com.igeeksky.xredis.lettuce.api.RedisOperator;
 import com.igeeksky.xredis.lettuce.api.RedisOperatorFactory;
+import com.igeeksky.xredis.lettuce.config.LettuceGenericConfig;
 import io.lettuce.core.codec.ByteArrayCodec;
 
 import java.util.concurrent.CompletableFuture;
@@ -26,6 +27,8 @@ public class LettuceHolder {
 
     private final RedisOperatorFactory factory;
 
+    private final StreamOptions streamOptions;
+
     private final RedisStatOptions statOptions;
 
     private final RedisSyncOptions syncOptions;
@@ -38,18 +41,20 @@ public class LettuceHolder {
 
     private final SingletonSupplier<StreamContainer<byte[], byte[]>> streamContainerSupplier;
 
-    public LettuceHolder(LettuceConfig config, long timeout,
+    public LettuceHolder(LettuceGenericConfig genericConfig, LettuceConfig lettuceConfig,
                          RedisOperatorFactory factory, ScheduledExecutorService scheduler) {
         this.factory = factory;
-        this.statOptions = (config.getStat() != null) ? config.getStat() : new RedisStatOptions();
-        this.syncOptions = (config.getSync() != null) ? config.getSync() : new RedisSyncOptions();
-        int batchSize = config.getBatchSize();
-        StreamOptions streamOptions = (config.getStream() != null) ? config.getStream() : new StreamOptions();
+        this.statOptions = (lettuceConfig.getStat() != null) ? lettuceConfig.getStat() : new RedisStatOptions();
+        this.syncOptions = (lettuceConfig.getSync() != null) ? lettuceConfig.getSync() : new RedisSyncOptions();
+        this.streamOptions = (lettuceConfig.getStream() != null) ? lettuceConfig.getStream() : new StreamOptions();
+
+        long timeout = genericConfig.getTimeout();
+        int batchSize = lettuceConfig.getBatchSize();
 
         this.redisOperatorSupplier = SingletonSupplier.of(() -> factory.redisOperator(CODEC));
         this.redisOperatorProxySupplier = SingletonSupplier.of(() -> {
             RedisOperator<byte[], byte[]> redisOperator = this.redisOperatorSupplier.get();
-            return new LettuceOperatorProxy(batchSize, timeout, redisOperator);
+            return new LettuceOperatorProxy(timeout, batchSize, redisOperator);
         });
         this.streamOperatorSupplier = SingletonSupplier.of(() -> {
             RedisOperator<byte[], byte[]> redisOperator = this.redisOperatorSupplier.get();
@@ -91,8 +96,8 @@ public class LettuceHolder {
     }
 
     public void shutdown() {
-        StreamContainer<byte[], byte[]> container = streamContainerSupplier.getIfPresent();
         RedisOperator<byte[], byte[]> redisOperator = redisOperatorSupplier.getIfPresent();
+        StreamContainer<byte[], byte[]> container = streamContainerSupplier.getIfPresent();
 
         CompletableFuture<Void> future1 = (container != null) ? container.shutdownAsync()
                 : CompletableFuture.completedFuture(null);

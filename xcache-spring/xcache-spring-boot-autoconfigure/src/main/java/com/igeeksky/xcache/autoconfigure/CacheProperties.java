@@ -1,10 +1,8 @@
 package com.igeeksky.xcache.autoconfigure;
 
 import com.igeeksky.xcache.props.CacheProps;
-import com.igeeksky.xcache.props.StatProps;
 import com.igeeksky.xcache.props.Template;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
@@ -26,6 +24,11 @@ public class CacheProperties {
     private String group;
 
     /**
+     * 缓存统计间隔时长（统计信息输出到日志）
+     */
+    private Long logStatInterval;
+
+    /**
      * 模板配置（必填）
      * <p>
      * 列表类型，可配置多个模板.
@@ -41,11 +44,6 @@ public class CacheProperties {
      * 如使用其它模板，但与模板无差异，则仅需配置缓存名称和模板ID.
      */
     private List<CacheProps> cache;
-
-    /**
-     * 日志方式缓存指标统计配置
-     */
-    private StatProps stat;
 
     /**
      * 默认构造函数
@@ -113,35 +111,41 @@ public class CacheProperties {
     }
 
     /**
-     * 获取日志方式缓存指标统计配置
+     * 缓存统计间隔时长（仅用于日志方式输出统计信息）
+     * <p>
+     * 默认值：60000，单位：毫秒
      *
-     * @return {@link StatProps} – 日志方式缓存指标统计配置
+     * @return {@link Long} – 缓存统计间隔时长
      */
-    public StatProps getStat() {
-        return stat;
+    public Long getLogStatInterval() {
+        return logStatInterval;
     }
 
     /**
-     * 设置日志方式缓存指标统计配置
+     * 缓存统计间隔时长（仅用于日志方式输出统计信息）
+     * <p>
+     * 默认值：60000，单位：毫秒
      *
-     * @param stat 日志方式缓存指标统计配置
+     * @param logStatInterval 缓存统计间隔时长
      */
-    public void setStat(StatProps stat) {
-        this.stat = stat;
+    public void setLogStatInterval(Long logStatInterval) {
+        this.logStatInterval = logStatInterval;
     }
 
     @Override
     public String toString() {
         StringJoiner joiner = new StringJoiner(", ", "{", "}");
-        joiner.add("\"group\":\"" + group + "\"");
+        if (group != null) {
+            joiner.add("\"group\":\"" + group + "\"");
+        }
+        if (logStatInterval != null) {
+            joiner.add("\"logStatInterval\":" + logStatInterval);
+        }
         if (template != null) {
             joiner.add("\"template\":" + template);
         }
         if (cache != null) {
             joiner.add("\"cache\":" + cache);
-        }
-        if (stat != null) {
-            joiner.add("\"stat\":" + stat);
         }
         return joiner.toString();
     }
