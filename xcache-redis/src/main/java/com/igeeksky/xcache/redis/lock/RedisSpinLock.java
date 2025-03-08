@@ -1,12 +1,14 @@
 package com.igeeksky.xcache.redis.lock;
 
-import com.igeeksky.xredis.common.RedisFutureHelper;
 import com.igeeksky.xredis.common.RedisOperatorProxy;
 import com.igeeksky.xtool.core.lang.codec.StringCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -47,7 +49,6 @@ public class RedisSpinLock implements Lock {
     private volatile ScheduledFuture<?> scheduledFuture;
 
     private final long leaseTime;
-    private final long batchTimeout;
 
     private final byte[][] keys = new byte[1][];
     private final byte[][] args = new byte[2][];
@@ -60,12 +61,10 @@ public class RedisSpinLock implements Lock {
      * @param operator  Redis连接
      * @param scheduler 定时调度器，用于在加锁执行期间，定期运行 watchdog，延长锁的存续时间
      */
-    public RedisSpinLock(String key, String sid, long leaseTime, long batchTimeout,
-                         StringCodec codec, RedisOperatorProxy operator,
-                         ScheduledExecutorService scheduler) {
+    public RedisSpinLock(String key, String sid, long leaseTime, StringCodec codec,
+                         RedisOperatorProxy operator, ScheduledExecutorService scheduler) {
         this.scheduler = scheduler;
         this.leaseTime = leaseTime;
-        this.batchTimeout = batchTimeout;
         this.operator = operator;
         this.keys[0] = codec.encode(key);
         this.args[0] = codec.encode(sid);
@@ -171,9 +170,7 @@ public class RedisSpinLock implements Lock {
     }
 
     private Long tryAcquire() {
-        CompletableFuture<Long> future = this.operator.evalsha(RedisLockScript.LOCK_SCRIPT, this.keys, this.args);
-
-        Long result = RedisFutureHelper.get(future, batchTimeout);
+        Long result = this.operator.evalsha(RedisLockScript.LOCK_SCRIPT, this.keys, this.args);
         if (result == null && this.scheduledFuture == null) {
             // 如果加锁成功，且没有启动续期任务，则启动一个定时任务，定时续期
             long period = Math.max(1, leaseTime / 3);
@@ -187,10 +184,7 @@ public class RedisSpinLock implements Lock {
     @Override
     public void unlock() {
         try {
-            CompletableFuture<Boolean> future = this.operator.evalsha(RedisLockScript.UNLOCK_SCRIPT,
-                    this.keys, this.args);
-
-            Boolean unlocked = RedisFutureHelper.get(future, batchTimeout);
+            Boolean unlocked = this.operator.evalsha(RedisLockScript.UNLOCK_SCRIPT, this.keys, this.args);
             if (unlocked == null || unlocked) {
                 this.stopExpirationTask();
                 return;
@@ -237,7 +231,7 @@ public class RedisSpinLock implements Lock {
         @Override
         public void run() {
             try {
-                this.operator.evalsha(RedisLockScript.NEW_EXPIRE_SCRIPT, this.keys, this.args)
+                this.operator.evalshaAsync(RedisLockScript.NEW_EXPIRE_SCRIPT, this.keys, this.args)
                         .whenComplete((result, t) -> {
                             if (t != null) {
                                 log.error("extend expiration failed: {}", t.getMessage(), t);

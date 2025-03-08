@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.extension.stat;
+package com.igeeksky.xcache.extension.metrics;
 
 import com.igeeksky.xtool.core.lang.Assert;
 import org.slf4j.Logger;
@@ -19,37 +19,37 @@ import java.util.concurrent.TimeUnit;
  * @author Patrick.Lau
  * @since 0.0.3 2021-06-25
  */
-public abstract class AbstractCacheStatProvider implements CacheStatProvider {
+public abstract class AbstractCacheMetricsProvider implements CacheMetricsProvider {
 
-    private static final Logger log = LoggerFactory.getLogger(AbstractCacheStatProvider.class);
+    private static final Logger log = LoggerFactory.getLogger(AbstractCacheMetricsProvider.class);
 
     private final ScheduledFuture<?> scheduledFuture;
 
-    private final Map<String, CacheStatMonitor> monitors = new ConcurrentHashMap<>();
+    private final Map<String, CacheMetricsMonitor> monitors = new ConcurrentHashMap<>();
 
-    public AbstractCacheStatProvider(ScheduledExecutorService scheduler, long period) {
-        Assert.isTrue(period > 0L, "stat period must be greater than 0");
+    public AbstractCacheMetricsProvider(ScheduledExecutorService scheduler, long interval) {
+        Assert.isTrue(interval > 0L, "stat interval must be greater than 0");
         scheduledFuture = scheduler.scheduleAtFixedRate(() -> {
             try {
-                Collection<CacheStatMonitor> values = monitors.values();
-                List<CacheStatMessage> messages = new ArrayList<>(values.size());
-                for (CacheStatMonitor monitor : values) {
+                Collection<CacheMetricsMonitor> values = monitors.values();
+                List<CacheMetricsMessage> messages = new ArrayList<>(values.size());
+                for (CacheMetricsMonitor monitor : values) {
                     messages.add(monitor.collect());
                 }
                 this.publish(messages);
             } catch (Throwable e) {
                 log.error("CacheStatProvider PublishTask has error:{}", e.getMessage(), e);
             }
-        }, period, period, TimeUnit.MILLISECONDS);
+        }, interval, interval, TimeUnit.MILLISECONDS);
     }
 
     @Override
-    public CacheStatMonitor getMonitor(StatConfig config) {
-        return monitors.computeIfAbsent(config.getName(), ignored -> new CacheStatMonitorImpl(config));
+    public CacheMetricsMonitor getMonitor(MetricsConfig config) {
+        return monitors.computeIfAbsent(config.getName(), ignored -> new CacheMetricsMonitorImpl(config));
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (scheduledFuture != null) {
             scheduledFuture.cancel(false);
         }

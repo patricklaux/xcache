@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.autoconfigure.register;
 
+import com.igeeksky.xcache.core.SingletonSupplier;
 import com.igeeksky.xcache.core.store.StoreProvider;
 import com.igeeksky.xtool.core.lang.Assert;
 
@@ -14,9 +15,9 @@ import java.util.function.Supplier;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-29
  */
-public class StoreProviderRegister implements Register<Supplier<StoreProvider>> {
+public class StoreProviderRegister implements Register<SingletonSupplier<StoreProvider>> {
 
-    private final Map<String, Supplier<StoreProvider>> map = new HashMap<>();
+    private final Map<String, SingletonSupplier<StoreProvider>> map = new HashMap<>();
 
     /**
      * 默认构造函数
@@ -27,18 +28,18 @@ public class StoreProviderRegister implements Register<Supplier<StoreProvider>> 
     }
 
     @Override
-    public void put(String beanId, Supplier<StoreProvider> provider) {
+    public void put(String beanId, SingletonSupplier<StoreProvider> provider) {
         Supplier<StoreProvider> old = map.put(beanId, provider);
         Assert.isTrue(old == null, "StoreProvider:[" + beanId + "]: duplicate id.");
     }
 
     @Override
-    public Supplier<StoreProvider> get(String beanId) {
+    public SingletonSupplier<StoreProvider> get(String beanId) {
         return map.get(beanId);
     }
 
     @Override
-    public Map<String, Supplier<StoreProvider>> getAll() {
+    public Map<String, SingletonSupplier<StoreProvider>> getAll() {
         return Collections.unmodifiableMap(map);
     }
 

@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 编解码提供者接口
+ * 编解码器工厂
  *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/28

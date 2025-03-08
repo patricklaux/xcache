@@ -61,7 +61,7 @@ public interface Base<K, V> {
      * @param key 键
      * @return {@code CompletableFuture<CacheValue<V>>} – 值的包装类
      */
-    CompletableFuture<CacheValue<V>> asyncGetCacheValue(K key);
+    CompletableFuture<CacheValue<V>> getCacheValueAsync(K key);
 
     /**
      * 根据键集从缓存中读取值
@@ -83,7 +83,7 @@ public interface Base<K, V> {
      * 1. CacheValue.hasValue() == true，缓存的是正常值； <p>
      * 2. CacheValue.hasValue() == false，缓存的是空值； <p>
      */
-    CompletableFuture<Map<K, CacheValue<V>>> asyncGetAllCacheValues(Set<? extends K> keys);
+    CompletableFuture<Map<K, CacheValue<V>>> getAllCacheValuesAsync(Set<? extends K> keys);
 
     /**
      * 将单个键值对存入缓存
@@ -100,7 +100,7 @@ public interface Base<K, V> {
      * @param value 值
      * @return {@code CompletableFuture<Void>} – void
      */
-    CompletableFuture<Void> asyncPut(K key, V value);
+    CompletableFuture<Void> putAsync(K key, V value);
 
     /**
      * 将多个键值对存入缓存
@@ -115,7 +115,7 @@ public interface Base<K, V> {
      * @param keyValues 键值对的集合
      * @return {@code CompletableFuture<Void>} – void
      */
-    CompletableFuture<Void> asyncPutAll(Map<? extends K, ? extends V> keyValues);
+    CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> keyValues);
 
     /**
      * 根据键将数据逐出缓存
@@ -130,7 +130,7 @@ public interface Base<K, V> {
      * @param key 键
      * @return {@code CompletableFuture<Void>} – void
      */
-    CompletableFuture<Void> asyncRemove(K key);
+    CompletableFuture<Void> removeAsync(K key);
 
     /**
      * 根据键集将数据逐出缓存
@@ -145,7 +145,7 @@ public interface Base<K, V> {
      * @param keys 键集
      * @return {@code CompletableFuture<Void>} – void
      */
-    CompletableFuture<Void> asyncRemoveAll(Set<? extends K> keys);
+    CompletableFuture<Void> removeAllAsync(Set<? extends K> keys);
 
     /**
      * 清空缓存中的所有数据

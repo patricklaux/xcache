@@ -188,7 +188,7 @@ public class CacheLoaderTest {
         loadAll = userLoaderService.getOrLoadAll(keys);
         Assertions.assertTrue(loadAll.isEmpty());
 
-        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100000));
+        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10000));
     }
 
 }

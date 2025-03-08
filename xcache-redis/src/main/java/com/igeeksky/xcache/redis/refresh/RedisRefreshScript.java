@@ -22,7 +22,9 @@ public final class RedisRefreshScript {
      * <p>
      * KEYS[1] 键 <p>
      * ARGV[1] sid <p>
-     * ARGV[2] 存续时间 单位：Millisecond
+     * ARGV[2] 锁存续时间 单位：毫秒
+     * <p>
+     * {@code Returns:} 加锁成功返回 true，否则返回 false。
      */
     public static final RedisScript LOCK = new RedisScript(
             "local sid = redis.call('GET', KEYS[1]); " +
@@ -40,7 +42,7 @@ public final class RedisRefreshScript {
      * KEYS[1] 键 <p>
      * ARGV[1] sid
      * <p>
-     * {@code return} 解锁成功返回 true，否则返回 false。
+     * {@code Returns:} 解锁成功返回 true，否则返回 false。
      */
     public static final RedisScript UNLOCK = new RedisScript(
             "local sid = redis.call('GET', KEYS[1]); " +
@@ -56,47 +58,47 @@ public final class RedisRefreshScript {
 
 
     /**
-     * 更新刷新线程启动时间
+     * 新增或更新数据刷新时间
      * <p>
-     * KEYS[1] refreshPeriodKey <p>
-     * ARGV[1] refreshThreadPeriod 单位：Millisecond
+     * KEYS[1] refreshKey <p>
+     * ARGV[1] refreshAfterWrite 单位：Millisecond <p>
+     * ARGV[2~n] members
+     * <p>
+     * {@code Returns:} 刷新时间
      */
-    public static final RedisScript UPDATE_TASK_TIME = new RedisScript(
+    public static final RedisScript PUT = new RedisScript(
             "redis.replicate_commands(); " +
+                    "local key = KEYS[1]; " +
                     "local server_time = redis.call('time'); " +
                     "local now = math.floor((server_time[1] * 1000) + (server_time[2]/1000)); " +
-                    "local task_time = now + ARGV[1]; " +
-                    "return redis.call('set', KEYS[1], task_time); "
-            , ResultType.STATUS);
+                    "local refresh_time = now + ARGV[1]; " +
+                    "for i = 2, #(ARGV) do " +
+                    "    redis.call('zadd', key, refresh_time, ARGV[i]); " +
+                    "end; " +
+                    "return refresh_time;"
+            , ResultType.INTEGER);
 
 
     /**
-     * 是否已到达刷新线程启动时间
+     * 获取已到刷新时间的成员并更新刷新时间
      * <p>
-     * KEYS[1] refreshPeriodKey <p>
+     * KEYS[1] refreshKey <p>
+     * ARGV[1] refreshAfterWrite 单位：Millisecond <p>
+     * ARGV[2] count
      * <p>
-     * 已到启动时间返回 true，否则返回 false。
-     * {@snippet :
-     * if (未设置启动时间){
-     *     return 1;
-     * }
-     * if (当前时间 >= 启动时间){
-     *     return 1;
-     * }
-     * return 0;
-     *}
+     * {@code Returns:} 刷新时间
      */
-    public static final RedisScript ARRIVED_TASK_TIME = new RedisScript(
-            "if (redis.call('exists', KEYS[1]) == 0) then " +
-                    "    return 1; " +
-                    "end; " +
-                    "local task_time = tonumber(redis.call('get', KEYS[1])); " +
+    public static final RedisScript GET_UPDATE_REFRESH_MEMBERS = new RedisScript(
+            "redis.replicate_commands(); " +
+                    "local key = KEYS[1]; " +
                     "local server_time = redis.call('time'); " +
                     "local now = math.floor((server_time[1] * 1000) + (server_time[2]/1000)); " +
-                    "if (now >= task_time) then " +
-                    "    return 1; " +
+                    "local refresh_time = now + ARGV[1]; " +
+                    "local members = redis.call('ZRANGEBYSCORE', key, 0, refresh_time, 'LIMIT', 0, ARGV[2]); " +
+                    "for i = 1, #(members) do " +
+                    "    redis.call('zadd', key, refresh_time, members[i]); " +
                     "end; " +
-                    "return 0;"
-            , ResultType.BOOLEAN);
+                    "return members;"
+            , ResultType.MULTI);
 
 }

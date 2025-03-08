@@ -1,7 +1,6 @@
 package com.igeeksky.xcache.redis.store;
 
 import com.igeeksky.xcache.common.CacheValue;
-import com.igeeksky.xredis.common.RedisFutureHelper;
 import com.igeeksky.xredis.common.RedisOperatorProxy;
 import com.igeeksky.xtool.core.KeyValue;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
@@ -83,13 +82,12 @@ public class RedisHashStoreHelper<V> {
      *
      * @param redisOperator    redis操作代理
      * @param expireAfterWrite 过期时间
-     * @param batchTimeout          future.get 超时时间
      */
-    public static void checkServerVersion(RedisOperatorProxy redisOperator, long expireAfterWrite, long batchTimeout) {
+    public static void checkServerVersion(RedisOperatorProxy redisOperator, long expireAfterWrite) {
         if (expireAfterWrite <= 0) {
             return;
         }
-        String version = RedisFutureHelper.get(redisOperator.version(), batchTimeout);
+        String version = redisOperator.version();
         String[] array = version.split("\\.");
         String errorMsg = "If using hash as storage and expireAfterWrite > 0," +
                 " the redis_server version must be greater than or equal to 7.4.0";

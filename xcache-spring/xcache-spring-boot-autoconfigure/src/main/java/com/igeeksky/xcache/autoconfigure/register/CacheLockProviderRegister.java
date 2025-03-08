@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.autoconfigure.register;
 
+import com.igeeksky.xcache.core.SingletonSupplier;
 import com.igeeksky.xcache.extension.lock.CacheLockProvider;
 import com.igeeksky.xtool.core.lang.Assert;
 
@@ -14,9 +15,9 @@ import java.util.function.Supplier;
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-02
  */
-public class CacheLockProviderRegister implements Register<Supplier<CacheLockProvider>> {
+public class CacheLockProviderRegister implements Register<SingletonSupplier<CacheLockProvider>> {
 
-    private final Map<String, Supplier<CacheLockProvider>> map = new HashMap<>();
+    private final Map<String, SingletonSupplier<CacheLockProvider>> map = new HashMap<>();
 
     /**
      * 默认构造函数
@@ -27,18 +28,18 @@ public class CacheLockProviderRegister implements Register<Supplier<CacheLockPro
     }
 
     @Override
-    public void put(String beanId, Supplier<CacheLockProvider> provider) {
+    public void put(String beanId, SingletonSupplier<CacheLockProvider> provider) {
         Supplier<CacheLockProvider> old = map.put(beanId, provider);
         Assert.isTrue(old == null, () -> "CacheLockProvider: [" + beanId + "] duplicate id.");
     }
 
     @Override
-    public Supplier<CacheLockProvider> get(String beanId) {
+    public SingletonSupplier<CacheLockProvider> get(String beanId) {
         return map.get(beanId);
     }
 
     @Override
-    public Map<String, Supplier<CacheLockProvider>> getAll() {
+    public Map<String, SingletonSupplier<CacheLockProvider>> getAll() {
         return Collections.unmodifiableMap(map);
     }
 

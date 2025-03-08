@@ -11,9 +11,9 @@ import com.igeeksky.xcache.extension.lock.*;
 import com.igeeksky.xcache.extension.refresh.CacheRefresh;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
-import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
-import com.igeeksky.xcache.extension.stat.CacheStatProvider;
-import com.igeeksky.xcache.extension.stat.StatConfig;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsMonitor;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsProvider;
+import com.igeeksky.xcache.extension.metrics.MetricsConfig;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncProvider;
 import com.igeeksky.xcache.extension.sync.SyncConfig;
@@ -100,8 +100,8 @@ public class CacheManagerImpl implements CacheManager {
         RefreshConfig refreshConfig = this.buildRefreshConfig(cacheProps.getCacheRefresh(), cacheConfig);
         CacheRefresh cacheRefresh = this.getCacheRefresh(refreshConfig);
 
-        StatConfig statConfig = this.buildStatConfig(cacheProps.getCacheStat(), cacheConfig);
-        CacheStatMonitor statMonitor = this.getStatMonitor(statConfig);
+        MetricsConfig metricsConfig = this.buildMetricsConfig(cacheProps.getCacheMetrics(), cacheConfig);
+        CacheMetricsMonitor statMonitor = this.getMetricsMonitor(metricsConfig);
 
         SyncConfig<V> syncConfig = this.buildSyncConfig(cacheProps.getCacheSync(), stores, cacheConfig);
         CacheSyncMonitor syncMonitor = this.getSyncMonitor(syncConfig, stores);
@@ -110,7 +110,7 @@ public class CacheManagerImpl implements CacheManager {
         extendBuilder.cacheLoader(cacheLoader)
                 .lockService(lockService)
                 .keyCodec(keyCodec)
-                .statMonitor(statMonitor)
+                .metricsMonitor(statMonitor)
                 .syncMonitor(syncMonitor)
                 .containsPredicate(predicate)
                 .cacheRefresh(cacheRefresh)
@@ -331,6 +331,9 @@ public class CacheManagerImpl implements CacheManager {
                 .refreshAfterWrite(props.getRefreshAfterWrite())
                 .refreshThreadPeriod(props.getRefreshThreadPeriod())
                 .refreshSequenceSize(props.getRefreshSequenceSize())
+                .shutdownTimeout(props.getShutdownTimeout())
+                .shutdownQuietPeriod(props.getShutdownQuietPeriod())
+                .shutdownBehavior(ShutdownBehavior.of(props.getShutdownBehavior()))
                 .enableGroupPrefix(props.getEnableGroupPrefix())
                 .params(props.getParams())
                 .build();
@@ -348,21 +351,21 @@ public class CacheManagerImpl implements CacheManager {
         return provider.getCacheRefresh(config);
     }
 
-    private <K, V> StatConfig buildStatConfig(String provider, CacheConfig<K, V> config) {
-        return StatConfig.builder()
+    private <K, V> MetricsConfig buildMetricsConfig(String provider, CacheConfig<K, V> config) {
+        return MetricsConfig.builder()
                 .group(config.getGroup())
                 .name(config.getName())
                 .provider(provider)
                 .build();
     }
 
-    private CacheStatMonitor getStatMonitor(StatConfig config) {
+    private CacheMetricsMonitor getMetricsMonitor(MetricsConfig config) {
         String beanId = config.getProvider();
         if (beanId == null || Objects.equals(CacheConstants.NONE, StringUtils.toUpperCase(beanId))) {
             return null;
         }
 
-        CacheStatProvider provider = componentManager.getStatProvider(beanId);
+        CacheMetricsProvider provider = componentManager.getMetricsProvider(beanId);
         requireNonNull(provider, () -> "CacheStatProvider:[" + beanId + "] is undefined.");
 
         return provider.getMonitor(config);

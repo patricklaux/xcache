@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.extension.stat;
+package com.igeeksky.xcache.extension.metrics;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-11
  */
-public class CacheStatCounter {
+public class CacheMetricsCounter {
 
     private final AtomicLong hits = new AtomicLong();
     private final AtomicLong misses = new AtomicLong();
@@ -16,7 +16,7 @@ public class CacheStatCounter {
     private final AtomicLong removals = new AtomicLong();
     private final AtomicLong clears = new AtomicLong();
 
-    public CacheStatCounter() {
+    public CacheMetricsCounter() {
     }
 
     public long getHits() {

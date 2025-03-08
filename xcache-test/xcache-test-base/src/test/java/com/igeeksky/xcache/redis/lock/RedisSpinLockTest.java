@@ -50,8 +50,8 @@ class RedisSpinLockTest {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
         RedisOperator<byte[], byte[]> redisOperator = redisOperatorFactory.redisOperator(ByteArrayCodec.INSTANCE);
-        LettuceOperatorProxy operatorProxy = new LettuceOperatorProxy(10000, redisOperator);
-        RedisLockProvider provider = new RedisLockProvider(operatorProxy, scheduler, 60000);
+        LettuceOperatorProxy operatorProxy = new LettuceOperatorProxy(10000, 60000, redisOperator);
+        RedisLockProvider provider = new RedisLockProvider(operatorProxy, scheduler);
         lockService = provider.get(config);
     }
 

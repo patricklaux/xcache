@@ -18,7 +18,7 @@ public abstract class AbstractProps {
 
     private String keyCodec;
 
-    private String cacheStat;
+    private String cacheMetrics;
 
     private SyncProps cacheSync = new SyncProps();
 
@@ -103,28 +103,28 @@ public abstract class AbstractProps {
     }
 
     /**
-     * CacheStatProviderId
+     * CacheMetricsProvider-ID
      * <p>
      * 用于缓存指标统计信息采集和输出。
      * <p>
      * 默认值：log
      * <p>
-     * {@link CacheConstants#DEFAULT_STAT_PROVIDER}
+     * {@link CacheConstants#DEFAULT_METRICS_PROVIDER}
      * <p>
      * 如果配置为 log，统计信息将输出到日志，日志级别为 info。 <p>
-     * 日志输出类为 { com.igeeksky.xcache.extension.stat.LogCacheStatProvider} ，可将此类的日志配置为单独输出到一个文件.
+     * 日志输出类为 {@code com.igeeksky.xcache.extension.metrics.LogCacheMetricsPublisher} ，可将此类的日志配置为单独输出到一个文件.
      *
-     * @return {@link String} – CacheStatProviderId
+     * @return {@link String} – CacheMetricsProvider-ID
      */
-    public String getCacheStat() {
-        return cacheStat;
+    public String getCacheMetrics() {
+        return cacheMetrics;
     }
 
     /**
-     * @param cacheStat CacheStatProvider 的 beanId
+     * @param cacheMetrics CacheMetricsProvider-ID
      */
-    public void setCacheStat(String cacheStat) {
-        this.cacheStat = cacheStat;
+    public void setCacheMetrics(String cacheMetrics) {
+        this.cacheMetrics = cacheMetrics;
     }
 
     /**

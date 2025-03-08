@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.autoconfigure.register;
 
+import com.igeeksky.xcache.core.SingletonSupplier;
 import com.igeeksky.xcache.extension.codec.CodecProvider;
 import com.igeeksky.xtool.core.lang.Assert;
 
@@ -9,14 +10,14 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * 用于向 CacheManager 注册 CodecProvider
+ * 用于向 {@code ComponentManager} 注册 {@link CodecProvider}
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-08
  */
-public class CodecProviderRegister implements Register<Supplier<CodecProvider>> {
+public class CodecProviderRegister implements Register<SingletonSupplier<CodecProvider>> {
 
-    private final Map<String, Supplier<CodecProvider>> map = new HashMap<>();
+    private final Map<String, SingletonSupplier<CodecProvider>> map = new HashMap<>();
 
     /**
      * 默认构造函数
@@ -27,18 +28,18 @@ public class CodecProviderRegister implements Register<Supplier<CodecProvider>> 
     }
 
     @Override
-    public void put(String beanId, Supplier<CodecProvider> provider) {
+    public void put(String beanId, SingletonSupplier<CodecProvider> provider) {
         Supplier<CodecProvider> old = map.put(beanId, provider);
         Assert.isTrue(old == null, () -> "CodecProvider: [" + beanId + "] duplicate id.");
     }
 
     @Override
-    public Supplier<CodecProvider> get(String beanId) {
+    public SingletonSupplier<CodecProvider> get(String beanId) {
         return map.get(beanId);
     }
 
     @Override
-    public Map<String, Supplier<CodecProvider>> getAll() {
+    public Map<String, SingletonSupplier<CodecProvider>> getAll() {
         return Collections.unmodifiableMap(map);
     }
 

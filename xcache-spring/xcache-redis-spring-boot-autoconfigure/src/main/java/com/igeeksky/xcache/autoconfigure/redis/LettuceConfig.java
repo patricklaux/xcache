@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.autoconfigure.redis;
 
 
-import com.igeeksky.xcache.redis.stat.RedisCacheStatProvider;
+import com.igeeksky.xcache.redis.metrics.RedisCacheMetricsProvider;
 import com.igeeksky.xredis.common.RedisOperatorProxy;
 import com.igeeksky.xredis.common.stream.container.StreamContainer;
 import com.igeeksky.xredis.lettuce.api.RedisOperatorFactory;
@@ -9,8 +9,6 @@ import com.igeeksky.xredis.lettuce.props.LettuceCluster;
 import com.igeeksky.xredis.lettuce.props.LettuceSentinel;
 import com.igeeksky.xredis.lettuce.props.LettuceStandalone;
 import com.igeeksky.xtool.core.json.SimpleJSON;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Lettuce 配置
@@ -24,11 +22,9 @@ public class LettuceConfig {
 
     private int batchSize = 10000;
 
-    private long batchTimeout = 60000;
-
     private StreamOptions stream;
 
-    private RedisStatOptions stat;
+    private RedisMetricsOptions metrics;
 
     private RedisSyncOptions sync;
 
@@ -92,60 +88,24 @@ public class LettuceConfig {
     }
 
     /**
-     * Redis 批处理同步阻塞超时时间
-     * <p>
-     * 默认值：60000 单位：毫秒
-     * <p>
-     * 如果调用同步接口，譬如 {@code cache.get(key)}、{@code cache.getAll(keys)} 等，
-     * 会先调用异步接口获取 {@link CompletableFuture}，然后再调用 {@code future.get(timeout, TimeUnit.MILLISECONDS)}
-     * 方法等待数据处理完成。<p>
-     * <b>注意：</b><p>
-     * 1、当调用同步接口时，如果异步操作未完成或线程被中断，会抛出异常。<br>
-     * 2、当调用同步接口时，单次操作数据量大、网络条件差、RedisServer 数据处理能力弱，请适当调大超时时间。
-     *
-     * @return {@link Long} – Redis 批处理同步阻塞超时时间
-     */
-    public long getBatchTimeout() {
-        return batchTimeout;
-    }
-
-    /**
-     * Redis 批处理同步阻塞超时时间
-     * <p>
-     * 默认值：60000 单位：毫秒
-     * <p>
-     * 如果调用同步接口，譬如 {@code cache.get(key)}、{@code cache.getAll(keys)} 等，
-     * 会先调用异步接口获取 {@link CompletableFuture}，然后再调用 {@code future.get(timeout, TimeUnit.MILLISECONDS)}
-     * 方法等待数据处理完成。<p>
-     * <b>注意：</b><p>
-     * 1、当调用同步接口时，如果异步操作未完成或线程被中断，会抛出异常。<br>
-     * 2、当调用同步接口时，单次操作数据量大、网络条件差、RedisServer 数据处理能力弱，请适当调大超时时间。
-     *
-     * @param batchTimeout Redis 批处理同步阻塞超时时间
-     */
-    public void setBatchTimeout(long batchTimeout) {
-        this.batchTimeout = batchTimeout;
-    }
-
-    /**
      * Redis 缓存指标统计配置
      * <p>
      * <b>注意：</b>
-     * {@link RedisCacheStatProvider} 仅负责采集并发送缓存指标统计信息到指定 Stream，统计信息消费端需自行实现。
+     * {@link RedisCacheMetricsProvider} 仅负责采集并发送缓存指标统计信息到指定 Stream，统计信息消费端需自行实现。
      *
-     * @return {@link RedisStatOptions} – Redis 缓存指标统计配置
+     * @return {@link RedisMetricsOptions} – Redis 缓存指标统计配置
      */
-    public RedisStatOptions getStat() {
-        return stat;
+    public RedisMetricsOptions getMetrics() {
+        return metrics;
     }
 
     /**
      * Redis 缓存指标统计配置
      *
-     * @param stat Redis 缓存指标统计配置
+     * @param metrics Redis 缓存指标统计配置
      */
-    public void setStat(RedisStatOptions stat) {
-        this.stat = stat;
+    public void setMetrics(RedisMetricsOptions metrics) {
+        this.metrics = metrics;
     }
 
     /**

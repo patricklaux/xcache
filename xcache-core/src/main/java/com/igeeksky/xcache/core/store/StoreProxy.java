@@ -2,7 +2,7 @@ package com.igeeksky.xcache.core.store;
 
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.Store;
-import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsMonitor;
 import com.igeeksky.xcache.props.StoreLevel;
 
 import java.util.Map;
@@ -24,35 +24,35 @@ public class StoreProxy<V> implements Store<V> {
 
     private final StoreLevel level;
 
-    private final CacheStatMonitor statMonitor;
+    private final CacheMetricsMonitor metricsMonitor;
 
-    public StoreProxy(Store<V> store, StoreLevel level, CacheStatMonitor statMonitor) {
+    public StoreProxy(Store<V> store, StoreLevel level, CacheMetricsMonitor metricsMonitor) {
         this.store = store;
         this.level = level;
-        this.statMonitor = statMonitor;
-        this.statMonitor.setCounter(level);
+        this.metricsMonitor = metricsMonitor;
+        this.metricsMonitor.setCounter(level);
     }
 
     @Override
     public CacheValue<V> getCacheValue(String key) {
         CacheValue<V> cacheValue = store.getCacheValue(key);
         if (cacheValue != null) {
-            statMonitor.incHits(level, 1L);
+            metricsMonitor.incHits(level, 1L);
         } else {
-            statMonitor.incMisses(level, 1L);
+            metricsMonitor.incMisses(level, 1L);
         }
         return cacheValue;
     }
 
     @Override
-    public CompletableFuture<CacheValue<V>> asyncGetCacheValue(String key) {
-        return store.asyncGetCacheValue(key)
+    public CompletableFuture<CacheValue<V>> getCacheValueAsync(String key) {
+        return store.getCacheValueAsync(key)
                 .whenCompleteAsync((cacheValue, throwable) -> {
                     if (throwable == null) {
                         if (cacheValue != null) {
-                            statMonitor.incHits(level, 1L);
+                            metricsMonitor.incHits(level, 1L);
                         } else {
-                            statMonitor.incMisses(level, 1L);
+                            metricsMonitor.incMisses(level, 1L);
                         }
                     }
                 });
@@ -63,20 +63,20 @@ public class StoreProxy<V> implements Store<V> {
         int total = keys.size();
         Map<String, CacheValue<V>> result = store.getAllCacheValues(keys);
         int hits = result.size();
-        statMonitor.incHits(level, hits);
-        statMonitor.incMisses(level, total - hits);
+        metricsMonitor.incHits(level, hits);
+        metricsMonitor.incMisses(level, total - hits);
         return result;
     }
 
     @Override
-    public CompletableFuture<Map<String, CacheValue<V>>> asyncGetAllCacheValues(Set<? extends String> keys) {
+    public CompletableFuture<Map<String, CacheValue<V>>> getAllCacheValuesAsync(Set<? extends String> keys) {
         int total = keys.size();
-        return store.asyncGetAllCacheValues(keys)
+        return store.getAllCacheValuesAsync(keys)
                 .whenCompleteAsync((result, throwable) -> {
                     if (throwable == null) {
                         int hits = result.size();
-                        statMonitor.incHits(level, hits);
-                        statMonitor.incMisses(level, total - hits);
+                        metricsMonitor.incHits(level, hits);
+                        metricsMonitor.incMisses(level, total - hits);
                     }
                 });
     }
@@ -84,15 +84,15 @@ public class StoreProxy<V> implements Store<V> {
     @Override
     public void put(String key, V value) {
         store.put(key, value);
-        statMonitor.incPuts(level, 1L);
+        metricsMonitor.incPuts(level, 1L);
     }
 
     @Override
-    public CompletableFuture<Void> asyncPut(String key, V value) {
-        return this.store.asyncPut(key, value)
+    public CompletableFuture<Void> putAsync(String key, V value) {
+        return this.store.putAsync(key, value)
                 .whenCompleteAsync((vod, throwable) -> {
                     if (throwable == null) {
-                        statMonitor.incPuts(level, 1L);
+                        metricsMonitor.incPuts(level, 1L);
                     }
                 });
     }
@@ -101,16 +101,16 @@ public class StoreProxy<V> implements Store<V> {
     public void putAll(Map<? extends String, ? extends V> keyValues) {
         int size = keyValues.size();
         store.putAll(keyValues);
-        statMonitor.incPuts(level, size);
+        metricsMonitor.incPuts(level, size);
     }
 
     @Override
-    public CompletableFuture<Void> asyncPutAll(Map<? extends String, ? extends V> keyValues) {
+    public CompletableFuture<Void> putAllAsync(Map<? extends String, ? extends V> keyValues) {
         int size = keyValues.size();
-        return store.asyncPutAll(keyValues)
+        return store.putAllAsync(keyValues)
                 .whenCompleteAsync((vod, throwable) -> {
                     if (throwable == null) {
-                        statMonitor.incPuts(level, size);
+                        metricsMonitor.incPuts(level, size);
                     }
                 });
     }
@@ -118,15 +118,15 @@ public class StoreProxy<V> implements Store<V> {
     @Override
     public void remove(String key) {
         store.remove(key);
-        statMonitor.incRemovals(level, 1L);
+        metricsMonitor.incRemovals(level, 1L);
     }
 
     @Override
-    public CompletableFuture<Void> asyncRemove(String key) {
-        return store.asyncRemove(key)
+    public CompletableFuture<Void> removeAsync(String key) {
+        return store.removeAsync(key)
                 .whenCompleteAsync((vod, throwable) -> {
                     if (throwable == null) {
-                        statMonitor.incRemovals(level, 1L);
+                        metricsMonitor.incRemovals(level, 1L);
                     }
                 });
     }
@@ -135,16 +135,16 @@ public class StoreProxy<V> implements Store<V> {
     public void removeAll(Set<? extends String> keys) {
         int size = keys.size();
         store.removeAll(keys);
-        statMonitor.incRemovals(level, size);
+        metricsMonitor.incRemovals(level, size);
     }
 
     @Override
-    public CompletableFuture<Void> asyncRemoveAll(Set<? extends String> keys) {
+    public CompletableFuture<Void> removeAllAsync(Set<? extends String> keys) {
         int size = keys.size();
-        return store.asyncRemoveAll(keys)
+        return store.removeAllAsync(keys)
                 .whenCompleteAsync((vod, throwable) -> {
                     if (throwable == null) {
-                        statMonitor.incRemovals(level, size);
+                        metricsMonitor.incRemovals(level, size);
                     }
                 });
     }
@@ -152,7 +152,7 @@ public class StoreProxy<V> implements Store<V> {
     @Override
     public void clear() {
         store.clear();
-        statMonitor.incClears(level);
+        metricsMonitor.incClears(level);
     }
 
 }

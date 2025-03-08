@@ -2,15 +2,14 @@ package com.igeeksky.xcache.autoconfigure;
 
 import com.igeeksky.xtool.core.concurrent.PlatformThreadFactory;
 import com.igeeksky.xtool.core.lang.Assert;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * 定时任务调度器自动配置
@@ -20,7 +19,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureBefore({CacheAutoConfiguration.class})
-@AutoConfigureAfter({SchedulerProperties.class})
+@EnableConfigurationProperties({SchedulerProperties.class})
 public class SchedulerAutoConfiguration {
 
     private final SchedulerProperties schedulerProperties;
@@ -30,7 +29,7 @@ public class SchedulerAutoConfiguration {
      *
      * @param schedulerProperties 调度器配置项
      */
-    public SchedulerAutoConfiguration(SchedulerProperties schedulerProperties) {
+    SchedulerAutoConfiguration(SchedulerProperties schedulerProperties) {
         this.schedulerProperties = schedulerProperties;
     }
 
@@ -40,11 +39,11 @@ public class SchedulerAutoConfiguration {
      * @return ScheduledExecutorService – 调度器
      */
     @Bean
-    public ScheduledExecutorService scheduler() {
+    ScheduledExecutorService scheduler() {
         // 根据配置属性动态确定线程池的核心大小
         int corePoolSize = getCorePoolSize(schedulerProperties.getCorePoolSize());
         // 创建一个线程工厂，用于生成具有统一前缀名称的线程
-        ThreadFactory threadFactory = new PlatformThreadFactory("cache-scheduler-thread-");
+        ThreadFactory threadFactory = new PlatformThreadFactory("cache-scheduler-");
         // 使用指定的核心线程数、线程工厂和拒绝策略创建ScheduledThreadPoolExecutor实例
         // 当任务提交过多，线程池无法处理时，采取AbortPolicy策略，即抛出RejectedExecutionException异常
         return new ScheduledThreadPoolExecutor(corePoolSize, threadFactory);

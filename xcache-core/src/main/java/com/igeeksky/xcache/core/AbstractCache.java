@@ -5,14 +5,12 @@ import com.igeeksky.xcache.common.CacheLoader;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsMonitor;
 import com.igeeksky.xcache.extension.refresh.CacheRefresh;
 import com.igeeksky.xcache.extension.refresh.NoOpCacheRefresh;
-import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.collection.Sets;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -30,13 +28,12 @@ import java.util.concurrent.locks.Lock;
  */
 public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
-    private static final Logger log = LoggerFactory.getLogger(AbstractCache.class);
     private final String name;
     private final Class<K> keyType;
     private final Class<V> valueType;
 
     private final KeyCodec<K> keyCodec;
-    private final CacheStatMonitor statMonitor;
+    private final CacheMetricsMonitor metricsMonitor;
 
     private CacheRefresh cacheRefresh;
     private CacheLoader<K, V> cacheLoader;
@@ -52,7 +49,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         this.message = "Cache:[" + this.name + "], %s";
 
         this.keyCodec = extend.getKeyCodec();
-        this.statMonitor = extend.getStatMonitor();
+        this.metricsMonitor = extend.getMetricsMonitor();
 
         this.lockService = extend.getLockService();
         this.containsPredicate = extend.getContainsPredicate();
@@ -97,9 +94,9 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
                     V value = this.cacheLoader.load(key);
                     this.doAsyncPut(storeKey, value);
                     if (value != null) {
-                        this.statMonitor.incHitLoads(1);
+                        this.metricsMonitor.incHitLoads(1);
                     } else {
-                        this.statMonitor.incMissLoads(1);
+                        this.metricsMonitor.incMissLoads(1);
                     }
                 } finally {
                     // 释放锁
@@ -142,8 +139,8 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<V> asyncGet(K key) {
-        return this.asyncGetCacheValue(key)
+    public CompletableFuture<V> getAsync(K key) {
+        return this.getCacheValueAsync(key)
                 .thenApply(cacheValue -> (cacheValue != null) ? cacheValue.getValue() : null);
     }
 
@@ -154,7 +151,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<CacheValue<V>> asyncGetCacheValue(K key) {
+    public CompletableFuture<CacheValue<V>> getCacheValueAsync(K key) {
         if (key == null) {
             return this.requireNonNull("key must not be null.");
         }
@@ -170,11 +167,11 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<V> asyncGetOrLoad(K key) {
+    public CompletableFuture<V> getOrLoadAsync(K key) {
         if (this.cacheLoader == null) {
-            return this.asyncGet(key);
+            return this.getAsync(key);
         }
-        return this.asyncGetOrLoad(key, this.cacheLoader);
+        return this.getOrLoadAsync(key, this.cacheLoader);
     }
 
     @Override
@@ -193,7 +190,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<V> asyncGetOrLoad(K key, CacheLoader<K, V> cacheLoader) {
+    public CompletableFuture<V> getOrLoadAsync(K key, CacheLoader<K, V> cacheLoader) {
         if (key == null) {
             return this.requireNonNull("key must not be null.");
         }
@@ -245,7 +242,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Map<K, CacheValue<V>>> asyncGetAllCacheValues(Set<? extends K> keys) {
+    public CompletableFuture<Map<K, CacheValue<V>>> getAllCacheValuesAsync(Set<? extends K> keys) {
         if (keys == null) {
             return requireNonNull("keys must not be null.");
         }
@@ -273,7 +270,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Map<K, V>> asyncGetAll(Set<? extends K> keys) {
+    public CompletableFuture<Map<K, V>> getAllAsync(Set<? extends K> keys) {
         if (keys == null) {
             return this.requireNonNull("keys must not be null.");
         }
@@ -298,11 +295,11 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Map<K, V>> asyncGetAllOrLoad(Set<? extends K> keys) {
+    public CompletableFuture<Map<K, V>> getAllOrLoadAsync(Set<? extends K> keys) {
         if (this.cacheLoader == null) {
-            return this.asyncGetAll(keys);
+            return this.getAllAsync(keys);
         }
-        return this.asyncGetAllOrLoad(keys, this.cacheLoader);
+        return this.getAllOrLoadAsync(keys, this.cacheLoader);
     }
 
     @Override
@@ -319,7 +316,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Map<K, V>> asyncGetAllOrLoad(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
+    public CompletableFuture<Map<K, V>> getAllOrLoadAsync(Set<? extends K> keys, CacheLoader<K, V> cacheLoader) {
         if (keys == null) {
             return this.requireNonNull("keys must not be null.");
         }
@@ -348,7 +345,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Void> asyncPut(K key, V value) {
+    public CompletableFuture<Void> putAsync(K key, V value) {
         if (key == null) {
             return this.requireNonNull("key must not be null.");
         }
@@ -368,7 +365,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Void> asyncPutAll(Map<? extends K, ? extends V> keyValues) {
+    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> keyValues) {
         if (keyValues == null) {
             return this.requireNonNull("keyValues must not be null.");
         }
@@ -392,7 +389,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Void> asyncRemove(K key) {
+    public CompletableFuture<Void> removeAsync(K key) {
         if (key == null) {
             return this.requireNonNull("key must not be null.");
         }
@@ -412,7 +409,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public CompletableFuture<Void> asyncRemoveAll(Set<? extends K> keys) {
+    public CompletableFuture<Void> removeAllAsync(Set<? extends K> keys) {
         if (keys == null) {
             return this.requireNonNull("keys must not be null.");
         }
@@ -559,8 +556,8 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         // 6. 执行刷新逻辑
         this.cacheRefresh.onPutAll(keyValues.keySet());
         // 7. 记录回源成功/失败次数
-        this.statMonitor.incHitLoads(hitLoads);
-        this.statMonitor.incMissLoads(totalLoads - hitLoads);
+        this.metricsMonitor.incHitLoads(hitLoads);
+        this.metricsMonitor.incMissLoads(totalLoads - hitLoads);
     }
 
     /**
@@ -575,9 +572,9 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         this.doPut(storeKey, value);
         this.cacheRefresh.onPut(storeKey);
         if (value != null) {
-            this.statMonitor.incHitLoads(1);
+            this.metricsMonitor.incHitLoads(1);
         } else {
-            this.statMonitor.incMissLoads(1);
+            this.metricsMonitor.incMissLoads(1);
         }
     }
 

@@ -10,6 +10,7 @@ import com.igeeksky.xcache.core.ComponentManager;
 import com.igeeksky.xcache.core.SingletonSupplier;
 import com.igeeksky.xcache.domain.User;
 import com.igeeksky.xcache.extension.jackson.JacksonCodecProvider;
+import com.igeeksky.xcache.extension.metrics.LogCacheMetricsProvider;
 import com.igeeksky.xcache.props.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,13 +51,13 @@ class CacheManagerTest {
         t0.getSecond().setProvider(CacheConstants.NONE);
         t0.getThird().setProvider(CacheConstants.NONE);
 
-        StatProps statProps = new StatProps();
-        statProps.setPeriod(5000L);
-
-        ComponentManager componentManager = new ComponentManager(Executors.newSingleThreadScheduledExecutor(), statProps);
+        ComponentManager componentManager = new ComponentManager();
         componentManager.addCodecProvider(CacheConstants.JACKSON_CODEC, JacksonCodecProvider::getInstance);
         componentManager.addStoreProvider(CacheConstants.CAFFEINE_STORE, SingletonSupplier.of(() ->
                 new CaffeineStoreProvider(null, null)
+        ));
+        componentManager.addMetricsProvider(CacheConstants.LOG_CACHE_METRICS, SingletonSupplier.of(() ->
+                new LogCacheMetricsProvider(Executors.newSingleThreadScheduledExecutor(), CacheConstants.DEFAULT_METRICS_INTERVAL)
         ));
 
         CacheManagerConfig managerConfig = CacheManagerConfig.builder()

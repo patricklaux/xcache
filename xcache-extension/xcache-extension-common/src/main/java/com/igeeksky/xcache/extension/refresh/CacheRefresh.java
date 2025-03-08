@@ -1,6 +1,8 @@
 package com.igeeksky.xcache.extension.refresh;
 
 
+import com.igeeksky.xtool.core.GracefulShutdown;
+
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -11,7 +13,7 @@ import java.util.function.Predicate;
  * @author Patrick.Lau
  * @since 1.0.0
  */
-public interface CacheRefresh extends AutoCloseable {
+public interface CacheRefresh extends GracefulShutdown {
 
     /**
      * 监听缓存写入事件

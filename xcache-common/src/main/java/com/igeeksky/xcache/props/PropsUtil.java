@@ -68,9 +68,9 @@ public class PropsUtil {
             to.setKeyCodec(keyCodec);
         }
 
-        String cacheStat = StringUtils.trimToNull(from.getCacheStat());
+        String cacheStat = StringUtils.trimToNull(from.getCacheMetrics());
         if (cacheStat != null) {
-            to.setCacheStat(cacheStat);
+            to.setCacheMetrics(cacheStat);
         }
 
         replaceProps(from.getCacheLock(), to.getCacheLock());
@@ -182,6 +182,21 @@ public class PropsUtil {
         Integer refreshSequenceSize = from.getRefreshSequenceSize();
         if (refreshSequenceSize != null) {
             to.setRefreshSequenceSize(refreshSequenceSize);
+        }
+
+        Long shutdownTimeout = from.getShutdownTimeout();
+        if (shutdownTimeout != null) {
+            to.setShutdownTimeout(shutdownTimeout);
+        }
+
+        Long shutdownQuietPeriod = from.getShutdownQuietPeriod();
+        if (shutdownQuietPeriod != null) {
+            to.setShutdownQuietPeriod(shutdownQuietPeriod);
+        }
+
+        String shutdownBehavior = StringUtils.trimToNull(from.getShutdownBehavior());
+        if (shutdownBehavior != null) {
+            to.setShutdownBehavior(shutdownBehavior);
         }
 
         Boolean enableGroupPrefix = from.getEnableGroupPrefix();
@@ -306,7 +321,7 @@ public class PropsUtil {
         props.setId(id);
         props.setCharset(CacheConstants.DEFAULT_CHARSET_NAME);
         props.setKeyCodec(CacheConstants.DEFAULT_KEY_CODEC_PROVIDER);
-        props.setCacheStat(CacheConstants.DEFAULT_STAT_PROVIDER);
+        props.setCacheMetrics(CacheConstants.DEFAULT_METRICS_PROVIDER);
 
         props.setCacheLock(defaultLockProps());
         props.setCacheSync(defaultSyncProps());
@@ -331,6 +346,9 @@ public class PropsUtil {
         props.setRefreshTasksSize(CacheConstants.DEFAULT_REFRESH_TASKS_SIZE);
         props.setRefreshThreadPeriod(CacheConstants.DEFAULT_REFRESH_THREAD_PERIOD);
         props.setRefreshSequenceSize(CacheConstants.DEFAULT_REFRESH_SEQUENCE_SIZE);
+        props.setShutdownTimeout(CacheConstants.DEFAULT_SHUTDOWN_TIMEOUT);
+        props.setShutdownQuietPeriod(CacheConstants.DEFAULT_SHUTDOWN_QUIET_PERIOD);
+        props.setShutdownBehavior(CacheConstants.DEFAULT_SHUTDOWN_BEHAVIOR.name());
         props.setEnableGroupPrefix(CacheConstants.DEFAULT_ENABLE_GROUP_PREFIX);
         return props;
     }

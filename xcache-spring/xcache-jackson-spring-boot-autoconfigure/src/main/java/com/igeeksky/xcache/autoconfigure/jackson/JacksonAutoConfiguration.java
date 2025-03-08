@@ -2,6 +2,7 @@ package com.igeeksky.xcache.autoconfigure.jackson;
 
 import com.igeeksky.xcache.autoconfigure.CacheAutoConfiguration;
 import com.igeeksky.xcache.autoconfigure.register.CodecProviderRegister;
+import com.igeeksky.xcache.core.SingletonSupplier;
 import com.igeeksky.xcache.extension.jackson.GenericJacksonCodecProvider;
 import com.igeeksky.xcache.extension.jackson.JacksonCodecProvider;
 import com.igeeksky.xcache.props.CacheConstants;
@@ -28,8 +29,8 @@ public class JacksonAutoConfiguration {
     @Bean
     CodecProviderRegister jacksonCodecProviderRegister() {
         CodecProviderRegister register = new CodecProviderRegister();
-        register.put(CacheConstants.JACKSON_CODEC, JacksonCodecProvider::getInstance);
-        register.put(CacheConstants.JACKSON_SPRING_CODEC, GenericJacksonCodecProvider::getInstance);
+        register.put(CacheConstants.JACKSON_CODEC, SingletonSupplier.of(JacksonCodecProvider::getInstance));
+        register.put(CacheConstants.JACKSON_SPRING_CODEC, SingletonSupplier.of(GenericJacksonCodecProvider::getInstance));
         return register;
     }
 

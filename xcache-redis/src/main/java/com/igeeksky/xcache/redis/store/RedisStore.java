@@ -3,7 +3,7 @@ package com.igeeksky.xcache.redis.store;
 
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.Store;
-import com.igeeksky.xredis.common.RedisFutureHelper;
+import com.igeeksky.xredis.common.RedisHelper;
 import com.igeeksky.xredis.common.RedisOperationException;
 
 import java.util.Map;
@@ -20,45 +20,45 @@ public abstract class RedisStore<V> implements Store<V> {
 
     private static final String OK = "OK";
 
-    private final long batchTimeout;
+    private final long timeout;
 
     /**
      * 创建 RedisStore
      *
-     * @param batchTimeout 同步操作超时（毫秒）
+     * @param timeout 同步操作超时（毫秒）
      */
-    public RedisStore(long batchTimeout) {
-        this.batchTimeout = batchTimeout;
+    public RedisStore(long timeout) {
+        this.timeout = timeout;
     }
 
     @Override
     public CacheValue<V> getCacheValue(String key) {
-        return RedisFutureHelper.get(this.asyncGetCacheValue(key), batchTimeout);
+        return RedisHelper.get(this.getCacheValueAsync(key), timeout);
     }
 
     @Override
     public Map<String, CacheValue<V>> getAllCacheValues(Set<? extends String> keys) {
-        return RedisFutureHelper.get(this.asyncGetAllCacheValues(keys), batchTimeout);
+        return RedisHelper.get(this.getAllCacheValuesAsync(keys), timeout);
     }
 
     @Override
     public void put(String key, V value) {
-        RedisFutureHelper.get(this.asyncPut(key, value), batchTimeout);
+        RedisHelper.get(this.putAsync(key, value), timeout);
     }
 
     @Override
     public void putAll(Map<? extends String, ? extends V> keyValues) {
-        RedisFutureHelper.get(this.asyncPutAll(keyValues), batchTimeout);
+        RedisHelper.get(this.putAllAsync(keyValues), timeout);
     }
 
     @Override
     public void remove(String key) {
-        RedisFutureHelper.get(this.asyncRemove(key), batchTimeout);
+        RedisHelper.get(this.removeAsync(key), timeout);
     }
 
     @Override
     public void removeAll(Set<? extends String> keys) {
-        RedisFutureHelper.get(this.asyncRemoveAll(keys), batchTimeout);
+        RedisHelper.get(this.removeAllAsync(keys), timeout);
     }
 
     protected static Void checkResult(String result) {

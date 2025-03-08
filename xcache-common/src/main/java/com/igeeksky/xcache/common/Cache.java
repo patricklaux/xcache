@@ -49,7 +49,7 @@ public interface Cache<K, V> extends Base<K, V> {
      * @param key 键
      * @return 值（返回值为原始值）
      */
-    CompletableFuture<V> asyncGet(K key);
+    CompletableFuture<V> getAsync(K key);
 
     /**
      * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值。<p>
@@ -75,7 +75,7 @@ public interface Cache<K, V> extends Base<K, V> {
      * @param key 键
      * @return 值
      */
-    CompletableFuture<V> asyncGetOrLoad(K key);
+    CompletableFuture<V> getOrLoadAsync(K key);
 
     /**
      * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值。<p>
@@ -99,7 +99,7 @@ public interface Cache<K, V> extends Base<K, V> {
      * @param cacheLoader 回源函数
      * @return {@code CompletableFuture<V>} – 值
      */
-    CompletableFuture<V> asyncGetOrLoad(K key, CacheLoader<K, V> cacheLoader);
+    CompletableFuture<V> getOrLoadAsync(K key, CacheLoader<K, V> cacheLoader);
 
     /**
      * 批量获取缓存值
@@ -115,7 +115,7 @@ public interface Cache<K, V> extends Base<K, V> {
      * @param keys 键集
      * @return {@code CompletableFuture<Map<K, V>>} – 键值对集合
      */
-    CompletableFuture<Map<K, V>> asyncGetAll(Set<? extends K> keys);
+    CompletableFuture<Map<K, V>> getAllAsync(Set<? extends K> keys);
 
     /**
      * 1. 先从缓存取值，如果缓存命中全部数据，返回缓存数据集。<p>
@@ -141,7 +141,7 @@ public interface Cache<K, V> extends Base<K, V> {
      * @param keys 键集
      * @return {@code CompletableFuture<Map<K, V>>} – 键值对集合
      */
-    CompletableFuture<Map<K, V>> asyncGetAllOrLoad(Set<? extends K> keys);
+    CompletableFuture<Map<K, V>> getAllOrLoadAsync(Set<? extends K> keys);
 
     /**
      * 先从缓存取值，如果缓存无值，则通过 cacheLoader 回源取值
@@ -159,12 +159,12 @@ public interface Cache<K, V> extends Base<K, V> {
      * 先从缓存取值，如果缓存无值，则通过 cacheLoader 回源取值
      * <p>
      * <b>注意</b>：<p>
-     * 批量回源取值不加锁，如希望加锁，请循环调用 {@link #asyncGetOrLoad(Object, CacheLoader)}
+     * 批量回源取值不加锁，如希望加锁，请循环调用 {@link #getOrLoadAsync(Object, CacheLoader)}
      *
      * @param keys        键集
      * @param cacheLoader 回源函数
      * @return {@code CompletableFuture<Map<K, V>>} – 键值对集合
      */
-    CompletableFuture<Map<K, V>> asyncGetAllOrLoad(Set<? extends K> keys, CacheLoader<K, V> cacheLoader);
+    CompletableFuture<Map<K, V>> getAllOrLoadAsync(Set<? extends K> keys, CacheLoader<K, V> cacheLoader);
 
 }

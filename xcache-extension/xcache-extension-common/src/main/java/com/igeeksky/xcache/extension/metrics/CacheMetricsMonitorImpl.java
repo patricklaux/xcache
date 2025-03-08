@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.extension.stat;
+package com.igeeksky.xcache.extension.metrics;
 
 import com.igeeksky.xcache.props.StoreLevel;
 
@@ -11,19 +11,19 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-11
  */
-public class CacheStatMonitorImpl implements CacheStatMonitor {
+public class CacheMetricsMonitorImpl implements CacheMetricsMonitor {
 
     private final String name;
     private final String group;
 
     private final AtomicLong hitLoads = new AtomicLong();
     private final AtomicLong missLoads = new AtomicLong();
-    private AtomicReference<CacheStatCounter> noop = null;
-    private AtomicReference<CacheStatCounter> first = null;
-    private AtomicReference<CacheStatCounter> second = null;
-    private AtomicReference<CacheStatCounter> third = null;
+    private AtomicReference<CacheMetricsCounter> noop = null;
+    private AtomicReference<CacheMetricsCounter> first = null;
+    private AtomicReference<CacheMetricsCounter> second = null;
+    private AtomicReference<CacheMetricsCounter> third = null;
 
-    public CacheStatMonitorImpl(StatConfig config) {
+    public CacheMetricsMonitorImpl(MetricsConfig config) {
         this.name = config.getName();
         this.group = config.getGroup();
     }
@@ -78,39 +78,39 @@ public class CacheStatMonitorImpl implements CacheStatMonitor {
     /**
      * 采集缓存统计信息
      *
-     * @return {@link CacheStatMessage} 缓存统计信息
+     * @return {@link CacheMetricsMessage} 缓存统计信息
      */
     @Override
-    public CacheStatMessage collect() {
-        CacheStatMessage message = new CacheStatMessage(name, group);
+    public CacheMetricsMessage collect() {
+        CacheMetricsMessage message = new CacheMetricsMessage(name, group);
         message.setHitLoads(this.hitLoads.getAndSet(0));
         message.setMissLoads(this.missLoads.getAndSet(0));
 
         if (noop != null) {
-            CacheStatCounter counter = noop.getAndSet(new CacheStatCounter());
+            CacheMetricsCounter counter = noop.getAndSet(new CacheMetricsCounter());
             message.setNoop(convert(counter));
         }
 
         if (first != null) {
-            CacheStatCounter counter = first.getAndSet(new CacheStatCounter());
+            CacheMetricsCounter counter = first.getAndSet(new CacheMetricsCounter());
             message.setFirst(convert(counter));
         }
 
         if (second != null) {
-            CacheStatCounter counter = second.getAndSet(new CacheStatCounter());
+            CacheMetricsCounter counter = second.getAndSet(new CacheMetricsCounter());
             message.setSecond(convert(counter));
         }
 
         if (third != null) {
-            CacheStatCounter counter = third.getAndSet(new CacheStatCounter());
+            CacheMetricsCounter counter = third.getAndSet(new CacheMetricsCounter());
             message.setThird(convert(counter));
         }
 
         return message;
     }
 
-    private CacheStatistics convert(CacheStatCounter counter) {
-        CacheStatistics stat = new CacheStatistics();
+    private CacheMetrics convert(CacheMetricsCounter counter) {
+        CacheMetrics stat = new CacheMetrics();
         stat.setHits(counter.getHits());
         stat.setMisses(counter.getMisses());
         stat.setPuts(counter.getPuts());
@@ -122,17 +122,17 @@ public class CacheStatMonitorImpl implements CacheStatMonitor {
     @Override
     public void setCounter(StoreLevel level) {
         if (StoreLevel.FIRST == level) {
-            first = new AtomicReference<>(new CacheStatCounter());
+            first = new AtomicReference<>(new CacheMetricsCounter());
         } else if (StoreLevel.SECOND == level) {
-            second = new AtomicReference<>(new CacheStatCounter());
+            second = new AtomicReference<>(new CacheMetricsCounter());
         } else if (StoreLevel.THIRD == level) {
-            third = new AtomicReference<>(new CacheStatCounter());
+            third = new AtomicReference<>(new CacheMetricsCounter());
         } else {
-            noop = new AtomicReference<>(new CacheStatCounter());
+            noop = new AtomicReference<>(new CacheMetricsCounter());
         }
     }
 
-    private CacheStatCounter getCounter(StoreLevel level) {
+    private CacheMetricsCounter getCounter(StoreLevel level) {
         if (StoreLevel.FIRST == level) {
             return first.get();
         } else if (StoreLevel.SECOND == level) {

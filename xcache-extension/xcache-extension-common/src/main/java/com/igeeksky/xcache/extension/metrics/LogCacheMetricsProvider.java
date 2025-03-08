@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.extension.stat;
+package com.igeeksky.xcache.extension.metrics;
 
 import com.igeeksky.xtool.core.concurrent.VirtualThreadFactory;
 
@@ -15,13 +15,13 @@ import java.util.concurrent.ScheduledExecutorService;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-19
  */
-public class LogCacheStatProvider extends AbstractCacheStatProvider {
+public class LogCacheMetricsProvider extends AbstractCacheMetricsProvider {
 
     private static final ExecutorService EXECUTOR = executor();
-    private static final LogStatMessagePublisher PUBLISHER = LogStatMessagePublisher.getInstance();
+    private static final LogCacheMetricsPublisher PUBLISHER = LogCacheMetricsPublisher.getInstance();
 
-    public LogCacheStatProvider(ScheduledExecutorService scheduler, long period) {
-        super(scheduler, period);
+    public LogCacheMetricsProvider(ScheduledExecutorService scheduler, long interval) {
+        super(scheduler, interval);
     }
 
     /**
@@ -32,17 +32,17 @@ public class LogCacheStatProvider extends AbstractCacheStatProvider {
      * @param messages 缓存统计信息的消息列表，每个消息包含特定缓存的统计信息。
      */
     @Override
-    public void publish(List<CacheStatMessage> messages) {
+    public void publish(List<CacheMetricsMessage> messages) {
         EXECUTOR.submit(() -> {
             // 遍历消息列表，并打印每个消息的内容
-            for (CacheStatMessage message : messages) {
+            for (CacheMetricsMessage message : messages) {
                 PUBLISHER.publish(message);
             }
         });
     }
 
     private static ExecutorService executor() {
-        return Executors.newThreadPerTaskExecutor(new VirtualThreadFactory("cache-stat-thread-"));
+        return Executors.newThreadPerTaskExecutor(new VirtualThreadFactory("virtual-metrics-log-"));
     }
 
 }

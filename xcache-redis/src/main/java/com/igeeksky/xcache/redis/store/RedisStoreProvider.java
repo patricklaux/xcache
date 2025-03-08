@@ -17,17 +17,15 @@ import java.util.Objects;
  */
 public class RedisStoreProvider implements StoreProvider {
 
-    private final long batchTimeout;
     private final RedisOperatorProxy operator;
 
-    public RedisStoreProvider(RedisOperatorProxy operator, long batchTimeout) {
+    public RedisStoreProvider(RedisOperatorProxy operator) {
         this.operator = operator;
-        this.batchTimeout = batchTimeout;
     }
 
     @Override
     public <V> Store<V> getStore(StoreConfig<V> storeConfig) {
-        RedisStoreConfig<V> config = new RedisStoreConfig<>(storeConfig, batchTimeout);
+        RedisStoreConfig<V> config = new RedisStoreConfig<>(storeConfig);
         RedisType redisType = config.getRedisType();
         if (redisType == null || Objects.equals(RedisType.STRING, redisType)) {
             return new RedisStringStore<>(this.operator, config);

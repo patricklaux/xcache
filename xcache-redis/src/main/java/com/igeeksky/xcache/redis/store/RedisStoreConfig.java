@@ -21,8 +21,6 @@ public class RedisStoreConfig<V> {
 
     private final RedisType redisType;
 
-    private final long batchTimeout;
-
     private final long expireAfterWrite;
 
     private final int keySequenceSize;
@@ -39,8 +37,7 @@ public class RedisStoreConfig<V> {
 
     private final Compressor valueCompressor;
 
-    public RedisStoreConfig(StoreConfig<V> storeConfig, long batchTimeout) {
-        this.batchTimeout = batchTimeout;
+    public RedisStoreConfig(StoreConfig<V> storeConfig) {
         this.name = storeConfig.getName();
         this.group = storeConfig.getGroup();
         this.charset = storeConfig.getCharset();
@@ -69,10 +66,6 @@ public class RedisStoreConfig<V> {
 
     public RedisType getRedisType() {
         return redisType;
-    }
-
-    public long getBatchTimeout() {
-        return batchTimeout;
     }
 
     public long getExpireAfterWrite() {

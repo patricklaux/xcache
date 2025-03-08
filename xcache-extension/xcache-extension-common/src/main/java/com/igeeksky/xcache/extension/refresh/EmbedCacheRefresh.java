@@ -1,16 +1,13 @@
 package com.igeeksky.xcache.extension.refresh;
 
 
-import com.igeeksky.xtool.core.tuple.Tuple2;
+import com.igeeksky.xcache.extension.TasksInfo;
 import com.igeeksky.xtool.core.tuple.Tuple3;
 import com.igeeksky.xtool.core.tuple.Tuples;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -59,6 +56,10 @@ public class EmbedCacheRefresh implements CacheRefresh {
      */
     private final long refreshThreadPeriod;
 
+    protected volatile boolean shutdown = false;
+
+    private final RefreshConfig config;
+
     private final ExecutorService executor;
     private final ScheduledExecutorService scheduler;
 
@@ -77,10 +78,11 @@ public class EmbedCacheRefresh implements CacheRefresh {
 
     private final Lock lock = new ReentrantLock();
     private volatile ScheduledFuture<?> scheduledFuture;
-    private final ArrayList<Tuple2<Future<?>[], Integer>> tasksList = new ArrayList<>();
+    private final Queue<TasksInfo> tasksQueue = new ConcurrentLinkedQueue<>();
 
     public EmbedCacheRefresh(RefreshConfig config, ScheduledExecutorService scheduler, ExecutorService executor) {
         this.name = config.getName();
+        this.config = config;
         this.executor = executor;
         this.scheduler = scheduler;
         this.refreshTasksSize = config.getRefreshTasksSize();
@@ -138,15 +140,12 @@ public class EmbedCacheRefresh implements CacheRefresh {
     private void refreshTask() {
         try {
             // 1. 任务队列是否已经完成
-            if (RefreshHelper.tasksUnfinished(tasksList)) {
-                return;
+            if (RefreshHelper.tasksFinished(tasksQueue)) {
+                // 2.临时队列数据迁移至刷新队列
+                transferKeys();
+                // 3.处理当前时刻需要刷新的数据
+                doRefresh();
             }
-
-            // 2.临时队列数据迁移至刷新队列
-            transferKeys();
-
-            // 3.处理当前时刻需要刷新的数据
-            doRefresh();
         } catch (Throwable e) {
             log.error("Cache:{} ,CacheRefresh refresh task has error. {}", name, e.getMessage());
         }
@@ -156,6 +155,9 @@ public class EmbedCacheRefresh implements CacheRefresh {
      * 临时队列数据迁移至刷新队列
      */
     private void transferKeys() {
+        if (shutdown) {
+            return;
+        }
         Tuple3<String, Long, RefreshEventType> tuple;
         while ((tuple = buffer.poll()) != null) {
             if (tuple.getT3() == RefreshEventType.PUT) {
@@ -167,15 +169,18 @@ public class EmbedCacheRefresh implements CacheRefresh {
     }
 
     private void doRefresh() {
+        if (shutdown) {
+            return;
+        }
         long now = System.currentTimeMillis();
         int i = 0, j = 0, maximum = Math.min(FUTURES_LENGTH, refreshTasksSize);
 
         Future<?>[] futures = new Future<?>[maximum];
-        tasksList.add(Tuples.of(futures, 0));
+        tasksQueue.add(new TasksInfo(futures));
 
         for (Map.Entry<String, Long> entry : refreshQueue.entrySet()) {
             // 3.1.如果当前元素未到刷新时间，或任务数已达单个周期上限，则退出循环
-            if (now < entry.getValue() || ++i >= refreshTasksSize) {
+            if (shutdown || now < entry.getValue() || ++i >= refreshTasksSize) {
                 break;
             }
             // 3.2.执行 put 操作，放入缓冲队列，更新刷新时间，避免下次循环重复刷新（相当于移动 refreshQueue 队尾）
@@ -184,7 +189,7 @@ public class EmbedCacheRefresh implements CacheRefresh {
             if (j >= maximum) {
                 j = 0;
                 futures = new Future<?>[maximum];
-                tasksList.add(Tuples.of(futures, 0));
+                tasksQueue.add(new TasksInfo(futures));
             }
             // 3.4.提交刷新任务
             futures[j++] = executor.submit(new RefreshTask(this, entry.getKey(), consumer, predicate));
@@ -192,9 +197,49 @@ public class EmbedCacheRefresh implements CacheRefresh {
     }
 
     @Override
-    public void close() {
-        if (scheduledFuture != null) {
-            scheduledFuture.cancel(false);
+    public void shutdown() {
+        this.shutdown(config.getShutdownQuietPeriod(), config.getShutdownTimeout(), TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public void shutdown(long quietPeriod, long timeout, TimeUnit unit) {
+        try {
+            this.shutdownAsync(quietPeriod, timeout, unit).get(timeout, unit);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("CacheRefresh:{}, shutdown has error. [{}]", name, "Interrupted", e);
+            log.error("Cache:{} ,CacheRefresh close has error. [{}]", name, "Interrupted", e);
+        } catch (ExecutionException e) {
+            log.error("CacheRefresh:{}, shutdown has error. [{}]", name, e.getMessage(), e.getCause());
+        } catch (TimeoutException e) {
+            log.error("CacheRefresh:{}, shutdown timeout. wait:[{} {}]", name, timeout, unit.name(), e);
+        }
+    }
+
+    @Override
+    public CompletableFuture<Void> shutdownAsync() {
+        return this.shutdownAsync(config.getShutdownQuietPeriod(), config.getShutdownTimeout(), TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public CompletableFuture<Void> shutdownAsync(long quietPeriod, long timeout, TimeUnit unit) {
+        if (shutdown) {
+            return CompletableFuture.completedFuture(null);
+        }
+        lock.lock();
+        try {
+            if (shutdown) {
+                return CompletableFuture.completedFuture(null);
+            }
+            shutdown = true;
+            ScheduledFuture<?> future = this.scheduledFuture;
+            if (future == null) {
+                return CompletableFuture.completedFuture(null);
+            }
+            this.scheduledFuture = null;
+            return RefreshHelper.close(name, future, tasksQueue, quietPeriod, timeout, unit, config.getShutdownBehavior());
+        } finally {
+            lock.unlock();
         }
     }
 

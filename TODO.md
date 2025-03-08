@@ -49,15 +49,18 @@
 - [X] 【开发】 xcache-bom dependencyManagement 去除第三方依赖，避免依赖传递
 - [X] 【开发】 StreamOptions(long or Long ？选择 long)，SpringBoot 当配置项为空时返回默认值，无法覆盖为空值。
 - [X] 【开发】 xcache-bom dependencyManagement lettuce 6.5.4.RELEASE
+- [X] 【开发】 batchSize, batchTimeout 配置
+- [X] 【测试】 RedisCacheRefresh 脚本
+- [X] 【文档】 XRedis：application.xml，README.md，Reference.md
+- [X] 【开发】 ExecutorService 线程 ID 重复（创建 VirtualThreadFactory 单例对象）
+- [X] 【开发】 RedisCacheRefresh：getRefreshMembers 去除同步更新时间（使用脚本获取成员集合时更新刷新时间）
+- [X] 【开发】 CacheRefresh shutdown 可配置是否等待刷新任务完成
 
 ### 待完成任务
 
-- [ ] 【开发】 ⭐ batchSize, batchTimeout 配置
-- [ ] 【文档】 ⭐ XRedis 文档 README.md，Reference.md
-- [ ] 【测试】 ⭐ RedisCacheRefresh 脚本
-- [ ] 【文档】 ⭐ README.md，Reference.md，application.xml
-- [ ] 【思考】 ⭐ Xcache：ComponentManager, LettuceHolder close, closeAsync 释放资源
-- [ ] 【开发】 补充代码注释
-- [ ] 【开发】 ConcurrentHashMap 实现无过期时间的缓存
+- [ ] 【开发】 ⭐ CacheMetrics shutdown
+- [ ] 【思考】 RedisSpinLock future.whenComplete() 打印日志消耗 Lettuce 线程资源问题
+- [ ] 【文档】 application.yml，README.md，Reference.md
 - [ ] 【测试】 测试 Xcache 注解参数
+- [ ] 【开发】 stat ——> Metrics
 

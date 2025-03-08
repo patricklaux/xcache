@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class RedisClusterHelper {
 
-    private static final int MINIMUM_CAPACITY = 32;
+    private static final int MINIMUM_CAPACITY = 16;
     private static final int MAXIMUM_CAPACITY = 16384;
 
     private final int size;
@@ -79,10 +79,10 @@ public class RedisClusterHelper {
     }
 
     /**
-     * 获取最接近的 2 的幂次方
+     * 最接近传入值的 2的整数次幂
      *
      * @param capacity 容量
-     * @return 最接近的2的幂次方
+     * @return 最接近传入值的 2的整数次幂
      */
     private static int tableSizeFor(int capacity) {
         if (capacity <= MINIMUM_CAPACITY) {

@@ -33,20 +33,20 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
     private final long expireAfterWrite;
     private final long expireAfterWriteMin;
 
-    private final RedisOperatorProxy redisOperator;
+    private final RedisOperatorProxy operator;
     private final ExtraStoreConvertor<V> convertor;
     private final RedisClusterHelper clusterHelper;
     private final RedisHashStoreHelper<V> hashStoreHelper;
 
-    public RedisClusterHashStore(RedisOperatorProxy redisOperator, RedisStoreConfig<V> config) {
-        super(config.getBatchTimeout());
-        this.redisOperator = redisOperator;
+    public RedisClusterHashStore(RedisOperatorProxy operator, RedisStoreConfig<V> config) {
+        super(operator.getTimeout());
+        this.operator = operator;
         boolean enableRandomTtl = config.isEnableRandomTtl();
         this.expireAfterWrite = config.getExpireAfterWrite();
         this.expireAfterWriteMin = expireAfterWrite * 4 / 5;
         this.enableRandomTtl = enableRandomTtl && (expireAfterWrite - expireAfterWriteMin) > 1;
 
-        RedisHashStoreHelper.checkServerVersion(this.redisOperator, this.expireAfterWrite, config.getBatchTimeout());
+        RedisHashStoreHelper.checkServerVersion(this.operator, this.expireAfterWrite);
 
         String hashKey = config.getName();
         if (config.isEnableGroupPrefix()) {
@@ -60,45 +60,45 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
     }
 
     @Override
-    public CompletableFuture<CacheValue<V>> asyncGetCacheValue(String field) {
+    public CompletableFuture<CacheValue<V>> getCacheValueAsync(String field) {
         byte[] storeField = this.hashStoreHelper.toStoreField(field);
         byte[] storeKey = this.clusterHelper.selectKey(storeField);
-        return this.redisOperator.hget(storeKey, storeField).thenApply(this.convertor::fromExtraStoreValue);
+        return this.operator.hgetAsync(storeKey, storeField).thenApply(this.convertor::fromExtraStoreValue);
     }
 
     @Override
-    public CompletableFuture<Map<String, CacheValue<V>>> asyncGetAllCacheValues(Set<? extends String> fields) {
+    public CompletableFuture<Map<String, CacheValue<V>>> getAllCacheValuesAsync(Set<? extends String> fields) {
         Map<byte[], List<byte[]>> keyFields = this.toKeyFields(fields);
-        return this.redisOperator.hmget(keyFields).thenApply(this.hashStoreHelper::toResult);
+        return this.operator.hmgetAsync(keyFields).thenApply(this.hashStoreHelper::toResult);
     }
 
     @Override
-    public CompletableFuture<Void> asyncPut(String field, V value) {
+    public CompletableFuture<Void> putAsync(String field, V value) {
         byte[] storeField = this.hashStoreHelper.toStoreField(field);
         byte[] storeValue = this.convertor.toExtraStoreValue(value);
         byte[] storeKey = this.clusterHelper.selectKey(storeField);
         if (storeValue == null) {
-            return this.redisOperator.hdel(storeKey, storeField).thenApply(ignore -> null);
+            return this.operator.hdelAsync(storeKey, storeField).thenApply(ignore -> null);
         }
         if (this.expireAfterWrite > 0) {
             long ttl = (this.enableRandomTtl) ? randomTtl() : expireAfterWrite;
-            return this.redisOperator.hpset(storeKey, ttl, storeField, storeValue).thenApply(ignore -> null);
+            return this.operator.hpsetAsync(storeKey, ttl, storeField, storeValue).thenApply(ignore -> null);
         }
-        return this.redisOperator.hset(storeKey, storeField, storeValue).thenApply(ignore -> null);
+        return this.operator.hsetAsync(storeKey, storeField, storeValue).thenApply(ignore -> null);
     }
 
     @Override
-    public CompletableFuture<Void> asyncPutAll(Map<? extends String, ? extends V> keyValues) {
+    public CompletableFuture<Void> putAllAsync(Map<? extends String, ? extends V> keyValues) {
         if (expireAfterWrite > 0) {
             if (this.enableRandomTtl) {
-                return this.asyncPutAllRandomTtl(keyValues);
+                return this.putAllRandomTtl(keyValues);
             }
-            return this.asyncPutAllFixTtl(keyValues);
+            return this.putAllFixTtl(keyValues);
         }
-        return this.asyncPutAllNoLimitTtl(keyValues);
+        return this.putAllUnlimitedTtl(keyValues);
     }
 
-    private CompletableFuture<Void> asyncPutAllRandomTtl(Map<? extends String, ? extends V> fieldValues) {
+    private CompletableFuture<Void> putAllRandomTtl(Map<? extends String, ? extends V> fieldValues) {
         Map<byte[], List<byte[]>> removeKeyFields = Maps.newHashMap();
         Map<byte[], List<ExpiryKeyValue<byte[], byte[]>>> expiryKeysFieldsValues = Maps.newHashMap();
         fieldValues.forEach((field, value) -> {
@@ -113,12 +113,12 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
             }
         });
         if (!removeKeyFields.isEmpty()) {
-            this.redisOperator.hdel(removeKeyFields);
+            this.operator.hdelAsync(removeKeyFields);
         }
-        return this.redisOperator.hmpset(expiryKeysFieldsValues).thenApply(ignore -> null);
+        return this.operator.hmpsetAsync(expiryKeysFieldsValues).thenApply(ignore -> null);
     }
 
-    private CompletableFuture<Void> asyncPutAllFixTtl(Map<? extends String, ? extends V> fieldValues) {
+    private CompletableFuture<Void> putAllFixTtl(Map<? extends String, ? extends V> fieldValues) {
         Map<byte[], List<byte[]>> removeKeyFields = Maps.newHashMap();
         Map<byte[], List<KeyValue<byte[], byte[]>>> keyFieldValues = Maps.newHashMap(fieldValues.size());
         fieldValues.forEach((field, value) -> {
@@ -133,12 +133,12 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
             }
         });
         if (!removeKeyFields.isEmpty()) {
-            this.redisOperator.hdel(removeKeyFields);
+            this.operator.hdelAsync(removeKeyFields);
         }
-        return this.redisOperator.hmpset(keyFieldValues, expireAfterWrite).thenApply(ignore -> null);
+        return this.operator.hmpsetAsync(keyFieldValues, expireAfterWrite).thenApply(ignore -> null);
     }
 
-    private CompletableFuture<Void> asyncPutAllNoLimitTtl(Map<? extends String, ? extends V> keyValues) {
+    private CompletableFuture<Void> putAllUnlimitedTtl(Map<? extends String, ? extends V> keyValues) {
         int maximum = this.clusterHelper.calculateCapacity(keyValues.size());
         Map<byte[], List<byte[]>> removeKeyFields = Maps.newHashMap();
         Map<byte[], Map<byte[], byte[]>> keyFieldValues = Maps.newHashMap(maximum);
@@ -155,28 +155,28 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
         });
 
         if (!removeKeyFields.isEmpty()) {
-            this.redisOperator.hdel(removeKeyFields);
+            this.operator.hdelAsync(removeKeyFields);
         }
 
-        return this.redisOperator.hmset(keyFieldValues).thenApply(RedisStore::checkResult);
+        return this.operator.hmsetAsync(keyFieldValues).thenApply(RedisStore::checkResult);
     }
 
     @Override
-    public CompletableFuture<Void> asyncRemove(String field) {
+    public CompletableFuture<Void> removeAsync(String field) {
         byte[] storeField = this.hashStoreHelper.toStoreField(field);
         byte[] storeKey = this.clusterHelper.selectKey(storeField);
-        return this.redisOperator.hdel(storeKey, storeField).thenApply(ignore -> null);
+        return this.operator.hdelAsync(storeKey, storeField).thenApply(ignore -> null);
     }
 
     @Override
-    public CompletableFuture<Void> asyncRemoveAll(Set<? extends String> fields) {
-        return this.redisOperator.hdel(this.toKeyFields(fields)).thenApply(ignore -> null);
+    public CompletableFuture<Void> removeAllAsync(Set<? extends String> fields) {
+        return this.operator.hdelAsync(this.toKeyFields(fields)).thenApply(ignore -> null);
     }
 
     @Override
     public void clear() {
         byte[][] hashKeys = this.clusterHelper.getKeys();
-        this.redisOperator.del(hashKeys);
+        this.operator.del(hashKeys);
     }
 
     private Map<byte[], List<byte[]>> toKeyFields(Set<? extends String> fields) {

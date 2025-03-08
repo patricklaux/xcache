@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.extension.stat;
+package com.igeeksky.xcache.extension.metrics;
 
 import com.igeeksky.xcache.props.StoreLevel;
 
@@ -8,14 +8,14 @@ import com.igeeksky.xcache.props.StoreLevel;
  * @author Patrick.Lau
  * @since 1.0.0 2024/9/9
  */
-public class NoOpCacheStatMonitor implements CacheStatMonitor {
+public class NoOpCacheMetricsMonitor implements CacheMetricsMonitor {
 
-    private static final NoOpCacheStatMonitor INSTANCE = new NoOpCacheStatMonitor();
+    private static final NoOpCacheMetricsMonitor INSTANCE = new NoOpCacheMetricsMonitor();
 
-    private NoOpCacheStatMonitor() {
+    private NoOpCacheMetricsMonitor() {
     }
 
-    public static NoOpCacheStatMonitor getInstance() {
+    public static NoOpCacheMetricsMonitor getInstance() {
         return INSTANCE;
     }
 
@@ -48,7 +48,7 @@ public class NoOpCacheStatMonitor implements CacheStatMonitor {
     }
 
     @Override
-    public CacheStatMessage collect() {
+    public CacheMetricsMessage collect() {
         return null;
     }
 

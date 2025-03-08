@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.props;
 
+import com.igeeksky.xcache.common.ShutdownBehavior;
 import com.igeeksky.xtool.core.json.SimpleJSON;
 
 import java.util.HashMap;
@@ -28,6 +29,12 @@ public class RefreshProps {
     private Integer refreshThreadPeriod;
 
     private Integer refreshSequenceSize;
+
+    private Long shutdownTimeout;
+
+    private Long shutdownQuietPeriod;
+
+    private String shutdownBehavior;
 
     private Boolean enableGroupPrefix;
 
@@ -61,7 +68,7 @@ public class RefreshProps {
     /**
      * 设置数据刷新周期
      * <p>
-     * 默认值：3600000 单位：毫秒
+     * 默认值：3600000 单位：毫秒（必须大于 0）
      * <p>
      * {@link CacheConstants#DEFAULT_REFRESH_AFTER_WRITE}
      * <p>
@@ -87,6 +94,8 @@ public class RefreshProps {
 
     /**
      * 设置数据刷新周期
+     * <p>
+     * 默认值：3600000 单位：毫秒（必须大于 0）
      *
      * @param refreshAfterWrite 数据刷新周期
      */
@@ -97,7 +106,7 @@ public class RefreshProps {
     /**
      * 刷新线程一个周期发起运行的最大任务数
      * <p>
-     * 默认值：16384 <br>
+     * 默认值：16384 （必须大于等于 refreshSequenceSize）<br>
      * {@link CacheConstants#DEFAULT_REFRESH_TASKS_SIZE}
      * <p>
      * 增加此限制的主要目的是为了限制单个服务器同时运行的任务数，以避免服务器资源耗尽。<br>
@@ -128,6 +137,8 @@ public class RefreshProps {
 
     /**
      * 设置刷新线程一个周期发起运行的最大任务数
+     * <p>
+     * 默认值：16384 （必须大于等于 refreshSequenceSize）
      *
      * @param refreshTasksSize 刷新线程一个周期发起运行的最大任务数
      */
@@ -138,7 +149,7 @@ public class RefreshProps {
     /**
      * 刷新线程运行周期
      * <p>
-     * 默认值：10000 单位：毫秒
+     * 默认值：10000 单位：毫秒（必须大于 0）
      * <p>
      * {@link CacheConstants#DEFAULT_REFRESH_THREAD_PERIOD}
      * <p>
@@ -160,11 +171,11 @@ public class RefreshProps {
     }
 
     /**
-     * 刷新序列数量
+     * 刷新键序列数量
      * <p>
      * 适用于 Redis 集群模式，其它模式下此配置无效。
      * <p>
-     * 默认值：32 <br>
+     * 默认值：16 <br>
      * {@link CacheConstants#DEFAULT_REFRESH_SEQUENCE_SIZE}
      * <p>
      * 如使用 {@code RedisCacheRefresh} 作为缓存刷新，将使用 Redis 的 SortedSet 记录需要刷新的数据和时间。<br>
@@ -172,31 +183,123 @@ public class RefreshProps {
      * 读取或保存刷新数据时，使用 crc16 算法计算 key 的哈希值，然后取余 {@code refresh-sequence-size} 以选择使用哪个 SortedSet。
      * <p>
      * <b>示例：</b><p>
-     * 设 {@code {group: shop, name: user, sequence-size: 32, enable-group-prefix: true}}，那么 Redis 中会创建
-     * {@code ["refresh:shop:user:0"、"refresh:shop:user:1", "refresh:shop:user:2", ……, "refresh:shop:user:30", ""refresh:shop:user:31"]}
-     * 共 32个 SortedSet。
+     * 设 {@code {group: shop, name: user, sequence-size: 16, enable-group-prefix: true}}，那么 Redis 中会创建
+     * {@code ["refresh:shop:user:0"、"refresh:shop:user:1", "refresh:shop:user:2", ……, "refresh:shop:user:14", ""refresh:shop:user:15"]}
+     * 共 16个 SortedSet。
      * <p>
      * <b>注意：</b><p>
      * 1、Redis 集群节点数越多，此配置值应越大。<br>
-     * 2、最小值为 32，最大值为 16384。<br>
-     * 3、此值应为 2 的 n 次方，如 32、64、128、256 等。<br>
+     * 2、最小值为 16，最大值为 16384。<br>
+     * 3、配置值如非 2 的整数次幂，将自动转换为 2 的整数次幂。<br>
      * 4、配置值不宜过小：过小会导致数据倾斜。<br>
      * 5、配置值不宜过大：因为刷新线程运行时会遍历所有的 SortedSet，更多的 SortedSet，意味着更多的网络请求。<br>
-     * 建议 {@code sequence-size ≈ (节点数量 × 4)}
+     * 建议 {@code sequence-size ≈ (主节点数量 × 4)}
      *
-     * @return {@link Integer} - 序列数量
+     * @return {@link Integer} - 刷新键序列数量
      */
     public Integer getRefreshSequenceSize() {
         return refreshSequenceSize;
     }
 
     /**
-     * 设置刷新序列数量
+     * 刷新键序列数量
      *
-     * @param refreshSequenceSize 刷新序列数量
+     * @param refreshSequenceSize 刷新键序列数量
      */
     public void setRefreshSequenceSize(Integer refreshSequenceSize) {
         this.refreshSequenceSize = refreshSequenceSize;
+    }
+
+    /**
+     * 等待刷新任务执行完毕的最大时长
+     * <p>
+     * 默认值：2000 单位：毫秒（必须大于 0）
+     * <p>
+     * {@link CacheConstants#DEFAULT_SHUTDOWN_TIMEOUT}
+     * <p>
+     * 如配置为 2000，超过 2000ms 仍未执行完毕的刷新任务可能会被抛弃。
+     *
+     * @return {@link Long} - 等待刷新任务执行完毕的最大时长
+     */
+    public Long getShutdownTimeout() {
+        return shutdownTimeout;
+    }
+
+    /**
+     * 设置等待刷新任务队列执行完毕的最大时长
+     * <p>
+     * 默认值：2000 单位：毫秒（必须大于 0）
+     * <p>
+     * {@link CacheConstants#DEFAULT_SHUTDOWN_TIMEOUT}
+     * <p>
+     * 如配置为 2000，等待超过 2000ms 后仍未执行完毕的刷新任务可能会被抛弃。
+     *
+     * @param shutdownTimeout 等待刷新任务队列执行完毕的最大时长
+     */
+    public void setShutdownTimeout(Long shutdownTimeout) {
+        this.shutdownTimeout = shutdownTimeout;
+    }
+
+    /**
+     * 静默期：等待刷新任务队列执行完毕的最短时长
+     * <p>
+     * 默认值：100 单位：毫秒（必须小于 shutdownTimeout）
+     * <p>
+     * {@link CacheConstants#DEFAULT_SHUTDOWN_QUIET_PERIOD}
+     *
+     * @return {@link Long} - 等待刷新任务队列执行完毕的最短时长
+     */
+    public Long getShutdownQuietPeriod() {
+        return shutdownQuietPeriod;
+    }
+
+    /**
+     * 静默期：等待刷新任务队列执行完毕的最短时长
+     * <p>
+     * 默认值：100 单位：毫秒（必须小于 shutdownTimeout）
+     * <p>
+     * {@link CacheConstants#DEFAULT_SHUTDOWN_QUIET_PERIOD}
+     *
+     * @param shutdownQuietPeriod 等待刷新任务队列执行完毕的最短时长
+     */
+    public void setShutdownQuietPeriod(Long shutdownQuietPeriod) {
+        this.shutdownQuietPeriod = shutdownQuietPeriod;
+    }
+
+    /**
+     * 刷新任务队列关闭行为
+     * <p>
+     * 默认值：IGNORE <br>
+     * {@link CacheConstants#DEFAULT_SHUTDOWN_BEHAVIOR}
+     * <p>
+     * <b>AWAIT</b>：等待刷新任务队列的所有任务执行完毕，最大等待时长：shutdown_timeout。<br>
+     * <b>IGNORE</b>：不做任何处理，既不取消也不等待。<br>
+     * <b>CANCEL</b>：取消任务队列中尚未开始的刷新任务。
+     * <b>INTERRUPT</b>：取消任务队列中尚未开始的刷新任务，并试图中断已在运行的刷新任务。
+     *
+     * @return {@link String} - 刷新任务队列关闭行为
+     * @see ShutdownBehavior
+     */
+    public String getShutdownBehavior() {
+        return shutdownBehavior;
+    }
+
+    /**
+     * 刷新任务队列关闭行为
+     * <p>
+     * 默认值：IGNORE <br>
+     * {@link CacheConstants#DEFAULT_SHUTDOWN_BEHAVIOR}
+     * <p>
+     * <b>AWAIT</b>：等待刷新任务队列的所有任务执行完毕，最大等待时长：shutdown_timeout。<br>
+     * <b>IGNORE</b>：不做任何处理，既不取消也不等待。<br>
+     * <b>CANCEL</b>：取消任务队列中尚未开始的刷新任务。
+     * <b>INTERRUPT</b>：取消任务队列中尚未开始的刷新任务，并试图中断已在运行的刷新任务。
+     *
+     * @param shutdownBehavior 刷新任务队列关闭行为
+     * @see ShutdownBehavior
+     */
+    public void setShutdownBehavior(String shutdownBehavior) {
+        this.shutdownBehavior = shutdownBehavior;
     }
 
     /**
@@ -212,14 +315,12 @@ public class RefreshProps {
      * 如果 enableGroupPrefix 为 true，生成的刷新相关的 key 如下：
      * <p>
      * 用于保存所有访问记录：{@code String refreshKey = "refresh:" + group + ":" + cacheName} <br>
-     * 用于刷新任务执行的锁：{@code String refreshLockKey = "refresh:lock:" + group + ":" + cacheName} <br>
-     * 用于刷新任务时间记录：{@code String refreshPeriodKey = "refresh:period:" + group + ":" + cacheName}
+     * 用于刷新任务执行的锁：{@code String refreshLockKey = "refresh:lock:" + group + ":" + cacheName}
      * <p>
      * 如果 enableGroupPrefix 为 false，生成的刷新相关的 key 如下：
      * <p>
      * 用于保存所有访问记录：{@code String refreshKey = "refresh:" + cacheName} <br>
-     * 用于刷新任务执行的锁：{@code String refreshLockKey = "refresh:lock:" + cacheName} <br>
-     * 用于刷新任务时间记录：{@code String refreshPeriodKey = "refresh:period:" + cacheName}
+     * 用于刷新任务执行的锁：{@code String refreshLockKey = "refresh:lock:" + cacheName}
      *
      * @return {@link Boolean} – 是否附加 group 作为键前缀
      */
@@ -241,7 +342,7 @@ public class RefreshProps {
      * <p>
      * 自定义扩展实现时，如需用到额外的未定义参数，可在此配置。
      * <p>
-     * 如使用 xcache 内置实现，则无需此配置。<br>
+     * 如无自定义扩展，则无需配置。<br>
      * 如不使用，请删除，否则会导致 SpringBoot 读取配置错误而启动失败。
      *
      * @return {@link Map} - 扩展参数

@@ -3,7 +3,7 @@ package com.igeeksky.xcache.core;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.core.store.StoreProxy;
-import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xcache.props.StoreLevel;
 import com.igeeksky.xtool.core.collection.Maps;
@@ -31,7 +31,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     public ThreeLevelCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend, Store<V>[] stores) {
         super(config, extend);
         this.syncMonitor = extend.getSyncMonitor();
-        CacheStatMonitor statMonitor = extend.getStatMonitor();
+        CacheMetricsMonitor statMonitor = extend.getMetricsMonitor();
         StoreLevel[] levels = StoreLevel.values();
         for (int i = 0; i < LENGTH; i++) {
             this.stores[i] = new StoreProxy<>(stores[i], levels[i], statMonitor);
@@ -64,23 +64,23 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected CompletableFuture<CacheValue<V>> doAsyncGet(String storeKey) {
-        return stores[0].asyncGetCacheValue(storeKey)
+        return stores[0].getCacheValueAsync(storeKey)
                 .thenCompose(firstValue -> {
                     if (firstValue != null) {
                         return CompletableFuture.completedFuture(firstValue);
                     }
-                    return stores[1].asyncGetCacheValue(storeKey)
+                    return stores[1].getCacheValueAsync(storeKey)
                             .thenCompose(secondValue -> {
                                 if (secondValue != null) {
-                                    stores[0].asyncPut(storeKey, secondValue.getValue());
+                                    stores[0].putAsync(storeKey, secondValue.getValue());
                                     return CompletableFuture.completedFuture(secondValue);
                                 }
-                                return stores[2].asyncGetCacheValue(storeKey)
+                                return stores[2].getCacheValueAsync(storeKey)
                                         .whenComplete((thirdValue, t) -> {
                                             if (thirdValue != null) {
                                                 V value = thirdValue.getValue();
-                                                stores[1].asyncPut(storeKey, value)
-                                                        .thenCompose(vod -> stores[0].asyncPut(storeKey, value));
+                                                stores[1].putAsync(storeKey, value)
+                                                        .thenCompose(vod -> stores[0].putAsync(storeKey, value));
                                             }
                                         });
                             });
@@ -105,19 +105,19 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     @Override
     protected CompletableFuture<Map<String, CacheValue<V>>> doAsyncGetAll(Set<String> keys) {
         Set<String> cloneKeys = new HashSet<>(keys);
-        return stores[0].asyncGetAllCacheValues(cloneKeys)
+        return stores[0].getAllCacheValuesAsync(cloneKeys)
                 .thenCompose(firstAll -> {
                     Map<String, CacheValue<V>> result = addToResult(firstAll, cloneKeys, keys.size());
                     if (cloneKeys.isEmpty()) {
                         return CompletableFuture.completedFuture(result);
                     }
-                    return stores[1].asyncGetAllCacheValues(cloneKeys)
+                    return stores[1].getAllCacheValuesAsync(cloneKeys)
                             .thenCompose(secondAll -> {
                                 addToResult(result, cloneKeys, secondAll, stores[0]);
                                 if (cloneKeys.isEmpty()) {
                                     return CompletableFuture.completedFuture(result);
                                 }
-                                return stores[2].asyncGetAllCacheValues(cloneKeys)
+                                return stores[2].getAllCacheValuesAsync(cloneKeys)
                                         .thenApply(thirdAll -> {
                                             addToResult(result, cloneKeys, thirdAll, stores[0], stores[1]);
                                             return result;
@@ -161,7 +161,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
                 CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
                 for (int i = lowerStores.length - 1; i >= 0; i--) {
                     Store<V> store = lowerStores[i];
-                    future = future.thenCompose(ignored -> store.asyncPutAll(saveToLower));
+                    future = future.thenCompose(ignored -> store.putAllAsync(saveToLower));
                 }
             }
         }
@@ -177,9 +177,9 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected CompletableFuture<Void> doAsyncPut(String key, V value) {
-        return stores[2].asyncPut(key, value)
-                .thenCompose(ignored -> stores[1].asyncPut(key, value))
-                .thenCompose(ignored -> stores[0].asyncPut(key, value))
+        return stores[2].putAsync(key, value)
+                .thenCompose(ignored -> stores[1].putAsync(key, value))
+                .thenCompose(ignored -> stores[0].putAsync(key, value))
                 .whenCompleteAsync((ignored, throwable) -> {
                     if (throwable == null) {
                         syncMonitor.afterPut(key);
@@ -197,9 +197,9 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected CompletableFuture<Void> doAsyncPutAll(Map<String, ? extends V> keyValues) {
-        return stores[2].asyncPutAll(keyValues)
-                .thenCompose(ignored -> stores[1].asyncPutAll(keyValues))
-                .thenCompose(ignored -> stores[0].asyncPutAll(keyValues))
+        return stores[2].putAllAsync(keyValues)
+                .thenCompose(ignored -> stores[1].putAllAsync(keyValues))
+                .thenCompose(ignored -> stores[0].putAllAsync(keyValues))
                 .whenCompleteAsync((ignored, throwable) -> {
                     if (throwable == null) {
                         syncMonitor.afterPutAll(keyValues.keySet());
@@ -217,9 +217,9 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected CompletableFuture<Void> doAsyncRemove(String key) {
-        return stores[2].asyncRemove(key)
-                .thenCompose(ignored -> stores[1].asyncRemove(key))
-                .thenCompose(ignored -> stores[0].asyncRemove(key))
+        return stores[2].removeAsync(key)
+                .thenCompose(ignored -> stores[1].removeAsync(key))
+                .thenCompose(ignored -> stores[0].removeAsync(key))
                 .whenCompleteAsync((ignored, throwable) -> {
                     if (throwable == null) {
                         syncMonitor.afterRemove(key);
@@ -237,9 +237,9 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
 
     @Override
     protected CompletableFuture<Void> doAsyncRemoveAll(Set<String> keys) {
-        return stores[2].asyncRemoveAll(keys)
-                .thenCompose(ignored -> stores[1].asyncRemoveAll(keys))
-                .thenCompose(ignored -> stores[0].asyncRemoveAll(keys))
+        return stores[2].removeAllAsync(keys)
+                .thenCompose(ignored -> stores[1].removeAllAsync(keys))
+                .thenCompose(ignored -> stores[0].removeAllAsync(keys))
                 .whenCompleteAsync((ignored, throwable) -> {
                     if (throwable == null) {
                         syncMonitor.afterRemoveAll(keys);
