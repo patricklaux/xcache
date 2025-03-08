@@ -1,7 +1,7 @@
 package com.igeeksky.xcache.autoconfigure.redis;
 
 
-import com.igeeksky.xcache.redis.stat.RedisCacheStatProvider;
+import com.igeeksky.xcache.redis.metrics.RedisCacheMetricsProvider;
 import com.igeeksky.xredis.common.RedisOperatorProxy;
 import com.igeeksky.xredis.common.stream.container.StreamContainer;
 import com.igeeksky.xredis.lettuce.api.RedisOperatorFactory;
@@ -24,7 +24,7 @@ public class LettuceConfig {
 
     private StreamOptions stream;
 
-    private RedisStatOptions stat;
+    private RedisMetricsOptions metrics;
 
     private RedisSyncOptions sync;
 
@@ -91,21 +91,21 @@ public class LettuceConfig {
      * Redis 缓存指标统计配置
      * <p>
      * <b>注意：</b>
-     * {@link RedisCacheStatProvider} 仅负责采集并发送缓存指标统计信息到指定 Stream，统计信息消费端需自行实现。
+     * {@link RedisCacheMetricsProvider} 仅负责采集并发送缓存指标统计信息到指定 Stream，统计信息消费端需自行实现。
      *
-     * @return {@link RedisStatOptions} – Redis 缓存指标统计配置
+     * @return {@link RedisMetricsOptions} – Redis 缓存指标统计配置
      */
-    public RedisStatOptions getStat() {
-        return stat;
+    public RedisMetricsOptions getMetrics() {
+        return metrics;
     }
 
     /**
      * Redis 缓存指标统计配置
      *
-     * @param stat Redis 缓存指标统计配置
+     * @param metrics Redis 缓存指标统计配置
      */
-    public void setStat(RedisStatOptions stat) {
-        this.stat = stat;
+    public void setMetrics(RedisMetricsOptions metrics) {
+        this.metrics = metrics;
     }
 
     /**

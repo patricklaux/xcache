@@ -1,5 +1,7 @@
 package com.igeeksky.xcache.extension.refresh;
 
+import com.igeeksky.xcache.common.ShutdownBehavior;
+import com.igeeksky.xcache.props.CacheConstants;
 import com.igeeksky.xtool.core.lang.Assert;
 
 import java.nio.charset.Charset;
@@ -28,8 +30,6 @@ public class RefreshConfig {
 
     private final String refreshLockKey;
 
-    private final String refreshPeriodKey;
-
     private final int refreshThreadPeriod;
 
     private final int refreshSequenceSize;
@@ -37,6 +37,12 @@ public class RefreshConfig {
     private final int refreshTasksSize;
 
     private final int refreshAfterWrite;
+
+    private final long shutdownTimeout;
+
+    private final long shutdownQuietPeriod;
+
+    private final ShutdownBehavior shutdownBehavior;
 
     private final boolean enableGroupPrefix;
 
@@ -52,16 +58,17 @@ public class RefreshConfig {
         this.refreshTasksSize = builder.refreshTasksSize;
         this.refreshAfterWrite = builder.refreshAfterWrite;
         this.refreshSequenceSize = builder.refreshSequenceSize;
+        this.shutdownTimeout = builder.shutdownTimeout;
+        this.shutdownQuietPeriod = builder.shutdownQuietPeriod;
+        this.shutdownBehavior = builder.shutdownBehavior;
         this.enableGroupPrefix = builder.enableGroupPrefix;
         this.params = builder.params;
         if (this.enableGroupPrefix) {
             this.refreshKey = "refresh:" + this.group + ":" + this.name;
             this.refreshLockKey = "refresh:lock:" + this.group + ":" + this.name;
-            this.refreshPeriodKey = "refresh:period:" + this.group + ":" + this.name;
         } else {
             this.refreshKey = "refresh:" + this.name;
             this.refreshLockKey = "refresh:lock:" + this.name;
-            this.refreshPeriodKey = "refresh:period:" + this.name;
         }
     }
 
@@ -89,10 +96,6 @@ public class RefreshConfig {
         return refreshLockKey;
     }
 
-    public String getRefreshPeriodKey() {
-        return refreshPeriodKey;
-    }
-
     public long getRefreshThreadPeriod() {
         return refreshThreadPeriod;
     }
@@ -107,6 +110,18 @@ public class RefreshConfig {
 
     public int getRefreshSequenceSize() {
         return refreshSequenceSize;
+    }
+
+    public long getShutdownTimeout() {
+        return shutdownTimeout;
+    }
+
+    public long getShutdownQuietPeriod() {
+        return shutdownQuietPeriod;
+    }
+
+    public ShutdownBehavior getShutdownBehavior() {
+        return shutdownBehavior;
     }
 
     public String getSid() {
@@ -135,66 +150,164 @@ public class RefreshConfig {
 
         private String provider;
 
-        private Charset charset;
+        private Charset charset = CacheConstants.DEFAULT_CHARSET;
 
-        private int refreshTasksSize;
+        private int refreshTasksSize = CacheConstants.DEFAULT_REFRESH_TASKS_SIZE;
 
-        private int refreshAfterWrite;
+        private int refreshSequenceSize = CacheConstants.DEFAULT_REFRESH_SEQUENCE_SIZE;
 
-        private int refreshSequenceSize;
+        private int refreshAfterWrite = CacheConstants.DEFAULT_REFRESH_AFTER_WRITE;
 
-        private int refreshThreadPeriod;
+        private int refreshThreadPeriod = CacheConstants.DEFAULT_REFRESH_THREAD_PERIOD;
 
-        private boolean enableGroupPrefix;
+        private long shutdownTimeout = CacheConstants.DEFAULT_SHUTDOWN_TIMEOUT;
+
+        private long shutdownQuietPeriod = CacheConstants.DEFAULT_SHUTDOWN_QUIET_PERIOD;
+
+        private ShutdownBehavior shutdownBehavior = CacheConstants.DEFAULT_SHUTDOWN_BEHAVIOR;
+
+        private boolean enableGroupPrefix = CacheConstants.DEFAULT_ENABLE_GROUP_PREFIX;
 
         private final Map<String, Object> params = new HashMap<>();
 
+        /**
+         * 应用实例 ID（不能为空）
+         *
+         * @param sid 应用实例 ID
+         * @return {@code this} – Builder
+         */
         public Builder sid(String sid) {
             this.sid = sid;
             return this;
         }
 
+        /**
+         * 缓存名称（不能为空）
+         *
+         * @param name 缓存名称
+         * @return {@code this} – Builder
+         */
         public Builder name(String name) {
             this.name = name;
             return this;
         }
 
+        /**
+         * 组名称（不能为空）
+         *
+         * @param group 组名称
+         * @return {@code this} – Builder
+         */
         public Builder group(String group) {
             this.group = group;
             return this;
         }
 
+        /**
+         * 缓存数据刷新器工厂 ID（不能为空）
+         *
+         * @param provider 缓存数据刷新器工厂 ID
+         * @return {@code this} – Builder
+         */
         public Builder provider(String provider) {
             this.provider = provider;
             return this;
         }
 
+        /**
+         * 字符集（不能为空）
+         *
+         * @param charset 字符集
+         * @return {@code this} – Builder
+         */
         public Builder charset(Charset charset) {
             this.charset = charset;
             return this;
         }
 
+        /**
+         * 数据刷新周期（大于 0）
+         *
+         * @param refreshAfterWrite 数据刷新周期
+         * @return {@code this} – Builder
+         */
         public Builder refreshAfterWrite(int refreshAfterWrite) {
             this.refreshAfterWrite = refreshAfterWrite;
             return this;
         }
 
+        /**
+         * 刷新任务队列大小（大于等于 refreshSequenceSize）
+         *
+         * @param refreshTasksSize 刷新任务队列大小
+         * @return {@code this} – Builder
+         */
         public Builder refreshTasksSize(int refreshTasksSize) {
             this.refreshTasksSize = refreshTasksSize;
             return this;
         }
 
+        /**
+         * 刷新线程执行周期（大于 0）
+         *
+         * @param refreshThreadPeriod 刷新线程执行周期
+         * @return {@code this} – Builder
+         */
         public Builder refreshThreadPeriod(int refreshThreadPeriod) {
-            Assert.isTrue(refreshThreadPeriod >= 10, "refreshThreadPeriod must be greater than or equal to 10");
             this.refreshThreadPeriod = refreshThreadPeriod;
             return this;
         }
 
+        /**
+         * 刷新键序列数量（大于等于 16）
+         *
+         * @param refreshSequenceSize 刷新键序列数量
+         * @return {@code this} – Builder
+         */
         public Builder refreshSequenceSize(int refreshSequenceSize) {
             this.refreshSequenceSize = refreshSequenceSize;
             return this;
         }
 
+        /**
+         * 停止任务队列最大等待时长（大于 0）
+         *
+         * @param shutdownTimeout 停止任务队列最大等待时长
+         * @return {@code this} – Builder
+         */
+        public Builder shutdownTimeout(long shutdownTimeout) {
+            this.shutdownTimeout = shutdownTimeout;
+            return this;
+        }
+
+        /**
+         * 静默期：停止任务队列最小等待时长（小于 shutdownTimeout）
+         *
+         * @param shutdownQuietPeriod 停止任务队列最小等待时长
+         * @return {@code this} – Builder
+         */
+        public Builder shutdownQuietPeriod(long shutdownQuietPeriod) {
+            this.shutdownQuietPeriod = shutdownQuietPeriod;
+            return this;
+        }
+
+        /**
+         * 关闭行为（不能为空）
+         *
+         * @param shutdownBehavior 关闭行为
+         * @return {@code this} – Builder
+         */
+        public Builder shutdownBehavior(ShutdownBehavior shutdownBehavior) {
+            this.shutdownBehavior = shutdownBehavior;
+            return this;
+        }
+
+        /**
+         * 是否启用组前缀（默认为 false）
+         *
+         * @param enableGroupPrefix 是否启用组前缀
+         * @return {@code this} – Builder
+         */
         public Builder enableGroupPrefix(boolean enableGroupPrefix) {
             this.enableGroupPrefix = enableGroupPrefix;
             return this;
@@ -208,6 +321,19 @@ public class RefreshConfig {
         }
 
         public RefreshConfig build() {
+            Assert.notNull(sid, "sid must not be null");
+            Assert.notNull(name, "name must not be null");
+            Assert.notNull(group, "group must not be null");
+            Assert.notNull(provider, "provider must not be null");
+            Assert.notNull(charset, "charset must not be null");
+            Assert.notNull(provider, "provider must not be null");
+            Assert.isTrue(refreshThreadPeriod > 0, "refreshThreadPeriod must be greater than 0");
+            Assert.isTrue(refreshSequenceSize >= 16, "refreshSequenceSize must be greater than or equal to 16");
+            Assert.isTrue(refreshTasksSize >= refreshSequenceSize, "refreshTasksSize must be greater than or equal to refreshSequenceSize");
+            Assert.isTrue(refreshAfterWrite > 0, "refreshAfterWrite must be greater than 0");
+            Assert.isTrue(shutdownTimeout > 0, "shutdownTimeout must be greater than 0");
+            Assert.isTrue(shutdownQuietPeriod < shutdownTimeout, "shutdownQuietPeriod must be less than shutdownTimeout");
+            Assert.notNull(shutdownBehavior, "shutdownBehavior must not be null");
             return new RefreshConfig(this);
         }
 

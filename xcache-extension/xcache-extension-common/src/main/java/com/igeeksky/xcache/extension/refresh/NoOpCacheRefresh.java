@@ -1,14 +1,16 @@
 package com.igeeksky.xcache.extension.refresh;
 
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
- * 缓存刷新代理
+ * 缓存数据刷新（无操作类）
  *
  * @author Patrick.Lau
- * @since 1.0.0 2024/9/4
+ * @since 1.0.0
  */
 public class NoOpCacheRefresh implements CacheRefresh {
 
@@ -42,6 +44,21 @@ public class NoOpCacheRefresh implements CacheRefresh {
     }
 
     @Override
-    public void close() throws Exception {
+    public void shutdown() {
     }
+
+    @Override
+    public void shutdown(long quietPeriod, long timeout, TimeUnit unit) {
+    }
+
+    @Override
+    public CompletableFuture<Void> shutdownAsync() {
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Override
+    public CompletableFuture<Void> shutdownAsync(long quietPeriod, long timeout, TimeUnit unit) {
+        return CompletableFuture.completedFuture(null);
+    }
+
 }

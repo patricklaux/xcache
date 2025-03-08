@@ -3,8 +3,8 @@ package com.igeeksky.xcache.autoconfigure;
 
 import com.igeeksky.xcache.autoconfigure.register.*;
 import com.igeeksky.xcache.core.*;
+import com.igeeksky.xcache.extension.metrics.LogCacheMetricsProvider;
 import com.igeeksky.xcache.extension.refresh.EmbedCacheRefreshProvider;
-import com.igeeksky.xcache.extension.stat.LogCacheStatProvider;
 import com.igeeksky.xcache.props.CacheConstants;
 import com.igeeksky.xtool.core.lang.Assert;
 import org.slf4j.Logger;
@@ -27,6 +27,7 @@ import java.util.concurrent.ScheduledExecutorService;
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter({CacheProperties.class})
 @EnableConfigurationProperties({CacheProperties.class})
+@SuppressWarnings("unused")
 public class CacheAutoConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(CacheAutoConfiguration.class);
@@ -46,7 +47,7 @@ public class CacheAutoConfiguration {
                               ObjectProvider<StoreProviderRegister> storeRegisters,
                               ObjectProvider<CodecProviderRegister> codecRegisters,
                               ObjectProvider<CacheSyncProviderRegister> syncRegisters,
-                              ObjectProvider<CacheStatProviderRegister> statRegisters,
+                              ObjectProvider<CacheMetricsProviderRegister> metricsRegisters,
                               ObjectProvider<CacheLockProviderRegister> lockRegisters,
                               ObjectProvider<ContainsPredicateRegister> predicateRegisters,
                               ObjectProvider<CacheRefreshProviderRegister> refreshRegisters,
@@ -74,8 +75,8 @@ public class CacheAutoConfiguration {
             holder.getAll().forEach(componentManager::addSyncProvider);
         }
 
-        for (CacheStatProviderRegister holder : statRegisters) {
-            holder.getAll().forEach(componentManager::addStatProvider);
+        for (CacheMetricsProviderRegister holder : metricsRegisters) {
+            holder.getAll().forEach(componentManager::addMetricsProvider);
         }
 
         for (CacheLockProviderRegister holder : lockRegisters) {
@@ -101,15 +102,15 @@ public class CacheAutoConfiguration {
     }
 
     @Bean(destroyMethod = "shutdown")
-    CacheStatProviderRegister logCacheStatProviderRegister(ScheduledExecutorService scheduler) {
-        long interval = (cacheProperties.getLogStatInterval() != null) ?
-                cacheProperties.getLogStatInterval() :
-                CacheConstants.DEFAULT_STAT_INTERVAL;
+    CacheMetricsProviderRegister logCacheMetricsProviderRegister(ScheduledExecutorService scheduler) {
+        long interval = (cacheProperties.getLogMetricsInterval() != null) ?
+                cacheProperties.getLogMetricsInterval() :
+                CacheConstants.DEFAULT_METRICS_INTERVAL;
         Assert.isTrue(interval > 0, "log-stat-interval must be greater than 0");
 
-        CacheStatProviderRegister register = new CacheStatProviderRegister();
-        register.put(CacheConstants.LOG_CACHE_STAT,
-                SingletonSupplier.of(() -> new LogCacheStatProvider(scheduler, interval)));
+        CacheMetricsProviderRegister register = new CacheMetricsProviderRegister();
+        register.put(CacheConstants.LOG_CACHE_METRICS,
+                SingletonSupplier.of(() -> new LogCacheMetricsProvider(scheduler, interval)));
         return register;
     }
 

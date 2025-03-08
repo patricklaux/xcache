@@ -1,13 +1,12 @@
 package com.igeeksky.xcache.redis.refresh;
 
+import com.igeeksky.xcache.extension.TasksInfo;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.extension.refresh.RefreshTask;
 import com.igeeksky.xcache.redis.RedisClusterHelper;
-import com.igeeksky.xredis.common.RedisHelper;
 import com.igeeksky.xredis.common.RedisOperatorProxy;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.collection.Maps;
-import com.igeeksky.xtool.core.tuple.Tuples;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -22,11 +21,13 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
 
+    private final ExecutorService executor;
     private final RedisClusterHelper clusterHelper;
 
     public RedisClusterCacheRefresh(RefreshConfig config, ScheduledExecutorService scheduler,
                                     ExecutorService executor, RedisOperatorProxy operator) {
-        super(config, scheduler, executor, operator);
+        super(config, scheduler, operator);
+        this.executor = executor;
         String refreshKey = config.getRefreshKey();
         int sequenceSize = config.getRefreshSequenceSize();
         this.clusterHelper = new RedisClusterHelper(sequenceSize, refreshKey, this.stringCodec);
@@ -36,7 +37,7 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
     public void onPut(String key) {
         byte[] member = stringCodec.encode(key);
         byte[] refreshKey = clusterHelper.selectKey(member);
-        this.put(refreshKey, member);
+        this.put(new byte[][]{refreshKey}, new byte[][]{refreshAfterWrite, member});
     }
 
     @Override
@@ -45,10 +46,15 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
         for (String key : keys) {
             byte[] member = stringCodec.encode(key);
             byte[] refreshKey = clusterHelper.selectKey(member);
-            map.computeIfAbsent(refreshKey, k -> new ArrayList<>()).add(member);
+            map.computeIfAbsent(refreshKey, k -> {
+                List<byte[]> list = new ArrayList<>();
+                list.add(refreshAfterWrite);
+                return list;
+            }).add(member);
         }
         for (Map.Entry<byte[], List<byte[]>> entry : map.entrySet()) {
-            this.put(entry.getKey(), entry.getValue());
+            List<byte[]> refreshArgs = entry.getValue();
+            this.put(new byte[][]{entry.getKey()}, refreshArgs.toArray(new byte[refreshArgs.size()][]));
         }
     }
 
@@ -74,31 +80,32 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
     }
 
     protected void doRefresh() {
+        if (isShutdown()) {
+            return;
+        }
         // SortedSet 键序列
         final List<byte[]> refreshKeys = new LinkedList<>(clusterHelper.getKeysList());
         // 最大任务数，大于等于键的数量，确保每个 SortedSet 至少能刷新 1 个元素（避免 refreshTasksSize 设定过小）
-        final int maximum = Math.max(refreshKeys.size(), refreshTasksSize);
+        final int maximum = Math.max(refreshKeys.size(), config.getRefreshTasksSize());
         // maximum / keysSize，确保每个 SortedSet 都能刷新至少 count 个元素
-        final int count = maximum / refreshKeys.size();
+        final int count = Math.min(FUTURES_LENGTH, maximum / refreshKeys.size());
         // futures 数组长度
         final int length = Math.min(FUTURES_LENGTH, maximum);
 
         // index：futures 当前可写位置；total：已提交的总任务数
         int index = 0, total = 0;
         Future<?>[] futures = new Future<?>[length];
-        this.tasksList.add(Tuples.of(futures, 0));
+        this.tasksQueue.add(new TasksInfo(futures));
 
-        // 当前服务器时间
-        final long now = this.getServerTime();
         // 两层嵌套循环，目的是为了确保每一个 SortedSet 都能至少刷新一次
         // 外层循环：每一轮刷新一遍 refreshKeys，当一轮刷新过后，仍有 refreshKey 包含待刷新的成员集合，则再刷新一轮
         // 内层循环：循环刷新每一个 refreshKey，每一个 SortedSet 每次最多刷新 count 个元素
-        while (total < maximum && !refreshKeys.isEmpty()) {
+        while (!isShutdown() && total < maximum && !refreshKeys.isEmpty()) {
             Iterator<byte[]> iterator = refreshKeys.iterator();
-            while (total < maximum && iterator.hasNext()) {
+            while (!isShutdown() && total < maximum && iterator.hasNext()) {
                 byte[] refreshKey = iterator.next();
                 // 1. 获取当前需刷新的成员集合
-                List<byte[]> members = this.getRefreshMembers(refreshKey, now, count);
+                List<byte[]> members = this.getRefreshMembersAndUpdateTime(new byte[][]{refreshKey}, count);
                 // 2. 如果成员集合为空 或 数量小于 count，说明该 SortedSet 此刻已无需刷新的键，移除该 SortedSet
                 if (CollectionUtils.isEmpty(members)) {
                     iterator.remove();
@@ -113,15 +120,13 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
                         if (index >= length) {
                             index = 0;
                             futures = new Future<?>[length];
-                            tasksList.add(Tuples.of(futures, 0));
+                            tasksQueue.add(new TasksInfo(futures));
                         }
                         RefreshTask task = new RefreshTask(this, stringCodec.decode(member), consumer, predicate);
                         futures[index++] = executor.submit(task);
                         total++;
                     }
                 }
-                // 4. 同步更新刷新时间，避免下次循环再次刷新（移动到队尾）
-                RedisHelper.get(this.put(refreshKey, members), syncTimeout);
             }
         }
     }

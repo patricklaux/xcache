@@ -3,7 +3,7 @@ package com.igeeksky.xcache.core;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.core.store.StoreProxy;
-import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xcache.props.StoreLevel;
 import com.igeeksky.xtool.core.collection.Maps;
@@ -34,11 +34,11 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
         super(config, extend);
         this.syncMonitor = extend.getSyncMonitor();
         AtomicInteger index = new AtomicInteger(0);
-        this.first = getStore(stores, index, extend.getStatMonitor());
-        this.second = getStore(stores, index, extend.getStatMonitor());
+        this.first = getStore(stores, index, extend.getMetricsMonitor());
+        this.second = getStore(stores, index, extend.getMetricsMonitor());
     }
 
-    private static <V> Store<V> getStore(Store<V>[] stores, AtomicInteger index, CacheStatMonitor statMonitor) {
+    private static <V> Store<V> getStore(Store<V>[] stores, AtomicInteger index, CacheMetricsMonitor statMonitor) {
         StoreLevel[] levels = StoreLevel.values();
         while (index.get() < stores.length) {
             int i = index.getAndIncrement();

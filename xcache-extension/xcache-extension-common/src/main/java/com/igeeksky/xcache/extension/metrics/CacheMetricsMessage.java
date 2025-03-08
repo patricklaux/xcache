@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.extension.stat;
+package com.igeeksky.xcache.extension.metrics;
 
 import com.igeeksky.xtool.core.json.SimpleJSON;
 
@@ -10,22 +10,22 @@ import com.igeeksky.xtool.core.json.SimpleJSON;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-11
  */
-public class CacheStatMessage {
+public class CacheMetricsMessage {
 
     private String name;
     private String group;
 
     private long hitLoads;
     private long missLoads;
-    private CacheStatistics noop;
-    private CacheStatistics first;
-    private CacheStatistics second;
-    private CacheStatistics third;
+    private CacheMetrics noop;
+    private CacheMetrics first;
+    private CacheMetrics second;
+    private CacheMetrics third;
 
-    public CacheStatMessage() {
+    public CacheMetricsMessage() {
     }
 
-    public CacheStatMessage(String name, String group) {
+    public CacheMetricsMessage(String name, String group) {
         this.name = name;
         this.group = group;
     }
@@ -62,35 +62,35 @@ public class CacheStatMessage {
         this.missLoads = missLoads;
     }
 
-    public CacheStatistics getNoop() {
+    public CacheMetrics getNoop() {
         return noop;
     }
 
-    public void setNoop(CacheStatistics noop) {
+    public void setNoop(CacheMetrics noop) {
         this.noop = noop;
     }
 
-    public CacheStatistics getFirst() {
+    public CacheMetrics getFirst() {
         return first;
     }
 
-    public void setFirst(CacheStatistics first) {
+    public void setFirst(CacheMetrics first) {
         this.first = first;
     }
 
-    public CacheStatistics getSecond() {
+    public CacheMetrics getSecond() {
         return second;
     }
 
-    public void setSecond(CacheStatistics second) {
+    public void setSecond(CacheMetrics second) {
         this.second = second;
     }
 
-    public CacheStatistics getThird() {
+    public CacheMetrics getThird() {
         return third;
     }
 
-    public void setThird(CacheStatistics third) {
+    public void setThird(CacheMetrics third) {
         this.third = third;
     }
 

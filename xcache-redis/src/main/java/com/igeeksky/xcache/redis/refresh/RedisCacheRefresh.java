@@ -2,10 +2,9 @@ package com.igeeksky.xcache.redis.refresh;
 
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.extension.refresh.RefreshTask;
-import com.igeeksky.xredis.common.RedisHelper;
+import com.igeeksky.xcache.extension.TasksInfo;
 import com.igeeksky.xredis.common.RedisOperatorProxy;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
-import com.igeeksky.xtool.core.tuple.Tuples;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,25 +22,32 @@ import java.util.concurrent.ScheduledExecutorService;
 public class RedisCacheRefresh extends AbstractRedisCacheRefresh {
 
     private final byte[] refreshKey;
+    private final byte[][] refreshKeys;
+
+    private final ExecutorService executor;
 
     public RedisCacheRefresh(RefreshConfig config, ScheduledExecutorService scheduler, ExecutorService executor,
                              RedisOperatorProxy operator) {
-        super(config, scheduler, executor, operator);
+        super(config, scheduler, operator);
+        this.executor = executor;
         this.refreshKey = this.stringCodec.encode(config.getRefreshKey());
+        this.refreshKeys = new byte[][]{refreshKey};
     }
 
     @Override
     public void onPut(String key) {
-        this.put(refreshKey, stringCodec.encode(key));
+        this.put(refreshKeys, new byte[][]{refreshAfterWrite, stringCodec.encode(key)});
     }
 
     @Override
     public void onPutAll(Set<String> keys) {
-        List<byte[]> members = new ArrayList<>(keys.size());
+        List<byte[]> refreshArgs = new ArrayList<>(keys.size());
+        refreshArgs.add(refreshAfterWrite);
         for (String key : keys) {
-            members.add(stringCodec.encode(key));
+            refreshArgs.add(stringCodec.encode(key));
         }
-        this.put(refreshKey, members);
+        int size = refreshArgs.size();
+        this.put(refreshKeys, refreshArgs.toArray(new byte[size][]));
     }
 
     @Override
@@ -60,15 +66,18 @@ public class RedisCacheRefresh extends AbstractRedisCacheRefresh {
     }
 
     protected void doRefresh() {
-        long now = this.getServerTime();
+        if (isShutdown()) {
+            return;
+        }
+        int refreshTasksSize = config.getRefreshTasksSize();
         int total = 0, index = 0, count = Math.min(FUTURES_LENGTH, refreshTasksSize);
 
         Future<?>[] futures = new Future<?>[count];
-        tasksList.add(Tuples.of(futures, 0));
+        tasksQueue.add(new TasksInfo(futures));
 
-        while (total < refreshTasksSize) {
+        while (!isShutdown() && total < refreshTasksSize) {
             // 1. 获取当前需刷新的键集
-            List<byte[]> members = this.getRefreshMembers(refreshKey, now, count);
+            List<byte[]> members = this.getRefreshMembersAndUpdateTime(refreshKeys, count);
             if (CollectionUtils.isEmpty(members)) {
                 break;
             }
@@ -78,15 +87,13 @@ public class RedisCacheRefresh extends AbstractRedisCacheRefresh {
                     if (index >= count) {
                         index = 0;
                         futures = new Future<?>[count];
-                        tasksList.add(Tuples.of(futures, 0));
+                        tasksQueue.add(new TasksInfo(futures));
                     }
                     RefreshTask task = new RefreshTask(this, stringCodec.decode(member), consumer, predicate);
                     futures[index++] = executor.submit(task);
                     total++;
                 }
             }
-            // 3. 同步更新刷新时间，避免下次循环重复刷新（移动到队尾）
-            RedisHelper.get(this.put(refreshKey, members), syncTimeout);
         }
     }
 

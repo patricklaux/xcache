@@ -1,7 +1,7 @@
-package com.igeeksky.xcache.redis.stat;
+package com.igeeksky.xcache.redis.metrics;
 
-import com.igeeksky.xcache.extension.stat.CacheStatMessage;
-import com.igeeksky.xcache.extension.stat.CacheStatistics;
+import com.igeeksky.xcache.extension.metrics.CacheMetrics;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsMessage;
 import com.igeeksky.xredis.common.stream.StreamCodec;
 import com.igeeksky.xtool.core.lang.ArrayUtils;
 import com.igeeksky.xtool.core.lang.Assert;
@@ -22,10 +22,10 @@ import java.util.Map;
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/22
  */
-public class RedisCacheStatMessageCodec implements StreamCodec<byte[], byte[], CacheStatMessage> {
+public class RedisCacheMetricsCodec implements StreamCodec<byte[], byte[], CacheMetricsMessage> {
 
     private final StringCodec stringCodec;
-    private final Codec<CacheStatistics> statCodec;
+    private final Codec<CacheMetrics> metricsCodec;
 
     private final ByteArray name;
     private final ByteArray group;
@@ -36,11 +36,11 @@ public class RedisCacheStatMessageCodec implements StreamCodec<byte[], byte[], C
     private final ByteArray second;
     private final ByteArray third;
 
-    public RedisCacheStatMessageCodec(Codec<CacheStatistics> statCodec, StringCodec stringCodec) {
-        Assert.notNull(statCodec, "StatCodec must not be null");
+    public RedisCacheMetricsCodec(Codec<CacheMetrics> metricsCodec, StringCodec stringCodec) {
         Assert.notNull(stringCodec, "StringCodec must not be null");
+        Assert.notNull(metricsCodec, "metricsCodec must not be null");
 
-        this.statCodec = statCodec;
+        this.metricsCodec = metricsCodec;
         this.stringCodec = stringCodec;
         this.name = ByteArray.wrap(this.stringCodec.encode("name"));
         this.group = ByteArray.wrap(this.stringCodec.encode("group"));
@@ -78,34 +78,34 @@ public class RedisCacheStatMessageCodec implements StreamCodec<byte[], byte[], C
      * @param message 消息
      * @return 键值对形式的消息体
      */
-    public Map<byte[], byte[]> encodeMsg(CacheStatMessage message) {
+    public Map<byte[], byte[]> encodeMsg(CacheMetricsMessage message) {
         Map<byte[], byte[]> body = new HashMap<>();
         body.put(this.name.getValue(), stringCodec.encode(message.getName()));
         body.put(this.group.getValue(), stringCodec.encode(message.getGroup()));
         body.put(this.hitLoads.getValue(), stringCodec.encode(String.valueOf(message.getHitLoads())));
         body.put(this.missLoads.getValue(), stringCodec.encode(String.valueOf(message.getMissLoads())));
         if (message.getNoop() != null) {
-            body.put(this.noop.getValue(), statCodec.encode(message.getNoop()));
+            body.put(this.noop.getValue(), metricsCodec.encode(message.getNoop()));
         }
         if (message.getFirst() != null) {
-            body.put(this.first.getValue(), statCodec.encode(message.getFirst()));
+            body.put(this.first.getValue(), metricsCodec.encode(message.getFirst()));
         }
         if (message.getSecond() != null) {
-            body.put(this.second.getValue(), statCodec.encode(message.getSecond()));
+            body.put(this.second.getValue(), metricsCodec.encode(message.getSecond()));
         }
         if (message.getThird() != null) {
-            body.put(this.third.getValue(), statCodec.encode(message.getThird()));
+            body.put(this.third.getValue(), metricsCodec.encode(message.getThird()));
         }
         return body;
     }
 
     @Override
-    public CacheStatMessage decodeMsg(Map<byte[], byte[]> body) {
+    public CacheMetricsMessage decodeMsg(Map<byte[], byte[]> body) {
 
         Map<ByteArray, byte[]> temp = HashMap.newHashMap(body.size());
         body.forEach((k, v) -> temp.put(ByteArray.wrap(k), v));
 
-        CacheStatMessage message = new CacheStatMessage();
+        CacheMetricsMessage message = new CacheMetricsMessage();
         byte[] nameBytes = temp.get(name);
         if (ArrayUtils.isNotEmpty(nameBytes)) {
             message.setName(stringCodec.decode(nameBytes));
@@ -124,19 +124,19 @@ public class RedisCacheStatMessageCodec implements StreamCodec<byte[], byte[], C
         }
         byte[] noopBytes = temp.get(noop);
         if (ArrayUtils.isNotEmpty(noopBytes)) {
-            message.setNoop(this.statCodec.decode(noopBytes));
+            message.setNoop(this.metricsCodec.decode(noopBytes));
         }
         byte[] firstBytes = temp.get(first);
         if (ArrayUtils.isNotEmpty(firstBytes)) {
-            message.setFirst(this.statCodec.decode(firstBytes));
+            message.setFirst(this.metricsCodec.decode(firstBytes));
         }
         byte[] secondBytes = temp.get(second);
         if (ArrayUtils.isNotEmpty(secondBytes)) {
-            message.setSecond(this.statCodec.decode(secondBytes));
+            message.setSecond(this.metricsCodec.decode(secondBytes));
         }
         byte[] thirdBytes = temp.get(third);
         if (ArrayUtils.isNotEmpty(thirdBytes)) {
-            message.setThird(this.statCodec.decode(thirdBytes));
+            message.setThird(this.metricsCodec.decode(thirdBytes));
         }
         return message;
     }

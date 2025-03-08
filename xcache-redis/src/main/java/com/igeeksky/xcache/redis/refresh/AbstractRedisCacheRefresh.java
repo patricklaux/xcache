@@ -1,20 +1,18 @@
 package com.igeeksky.xcache.redis.refresh;
 
+import com.igeeksky.xcache.extension.TasksInfo;
 import com.igeeksky.xcache.extension.refresh.CacheRefresh;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.extension.refresh.RefreshHelper;
-import com.igeeksky.xredis.common.Limit;
-import com.igeeksky.xredis.common.Range;
 import com.igeeksky.xredis.common.RedisOperatorProxy;
-import com.igeeksky.xredis.common.ScoredValue;
 import com.igeeksky.xtool.core.lang.codec.StringCodec;
-import com.igeeksky.xtool.core.tuple.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -31,34 +29,30 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractRedisCacheRefresh.class);
 
+    private static final int MIN_STATE = 2;
+
+    private static final int MAX_STATE = 10;
+
     /**
      * 刷新任务分批的 Future 数组长度
      */
     protected static final int FUTURES_LENGTH = 1024;
 
     /**
-     * 锁：保证刷新任务仅启动一次
+     * 用于保证刷新任务仅启动一次
      */
     private final Lock lock = new ReentrantLock();
 
     private final String sid;
     private final String name;
-    protected final long syncTimeout;
-    private final RedisOperatorProxy operator;
+    private final RedisOperatorProxy redisOperator;
     private final ScheduledExecutorService scheduler;
     private volatile ScheduledFuture<?> scheduledFuture;
 
-    /**
-     * 缓存数据刷新周期
-     */
-    private final int refreshAfterWrite;
-    /**
-     * 刷新线程运行周期
-     */
-    private final long refreshThreadPeriod;
+    private final byte[][] lockKeys;
+    private final byte[][] lockArgs;
 
-    private final byte[][] lockKeys = new byte[1][];
-    private final byte[][] lockArgs = new byte[2][];
+    protected final byte[] refreshAfterWrite;
 
     /**
      * 任务状态：<br>
@@ -73,16 +67,12 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
      */
     private final AtomicInteger taskState = new AtomicInteger(0);
 
-    private static final int MIN_STATE = 2;
-    private static final int MAX_STATE = 10;
-
     private final int lockState;
     private final int unlockState;
 
-    /**
-     * 刷新任务最大数量
-     */
-    protected final int refreshTasksSize;
+    private final AtomicBoolean shutdownState = new AtomicBoolean(false);
+
+    protected final RefreshConfig config;
 
     protected final StringCodec stringCodec;
 
@@ -96,27 +86,24 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
      */
     protected volatile Predicate<String> predicate;
 
-    protected final ExecutorService executor;
-
-    protected final ArrayList<Tuple2<Future<?>[], Integer>> tasksList = new ArrayList<>();
+    protected final Queue<TasksInfo> tasksQueue = new ConcurrentLinkedQueue<>();
 
     public AbstractRedisCacheRefresh(RefreshConfig config, ScheduledExecutorService scheduler,
-                                     ExecutorService executor, RedisOperatorProxy operator) {
+                                     RedisOperatorProxy operator) {
+        this.config = config;
         this.stringCodec = StringCodec.getInstance(config.getCharset());
         this.sid = config.getSid();
         this.name = config.getName();
-        this.refreshTasksSize = config.getRefreshTasksSize();
-        this.refreshAfterWrite = config.getRefreshAfterWrite();
-        this.refreshThreadPeriod = config.getRefreshThreadPeriod();
-        this.lockState = (int) Math.min(MAX_STATE, Math.max(MIN_STATE, refreshThreadPeriod / 100));
+        this.lockState = (int) Math.min(MAX_STATE, Math.max(MIN_STATE, config.getRefreshThreadPeriod() / 100));
         this.unlockState = lockState - 1;
-        this.operator = operator;
-        this.syncTimeout = operator.getTimeout();
-        this.executor = executor;
+        this.redisOperator = operator;
         this.scheduler = scheduler;
+        this.lockKeys = new byte[1][];
+        this.lockArgs = new byte[2][];
         this.lockKeys[0] = stringCodec.encode(config.getRefreshLockKey());
         this.lockArgs[0] = stringCodec.encode(config.getSid());
-        this.lockArgs[1] = stringCodec.encode(Long.toString(refreshThreadPeriod));
+        this.lockArgs[1] = stringCodec.encode(Long.toString(config.getRefreshThreadPeriod()));
+        this.refreshAfterWrite = stringCodec.encode(Long.toString(config.getRefreshAfterWrite()));
     }
 
     @Override
@@ -131,7 +118,7 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
             }
             this.consumer = consumer;
             this.predicate = predicate;
-            long delay = Math.max(1, refreshThreadPeriod / lockState);
+            long delay = Math.max(1, config.getRefreshThreadPeriod() / lockState);
             this.scheduledFuture = scheduler.scheduleWithFixedDelay(this::refreshTask,
                     delay, delay, TimeUnit.MILLISECONDS);
         } finally {
@@ -145,9 +132,12 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
     private void refreshTask() {
         ScheduledFuture<?> extendExpireFuture = null;
         try {
-            // 1. 当前进程任务队列是否已全部完成
-            if (taskState.get() == lockState && RefreshHelper.tasksUnfinished(tasksList)) {
+            // 1. 当前进程任务队列是否已全部完成，未完成则续期锁
+            if (!RefreshHelper.tasksFinished(tasksQueue)) {
                 this.extendLockExpire();
+                return;
+            }
+            if (shutdownState.get()) {
                 return;
             }
             // 2. 如果状态递减到 0，则再次启动刷新任务，否则返回
@@ -164,6 +154,7 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
             }
             taskState.set(lockState);
             // 3. 成功加锁后，任务执行期间，锁需要定时续期
+            long refreshThreadPeriod = config.getRefreshThreadPeriod();
             extendExpireFuture = scheduler.scheduleWithFixedDelay(this::extendLockExpire,
                     refreshThreadPeriod, refreshThreadPeriod, TimeUnit.MILLISECONDS);
             // 4. 读取队列，刷新已到刷新时间的数据
@@ -182,18 +173,22 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
      */
     protected abstract void doRefresh();
 
+    protected boolean isShutdown() {
+        return shutdownState.get();
+    }
+
     /**
      * 先解锁后加锁
      *
      * @return true 加锁成功；false 加锁失败
      */
     private boolean tryLock() {
-        Boolean locked = this.operator.evalsha(RedisRefreshScript.LOCK, lockKeys, lockArgs);
+        Boolean locked = this.redisOperator.evalsha(RedisRefreshScript.LOCK, lockKeys, lockArgs);
         return (locked != null && locked);
     }
 
     private void unlock() {
-        this.operator.evalshaAsync(RedisRefreshScript.UNLOCK, lockKeys, lockArgs)
+        this.redisOperator.evalshaAsync(RedisRefreshScript.UNLOCK, lockKeys, lockArgs)
                 .whenComplete((locked, t) -> {
                     if (t != null) {
                         log.error("Cache: {}, sid: {}, CacheRefresh unlock failed.", name, sid, t);
@@ -208,42 +203,14 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
     }
 
     private void extendLockExpire() {
-        this.operator.evalshaAsync(RedisRefreshScript.LOCK, lockKeys, lockArgs)
+        this.redisOperator.evalshaAsync(RedisRefreshScript.LOCK, lockKeys, lockArgs)
                 .whenComplete((locked, t) -> {
                     if (t != null) {
                         log.error("Cache: {}, sid: {}, CacheRefresh extend lock expire failed.", name, sid, t);
                         return;
                     }
-                    if (locked == null || !(boolean) locked) {
-                        if (log.isWarnEnabled()) {
-                            log.warn("Cache: {}, sid: {}, CacheRefresh extend lock expire failed.", name, sid);
-                        }
-                    }
-                    log.info("Cache: {}, sid: {}, CacheRefresh extend lock expire result:{}.", name, sid, locked);
-                });
-    }
-
-    /**
-     * 添加成员集合（设置或更新刷新时间）
-     *
-     * @param refreshKey Redis-SortedSet key
-     * @param members    需刷新的键集
-     * @return {@code CompletableFuture<Long>} – 新增成员数量
-     */
-    @SuppressWarnings("unchecked")
-    protected CompletableFuture<Long> put(byte[] refreshKey, List<byte[]> members) {
-        return this.operator.timeMillisAsync()
-                .thenCompose(serverTime -> {
-                    int size = members.size();
-                    long refreshTime = serverTime + refreshAfterWrite;
-                    ScoredValue<byte[]>[] scoredValues = new ScoredValue[size];
-                    for (int i = 0; i < size; i++) {
-                        scoredValues[i] = ScoredValue.just(refreshTime, members.get(i));
-                    }
-                    return this.operator.zaddAsync(refreshKey, scoredValues);
-                }).whenComplete((num, t) -> {
-                    if (t != null) {
-                        log.error("Cache: {}, CacheRefresh process put_event failed. {}", name, t.getMessage(), t);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Cache: {}, sid: {}, CacheRefresh extend lock expire result: {}.", name, sid, locked);
                     }
                 });
     }
@@ -251,21 +218,17 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
     /**
      * 添加成员（设置或更新刷新时间）
      *
-     * @param refreshKey Redis-SortedSet key
-     * @param member     需刷新的成员
+     * @param refreshKey  Redis-SortedSet key
+     * @param refreshArgs [refreshAfterWrite, member1, member2, ... ]
      * @return {@code CompletableFuture<Long>} – 新增成员数量
      */
-    protected CompletableFuture<Long> put(byte[] refreshKey, byte[] member) {
-        return this.operator.timeMillisAsync()
-                .thenCompose(serverTime -> {
-                    long refreshTime = serverTime + refreshAfterWrite;
-                    return this.operator.zaddAsync(refreshKey, refreshTime, member);
-                })
-                .whenComplete((num, t) -> {
-                    if (t != null) {
-                        log.error("Cache: {}, CacheRefresh process put_event failed. {}", name, t.getMessage(), t);
-                    }
-                });
+    protected CompletableFuture<Long> put(byte[][] refreshKey, byte[][] refreshArgs) {
+        CompletableFuture<Long> future = this.redisOperator.evalshaAsync(RedisRefreshScript.PUT, refreshKey, refreshArgs);
+        return future.whenComplete((num, t) -> {
+            if (t != null) {
+                log.error("Cache: {}, CacheRefresh process put_event failed. {}", name, t.getMessage(), t);
+            }
+        });
     }
 
     /**
@@ -276,7 +239,7 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
      * @return {@code CompletableFuture<Long>} – 删除成员数量
      */
     protected CompletableFuture<Long> remove(byte[] refreshKey, byte[]... members) {
-        return this.operator.zremAsync(refreshKey, members)
+        return this.redisOperator.zremAsync(refreshKey, members)
                 .whenComplete((num, t) -> {
                     if (t != null) {
                         log.error("Cache: {}, CacheRefresh process remove_event failed. {}", name, t.getMessage(), t);
@@ -287,34 +250,51 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
     /**
      * 获取待刷新的成员集合
      *
-     * @param refreshKey sorted set key
-     * @param now        当前时间
+     * @param refreshKey sorted set key, Length of members must be 1
      * @param count      获取数量
      * @return 待刷新的键集
      */
-    protected List<byte[]> getRefreshMembers(byte[] refreshKey, long now, int count) {
-        // TODO 使用脚本获取数据并更新刷新时间，增加偏移？
-        Limit limit = Limit.from(count);
-        Range<? extends Number> range = Range.closed(0, now);
-        return this.operator.zrangebyscore(refreshKey, range, limit);
-    }
-
-    /**
-     * 获取 RedisServer 当前时间（毫秒）
-     *
-     * @return {@code UnixTimestamp(millis)}
-     */
-    protected long getServerTime() {
-        return this.operator.timeMillis();
+    protected List<byte[]> getRefreshMembersAndUpdateTime(byte[][] refreshKey, int count) {
+        byte[][] refreshArgs = new byte[][]{stringCodec.encode(Integer.toString(count)), refreshAfterWrite};
+        return this.redisOperator.evalsha(RedisRefreshScript.GET_UPDATE_REFRESH_MEMBERS, refreshKey, refreshArgs);
     }
 
     @Override
-    public void close() {
-        ScheduledFuture<?> future = this.scheduledFuture;
-        if (future != null) {
-            future.cancel(false);
-            this.scheduledFuture = null;
+    public void shutdown() {
+        this.shutdown(config.getShutdownQuietPeriod(), config.getShutdownTimeout(), TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public void shutdown(long quietPeriod, long timeout, TimeUnit unit) {
+        try {
+            this.shutdownAsync(quietPeriod, timeout, unit).get(timeout, unit);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("CacheRefresh:{}, shutdown has error. [{}]", name, "Interrupted", e);
+            log.error("Cache:{} ,CacheRefresh close has error. [{}]", name, "Interrupted", e);
+        } catch (ExecutionException e) {
+            log.error("CacheRefresh:{}, shutdown has error. [{}]", name, e.getMessage(), e.getCause());
+        } catch (TimeoutException e) {
+            log.error("CacheRefresh:{}, shutdown timeout. wait:[{} {}]", name, timeout, unit.name(), e);
         }
+    }
+
+    @Override
+    public CompletableFuture<Void> shutdownAsync() {
+        return this.shutdownAsync(config.getShutdownQuietPeriod(), config.getShutdownTimeout(), TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public CompletableFuture<Void> shutdownAsync(long quietPeriod, long timeout, TimeUnit unit) {
+        if (shutdownState.compareAndSet(false, true)) {
+            ScheduledFuture<?> future = this.scheduledFuture;
+            if (future == null) {
+                return CompletableFuture.completedFuture(null);
+            }
+            this.scheduledFuture = null;
+            return RefreshHelper.close(name, future, tasksQueue, quietPeriod, timeout, unit, config.getShutdownBehavior());
+        }
+        return CompletableFuture.completedFuture(null);
     }
 
 }

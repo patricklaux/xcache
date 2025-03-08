@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.redis.refresh;
 
+import com.igeeksky.xcache.common.ShutdownBehavior;
 import com.igeeksky.xcache.extension.refresh.RefreshConfig;
 import com.igeeksky.xcache.redis.LettuceTestHelper;
 import com.igeeksky.xredis.common.RedisOperatorProxy;
@@ -15,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -44,10 +47,13 @@ public class RedisCacheRefreshTest {
                 .group("shop")
                 .charset(StandardCharsets.UTF_8)
                 .provider("test")
-                .refreshTasksSize(10)
                 .refreshAfterWrite(50)
                 .refreshThreadPeriod(1000)
-                .refreshSequenceSize(32)
+                .refreshSequenceSize(16)
+                .refreshTasksSize(16)
+                .shutdownTimeout(1)
+                .shutdownQuietPeriod(0)
+                .shutdownBehavior(ShutdownBehavior.AWAIT)
                 .enableGroupPrefix(true);
         RefreshConfig config1 = builder.sid("test1").build();
         RefreshConfig config2 = builder.sid("test2").refreshThreadPeriod(1000).build();
@@ -66,17 +72,39 @@ public class RedisCacheRefreshTest {
 
     @AfterAll
     static void afterAll() {
-        refresh1.close();
-        refresh2.close();
+        refresh1.shutdown();
+        refresh2.shutdown();
+        redisOperator.closeAsync();
     }
 
     @Test
     @Disabled
     void test() {
-        refresh1.onPut("key1");
-        refresh2.onPut("key2");
+        for (int i = 0; i < 10000; i++) {
+            refresh1.onPut("key1:" + i);
+            refresh2.onPut("key2:" + i);
+        }
 
-        LockSupport.parkNanos(Duration.ofMillis(20000).toNanos());
+        LockSupport.parkNanos(Duration.ofMillis(2000).toNanos());
+    }
+
+    @Test
+    @Disabled
+    void testPutAll() {
+        Set<String> keys1 = HashSet.newHashSet(10000);
+        Set<String> keys2 = HashSet.newHashSet(10000);
+        for (int i = 0; i < 10000; i++) {
+            keys1.add("key1:" + i);
+            keys2.add("key2:" + i);
+        }
+
+        refresh1.onPutAll(keys1);
+        refresh2.onPutAll(keys2);
+
+        LockSupport.parkNanos(Duration.ofMillis(2000).toNanos());
+
+        refresh2.onRemoveAll(keys1);
+        refresh2.onRemoveAll(keys2);
     }
 
 }

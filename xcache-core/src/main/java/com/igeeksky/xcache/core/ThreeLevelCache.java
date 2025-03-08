@@ -3,7 +3,7 @@ package com.igeeksky.xcache.core;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.core.store.StoreProxy;
-import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xcache.props.StoreLevel;
 import com.igeeksky.xtool.core.collection.Maps;
@@ -31,7 +31,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     public ThreeLevelCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend, Store<V>[] stores) {
         super(config, extend);
         this.syncMonitor = extend.getSyncMonitor();
-        CacheStatMonitor statMonitor = extend.getStatMonitor();
+        CacheMetricsMonitor statMonitor = extend.getMetricsMonitor();
         StoreLevel[] levels = StoreLevel.values();
         for (int i = 0; i < LENGTH; i++) {
             this.stores[i] = new StoreProxy<>(stores[i], levels[i], statMonitor);

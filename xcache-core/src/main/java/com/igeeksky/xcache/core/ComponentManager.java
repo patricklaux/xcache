@@ -11,7 +11,7 @@ import com.igeeksky.xcache.extension.compress.GzipCompressorProvider;
 import com.igeeksky.xcache.extension.lock.CacheLockProvider;
 import com.igeeksky.xcache.extension.lock.EmbedCacheLockProvider;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
-import com.igeeksky.xcache.extension.stat.CacheStatProvider;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsProvider;
 import com.igeeksky.xcache.extension.sync.CacheSyncProvider;
 import com.igeeksky.xcache.props.CacheConstants;
 
@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
 /**
- * 集中管理组件
+ * 集中管理缓存组件
  *
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/18
@@ -31,9 +31,9 @@ public class ComponentManager {
     private final ConcurrentMap<String, Supplier<StoreProvider>> stores = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Supplier<CodecProvider>> codecs = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Supplier<CacheSyncProvider>> syncs = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, Supplier<CacheStatProvider>> stats = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Supplier<CacheLockProvider>> locks = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Supplier<CacheLoader<?, ?>>> loaders = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Supplier<CacheMetricsProvider>> metrics = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Supplier<CompressorProvider>> compressors = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Supplier<CacheRefreshProvider>> refreshes = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Supplier<ContainsPredicate<?>>> predicates = new ConcurrentHashMap<>();
@@ -99,12 +99,12 @@ public class ComponentManager {
         return supplier != null ? supplier.get() : null;
     }
 
-    public void addStatProvider(String beanId, Supplier<CacheStatProvider> provider) {
-        this.stats.put(beanId, provider);
+    public void addMetricsProvider(String beanId, Supplier<CacheMetricsProvider> provider) {
+        this.metrics.put(beanId, provider);
     }
 
-    public CacheStatProvider getStatProvider(String beanId) {
-        Supplier<CacheStatProvider> supplier = this.stats.get(beanId);
+    public CacheMetricsProvider getMetricsProvider(String beanId) {
+        Supplier<CacheMetricsProvider> supplier = this.metrics.get(beanId);
         return supplier != null ? supplier.get() : null;
     }
 

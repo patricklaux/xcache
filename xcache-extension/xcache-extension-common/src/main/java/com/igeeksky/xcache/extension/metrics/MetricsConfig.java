@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.extension.stat;
+package com.igeeksky.xcache.extension.metrics;
 
 /**
  * 统计配置
@@ -6,7 +6,7 @@ package com.igeeksky.xcache.extension.stat;
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/9
  */
-public class StatConfig {
+public class MetricsConfig {
 
     private final String name;
 
@@ -14,7 +14,7 @@ public class StatConfig {
 
     private final String provider;
 
-    private StatConfig(Builder builder) {
+    private MetricsConfig(Builder builder) {
         this.name = builder.name;
         this.group = builder.group;
         this.provider = builder.provider;
@@ -62,8 +62,8 @@ public class StatConfig {
             return this;
         }
 
-        public StatConfig build() {
-            return new StatConfig(this);
+        public MetricsConfig build() {
+            return new MetricsConfig(this);
         }
 
     }

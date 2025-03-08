@@ -5,14 +5,12 @@ import com.igeeksky.xcache.common.CacheLoader;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsMonitor;
 import com.igeeksky.xcache.extension.refresh.CacheRefresh;
 import com.igeeksky.xcache.extension.refresh.NoOpCacheRefresh;
-import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
 import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.collection.Sets;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -30,13 +28,12 @@ import java.util.concurrent.locks.Lock;
  */
 public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
-    private static final Logger log = LoggerFactory.getLogger(AbstractCache.class);
     private final String name;
     private final Class<K> keyType;
     private final Class<V> valueType;
 
     private final KeyCodec<K> keyCodec;
-    private final CacheStatMonitor statMonitor;
+    private final CacheMetricsMonitor metricsMonitor;
 
     private CacheRefresh cacheRefresh;
     private CacheLoader<K, V> cacheLoader;
@@ -52,7 +49,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         this.message = "Cache:[" + this.name + "], %s";
 
         this.keyCodec = extend.getKeyCodec();
-        this.statMonitor = extend.getStatMonitor();
+        this.metricsMonitor = extend.getMetricsMonitor();
 
         this.lockService = extend.getLockService();
         this.containsPredicate = extend.getContainsPredicate();
@@ -97,9 +94,9 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
                     V value = this.cacheLoader.load(key);
                     this.doAsyncPut(storeKey, value);
                     if (value != null) {
-                        this.statMonitor.incHitLoads(1);
+                        this.metricsMonitor.incHitLoads(1);
                     } else {
-                        this.statMonitor.incMissLoads(1);
+                        this.metricsMonitor.incMissLoads(1);
                     }
                 } finally {
                     // 释放锁
@@ -559,8 +556,8 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         // 6. 执行刷新逻辑
         this.cacheRefresh.onPutAll(keyValues.keySet());
         // 7. 记录回源成功/失败次数
-        this.statMonitor.incHitLoads(hitLoads);
-        this.statMonitor.incMissLoads(totalLoads - hitLoads);
+        this.metricsMonitor.incHitLoads(hitLoads);
+        this.metricsMonitor.incMissLoads(totalLoads - hitLoads);
     }
 
     /**
@@ -575,9 +572,9 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         this.doPut(storeKey, value);
         this.cacheRefresh.onPut(storeKey);
         if (value != null) {
-            this.statMonitor.incHitLoads(1);
+            this.metricsMonitor.incHitLoads(1);
         } else {
-            this.statMonitor.incMissLoads(1);
+            this.metricsMonitor.incMissLoads(1);
         }
     }
 

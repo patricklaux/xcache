@@ -3,7 +3,7 @@ package com.igeeksky.xcache.core;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.core.store.StoreProxy;
-import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsMonitor;
 import com.igeeksky.xcache.props.StoreLevel;
 
 import java.util.Map;
@@ -24,10 +24,10 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
 
     public OneLevelCache(CacheConfig<K, V> config, ExtendConfig<K, V> extend, Store<V>[] stores) {
         super(config, extend);
-        this.store = getStore(stores, extend.getStatMonitor());
+        this.store = getStore(stores, extend.getMetricsMonitor());
     }
 
-    private static <V> Store<V> getStore(Store<V>[] stores, CacheStatMonitor statMonitor) {
+    private static <V> Store<V> getStore(Store<V>[] stores, CacheMetricsMonitor statMonitor) {
         StoreLevel[] levels = StoreLevel.values();
         for (int i = 0; i < stores.length; i++) {
             if (stores[i] != null) {

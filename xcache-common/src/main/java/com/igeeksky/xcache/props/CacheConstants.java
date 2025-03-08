@@ -2,6 +2,10 @@ package com.igeeksky.xcache.props;
 
 
 import com.igeeksky.xcache.common.ReferenceType;
+import com.igeeksky.xcache.common.ShutdownBehavior;
+
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 缓存配置项常量
@@ -24,14 +28,14 @@ public interface CacheConstants {
     String JACKSON_SPRING_CODEC = "jackson-spring";
     String GZIP_COMPRESSOR = "gzip";
     String DEFLATE_COMPRESSOR = "deflate";
-    String LOG_CACHE_STAT = "log";
+    String LOG_CACHE_METRICS = "log";
     String EMBED_CACHE_LOCK = "embed";
     String EMBED_CACHE_REFRESH = "embed";
 
     // 默认配置 start
     String DEFAULT_TEMPLATE_ID = "t0";
     String DEFAULT_CHARSET_NAME = "UTF-8";
-
+    Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
     // 内嵌缓存默认配置 start
     String DEFAULT_EMBED_STORE_PROVIDER = CAFFEINE_STORE;
@@ -75,15 +79,19 @@ public interface CacheConstants {
 
     String DEFAULT_REFRESH_PROVIDER = NONE;
     int DEFAULT_REFRESH_TASKS_SIZE = 16384;
-    int DEFAULT_REFRESH_SEQUENCE_SIZE = 32;
+    int DEFAULT_REFRESH_SEQUENCE_SIZE = 16;
     int DEFAULT_REFRESH_THREAD_PERIOD = 10000;
     int DEFAULT_REFRESH_AFTER_WRITE = 3600000;
+    long DEFAULT_SHUTDOWN_TIMEOUT = 2000;
+    long DEFAULT_SHUTDOWN_QUIET_PERIOD = 100;
+    ShutdownBehavior DEFAULT_SHUTDOWN_BEHAVIOR = ShutdownBehavior.IGNORE;
 
     String DEFAULT_SYNC_PROVIDER = NONE;
     long DEFAULT_SYNC_MAX_LEN = 10000;
 
-    String DEFAULT_STAT_PROVIDER = LOG_CACHE_STAT;
-    long DEFAULT_STAT_INTERVAL = 60000;
+    String DEFAULT_METRICS_PROVIDER = LOG_CACHE_METRICS;
+    long DEFAULT_METRICS_INTERVAL = 60000;
+
 
     // 扩展属性默认配置 end
 

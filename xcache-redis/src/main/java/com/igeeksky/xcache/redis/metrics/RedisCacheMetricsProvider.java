@@ -1,7 +1,7 @@
-package com.igeeksky.xcache.redis.stat;
+package com.igeeksky.xcache.redis.metrics;
 
-import com.igeeksky.xcache.extension.stat.AbstractCacheStatProvider;
-import com.igeeksky.xcache.extension.stat.CacheStatMessage;
+import com.igeeksky.xcache.extension.metrics.AbstractCacheMetricsProvider;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsMessage;
 import com.igeeksky.xredis.common.stream.StreamOperator;
 import com.igeeksky.xredis.common.stream.StreamPublisher;
 import com.igeeksky.xredis.common.stream.XAddOptions;
@@ -16,14 +16,14 @@ import java.util.List;
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/18
  */
-public class RedisCacheStatProvider extends AbstractCacheStatProvider {
+public class RedisCacheMetricsProvider extends AbstractCacheMetricsProvider {
 
     private static final String PREFIX = "stat:";
-    private final StreamPublisher<byte[], byte[], CacheStatMessage> publisher;
+    private final StreamPublisher<byte[], byte[], CacheMetricsMessage> publisher;
 
-    public RedisCacheStatProvider(RedisStatConfig config) {
+    public RedisCacheMetricsProvider(RedisMetricsConfig config) {
         super(config.getScheduler(), config.getPeriod());
-        RedisCacheStatMessageCodec codec = config.getCodec();
+        RedisCacheMetricsCodec codec = config.getCodec();
         StreamOperator<byte[], byte[]> operator = config.getOperator();
         String channel = config.isEnableGroupPrefix() ? (PREFIX + config.getGroup()) : PREFIX;
         XAddOptions options = XAddOptions.builder().maxLen(config.getMaxLen()).approximateTrimming().build();
@@ -31,8 +31,8 @@ public class RedisCacheStatProvider extends AbstractCacheStatProvider {
     }
 
     @Override
-    public void publish(List<CacheStatMessage> messages) {
-        for (CacheStatMessage message : messages) {
+    public void publish(List<CacheMetricsMessage> messages) {
+        for (CacheMetricsMessage message : messages) {
             this.publisher.publish(message);
         }
     }

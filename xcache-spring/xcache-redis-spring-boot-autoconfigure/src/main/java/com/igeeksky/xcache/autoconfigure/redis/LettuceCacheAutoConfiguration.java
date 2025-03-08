@@ -9,16 +9,16 @@ import com.igeeksky.xcache.core.store.StoreProvider;
 import com.igeeksky.xcache.extension.codec.CodecConfig;
 import com.igeeksky.xcache.extension.codec.CodecProvider;
 import com.igeeksky.xcache.extension.lock.CacheLockProvider;
+import com.igeeksky.xcache.extension.metrics.CacheMetrics;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsProvider;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
-import com.igeeksky.xcache.extension.stat.CacheStatProvider;
-import com.igeeksky.xcache.extension.stat.CacheStatistics;
 import com.igeeksky.xcache.extension.sync.CacheSyncProvider;
 import com.igeeksky.xcache.props.CacheConstants;
 import com.igeeksky.xcache.redis.lock.RedisLockProvider;
+import com.igeeksky.xcache.redis.metrics.RedisCacheMetricsCodec;
+import com.igeeksky.xcache.redis.metrics.RedisCacheMetricsProvider;
+import com.igeeksky.xcache.redis.metrics.RedisMetricsConfig;
 import com.igeeksky.xcache.redis.refresh.RedisCacheRefreshProvider;
-import com.igeeksky.xcache.redis.stat.RedisCacheStatMessageCodec;
-import com.igeeksky.xcache.redis.stat.RedisCacheStatProvider;
-import com.igeeksky.xcache.redis.stat.RedisStatConfig;
 import com.igeeksky.xcache.redis.store.RedisStoreProvider;
 import com.igeeksky.xcache.redis.sync.RedisCacheSyncProvider;
 import com.igeeksky.xredis.common.stream.StreamOperator;
@@ -157,7 +157,7 @@ public class LettuceCacheAutoConfiguration {
         return register;
     }
 
-    @Bean
+    @Bean(destroyMethod = "shutdown")
     CacheRefreshProviderRegister lettuceRefreshProviderRegister(LettuceRegister lettuceRegister,
                                                                 ScheduledExecutorService scheduler) {
         CacheRefreshProviderRegister register = new CacheRefreshProviderRegister();
@@ -166,15 +166,15 @@ public class LettuceCacheAutoConfiguration {
     }
 
     /**
-     * @return {@link CacheStatProviderRegister} – 缓存指标信息统计发布
+     * @return {@link CacheMetricsProviderRegister} – 缓存指标信息统计发布
      */
-    @Bean
-    CacheStatProviderRegister lettuceStatProviderRegister(LettuceRegister lettuceRegister,
-                                                          ScheduledExecutorService scheduler,
-                                                          ObjectProvider<CodecProviderRegister> providers) {
-        CacheStatProviderRegister register = new CacheStatProviderRegister();
+    @Bean(destroyMethod = "shutdown")
+    CacheMetricsProviderRegister lettuceMetricsProviderRegister(LettuceRegister lettuceRegister,
+                                                             ScheduledExecutorService scheduler,
+                                                             ObjectProvider<CodecProviderRegister> providers) {
+        CacheMetricsProviderRegister register = new CacheMetricsProviderRegister();
         lettuceRegister.getAll()
-                .forEach((id, holder) -> register.put(id, createStatProvider(holder, scheduler, group, providers)));
+                .forEach((id, holder) -> register.put(id, createMetricsProvider(holder, scheduler, group, providers)));
         return register;
     }
 
@@ -207,22 +207,22 @@ public class LettuceCacheAutoConfiguration {
         return SingletonSupplier.of(() -> new RedisCacheRefreshProvider(proxySupplier.get(), scheduler));
     }
 
-    private static SingletonSupplier<CacheStatProvider> createStatProvider(LettuceHolder holder, ScheduledExecutorService scheduler,
-                                                                           String group, ObjectProvider<CodecProviderRegister> providers) {
-        RedisStatOptions options = holder.getStatOptions();
-        RedisCacheStatMessageCodec statMessageCodec = createStatMessageCodec(options, providers);
+    private static SingletonSupplier<CacheMetricsProvider> createMetricsProvider(LettuceHolder holder, ScheduledExecutorService scheduler,
+                                                                                 String group, ObjectProvider<CodecProviderRegister> providers) {
+        RedisMetricsOptions options = holder.getMetricsOptions();
+        RedisCacheMetricsCodec statMessageCodec = createMetricsCodec(options, providers);
         SingletonSupplier<StreamOperator<byte[], byte[]>> streamOperatorSupplier = holder.getStreamOperatorSupplier();
         return SingletonSupplier.of(() -> {
-            RedisStatConfig config = RedisStatConfig.builder()
+            RedisMetricsConfig config = RedisMetricsConfig.builder()
                     .maxLen(options.getMaxLen())
-                    .period(options.getPeriod())
+                    .interval(options.getInterval())
                     .group(group)
                     .enableGroupPrefix(options.getEnableGroupPrefix())
                     .operator(streamOperatorSupplier.get())
                     .codec(statMessageCodec)
                     .scheduler(scheduler)
                     .build();
-            return new RedisCacheStatProvider(config);
+            return new RedisCacheMetricsProvider(config);
         });
     }
 
@@ -230,18 +230,18 @@ public class LettuceCacheAutoConfiguration {
      * 获取缓存统计消息编码器<p>
      * 该编码器固定采用 Jackson 作为编解码器
      *
-     * @return {@link RedisCacheStatMessageCodec} – 用于对缓存统计消息进行编码和解码
+     * @return {@link RedisCacheMetricsCodec} – 用于对缓存统计消息进行编码和解码
      */
-    private static RedisCacheStatMessageCodec createStatMessageCodec(RedisStatOptions options,
-                                                                     ObjectProvider<CodecProviderRegister> providers) {
+    private static RedisCacheMetricsCodec createMetricsCodec(RedisMetricsOptions options,
+                                                             ObjectProvider<CodecProviderRegister> providers) {
         String charsetName = StringUtils.toUpperCase(options.getCharset());
         Charset charset = (charsetName != null) ? Charset.forName(charsetName) : StandardCharsets.UTF_8;
 
-        CodecConfig<CacheStatistics> config = CodecConfig.builder(CacheStatistics.class).charset(charset).build();
+        CodecConfig<CacheMetrics> config = CodecConfig.builder(CacheMetrics.class).charset(charset).build();
         CodecProvider codecProvider = getCodecProvider(options.getCodec(), providers);
         if (codecProvider != null) {
-            Codec<CacheStatistics> statCodec = codecProvider.getCodec(config);
-            return new RedisCacheStatMessageCodec(statCodec, StringCodec.getInstance(charset));
+            Codec<CacheMetrics> statCodec = codecProvider.getCodec(config);
+            return new RedisCacheMetricsCodec(statCodec, StringCodec.getInstance(charset));
         }
         return null;
     }

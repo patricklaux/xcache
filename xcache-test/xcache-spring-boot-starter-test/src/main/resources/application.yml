@@ -19,14 +19,17 @@ xcache:
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true）
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则会提示参数读取异常）
           test: test
-      cache-stat: lettuce # CacheStatProviderId，用于缓存指标信息采集和输出（默认值：log，输出到日志）
+      cache-metrics: log # CacheMetricsProviderId，用于缓存指标信息采集和输出（默认值：log，输出到日志）
       cache-refresh: # 缓存刷新配置
-        provider: lettuce # CacheRefreshProviderId（默认值：none，不启用缓存刷新）
+        provider: none # CacheRefreshProviderId（默认值：none，不启用缓存刷新）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，适用于外部刷新实现）
         refresh-after-write: 10000 # （默认值：3600000 毫秒）
         refresh-tasks-size: 16384
         refresh-sequence-size: 32
         refresh-thread-period: 10000 # 刷新间隔周期（默认值：10000 毫秒）
+        shutdown-timeout: 2000
+        shutdown-quiet-period: 100
+        shutdown-behavior: cancel # 缓存刷新关闭行为（默认值：cancel，取消刷新线程）
         params: # 用于扩展实现的自定义参数，map 类型 （如不使用，请删除，否则会提示参数读取异常）
           test: test
       cache-sync: # 缓存同步配置
@@ -91,15 +94,15 @@ xcache:
       template-id: t0 # 模板id（默认值：t0，如未配置，默认从 id 为 t0 的模板中复制配置项）
       # …… 其余配置项与模板配置相同，所以直接省略
       # 另，如此缓存配置与 id 为 t0 的模板配置完全相同，name 与 template-id 其实也可以省略。
-  log-stat-interval: 60000 # 缓存指标采集的时间间隔（默认值：60000 单位：毫秒）
+  log-metrics-interval: 60000 # 缓存指标采集的时间间隔（默认值：60000 单位：毫秒）
   scheduler: # 调度器配置
     core-pool-size: 1 # 定时任务调度器核心线程数，如未配置，则使用 (核心数 / 8)，最小为 1。
   redis: # Redis 配置（如不使用 Redis，可直接删除此配置项；如未配置，则不会生成相应的实例对象）
     lettuce: # Lettuce 客户端配置
       - id: lettuce # RedisOperatorFactory 唯一标识（默认值：lettuce）
-        stat: # RedisCacheStatProvider 配置
-          # 另，RedisCacheStat 只负责发送统计指标信息到指定的 channel，具体的统计汇总需用户自行实现
-          period: 60000 # 缓存指标统计的时间间隔（默认值：60000，单位：毫秒）
+        metrics: # RedisCacheMetricsProvider 配置
+          # 另，StreamPublisher 仅负责发送统计指标信息到指定的 channel，具体的统计汇总需用户自行实现
+          interval: 60000 # 缓存指标统计的时间间隔（默认值：60000，单位：毫秒）
           max-len: 10000 # Redis stream 最大长度（默认值：10000，采用近似裁剪，实际长度可能略大于配置值）
           charset: UTF-8 # 字符集，用于缓存统计指标消息的编解码（默认值：UTF-8）
           codec: jackson # 统计消息编解码

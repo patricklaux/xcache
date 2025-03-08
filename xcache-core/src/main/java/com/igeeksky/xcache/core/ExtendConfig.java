@@ -6,8 +6,8 @@ import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.NoOpContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
 import com.igeeksky.xcache.extension.refresh.CacheRefresh;
-import com.igeeksky.xcache.extension.stat.CacheStatMonitor;
-import com.igeeksky.xcache.extension.stat.NoOpCacheStatMonitor;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsMonitor;
+import com.igeeksky.xcache.extension.metrics.NoOpCacheMetricsMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xcache.extension.sync.NoOpCacheSyncMonitor;
 import com.igeeksky.xtool.core.lang.Assert;
@@ -29,7 +29,7 @@ public class ExtendConfig<K, V> {
 
     private final CacheRefresh cacheRefresh;
 
-    private final CacheStatMonitor statMonitor;
+    private final CacheMetricsMonitor metricsMonitor;
 
     private final CacheSyncMonitor syncMonitor;
 
@@ -40,7 +40,7 @@ public class ExtendConfig<K, V> {
     public ExtendConfig(Builder<K, V> builder) {
         this.keyCodec = builder.keyCodec;
         this.lockService = builder.lockService;
-        this.statMonitor = builder.statMonitor;
+        this.metricsMonitor = builder.metricsMonitor;
         this.syncMonitor = builder.syncMonitor;
         this.cacheLoader = builder.cacheLoader;
         this.cacheRefresh = builder.cacheRefresh;
@@ -90,13 +90,13 @@ public class ExtendConfig<K, V> {
     /**
      * 缓存统计监视器，用于统计缓存命中率、缓存命中次数等
      *
-     * @return 如果有配置，返回配置的监视器；否则返回无操作监视器 {@link NoOpCacheStatMonitor}
+     * @return 如果有配置，返回配置的监视器；否则返回无操作监视器 {@link NoOpCacheMetricsMonitor}
      */
-    public CacheStatMonitor getStatMonitor() {
-        if (statMonitor == null) {
-            return NoOpCacheStatMonitor.getInstance();
+    public CacheMetricsMonitor getMetricsMonitor() {
+        if (metricsMonitor == null) {
+            return NoOpCacheMetricsMonitor.getInstance();
         }
-        return statMonitor;
+        return metricsMonitor;
     }
 
     /**
@@ -131,7 +131,7 @@ public class ExtendConfig<K, V> {
 
         private CacheRefresh cacheRefresh;
 
-        private CacheStatMonitor statMonitor;
+        private CacheMetricsMonitor metricsMonitor;
 
         private CacheSyncMonitor syncMonitor;
 
@@ -157,8 +157,8 @@ public class ExtendConfig<K, V> {
             return this;
         }
 
-        public Builder<K, V> statMonitor(CacheStatMonitor statMonitor) {
-            this.statMonitor = statMonitor;
+        public Builder<K, V> metricsMonitor(CacheMetricsMonitor metricsMonitor) {
+            this.metricsMonitor = metricsMonitor;
             return this;
         }
 

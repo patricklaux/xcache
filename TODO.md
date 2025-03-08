@@ -52,12 +52,15 @@
 - [X] 【开发】 batchSize, batchTimeout 配置
 - [X] 【测试】 RedisCacheRefresh 脚本
 - [X] 【文档】 XRedis：application.xml，README.md，Reference.md
+- [X] 【开发】 ExecutorService 线程 ID 重复（创建 VirtualThreadFactory 单例对象）
+- [X] 【开发】 RedisCacheRefresh：getRefreshMembers 去除同步更新时间（使用脚本获取成员集合时更新刷新时间）
+- [X] 【开发】 CacheRefresh shutdown 可配置是否等待刷新任务完成
 
 ### 待完成任务
 
-- [ ] 【开发】 资源释放
+- [ ] 【开发】 ⭐ CacheMetrics shutdown
 - [ ] 【思考】 RedisSpinLock future.whenComplete() 打印日志消耗 Lettuce 线程资源问题
 - [ ] 【文档】 application.yml，README.md，Reference.md
-- [ ] 【思考】 RedisCacheRefresh：getRefreshMembers 增加偏移，去除同步代码？
 - [ ] 【测试】 测试 Xcache 注解参数
+- [ ] 【开发】 stat ——> Metrics
 

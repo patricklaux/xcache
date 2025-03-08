@@ -2,6 +2,7 @@ package com.igeeksky.xcache.autoconfigure.register;
 
 import com.igeeksky.xcache.common.CacheLoader;
 import com.igeeksky.xcache.core.SingletonSupplier;
+import com.igeeksky.xtool.core.io.IOUtils;
 import com.igeeksky.xtool.core.lang.Assert;
 
 import java.util.Collections;
@@ -41,6 +42,10 @@ public class CacheLoaderRegister implements Register<SingletonSupplier<CacheLoad
     @Override
     public Map<String, SingletonSupplier<CacheLoader<?, ?>>> getAll() {
         return Collections.unmodifiableMap(map);
+    }
+
+    public void shutdown() {
+        map.values().forEach(supplier -> IOUtils.closeQuietly(supplier.getIfPresent()));
     }
 
 }

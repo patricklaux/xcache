@@ -26,7 +26,7 @@ public class CacheProperties {
     /**
      * 缓存统计间隔时长（统计信息输出到日志）
      */
-    private Long logStatInterval;
+    private Long logMetricsInterval;
 
     /**
      * 模板配置（必填）
@@ -117,8 +117,8 @@ public class CacheProperties {
      *
      * @return {@link Long} – 缓存统计间隔时长
      */
-    public Long getLogStatInterval() {
-        return logStatInterval;
+    public Long getLogMetricsInterval() {
+        return logMetricsInterval;
     }
 
     /**
@@ -128,8 +128,8 @@ public class CacheProperties {
      *
      * @param logStatInterval 缓存统计间隔时长
      */
-    public void setLogStatInterval(Long logStatInterval) {
-        this.logStatInterval = logStatInterval;
+    public void setLogMetricsInterval(Long logStatInterval) {
+        this.logMetricsInterval = logStatInterval;
     }
 
     @Override
@@ -138,8 +138,8 @@ public class CacheProperties {
         if (group != null) {
             joiner.add("\"group\":\"" + group + "\"");
         }
-        if (logStatInterval != null) {
-            joiner.add("\"logStatInterval\":" + logStatInterval);
+        if (logMetricsInterval != null) {
+            joiner.add("\"logStatInterval\":" + logMetricsInterval);
         }
         if (template != null) {
             joiner.add("\"template\":" + template);

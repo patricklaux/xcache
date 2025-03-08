@@ -9,10 +9,14 @@ import com.igeeksky.xredis.lettuce.LettuceStreamOperator;
 import com.igeeksky.xredis.lettuce.api.RedisOperator;
 import com.igeeksky.xredis.lettuce.api.RedisOperatorFactory;
 import com.igeeksky.xredis.lettuce.config.LettuceGenericConfig;
+import com.igeeksky.xtool.core.concurrent.Futures;
 import io.lettuce.core.codec.ByteArrayCodec;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.ArrayList;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -25,13 +29,17 @@ public class LettuceHolder {
 
     private static final ByteArrayCodec CODEC = ByteArrayCodec.INSTANCE;
 
+    private final AtomicBoolean shutdownState = new AtomicBoolean(false);
+
     private final RedisOperatorFactory factory;
 
     private final StreamOptions streamOptions;
 
-    private final RedisStatOptions statOptions;
+    private final RedisMetricsOptions metricsOptions;
 
     private final RedisSyncOptions syncOptions;
+
+    private final long shutdownTimeout;
 
     private final SingletonSupplier<LettuceOperatorProxy> redisOperatorProxySupplier;
 
@@ -44,7 +52,8 @@ public class LettuceHolder {
     public LettuceHolder(LettuceGenericConfig genericConfig, LettuceConfig lettuceConfig,
                          RedisOperatorFactory factory, ScheduledExecutorService scheduler) {
         this.factory = factory;
-        this.statOptions = (lettuceConfig.getStat() != null) ? lettuceConfig.getStat() : new RedisStatOptions();
+        this.shutdownTimeout = genericConfig.getShutdownTimeout();
+        this.metricsOptions = (lettuceConfig.getMetrics() != null) ? lettuceConfig.getMetrics() : new RedisMetricsOptions();
         this.syncOptions = (lettuceConfig.getSync() != null) ? lettuceConfig.getSync() : new RedisSyncOptions();
         this.streamOptions = (lettuceConfig.getStream() != null) ? lettuceConfig.getStream() : new StreamOptions();
 
@@ -71,8 +80,8 @@ public class LettuceHolder {
         return factory;
     }
 
-    public RedisStatOptions getStatOptions() {
-        return statOptions;
+    public RedisMetricsOptions getMetricsOptions() {
+        return metricsOptions;
     }
 
     public RedisSyncOptions getSyncOptions() {
@@ -96,20 +105,21 @@ public class LettuceHolder {
     }
 
     public void shutdown() {
-        RedisOperator<byte[], byte[]> redisOperator = redisOperatorSupplier.getIfPresent();
-        StreamContainer<byte[], byte[]> container = streamContainerSupplier.getIfPresent();
-
-        CompletableFuture<Void> future1 = (container != null) ? container.shutdownAsync()
-                : CompletableFuture.completedFuture(null);
-        CompletableFuture<Void> future2 = (redisOperator != null) ? redisOperator.closeAsync()
-                : CompletableFuture.completedFuture(null);
-        future1.thenCompose(ignored -> future2)
-                .thenAccept(ignored -> {
-                    RedisOperatorFactory factory = this.factory;
-                    if (factory != null) {
-                        factory.shutdown();
-                    }
-                }).join();
+        if (shutdownState.compareAndSet(false, true)) {
+            ArrayList<Future<?>> futures = new ArrayList<>(3);
+            RedisOperator<byte[], byte[]> redisOperator = redisOperatorSupplier.getIfPresent();
+            StreamContainer<byte[], byte[]> container = streamContainerSupplier.getIfPresent();
+            if (container != null) {
+                futures.add(container.shutdownAsync());
+            }
+            if (redisOperator != null) {
+                futures.add(redisOperator.closeAsync());
+            }
+            if (factory != null) {
+                futures.add(factory.shutdownAsync());
+            }
+            Futures.awaitAll(futures, shutdownTimeout, TimeUnit.MILLISECONDS);
+        }
     }
 
 }

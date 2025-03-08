@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.extension.stat;
+package com.igeeksky.xcache.extension.metrics;
 
 import com.igeeksky.xcache.props.StoreLevel;
 
@@ -8,7 +8,7 @@ import com.igeeksky.xcache.props.StoreLevel;
  * @author Patrick.Lau
  * @since 1.0.0 2024/9/9
  */
-public interface CacheStatMonitor {
+public interface CacheMetricsMonitor {
 
     /**
      * 增加命中次数
@@ -75,6 +75,6 @@ public interface CacheStatMonitor {
      *
      * @return 指标信息
      */
-    CacheStatMessage collect();
+    CacheMetricsMessage collect();
 
 }

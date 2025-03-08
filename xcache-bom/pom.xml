@@ -17,8 +17,8 @@
     <url>https://github.com/patricklaux/xcache</url>
 
     <properties>
-        <xtool.version>1.1.4</xtool.version>
-        <xredis.version>1.0.1</xredis.version>
+        <xtool.version>1.2.1</xtool.version>
+        <xredis.version>1.0.3</xredis.version>
         <caffeine.version>3.1.8</caffeine.version>
         <spring.version>6.2.3</spring.version>
         <spring.boot.version>3.4.3</spring.boot.version>

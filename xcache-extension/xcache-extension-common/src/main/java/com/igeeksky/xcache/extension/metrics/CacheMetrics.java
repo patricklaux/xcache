@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.extension.stat;
+package com.igeeksky.xcache.extension.metrics;
 
 import com.igeeksky.xtool.core.json.SimpleJSON;
 
@@ -11,7 +11,7 @@ import java.math.RoundingMode;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-11
  */
-public class CacheStatistics {
+public class CacheMetrics {
 
     private long hits;
 
@@ -25,7 +25,7 @@ public class CacheStatistics {
 
     private Float hitPercentage;
 
-    public CacheStatistics() {
+    public CacheMetrics() {
     }
 
     public long getHits() {

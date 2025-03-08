@@ -1,21 +1,21 @@
 package com.igeeksky.xcache.autoconfigure.redis;
 
-import com.igeeksky.xcache.extension.stat.CacheStatMessage;
+import com.igeeksky.xcache.extension.metrics.CacheMetricsMessage;
 import com.igeeksky.xcache.props.CacheConstants;
-import com.igeeksky.xcache.redis.stat.RedisCacheStatProvider;
+import com.igeeksky.xcache.redis.metrics.RedisCacheMetricsProvider;
 import com.igeeksky.xtool.core.json.SimpleJSON;
 
 /**
- * {@link RedisCacheStatProvider} 配置项
+ * {@link RedisCacheMetricsProvider} 配置项
  */
-public class RedisStatOptions {
+public class RedisMetricsOptions {
 
     /**
      * 缓存指标统计的时间间隔
      * <p>
      * 默认值：60000，单位：毫秒
      */
-    private long period = 60000;
+    private long interval = 60000;
 
     /**
      * Redis stream 最大长度
@@ -31,7 +31,7 @@ public class RedisStatOptions {
      * <p>
      * 如果为 true，完整的 channel 为：{@code String channel = "stat:" + group} <br>
      * 如果为 false，完整的 channel 为：{@code String channel = "stat:" } <p>
-     * {@link CacheStatMessage} 已有 group 属性，因此可省略 group。
+     * {@link CacheMetricsMessage} 已有 group 属性，因此可省略 group。
      * 如希望多个应用的缓存指标共用一套消费者进行统计汇总，且新增应用后无需再手动添加 channel，则建议保持默认，不附加 group。
      */
     private Boolean enableGroupPrefix;
@@ -52,12 +52,12 @@ public class RedisStatOptions {
      */
     private String codec = CacheConstants.JACKSON_CODEC;
 
-    public long getPeriod() {
-        return period;
+    public long getInterval() {
+        return interval;
     }
 
-    public void setPeriod(long period) {
-        this.period = period;
+    public void setInterval(long interval) {
+        this.interval = interval;
     }
 
     public Boolean getEnableGroupPrefix() {
