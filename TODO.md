@@ -56,11 +56,13 @@
 - [X] 【开发】 RedisCacheRefresh：getRefreshMembers 去除同步更新时间（使用脚本获取成员集合时更新刷新时间）
 - [X] 【开发】 CacheRefresh shutdown 可配置是否等待刷新任务完成
 - [X] 【开发】 CacheMetrics close
+- [X] 【开发】 Redis future.whenComplete() 打印日志消耗 Lettuce 线程资源问题（去除非必要日志，调低级别为 DEBUG）
+- [X] 【文档】 application.yml
+- [X] 【开发】 stat 模块 ——> metrics 模块
 
 ### 待完成任务
 
-- [ ] 【思考】 RedisSpinLock future.whenComplete() 打印日志消耗 Lettuce 线程资源问题
-- [ ] 【文档】 application.yml，README.md，Reference.md
+- [ ] 【文档】 README.md，Reference.md
 - [ ] 【测试】 测试 Xcache 注解参数
-- [ ] 【开发】 stat ——> Metrics
+- [ ] 【开发】 接入 micrometer 作为 metrics 模块
 

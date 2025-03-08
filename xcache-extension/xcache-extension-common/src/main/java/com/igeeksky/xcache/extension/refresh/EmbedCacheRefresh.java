@@ -7,7 +7,10 @@ import com.igeeksky.xtool.core.tuple.Tuples;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -203,17 +206,7 @@ public class EmbedCacheRefresh implements CacheRefresh {
 
     @Override
     public void shutdown(long quietPeriod, long timeout, TimeUnit unit) {
-        try {
-            this.shutdownAsync(quietPeriod, timeout, unit).get(timeout, unit);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("CacheRefresh:{}, shutdown has error. [{}]", name, "Interrupted", e);
-            log.error("Cache:{} ,CacheRefresh close has error. [{}]", name, "Interrupted", e);
-        } catch (ExecutionException e) {
-            log.error("CacheRefresh:{}, shutdown has error. [{}]", name, e.getMessage(), e.getCause());
-        } catch (TimeoutException e) {
-            log.error("CacheRefresh:{}, shutdown timeout. wait:[{} {}]", name, timeout, unit.name(), e);
-        }
+        RefreshHelper.shutdown(this, name, quietPeriod, timeout, unit);
     }
 
     @Override
@@ -237,7 +230,7 @@ public class EmbedCacheRefresh implements CacheRefresh {
                 return CompletableFuture.completedFuture(null);
             }
             this.scheduledFuture = null;
-            return RefreshHelper.close(name, future, tasksQueue, quietPeriod, timeout, unit, config.getShutdownBehavior());
+            return RefreshHelper.shutdown(name, future, tasksQueue, quietPeriod, timeout, unit, config.getShutdownBehavior());
         } finally {
             lock.unlock();
         }

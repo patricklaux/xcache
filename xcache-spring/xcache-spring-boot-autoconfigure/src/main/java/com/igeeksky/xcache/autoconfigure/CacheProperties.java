@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.autoconfigure;
 
+import com.igeeksky.xcache.extension.metrics.LogCacheMetricsProvider;
 import com.igeeksky.xcache.props.CacheProps;
 import com.igeeksky.xcache.props.Template;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -24,7 +25,7 @@ public class CacheProperties {
     private String group;
 
     /**
-     * 缓存统计间隔时长（统计信息输出到日志）
+     * 缓存统计间隔时长（仅用于配置 LogCacheMetricsProvider）
      */
     private Long logMetricsInterval;
 
@@ -111,22 +112,23 @@ public class CacheProperties {
     }
 
     /**
-     * 缓存统计间隔时长（仅用于日志方式输出统计信息）
+     * 缓存指标统计间隔时长（仅用于 LogCacheMetricsProvider）
      * <p>
      * 默认值：60000，单位：毫秒
      *
-     * @return {@link Long} – 缓存统计间隔时长
+     * @return {@link Long} – 缓存指标统计间隔时长
      */
     public Long getLogMetricsInterval() {
         return logMetricsInterval;
     }
 
     /**
-     * 缓存统计间隔时长（仅用于日志方式输出统计信息）
+     * 缓存指标统计间隔时长（仅用于 LogCacheMetricsProvider）
      * <p>
      * 默认值：60000，单位：毫秒
      *
-     * @param logStatInterval 缓存统计间隔时长
+     * @param logStatInterval 缓存指标统计间隔时长
+     * @see LogCacheMetricsProvider
      */
     public void setLogMetricsInterval(Long logStatInterval) {
         this.logMetricsInterval = logStatInterval;
