@@ -4,47 +4,41 @@
 
 ## 1. 简介
 
-Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架。
+`Xcache` 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架。
 
-## 2. 架构
+## 2. 基本架构
 
 ![Architecture](docs/images/architecture.png)
 
 **说明**：
 
-1. Cache：缓存实例。
-2. CacheStore：缓存数据存储，每个缓存实例最多可支持三级缓存数据存储。
-3. CacheStat：缓存指标计数，用于记录缓存方法调用次数及结果。
-4. StatCollector：缓存指标统计信息的采集与发布（可选择发布到日志或 Redis）。
-5. CacheSync：缓存数据同步，用于维护各个缓存实例的数据一致性。
-6. MQ：消息队列，用于中转数据同步消息或缓存指标统计消息（已有实现采用 Redis Stream）。
-7. CacheWriter：缓存数据回写，当缓存数据发生变化时，将数据写入到数据源。
-8. CacheLoader：回源加载数据，当缓存无数据或需定期刷新时，从数据源加载新数据。
-9. dataSource：数据源。
-
-
+* `Cache`：缓存实例。
+* `CacheStore`：缓存数据存储，每个缓存实例最多可支持三级缓存数据存储。
+* `MetricsMessage`：缓存指标信息，用于记录缓存调用次数及命中率等指标。
+* `MetricsSystem`：缓存指标信息的收集、存储、计算与展示。
+* `SyncMessage`：缓存数据同步信息，用于维护各个缓存实例的数据一致性。
+* `MQ`：消息队列，用于转发数据同步消息（已有实现采用 `Redis Stream`）。
+* `DataSource`：数据源，当缓存无数据时，从数据源加载数据并存入缓存。
 
 ## 3. 特性
 
-- 支持多种缓存模式：Cache-Aside，Read-Through，Write-Through，Write-Behind。
-- 支持缓存数据同步：通过缓存事件广播，多个应用实例的缓存数据保持一致。
-- 支持缓存指标统计：通过日志方式输出和 Redis Stream 方式输出，便于统计各种缓存指标。
-- 支持随机存活时间：避免大量的 key 集中过期，导致数据源压力过大。
-- 支持缓存自动刷新：自动刷新缓存数据，避免慢查询导致应用响应缓慢。
-- 支持数据回源加锁：加锁确保相同的键同时仅有一个线程回源查询，降低回源次数，减轻数据源压力。
-- 支持缓存数据压缩：可选择压缩数据，降低内存消耗。
-- 支持多级缓存实现：一级缓存默认采用 Caffeine，二级缓存默认采用 Redis，最多可支持三级缓存。
-- 支持数据存在断言：通过实现数据存在断言接口，譬如 Bloom Filter，避免回源查询。
-- 支持缓存空值：当数据源确定无数据时，可缓存空值，避免缓存穿透。
-- 虚拟线程特别优化：需要加锁执行或 IO 等待的定时任务，采用虚拟线程执行，降低平台线程资源占用。
-- 更丰富的缓存注解：Cacheable，CacheableAll，CachePut，CachePutAll，…… ，CacheClear
-- 适配 SpringCache：无需修改现有代码，添加 Xcache 依赖，即可支持更多缓存功能。
+- 支持多级缓存：一级缓存默认采用 `Caffeine`，二级缓存默认采用 `Redis`，最多可支持三级缓存。
+- 缓存数据同步：通过缓存事件广播，多个应用实例的缓存数据保持一致。
+- 缓存指标统计：支持调用次数、命中次数等指标，指标存储和数据展现可自由扩展。
+- 缓存数据刷新：定时自动刷新缓存数据，避免慢查询导致应用响应缓慢。
+- 随机存活时间：可选择自动生成随机存活时间，避免大量数据集中过期，导致数据源压力过大。
+- 数据回源加锁：同一个键同一时刻仅允许一个线程回源查询，减轻数据源压力。
+- 数据存在断言：可选择实现数据存在断言接口，譬如 `Bloom Filter`，减少无效回源查询。
+- 支持缓存空值：可选择缓存空值，减少无效回源查询。
+- 缓存数据压缩：可选择数据压缩，降低内存(磁盘)消耗。
+- 支持缓存注解：`Cacheable`，`CacheableAll`，`CachePut`，`CachePutAll`，…… ，`CacheClear`
+- 适配 `Spring Cache`：如希望使用 `Spring Cache` ，可添加 `Xcache` 适配，即可解锁更多功能。
 
 ## 4. 运行环境
 
-SpringBoot：3.3.0+
+`SpringBoot`：3.3.0+
 
-JDK：21+
+`JDK`：21+
 
 ## 5. 开始使用
 
@@ -58,7 +52,7 @@ git clone https://github.com/patricklaux/xcache-samples.git
 
 如直接通过调用方法操作缓存，不使用缓存注解，仅需引入 ``xcache-spring-boot-starter`` 。
 
-主要依赖：Caffeine（内嵌缓存），Lettuce（Redis 客户端），Jackson（序列化）
+主要依赖：`Caffeine`（内嵌缓存），`Lettuce`（`Redis` 客户端），`Jackson`（序列化）
 
 ```xml
 <dependencies>
@@ -74,30 +68,22 @@ git clone https://github.com/patricklaux/xcache-samples.git
 ### 5.2. 第二步：编写缓存配置
 
 ```yaml
-xcache:
-  group: shop # 分组名称（必填），主要用于区分不同的应用
-  template: # 公共模板配置（必填），列表类型，可配置一至多个
-    - id: t0 # 模板ID（必填）
-      first: # 一级缓存配置
-        provider: caffeine # 缓存存储提供者实例 id
-        store-type: EMBED # 缓存存储类型，根据类型自动填充默认配置
-      second: # 二级缓存配置
-        provider: none # 缓存存储提供者实例 id（如果配置为 none，则表示不使用二级缓存）
-        store-type: EXTRA # 缓存存储类型，根据类型自动填充默认配置
-  cache: # 缓存实例个性配置，列表类型，可配置零至多个
-    - name: user # 缓存名称，用于区分不同的缓存对象
-      template-id: t0 # 指定使用的模板为 t0（对应属性：xcache.template[i].id）
+xcache: #【1】xcache 配置的根节点
+  group: shop #【2】分组名称（必填），主要用于区分不同的应用
+  template: #【3】缓存公共配置模板（必填），列表类型，可配置一至多个
+    - id: t0 #【4】 模板ID（必填）
+      first: #【5】 一级缓存配置
+        provider: caffeine #【6】使用 caffeine 作为一级缓存（默认值：caffeine）
 ```
 
 **说明**：
 
-1. 同一应用中，一般会有多个不同名称的缓存实例，它们的配置通常大部分相同。
+* 【1-4】仅有的 4 个必填项。`Xcache` 提供了丰富的配置项，大部分有默认值，因此可以省略。
+* 【3~8】缓存公共配置模板：同一应用中，一般会有多个缓存实例，配置通常相同。为减少重复配置，可使用公共配置模板。
 
-   为避免重复填写配置，可创建一个公共配置模板，缓存实例个性配置则只需填写与该模板的差异部分。
+另，每一个配置项都有详细介绍，可借助 ide 的自动提示功能快速查看配置描述。
 
-2. Xcache 提供了丰富的配置项，绝大多数都有默认值，因此可以省略而无需填写。
-
-3. 每一个配置项都有详细介绍，可借助 ide 的自动提示功能快速查看相关描述信息。
+或直接查看 `com.igeeksky.xcache.props.CacheProps`，了解详细的配置信息。
 
 ### 5.3. 第三步：调用缓存方法
 
@@ -127,7 +113,7 @@ public class UserCacheService {
     public User getUser(Long id) {
         // 1. 首先查询缓存，如果缓存命中，则直接返回缓存数据；
         // 2. 如果缓存未命中，则调用 cacheLoader 从数据源加载数据。
-        return cache.get(id, cacheLoader);
+        return cache.getOrLoad(id, cacheLoader);
     }
 
     /**
@@ -139,7 +125,7 @@ public class UserCacheService {
     public Map<Long, User> getUsers(Set<Long> ids) {
         // 1. 首先查询缓存，如果缓存全部命中，则直接返回缓存数据；
         // 2. 如果缓存全部未命中或部分命中，则调用 cacheLoader 从数据源加载未命中数据。
-        return cache.getAll(ids, this.cacheLoader);
+        return cache.getAllOrLoad(ids, this.cacheLoader);
     }
 
     /**
@@ -177,12 +163,12 @@ public class UserCacheService {
      * @return 保存到数据库后返回的用户信息集合
      */
     public Map<Long, User> updateUsers(List<User> users) {
-        Map<Long, User> updates = userDao.batchUpdate(users);
+        Map<Long, User> updated = userDao.batchUpdate(users);
         // 将更新后的用户信息写入缓存
-        cache.putAll(updates);
+        cache.putAll(updated);
         // 如果为了更好地保持数据一致性，这里可选择直接删除缓存数据，后续查询时再从数据源加载
-        // cache.evictAll(updates.keySet());
-        return updates;
+        // cache.evictAll(updated.keySet());
+        return updated;
     }
 
     /**
@@ -193,7 +179,7 @@ public class UserCacheService {
     public void deleteUser(Long id) {
         userDao.delete(id);
         // 删除缓存数据
-        cache.evict(id);
+        cache.remove(id);
     }
 
     /**
@@ -204,7 +190,7 @@ public class UserCacheService {
     public void deleteUsers(Set<Long> ids) {
         userDao.batchDelete(ids);
         // 批量删除缓存数据
-        cache.evictAll(ids);
+        cache.removeAll(ids);
     }
 
     /**
@@ -258,7 +244,7 @@ cd xcache
 # 3. 执行 maven 命令编译
 mvn clean install
 
-# xcache 测试用例依赖本地 redis，如构建时不希望运行测试用例，可执行：
+# xcache 部分测试用例依赖 Redis，如构建时不希望运行测试用例，可执行：
 # mvn clean install -DskipTests
 ```
 

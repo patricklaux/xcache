@@ -325,7 +325,7 @@ public class StoreProps {
      * <p>
      * 默认值：<br>
      * 内嵌缓存：none <br>
-     * 外部缓存：jackson
+     * 外部缓存：jackson（如果是用 spring-cache，请改为 jackson-spring）
      * <p>
      * {@link CacheConstants#DEFAULT_EMBED_VALUE_CODEC}
      * {@link CacheConstants#DEFAULT_EXTRA_VALUE_CODEC}

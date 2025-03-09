@@ -10,11 +10,13 @@ import com.igeeksky.xtool.core.lang.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -25,8 +27,9 @@ import java.util.concurrent.ScheduledExecutorService;
  * @since 0.0.4 2023-09-29
  */
 @Configuration(proxyBeanMethods = false)
-@AutoConfigureAfter({CacheProperties.class})
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 @EnableConfigurationProperties({CacheProperties.class})
+@AutoConfigureAfter({SchedulerAutoConfiguration.class})
 @SuppressWarnings("unused")
 public class CacheAutoConfiguration {
 
@@ -42,6 +45,7 @@ public class CacheAutoConfiguration {
     }
 
     @Bean("xcacheManager")
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     @ConditionalOnMissingBean(CacheManager.class)
     CacheManager cacheManager(ObjectProvider<CacheLoaderRegister> loaderRegisters,
                               ObjectProvider<StoreProviderRegister> storeRegisters,
@@ -102,6 +106,7 @@ public class CacheAutoConfiguration {
     }
 
     @Bean(destroyMethod = "shutdown")
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     CacheMetricsProviderRegister logCacheMetricsProviderRegister(ScheduledExecutorService scheduler) {
         long interval = (cacheProperties.getLogMetricsInterval() != null) ?
                 cacheProperties.getLogMetricsInterval() :
@@ -115,6 +120,7 @@ public class CacheAutoConfiguration {
     }
 
     @Bean(destroyMethod = "shutdown")
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     CacheRefreshProviderRegister embedCacheRefreshProviderRegister(ScheduledExecutorService scheduler) {
         CacheRefreshProviderRegister register = new CacheRefreshProviderRegister();
         register.put(CacheConstants.EMBED_CACHE_REFRESH,

@@ -8,9 +8,11 @@ import com.igeeksky.xcache.caffeine.CaffeineWeigherProvider;
 import com.igeeksky.xcache.core.SingletonSupplier;
 import com.igeeksky.xcache.props.CacheConstants;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 
 import java.util.List;
 
@@ -21,6 +23,7 @@ import java.util.List;
  * @since 0.0.4 2023/09/18
  */
 @Configuration(proxyBeanMethods = false)
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 @AutoConfigureBefore(CacheAutoConfiguration.class)
 @SuppressWarnings("unused")
 public class CaffeineAutoConfiguration {
@@ -33,6 +36,7 @@ public class CaffeineAutoConfiguration {
      * @return {@link StoreProviderRegister} – StoreProvider 注册器
      */
     @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     StoreProviderRegister caffeineStoreRegister(ObjectProvider<CaffeineExpiryProvider> expiryProviders,
                                                 ObjectProvider<CaffeineWeigherProvider> weigherProviders) {
         List<CaffeineExpiryProvider> expiryList = expiryProviders.orderedStream().toList();

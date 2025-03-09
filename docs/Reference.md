@@ -42,21 +42,19 @@ Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架�
 
 **说明**：
 
-1. Cache：缓存实例。
-2. CacheStore：缓存数据存储，每个缓存实例最多可支持三级缓存数据存储。
-3. CacheStatMessage：缓存指标统计消息（缓存方法调用次数及结果）。
-4. StatCollector：缓存指标统计消息的采集与发布（可选择发布到 log 或 Redis）。
-5. CacheSyncMessage：缓存数据同步消息，用于维护各个缓存实例的数据一致性。
-6. MQ：消息队列，用于中转数据同步消息或缓存指标统计消息（已有实现采用 Redis Stream）。
-7. CacheWriter：数据回写，当缓存数据发生变化时，将数据写入数据源。
-8. CacheLoader：回源取值，当缓存无数据或需定期刷新时，从数据源读取数据。
-9. dataSource：数据源。
+* `Cache`：缓存实例。
+* `CacheStore`：缓存数据存储，每个缓存实例最多可支持三级缓存数据存储。
+* `MetricsMessage`：缓存指标信息，用于记录缓存调用次数及命中率等指标。
+* `MetricsSystem`：缓存指标信息的收集、存储、计算与展示。
+* `SyncMessage`：缓存数据同步信息，用于维护各个缓存实例的数据一致性。
+* `MQ`：消息队列，用于转发数据同步消息（已有实现采用 `Redis Stream`）。
+* `DataSource`：数据源，当缓存无数据时，从数据源加载数据并存入缓存。
 
 ### 2.3. 运行环境
 
-SpringBoot：3.3.0+
+`SpringBoot`：3.3.0+
 
-JDK：21+
+`JDK`：21+
 
 ## 3. 项目示例
 
@@ -84,7 +82,7 @@ Xcache 支持 bom 方式统一管理版本，可在 pom.xml 文件中添加如�
 </dependencyManagement>
 ```
 
-### 3.1. 调用缓存方法
+### 3.1. 缓存方法
 
 详见 ``xcache-samples-method`` 子项目。
 
@@ -107,24 +105,22 @@ Xcache 支持 bom 方式统一管理版本，可在 pom.xml 文件中添加如�
 #### 3.1.2. 第二步：编写配置
 
 ```yaml
-xcache: #【1】Xcache 配置的根节点
+xcache: #【1】xcache 配置的根节点
   group: shop #【2】分组名称（必填），主要用于区分不同的应用
-  template: #【3】公共模板配置（必填），列表类型，可配置一至多个
-    - id: t0 #【4】模板ID（必填）
-      first: #【5】一级缓存配置
-        provider: caffeine #【6】使用 id 为 caffeine 的 StoreProvider 作为一级缓存
-  cache: #【7】缓存个性配置，列表类型，可配置零至多个
-    - name: user #【8】缓存名称，用于区分不同的缓存实例
-      template-id: t0 #【9】指定使用的模板为 t0（即【4】中设定的 id）
+  template: #【3】缓存公共配置模板（必填），列表类型，可配置一至多个
+    - id: t0 #【4】 模板ID（必填）
+      first: #【5】 一级缓存配置
+        provider: caffeine #【6】使用 caffeine 作为一级缓存（默认值：caffeine）
 ```
 
 **说明**：
 
-- 同一应用中，一般会有多个不同名称的缓存对象，它们的配置通常大部分相同。
+* 【1-4】仅有的 4 个必填项。`Xcache` 提供了丰富的配置项，大部分有默认值，因此可以省略。
+* 【3~8】缓存公共配置模板：同一应用中，一般会有多个缓存实例，配置通常相同。为减少重复配置，可使用公共配置模板。
 
-  为了避免填写重复配置，可创建一个公共配置模板【3】，缓存个性配置【9】中则只需填写与该模板的差异部分。
+另，每一个配置项都有详细介绍，可借助 ide 的自动提示功能快速查看配置描述。
 
-- Xcache 提供了丰富的配置项，绝大多数都有默认值，因此可以省略而无需填写。
+或直接查看 `com.igeeksky.xcache.props.CacheProps`，了解详细的配置信息。
 
 
 #### 3.1.3. 第三步：调用方法
@@ -147,7 +143,7 @@ public class UserCacheService {
     }
 
     /**
-     * 获取单个用户信息
+     * 根据用户ID获取单个用户信息
      *
      * @param id 用户ID
      * @return 用户信息
@@ -159,7 +155,7 @@ public class UserCacheService {
     }
 
     /**
-     * 批量获取用户信息
+     * 根据用户ID批量获取用户信息
      *
      * @param ids 用户ID集合
      * @return 用户信息集合
@@ -205,12 +201,12 @@ public class UserCacheService {
      * @return 保存到数据库后返回的用户信息集合
      */
     public Map<Long, User> updateUsers(List<User> users) {
-        Map<Long, User> updates = userDao.batchUpdate(users);
+        Map<Long, User> updated = userDao.batchUpdate(users);
         // 将更新后的用户信息写入缓存
-        cache.putAll(updates);
+        cache.putAll(updated);
         // 如果为了更好地保持数据一致性，这里可选择直接删除缓存数据，后续查询时再从数据源加载
-        // cache.evictAll(updates.keySet());
-        return updates;
+        // cache.evictAll(updated.keySet());
+        return updated;
     }
 
     /**
@@ -272,27 +268,25 @@ public class UserCacheService {
 
 > ``CacheLoader`` 有两个接口：一是 ``load(key)``，用于单个回源取值；二是 ``loadAll(keys)``，用于批量回源取值。
 >
-> ``cache.getOrLoad(key, cacheLoader)`` 方法，单个回源取值时加锁；
->
-> ``cache.getAllOrLoad(keys, cacheLoader)`` 方法，批量回源取值时不加锁，因为批量加锁可能导致死锁。
+> 单个回源取值时加锁，批量回源取值时不加锁（批量回源加锁可能导致死锁）。
 
 #### 3.1.4. 小结
 
 此示例演示了如何通过直接调用缓存方法来使用缓存。
 
-缓存方法的使用并不复杂，但大家可能会对编写配置有些许疑惑：
+缓存方法使用其实是很简单的，类似于 `Map` 的 `API` 。
 
-有哪些配置项？有没有默认值？哪些是必填项？哪些是可选项……
+这里演示的仅仅是同步调用方式，另外还有异步 `API`，只要在方法名称后面加上 `Async`，返回结果将变成 `CompleteFuture`。
 
-鉴于配置项较多，因此写了一个单独章节。欲详细了解，请见 [4.缓存配置](#4. 缓存配置)。
+### 3.2. Xcache 注解
 
-### 3.2. 使用 Xcache 注解
+上一示例中，仅仅使用了 `caffeine` 作为一级缓存，这一节将使用 `caffeine` 和 `redis` 创建两级缓存，并介绍如何使用缓存注解。
 
 详见 ``xcache-samples-annotation`` 子项目。
 
 #### 3.2.1. 第一步：引入依赖
 
-使用  Xcache 注解，除了需引入 ``xcache-spring-boot-starter``，还需引入 ``xcache-spring-aop``。
+使用  Xcache 注解，除了依赖 ``xcache-spring-boot-starter``，还需引入 ``xcache-spring-aop``。
 
 ```xml
 <dependencies>
@@ -319,9 +313,6 @@ xcache: #【1】Xcache 配置的根节点
         provider: caffeine #【6】使用 id 为 caffeine 的 StoreProvider 作为一级缓存
       second: #【7】二级缓存配置
         provider: lettuce #【8】使用 id 为 lettuce 的 StoreProvider 作为二级缓存（即【14】中设定的 id）
-  cache: #【9】缓存个性配置，列表类型，可配置零至多个
-    - name: user #【10】缓存名称，用于区分不同的缓存对象
-      template-id: t0 #【11】指定使用的模板为 t0（即【4】中设定的模板 id）
   redis: #【12】Redis 配置
     store: #【13】RedisStoreProvider 配置，列表类型，可配置多个
       - id: lettuce #【14】要创建的 RedisStoreProvider 的 id
@@ -627,7 +618,7 @@ public class UserCacheService {
    另，Spring cache 注解还支持 Reactor 的 ``Mono`` 和 ``Flux`` 类型，但 Xcache 注解暂无计划支持。因为 JDK 21 已有相对成熟的虚拟线程，再引入更多的抽象似乎并不是一个好主意。
    
 
-### 3.3. 使用 Spring cache 注解
+### 3.3. Spring cache 注解
 
 详见 ``xcache-samples-spring-annotation`` 子项目。
 

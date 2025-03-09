@@ -189,28 +189,26 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
 
     private void unlock() {
         this.redisOperator.evalshaAsync(RedisRefreshScript.UNLOCK, lockKeys, lockArgs)
-                .whenComplete((locked, t) -> {
+                .whenComplete((status, t) -> {
                     if (t != null) {
                         log.error("Cache: {}, sid: {}, CacheRefresh unlock failed.", name, sid, t);
                         return;
                     }
-                    if (locked == null || !(boolean) locked) {
-                        if (log.isWarnEnabled()) {
-                            log.warn("Cache: {}, sid: {}, CacheRefresh unlock failed.", name, sid);
-                        }
+                    if (log.isDebugEnabled()) {
+                        log.debug("Cache: {}, sid: {}, CacheRefresh unlock result: {}.", name, sid, status);
                     }
                 });
     }
 
     private void extendLockExpire() {
         this.redisOperator.evalshaAsync(RedisRefreshScript.LOCK, lockKeys, lockArgs)
-                .whenComplete((locked, t) -> {
+                .whenComplete((status, t) -> {
                     if (t != null) {
                         log.error("Cache: {}, sid: {}, CacheRefresh extend lock expire failed.", name, sid, t);
                         return;
                     }
                     if (log.isDebugEnabled()) {
-                        log.debug("Cache: {}, sid: {}, CacheRefresh extend lock expire result: {}.", name, sid, locked);
+                        log.debug("Cache: {}, sid: {}, CacheRefresh extend lock expire result: {}.", name, sid, status);
                     }
                 });
     }
@@ -266,17 +264,7 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
 
     @Override
     public void shutdown(long quietPeriod, long timeout, TimeUnit unit) {
-        try {
-            this.shutdownAsync(quietPeriod, timeout, unit).get(timeout, unit);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("CacheRefresh:{}, shutdown has error. [{}]", name, "Interrupted", e);
-            log.error("Cache:{} ,CacheRefresh close has error. [{}]", name, "Interrupted", e);
-        } catch (ExecutionException e) {
-            log.error("CacheRefresh:{}, shutdown has error. [{}]", name, e.getMessage(), e.getCause());
-        } catch (TimeoutException e) {
-            log.error("CacheRefresh:{}, shutdown timeout. wait:[{} {}]", name, timeout, unit.name(), e);
-        }
+        RefreshHelper.shutdown(this, name, quietPeriod, timeout, unit);
     }
 
     @Override
@@ -292,7 +280,7 @@ public abstract class AbstractRedisCacheRefresh implements CacheRefresh {
                 return CompletableFuture.completedFuture(null);
             }
             this.scheduledFuture = null;
-            return RefreshHelper.close(name, future, tasksQueue, quietPeriod, timeout, unit, config.getShutdownBehavior());
+            return RefreshHelper.shutdown(name, future, tasksQueue, quietPeriod, timeout, unit, config.getShutdownBehavior());
         }
         return CompletableFuture.completedFuture(null);
     }

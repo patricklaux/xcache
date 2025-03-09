@@ -30,15 +30,15 @@ import java.util.concurrent.locks.LockSupport;
 public class RedisCacheRefreshTest {
 
     private static final Logger log = LoggerFactory.getLogger(RedisCacheRefreshTest.class);
+
     private static RedisCacheRefresh refresh1;
     private static RedisCacheRefresh refresh2;
-    private static RedisOperatorProxy operatorProxy;
     private static LettuceOperator<byte[], byte[]> redisOperator;
 
     @BeforeAll
     static void beforeAll() {
         redisOperator = LettuceTestHelper.createStandaloneFactory().redisOperator(ByteArrayCodec.INSTANCE);
-        operatorProxy = new LettuceOperatorProxy(redisOperator);
+        RedisOperatorProxy operatorProxy = new LettuceOperatorProxy(redisOperator);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
         ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 

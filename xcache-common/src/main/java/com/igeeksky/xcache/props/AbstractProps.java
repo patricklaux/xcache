@@ -59,7 +59,7 @@ public abstract class AbstractProps {
      * <p>
      * 用于获取 KeyCodec，处理 键 与 String 相互转换。
      * <p>
-     * 默认值：jackson
+     * 默认值：jackson（如使用 Spring cache adapter，请改为 jackson-spring）
      * <p>
      * {@link CacheConstants#DEFAULT_KEY_CODEC_PROVIDER}
      *

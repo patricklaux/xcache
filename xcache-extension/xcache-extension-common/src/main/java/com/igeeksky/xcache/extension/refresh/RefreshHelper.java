@@ -9,10 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Queue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -58,10 +55,24 @@ public final class RefreshHelper {
         return true;
     }
 
-    public static CompletableFuture<Void> close(String name, ScheduledFuture<?> scheduledFuture,
-                                                Queue<TasksInfo> tasksQueue,
-                                                long quietPeriod, long timeout, TimeUnit unit,
-                                                ShutdownBehavior behavior) {
+    public static void shutdown(CacheRefresh cacheRefresh, String name, long quietPeriod, long timeout, TimeUnit unit) {
+        try {
+            cacheRefresh.shutdownAsync(quietPeriod, timeout, unit).get(timeout, unit);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("CacheRefresh:{}, shutdown has error. [{}]", name, "Interrupted", e);
+            log.error("Cache:{} ,CacheRefresh close has error. [{}]", name, "Interrupted", e);
+        } catch (ExecutionException e) {
+            log.error("CacheRefresh:{}, shutdown has error. [{}]", name, e.getMessage(), e.getCause());
+        } catch (TimeoutException e) {
+            log.error("CacheRefresh:{}, shutdown timeout. wait:[{} {}]", name, timeout, unit.name(), e);
+        }
+    }
+
+    public static CompletableFuture<Void> shutdown(String name, ScheduledFuture<?> scheduledFuture,
+                                                   Queue<TasksInfo> tasksQueue,
+                                                   long quietPeriod, long timeout, TimeUnit unit,
+                                                   ShutdownBehavior behavior) {
         log.info("CacheRefresh:{}, Commencing graceful shutdown. {} refresh tasks.", name, behavior.name());
         try {
             scheduledFuture.cancel(ShutdownBehavior.INTERRUPT == behavior);

@@ -47,11 +47,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -67,6 +69,7 @@ import java.util.function.Supplier;
  * @since 0.0.4 2023-09-18
  */
 @Configuration(proxyBeanMethods = false)
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 @AutoConfigureBefore({CacheAutoConfiguration.class})
 @AutoConfigureAfter({SchedulerAutoConfiguration.class})
 @EnableConfigurationProperties({LettuceCacheProperties.class})
@@ -87,6 +90,7 @@ public class LettuceCacheAutoConfiguration {
     }
 
     @Bean(destroyMethod = "shutdown")
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     LettuceRegister lettuceRegister(ClientResourcesHolder clientResources, ScheduledExecutorService scheduler,
                                     ObjectProvider<ClientOptionsBuilderCustomizer> customizers) {
 
@@ -135,6 +139,7 @@ public class LettuceCacheAutoConfiguration {
     }
 
     @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     StoreProviderRegister lettuceStoreProviderRegister(LettuceRegister lettuceRegister) {
         StoreProviderRegister register = new StoreProviderRegister();
         lettuceRegister.getAll().forEach((id, holder) -> register.put(id, createStoreProvider(holder)));
@@ -142,6 +147,7 @@ public class LettuceCacheAutoConfiguration {
     }
 
     @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     CacheSyncProviderRegister lettuceSyncProviderRegister(LettuceRegister lettuceRegister,
                                                           ObjectProvider<CodecProviderRegister> providers) {
         CacheSyncProviderRegister register = new CacheSyncProviderRegister();
@@ -150,6 +156,7 @@ public class LettuceCacheAutoConfiguration {
     }
 
     @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     CacheLockProviderRegister lettuceLockProviderRegister(LettuceRegister lettuceRegister,
                                                           ScheduledExecutorService scheduler) {
         CacheLockProviderRegister register = new CacheLockProviderRegister();
@@ -158,6 +165,7 @@ public class LettuceCacheAutoConfiguration {
     }
 
     @Bean(destroyMethod = "shutdown")
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     CacheRefreshProviderRegister lettuceRefreshProviderRegister(LettuceRegister lettuceRegister,
                                                                 ScheduledExecutorService scheduler) {
         CacheRefreshProviderRegister register = new CacheRefreshProviderRegister();
@@ -165,10 +173,8 @@ public class LettuceCacheAutoConfiguration {
         return register;
     }
 
-    /**
-     * @return {@link CacheMetricsProviderRegister} – 缓存指标信息统计发布
-     */
     @Bean(destroyMethod = "shutdown")
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     CacheMetricsProviderRegister lettuceMetricsProviderRegister(LettuceRegister lettuceRegister,
                                                              ScheduledExecutorService scheduler,
                                                              ObjectProvider<CodecProviderRegister> providers) {

@@ -1,9 +1,8 @@
 package com.igeeksky.xcache.autoconfigure;
 
-import com.igeeksky.xcache.extension.metrics.LogCacheMetricsProvider;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 
 /**
  * 定时任务调度器配置项
@@ -11,21 +10,20 @@ import org.springframework.context.annotation.Configuration;
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/12
  */
-@Configuration
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 @ConfigurationProperties(prefix = "xcache.scheduler")
-@AutoConfigureBefore({SchedulerAutoConfiguration.class})
 public class SchedulerProperties {
 
     /**
      * 定时任务调度器核心线程数（可不填）
      * <p>
      * 既知可能用于以下组件：<p>
-     * 1. EmbedCacheRefreshProvider {@link com.igeeksky.xcache.extension.refresh.EmbedCacheRefreshProvider }<p>
-     * 2. RedisCacheRefreshProvider {@code com.igeeksky.xcache.redis.refresh.RedisCacheRefreshProvider }<p>
-     * 3. LogCacheStatProvider {@link LogCacheMetricsProvider } <p>
-     * 4. RedisCacheStatProvider {@code com.igeeksky.xcache.redis.stat.RedisCacheStatProvider } <p>
-     * 5. StreamContainer {@code com.igeeksky.redis.stream.StreamContainer } <p>
-     * 以上组件的定时任务的实际执行均使用虚拟线程，因此不会过多占用此调度器的线程资源。
+     * 1. EmbedCacheRefreshProvider <br>
+     * 2. RedisCacheRefreshProvider <br>
+     * 3. LogCacheMetricsProvider <br>
+     * 4. RedisCacheMetricsProvider <br>
+     * 5. StreamContainer <br>
+     * 以上组件的定时任务执行大部分使用虚拟线程或异步执行，因此只会占用此调度器极少的线程资源。
      * <p>
      * 如果未配置，则使用 (核心数 / 8)，最小为 1 <p>
      * {@snippet :
