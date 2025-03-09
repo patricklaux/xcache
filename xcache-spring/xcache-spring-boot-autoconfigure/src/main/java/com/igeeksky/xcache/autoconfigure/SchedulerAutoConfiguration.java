@@ -2,10 +2,12 @@ package com.igeeksky.xcache.autoconfigure;
 
 import com.igeeksky.xtool.core.concurrent.PlatformThreadFactory;
 import com.igeeksky.xtool.core.lang.Assert;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -18,6 +20,7 @@ import java.util.concurrent.ThreadFactory;
  * @since 1.0.0 2024/7/17
  */
 @Configuration(proxyBeanMethods = false)
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 @AutoConfigureBefore({CacheAutoConfiguration.class})
 @EnableConfigurationProperties({SchedulerProperties.class})
 public class SchedulerAutoConfiguration {
@@ -39,6 +42,7 @@ public class SchedulerAutoConfiguration {
      * @return ScheduledExecutorService – 调度器
      */
     @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     ScheduledExecutorService scheduler() {
         // 根据配置属性动态确定线程池的核心大小
         int corePoolSize = getCorePoolSize(schedulerProperties.getCorePoolSize());

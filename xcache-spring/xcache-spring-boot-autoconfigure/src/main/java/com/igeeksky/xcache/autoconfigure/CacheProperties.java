@@ -3,8 +3,9 @@ package com.igeeksky.xcache.autoconfigure;
 import com.igeeksky.xcache.extension.metrics.LogCacheMetricsProvider;
 import com.igeeksky.xcache.props.CacheProps;
 import com.igeeksky.xcache.props.Template;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 
 import java.util.List;
 import java.util.StringJoiner;
@@ -15,7 +16,7 @@ import java.util.StringJoiner;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-29
  */
-@Configuration
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 @ConfigurationProperties(prefix = "xcache")
 public class CacheProperties {
 

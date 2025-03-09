@@ -1,19 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- configuration file for LogBack (slf4J implementation)
-See here for more details: http://gordondickens.com/wordpress/2013/03/27/sawing-through-the-java-loggers/ -->
-<configuration scan="true" scanPeriod="10 seconds" debug="false">
+
+<configuration scan="false" scanPeriod="10 seconds" debug="false">
 
     <contextName>shop</contextName>
 
-    <property name="LOG_HOME" value="/Data/log/shop"/>
-    <property name="MODULE_NAME" value="shop"/>
-
-    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
-        <resetJUL>true</resetJUL>
-    </contextListener>
-
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder charset="UTF-8"> <!-- encoder 可以指定字符集，对于中文输出有意义 -->
+        <encoder charset="UTF-8">
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n</pattern>
         </encoder>
     </appender>
