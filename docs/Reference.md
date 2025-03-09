@@ -190,7 +190,7 @@ public class UserCacheService {
         // 将更新后的用户信息写入缓存
         cache.put(user.getId(), updated);
         // 如果为了更好地保持数据一致性，这里可选择直接删除缓存数据，后续查询时再从数据源加载
-        // cache.evict(user.getId());
+        // cache.remove(user.getId());
         return updated;
     }
 
@@ -205,7 +205,7 @@ public class UserCacheService {
         // 将更新后的用户信息写入缓存
         cache.putAll(updated);
         // 如果为了更好地保持数据一致性，这里可选择直接删除缓存数据，后续查询时再从数据源加载
-        // cache.evictAll(updated.keySet());
+        // cache.removeAll(updated.keySet());
         return updated;
     }
 
@@ -1512,7 +1512,7 @@ public User save(long id, User result) {
 	/**
      * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值；
      * 2. 如果缓存未命中，则通过方法传入的 cacheLoader 回源取值，取值结果先存入缓存，最后返回该值。
-     * 
+     * <p>
      * 注：回源取值时将加锁执行。
      */
     V getOrLoad(K key, CacheLoader<K, V> cacheLoader);
@@ -1521,7 +1521,7 @@ public User save(long id, User result) {
 	/**
      * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值。
      * 2. 如果缓存未命中，通过缓存内部的 cacheLoader 回源取值，取值结果存入缓存并返回；
-     * 
+     * <p>
      * 注1：回源取值时将加锁执行。
      * 注2：如果缓存内部无 CacheLoader，将抛出异常。
      */
@@ -1551,7 +1551,7 @@ public User save(long id, User result) {
     /**
      * 1. 先从缓存取值，如果缓存命中全部数据，返回缓存数据集。
      * 2. 如果有缓存未命中数据，通过缓存内部的 cacheLoader 回源取值，取值结果先存入缓存，最后返回合并结果集：缓存数据集+回源取值结果集。
-     * 
+     * <p>
      * 注1：批量回源取值不加锁；
      * 注2：如果缓存内部无 CacheLoader，将抛出异常。
      */

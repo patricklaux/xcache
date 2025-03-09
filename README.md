@@ -152,7 +152,7 @@ public class UserCacheService {
         // 将更新后的用户信息写入缓存
         cache.put(user.getId(), updated);
         // 如果为了更好地保持数据一致性，这里可选择直接删除缓存数据，后续查询时再从数据源加载
-        // cache.evict(user.getId());
+        // cache.remove(user.getId());
         return updated;
     }
 
@@ -167,7 +167,7 @@ public class UserCacheService {
         // 将更新后的用户信息写入缓存
         cache.putAll(updated);
         // 如果为了更好地保持数据一致性，这里可选择直接删除缓存数据，后续查询时再从数据源加载
-        // cache.evictAll(updated.keySet());
+        // cache.removeAll(updated.keySet());
         return updated;
     }
 

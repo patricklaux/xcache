@@ -59,10 +59,10 @@
 - [X] 【开发】 Redis future.whenComplete() 打印日志消耗 Lettuce 线程资源问题（去除非必要日志，调低级别为 DEBUG）
 - [X] 【文档】 application.yml
 - [X] 【开发】 stat 模块 ——> metrics 模块
+- [X] 【文档】 README.md，Reference.md
+- [X] 【测试】 测试 Xcache 注解参数
 
 ### 待完成任务
 
-- [ ] 【文档】 README.md，Reference.md
-- [ ] 【测试】 测试 Xcache 注解参数
 - [ ] 【开发】 接入 micrometer 作为 metrics 模块
 
