@@ -76,12 +76,7 @@ public class StoreConfig<V> {
     // extra
     private final int keySequenceSize;
 
-    /**
-     * 扩展参数0，用于自定义的 StoreProvider
-     * <p>
-     * 自定义实现 StoreProvider 时，如果以上参数名称均无法满足需求，可以使用 params[0-9]，
-     * 然后在 StoreProvider 中获取并使用即可
-     */
+    // 扩展参数，用于自定义的 StoreProvider
     private final Map<String, Object> params;
 
     private StoreConfig(Builder<V> builder) {

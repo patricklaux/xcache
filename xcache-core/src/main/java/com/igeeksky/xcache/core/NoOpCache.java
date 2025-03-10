@@ -6,8 +6,8 @@ import com.igeeksky.xcache.common.CacheLoader;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.ContainsPredicate;
 import com.igeeksky.xcache.extension.NoOpCacheLoader;
-import com.igeeksky.xtool.core.collection.Maps;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -129,7 +129,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
     @Override
     public Map<K, V> getAll(Set<? extends K> keys) {
         requireNonNull(keys, "keys must not be null");
-        return Maps.newHashMap(0);
+        return HashMap.newHashMap(0);
     }
 
     @Override
@@ -137,13 +137,13 @@ public class NoOpCache<K, V> implements Cache<K, V> {
         if (keys == null) {
             return this.requireNonNull("keys must not be null.");
         }
-        return CompletableFuture.completedFuture(Maps.newHashMap(0));
+        return CompletableFuture.completedFuture(HashMap.newHashMap(0));
     }
 
     @Override
     public Map<K, CacheValue<V>> getAllCacheValues(Set<? extends K> keys) {
         requireNonNull(keys, "keys must not be null");
-        return Maps.newHashMap(0);
+        return HashMap.newHashMap(0);
     }
 
     @Override
@@ -151,7 +151,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
         if (keys == null) {
             return this.requireNonNull("keys must not be null.");
         }
-        return CompletableFuture.completedFuture(Maps.newHashMap(0));
+        return CompletableFuture.completedFuture(HashMap.newHashMap(0));
     }
 
     @Override

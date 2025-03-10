@@ -8,10 +8,10 @@ import com.igeeksky.xcache.extension.lock.LockService;
 import com.igeeksky.xcache.extension.metrics.CacheMetricsMonitor;
 import com.igeeksky.xcache.extension.refresh.CacheRefresh;
 import com.igeeksky.xcache.extension.refresh.NoOpCacheRefresh;
-import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.collection.Sets;
 import com.igeeksky.xtool.core.lang.codec.KeyCodec;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -235,7 +235,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     public Map<K, CacheValue<V>> getAllCacheValues(Set<? extends K> keys) {
         requireNonNull(keys, "keys must not be null.");
         if (keys.isEmpty()) {
-            return Maps.newHashMap(0);
+            return HashMap.newHashMap(0);
         }
         Map<String, K> keyMapping = this.createKeyMapping(keys);
         return this.saveToWrapperResult(keyMapping, this.doGetAll(keyMapping.keySet()));
@@ -247,7 +247,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             return requireNonNull("keys must not be null.");
         }
         if (keys.isEmpty()) {
-            return CompletableFuture.completedFuture(Maps.newHashMap(0));
+            return CompletableFuture.completedFuture(HashMap.newHashMap(0));
         }
         return CompletableFuture.completedFuture(keys)
                 .thenApply(this::createKeyMapping)
@@ -262,7 +262,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     public Map<K, V> getAll(Set<? extends K> keys) {
         requireNonNull(keys, "keys must not be null.");
         if (keys.isEmpty()) {
-            return Maps.newHashMap(0);
+            return HashMap.newHashMap(0);
         }
         Map<String, K> keyMapping = this.createKeyMapping(keys);
         Map<String, CacheValue<V>> cacheValues = this.doGetAll(keyMapping.keySet());
@@ -275,7 +275,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             return this.requireNonNull("keys must not be null.");
         }
         if (keys.isEmpty()) {
-            return CompletableFuture.completedFuture(Maps.newHashMap(0));
+            return CompletableFuture.completedFuture(HashMap.newHashMap(0));
         }
         return CompletableFuture.completedFuture(keys)
                 .thenApply(this::createKeyMapping)
@@ -307,7 +307,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         requireNonNull(keys, "keys must not be null.");
         requireNonNull(cacheLoader, "cacheLoader must not be null.");
         if (keys.isEmpty()) {
-            return Maps.newHashMap(0);
+            return HashMap.newHashMap(0);
         }
         Map<String, K> keyMapping = this.createKeyMapping(keys);
         Map<String, CacheValue<V>> cacheValues = this.doGetAll(keyMapping.keySet());
@@ -324,7 +324,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             return this.requireNonNull("cacheLoader must not be null.");
         }
         if (keys.isEmpty()) {
-            return CompletableFuture.completedFuture(Maps.newHashMap(0));
+            return CompletableFuture.completedFuture(HashMap.newHashMap(0));
         }
         return CompletableFuture.completedFuture(keys)
                 .thenApply(this::createKeyMapping)
@@ -421,7 +421,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     private Map<String, V> toStoreKeyValues(Map<? extends K, ? extends V> keyValues) {
-        Map<String, V> kvs = Maps.newHashMap(keyValues.size());
+        Map<String, V> kvs = HashMap.newHashMap(keyValues.size());
         keyValues.forEach((key, value) -> {
             requireNonNull(key, "keyValues has null element.");
             kvs.put(toStoreKey(key), value);
@@ -465,7 +465,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
      * @return 返回一个 Map对象，其键为缓存键，值为原始键
      */
     private Map<String, K> createKeyMapping(Set<? extends K> keys) {
-        Map<String, K> keyMapping = Maps.newHashMap(keys.size());
+        Map<String, K> keyMapping = HashMap.newHashMap(keys.size());
         for (K key : keys) {
             requireNonNull(key, "keys has null element.");
             keyMapping.put(toStoreKey(key), key);
@@ -482,7 +482,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         int hitLoads = 0;
         Map<K, V> loaded = this.loadAll(keyMapping, cacheLoader);
         // 3. 用于将回源取值结果存入缓存
-        Map<String, V> toCache = Maps.newHashMap(keyMapping.size());
+        Map<String, V> toCache = HashMap.newHashMap(keyMapping.size());
         // 4. 回源取值结果存入最终结果集
         for (Map.Entry<String, K> entry : keyMapping.entrySet()) {
             String storeKey = entry.getKey();
@@ -501,7 +501,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     private Map<K, V> saveToResult(Map<String, K> keyMapping, Map<String, CacheValue<V>> cacheValues, int size) {
-        Map<K, V> result = Maps.newHashMap(size);
+        Map<K, V> result = HashMap.newHashMap(size);
         for (Map.Entry<String, CacheValue<V>> entry : cacheValues.entrySet()) {
             String storeKey = entry.getKey();
             CacheValue<V> cacheValue = entry.getValue();
@@ -516,7 +516,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     }
 
     private Map<K, CacheValue<V>> saveToWrapperResult(Map<String, K> keyMapping, Map<String, CacheValue<V>> cacheValues) {
-        Map<K, CacheValue<V>> result = Maps.newHashMap(cacheValues.size());
+        Map<K, CacheValue<V>> result = HashMap.newHashMap(cacheValues.size());
         for (Map.Entry<String, CacheValue<V>> entry : cacheValues.entrySet()) {
             String storeKey = entry.getKey();
             CacheValue<V> cacheValue = entry.getValue();
@@ -536,7 +536,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             }
         });
         if (keys.isEmpty()) {
-            return Maps.newHashMap(0);
+            return HashMap.newHashMap(0);
         }
         return cacheLoader.loadAll(keys);
     }

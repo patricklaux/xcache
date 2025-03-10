@@ -90,7 +90,7 @@ public class CacheOperationSource {
         return cacheOperations(method, targetClass);
     }
 
-    private Collection<CacheOperation> cacheOperations(Method method, Class<?> targetClass) {
+    private static Collection<CacheOperation> cacheOperations(Method method, Class<?> targetClass) {
         return CacheAnnotationParser.parseCacheAnnotations(method, targetClass);
     }
 

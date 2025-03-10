@@ -64,5 +64,7 @@
 
 ### 待完成任务
 
-- [ ] 【开发】 接入 micrometer 作为 metrics 模块
+- [ ] 【开发】 如果被注解方法返回值为 `CompletableFuture`，则使用 `Cache` 的异步方法
+- [ ] 【开发】 接入 `micrometer` 作为 `metrics` 实现模块
+- [ ] 【开发】 native-image 适配
 

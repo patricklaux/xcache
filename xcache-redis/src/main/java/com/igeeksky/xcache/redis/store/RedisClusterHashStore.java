@@ -120,7 +120,7 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
 
     private CompletableFuture<Void> putAllFixTtl(Map<? extends String, ? extends V> fieldValues) {
         Map<byte[], List<byte[]>> removeKeyFields = Maps.newHashMap();
-        Map<byte[], List<KeyValue<byte[], byte[]>>> keyFieldValues = Maps.newHashMap(fieldValues.size());
+        Map<byte[], List<KeyValue<byte[], byte[]>>> keyFieldValues = HashMap.newHashMap(fieldValues.size());
         fieldValues.forEach((field, value) -> {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
             byte[] storeKey = this.clusterHelper.selectKey(storeField);
@@ -141,7 +141,7 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
     private CompletableFuture<Void> putAllUnlimitedTtl(Map<? extends String, ? extends V> keyValues) {
         int maximum = this.clusterHelper.calculateCapacity(keyValues.size());
         Map<byte[], List<byte[]>> removeKeyFields = Maps.newHashMap();
-        Map<byte[], Map<byte[], byte[]>> keyFieldValues = Maps.newHashMap(maximum);
+        Map<byte[], Map<byte[], byte[]>> keyFieldValues = HashMap.newHashMap(maximum);
 
         keyValues.forEach((field, value) -> {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
@@ -181,7 +181,7 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
 
     private Map<byte[], List<byte[]>> toKeyFields(Set<? extends String> fields) {
         int maximum = this.clusterHelper.calculateCapacity(fields.size());
-        Map<byte[], List<byte[]>> keyFields = Maps.newHashMap(maximum);
+        Map<byte[], List<byte[]>> keyFields = HashMap.newHashMap(maximum);
         for (String field : fields) {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
             byte[] storeKey = this.clusterHelper.selectKey(storeField);

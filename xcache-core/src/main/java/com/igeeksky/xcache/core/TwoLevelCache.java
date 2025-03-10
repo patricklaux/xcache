@@ -8,6 +8,7 @@ import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xcache.props.StoreLevel;
 import com.igeeksky.xtool.core.collection.Maps;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -115,7 +116,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
 
     private static <V> Map<String, CacheValue<V>> addToResult(Map<String, CacheValue<V>> firstAll,
                                                               Set<String> cloneKeys, int size) {
-        Map<String, CacheValue<V>> result = Maps.newHashMap(size);
+        Map<String, CacheValue<V>> result = HashMap.newHashMap(size);
         if (Maps.isNotEmpty(firstAll)) {
             for (Map.Entry<String, CacheValue<V>> entry : firstAll.entrySet()) {
                 String key = entry.getKey();
@@ -133,7 +134,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
                                                               Map<String, CacheValue<V>> secondAll,
                                                               Store<V> first) {
         if (Maps.isNotEmpty(secondAll)) {
-            Map<String, V> saveToLower = Maps.newHashMap(secondAll.size());
+            Map<String, V> saveToLower = HashMap.newHashMap(secondAll.size());
             for (Map.Entry<String, CacheValue<V>> entry : secondAll.entrySet()) {
                 String key = entry.getKey();
                 CacheValue<V> cacheValue = entry.getValue();

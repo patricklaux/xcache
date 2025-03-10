@@ -1,8 +1,8 @@
 package com.igeeksky.xcache.extension;
 
 import com.igeeksky.xcache.common.CacheLoader;
-import com.igeeksky.xtool.core.collection.Maps;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,7 +29,7 @@ public class NoOpCacheLoader<K, V> implements CacheLoader<K, V> {
 
     @Override
     public Map<K, V> loadAll(Set<? extends K> keys) {
-        return Maps.newHashMap(0);
+        return HashMap.newHashMap(0);
     }
 
 }

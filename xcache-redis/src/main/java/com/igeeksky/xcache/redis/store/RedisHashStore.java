@@ -6,14 +6,10 @@ import com.igeeksky.xcache.core.ExtraStoreConvertor;
 import com.igeeksky.xredis.common.RedisOperatorProxy;
 import com.igeeksky.xtool.core.ExpiryKeyValue;
 import com.igeeksky.xtool.core.KeyValue;
-import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.lang.RandomUtils;
 import com.igeeksky.xtool.core.lang.codec.StringCodec;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -134,7 +130,7 @@ public class RedisHashStore<V> extends RedisStore<V> {
 
     private CompletableFuture<Void> putAllUnlimitedTtl(Map<? extends String, ? extends V> keyValues) {
         List<byte[]> removeFields = new ArrayList<>();
-        Map<byte[], byte[]> fieldValues = Maps.newHashMap(keyValues.size());
+        Map<byte[], byte[]> fieldValues = HashMap.newHashMap(keyValues.size());
         keyValues.forEach((field, value) -> {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
             byte[] storeValue = this.convertor.toExtraStoreValue(value);

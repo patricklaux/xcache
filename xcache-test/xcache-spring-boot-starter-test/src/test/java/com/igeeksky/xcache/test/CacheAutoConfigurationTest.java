@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.test.autoconfigure;
+package com.igeeksky.xcache.test;
 
 import com.igeeksky.xcache.core.CacheManager;
 import org.junit.jupiter.api.Test;

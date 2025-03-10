@@ -10,7 +10,7 @@ import java.io.Serializable;
  * @author patrick
  * @since 0.0.4 2024/5/12
  */
-public class User implements Serializable {
+public class User implements Serializable, Cloneable {
 
     private String id;
     private String name;
@@ -74,6 +74,15 @@ public class User implements Serializable {
     @Override
     public String toString() {
         return SimpleJSON.toJSONString(this);
+    }
+
+    @Override
+    public User clone() {
+        try {
+            return (User) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError(e);
+        }
     }
 
 }

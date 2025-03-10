@@ -11,13 +11,13 @@ import java.lang.annotation.*;
  * 如果数据未缓存，则反射执行方法并缓存；
  * 如果数据已缓存，则直接返回已缓存数据。
  * <p>
- * 五个公共属性 name, keyType, keyParams, valueType, valueParams
- * 可用类注解 {@link CacheConfig} 配置，此注解保持默认即可。
+ * 如果一个类中有多个同名缓存的注解，name, keyType, valueType，
+ * 这三个公共属性可用类注解 {@link CacheConfig} 配置，此注解保持默认即可。
  * <p>
  * <b>注意</b>：<p>
  * 1. 请勿与其它缓存注解用于同一方法！<br>
  * 因为当成功从缓存获取数据时，目标方法将不会被调用。<p>
- * 2. 如使用 SpEL表达式，项目编译时需使用 {@code -parameters } 记录方法参数名信息，否则无法正确解析。<br>
+ * 2. 如使用 SpEL表达式通过参数名获取数据，项目编译时需使用 {@code -parameters } 记录方法参数名信息，否则无法正确解析。<br>
  * 如使用 maven-compiler-plugin，需配置：{@code <parameters>true</parameters> } <p>
  * 3. 目标方法的返回值除了返回缓存值类型，也可以是 {@code Optional } 类型，如：{@code Optional<User> }，
  * 或是 {@code CompletableFuture } 类型，如：{@code CompletableFuture<User> }。 <br>

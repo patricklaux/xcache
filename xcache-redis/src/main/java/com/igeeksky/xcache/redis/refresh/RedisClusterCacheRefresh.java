@@ -6,7 +6,6 @@ import com.igeeksky.xcache.extension.refresh.RefreshTask;
 import com.igeeksky.xcache.redis.RedisClusterHelper;
 import com.igeeksky.xredis.common.RedisOperatorProxy;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
-import com.igeeksky.xtool.core.collection.Maps;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -42,7 +41,7 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
 
     @Override
     public void onPutAll(Set<String> keys) {
-        Map<byte[], List<byte[]>> map = Maps.newHashMap(clusterHelper.calculateCapacity(keys.size()));
+        Map<byte[], List<byte[]>> map = HashMap.newHashMap(clusterHelper.calculateCapacity(keys.size()));
         for (String key : keys) {
             byte[] member = stringCodec.encode(key);
             byte[] refreshKey = clusterHelper.selectKey(member);
@@ -67,7 +66,7 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
 
     @Override
     public void onRemoveAll(Set<String> keys) {
-        Map<byte[], List<byte[]>> map = Maps.newHashMap(clusterHelper.calculateCapacity(keys.size()));
+        Map<byte[], List<byte[]>> map = HashMap.newHashMap(clusterHelper.calculateCapacity(keys.size()));
         for (String key : keys) {
             byte[] member = stringCodec.encode(key);
             byte[] refreshKey = clusterHelper.selectKey(member);
