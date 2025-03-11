@@ -64,7 +64,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<CacheValue<V>> doAsyncGet(String storeKey) {
+    protected CompletableFuture<CacheValue<V>> doGetAsync(String storeKey) {
         return stores[0].getCacheValueAsync(storeKey)
                 .thenCompose(firstValue -> {
                     if (firstValue != null) {
@@ -104,7 +104,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Map<String, CacheValue<V>>> doAsyncGetAll(Set<String> keys) {
+    protected CompletableFuture<Map<String, CacheValue<V>>> doGetAllAsync(Set<String> keys) {
         Set<String> cloneKeys = new HashSet<>(keys);
         return stores[0].getAllCacheValuesAsync(cloneKeys)
                 .thenCompose(firstAll -> {
@@ -177,7 +177,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncPut(String key, V value) {
+    protected CompletableFuture<Void> doPutAsync(String key, V value) {
         return stores[2].putAsync(key, value)
                 .thenCompose(ignored -> stores[1].putAsync(key, value))
                 .thenCompose(ignored -> stores[0].putAsync(key, value))
@@ -197,7 +197,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncPutAll(Map<String, ? extends V> keyValues) {
+    protected CompletableFuture<Void> doPutAllAsync(Map<String, ? extends V> keyValues) {
         return stores[2].putAllAsync(keyValues)
                 .thenCompose(ignored -> stores[1].putAllAsync(keyValues))
                 .thenCompose(ignored -> stores[0].putAllAsync(keyValues))
@@ -217,7 +217,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncRemove(String key) {
+    protected CompletableFuture<Void> doRemoveAsync(String key) {
         return stores[2].removeAsync(key)
                 .thenCompose(ignored -> stores[1].removeAsync(key))
                 .thenCompose(ignored -> stores[0].removeAsync(key))
@@ -237,7 +237,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncRemoveAll(Set<String> keys) {
+    protected CompletableFuture<Void> doRemoveAllAsync(Set<String> keys) {
         return stores[2].removeAllAsync(keys)
                 .thenCompose(ignored -> stores[1].removeAllAsync(keys))
                 .thenCompose(ignored -> stores[0].removeAllAsync(keys))

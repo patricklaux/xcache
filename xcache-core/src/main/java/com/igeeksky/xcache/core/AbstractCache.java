@@ -80,7 +80,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
         // 如果断言执行发现数据源不存在数据，则存入空值
         if (!this.containsPredicate.test(key)) {
-            this.doAsyncPut(storeKey, null);
+            this.doPutAsync(storeKey, null);
             return;
         }
 
@@ -92,7 +92,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
                 try {
                     // 调用缓存加载器加载数据，并将结果存入缓存，并记录统计信息
                     V value = this.cacheLoader.load(key);
-                    this.doAsyncPut(storeKey, value);
+                    this.doPutAsync(storeKey, value);
                     if (value != null) {
                         this.metricsMonitor.incHitLoads(1);
                     } else {
@@ -155,7 +155,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         if (key == null) {
             return this.requireNonNull("key must not be null.");
         }
-        return CompletableFuture.completedFuture(this.toStoreKey(key)).thenCompose(this::doAsyncGet);
+        return CompletableFuture.completedFuture(this.toStoreKey(key)).thenCompose(this::doGetAsync);
     }
 
     @Override
@@ -198,7 +198,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             return this.requireNonNull("cacheLoader must not be null.");
         }
         return CompletableFuture.completedFuture(this.toStoreKey(key))
-                .thenCompose(storeKey -> this.doAsyncGet(storeKey)
+                .thenCompose(storeKey -> this.doGetAsync(storeKey)
                         .thenApply(cacheValue -> {
                             if (cacheValue != null) {
                                 return cacheValue.getValue();
@@ -253,7 +253,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
                 .thenApply(this::createKeyMapping)
                 .thenCompose(keyMapping -> {
                     Set<String> keySet = keyMapping.keySet();
-                    return this.doAsyncGetAll(keySet)
+                    return this.doGetAllAsync(keySet)
                             .thenApply(cacheValues -> this.saveToWrapperResult(keyMapping, cacheValues));
                 });
     }
@@ -281,7 +281,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
                 .thenApply(this::createKeyMapping)
                 .thenCompose(keyMapping -> {
                     Set<String> keySet = keyMapping.keySet();
-                    return this.doAsyncGetAll(keySet)
+                    return this.doGetAllAsync(keySet)
                             .thenApply(cacheValues -> this.saveToResult(keyMapping, cacheValues, cacheValues.size()));
                 });
     }
@@ -330,7 +330,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
                 .thenApply(this::createKeyMapping)
                 .thenCompose(keyMapping -> {
                     Set<String> keySet = keyMapping.keySet();
-                    return this.doAsyncGetAll(keySet)
+                    return this.doGetAllAsync(keySet)
                             .thenApply(cacheValues -> this.saveToResult(keyMapping, cacheValues, keyMapping.size()))
                             .thenApply(result -> this.loadAndSaveToResult(result, keyMapping, cacheLoader));
                 });
@@ -350,7 +350,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             return this.requireNonNull("key must not be null.");
         }
         String storeKey = this.toStoreKey(key);
-        return this.doAsyncPut(storeKey, value).whenCompleteAsync((vod, t) -> this.cacheRefresh.onPut(storeKey));
+        return this.doPutAsync(storeKey, value).whenCompleteAsync((vod, t) -> this.cacheRefresh.onPut(storeKey));
     }
 
     @Override
@@ -375,7 +375,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         return CompletableFuture.completedFuture(keyValues)
                 .thenApply(this::toStoreKeyValues)
                 .whenCompleteAsync((kvs, t) -> this.cacheRefresh.onPutAll(kvs.keySet()))
-                .thenCompose(this::doAsyncPutAll);
+                .thenCompose(this::doPutAllAsync);
     }
 
 
@@ -394,7 +394,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             return this.requireNonNull("key must not be null.");
         }
         String storeKey = this.toStoreKey(key);
-        return this.doAsyncRemove(storeKey).whenCompleteAsync((vod, t) -> this.cacheRefresh.onRemove(storeKey));
+        return this.doRemoveAsync(storeKey).whenCompleteAsync((vod, t) -> this.cacheRefresh.onRemove(storeKey));
     }
 
     @Override
@@ -417,7 +417,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
             return CompletableFuture.completedFuture(null);
         }
         Set<String> storeKeys = toStoreKeys(keys);
-        return this.doAsyncRemoveAll(storeKeys).whenCompleteAsync((vod, t) -> this.cacheRefresh.onRemoveAll(storeKeys));
+        return this.doRemoveAllAsync(storeKeys).whenCompleteAsync((vod, t) -> this.cacheRefresh.onRemoveAll(storeKeys));
     }
 
     private Map<String, V> toStoreKeyValues(Map<? extends K, ? extends V> keyValues) {
@@ -551,11 +551,11 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
      */
     private void doPutAndRefresh(Map<String, V> keyValues, int hitLoads) {
         int totalLoads = keyValues.size();
-        // 5. 回源取值结果存入缓存
+        // 1. 回源取值结果存入缓存
         this.doPutAll(keyValues);
-        // 6. 执行刷新逻辑
+        // 2. 执行刷新逻辑
         this.cacheRefresh.onPutAll(keyValues.keySet());
-        // 7. 记录回源成功/失败次数
+        // 3. 记录回源成功/失败次数
         this.metricsMonitor.incHitLoads(hitLoads);
         this.metricsMonitor.incMissLoads(totalLoads - hitLoads);
     }
@@ -580,26 +580,26 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
     protected abstract CacheValue<V> doGet(String key);
 
-    protected abstract CompletableFuture<CacheValue<V>> doAsyncGet(String storeKey);
+    protected abstract CompletableFuture<CacheValue<V>> doGetAsync(String storeKey);
 
     protected abstract Map<String, CacheValue<V>> doGetAll(Set<String> keys);
 
-    protected abstract CompletableFuture<Map<String, CacheValue<V>>> doAsyncGetAll(Set<String> keys);
+    protected abstract CompletableFuture<Map<String, CacheValue<V>>> doGetAllAsync(Set<String> keys);
 
     protected abstract void doPut(String key, V value);
 
-    protected abstract CompletableFuture<Void> doAsyncPut(String key, V value);
+    protected abstract CompletableFuture<Void> doPutAsync(String key, V value);
 
     protected abstract void doPutAll(Map<String, ? extends V> keyValues);
 
-    protected abstract CompletableFuture<Void> doAsyncPutAll(Map<String, ? extends V> keyValues);
+    protected abstract CompletableFuture<Void> doPutAllAsync(Map<String, ? extends V> keyValues);
 
     protected abstract void doRemove(String key);
 
-    protected abstract CompletableFuture<Void> doAsyncRemove(String key);
+    protected abstract CompletableFuture<Void> doRemoveAsync(String key);
 
     protected abstract void doRemoveAll(Set<String> keys);
 
-    protected abstract CompletableFuture<Void> doAsyncRemoveAll(Set<String> keys);
+    protected abstract CompletableFuture<Void> doRemoveAllAsync(Set<String> keys);
 
 }

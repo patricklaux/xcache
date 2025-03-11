@@ -248,6 +248,14 @@ public class UserService {
         return users;
     }
 
+    @CacheableAll(condition = "#keys.?[getAge > 18].size > 0")
+    public Map<Key, User> getUserListByCondition(Set<Key> keys) {
+        log.info("getUserListByEvalKeys: keys:{}", keys);
+        Map<Key, User> users = HashMap.newHashMap(keys.size());
+        keys.forEach(key -> users.put(key, new User(Integer.toString(0), key.getName(), key.getAge())));
+        return users;
+    }
+
     @CacheRemove
     public void deleteByKey(Key key) {
         log.info("deleteByKey: key:{}", key);

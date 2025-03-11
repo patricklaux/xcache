@@ -71,7 +71,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<CacheValue<V>> doAsyncGet(String storeKey) {
+    protected CompletableFuture<CacheValue<V>> doGetAsync(String storeKey) {
         return first.getCacheValueAsync(storeKey)
                 .thenCompose(firstValue -> {
                     if (firstValue != null) {
@@ -101,7 +101,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Map<String, CacheValue<V>>> doAsyncGetAll(Set<String> keys) {
+    protected CompletableFuture<Map<String, CacheValue<V>>> doGetAllAsync(Set<String> keys) {
         Set<String> cloneKeys = new HashSet<>(keys);
         return first.getAllCacheValuesAsync(cloneKeys)
                 .thenCompose(firstAll -> {
@@ -159,7 +159,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncPut(String key, V value) {
+    protected CompletableFuture<Void> doPutAsync(String key, V value) {
         return second.putAsync(key, value)
                 .thenCompose(vod -> first.putAsync(key, value))
                 .whenCompleteAsync((vod, throwable) -> {
@@ -177,7 +177,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncPutAll(Map<String, ? extends V> keyValues) {
+    protected CompletableFuture<Void> doPutAllAsync(Map<String, ? extends V> keyValues) {
         return second.putAllAsync(keyValues)
                 .whenCompleteAsync((vod, throwable) -> {
                     if (throwable == null) {
@@ -195,7 +195,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncRemove(String key) {
+    protected CompletableFuture<Void> doRemoveAsync(String key) {
         return second.removeAsync(key)
                 .whenCompleteAsync((vod, throwable) -> {
                     if (throwable == null) {
@@ -213,7 +213,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncRemoveAll(Set<String> keys) {
+    protected CompletableFuture<Void> doRemoveAllAsync(Set<String> keys) {
         return second.removeAllAsync(keys)
                 .whenCompleteAsync((vod, throwable) -> {
                     if (throwable == null) {

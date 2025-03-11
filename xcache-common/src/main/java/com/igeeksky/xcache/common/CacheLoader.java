@@ -14,7 +14,7 @@ import java.util.Set;
  * @since 0.0.4 2021-09-05
  */
 @FunctionalInterface
-public interface CacheLoader<K, V> extends AutoCloseable {
+public interface CacheLoader<K, V> {
 
     /**
      * 单个回源取值
@@ -39,10 +39,6 @@ public interface CacheLoader<K, V> extends AutoCloseable {
             }
         }
         return map;
-    }
-
-    default void close() {
-        // do nothing
     }
 
 }

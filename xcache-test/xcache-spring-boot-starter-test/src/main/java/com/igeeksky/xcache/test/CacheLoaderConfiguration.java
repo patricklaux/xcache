@@ -40,7 +40,7 @@ public class CacheLoaderConfiguration {
         return database;
     }
 
-    @Bean(destroyMethod = "shutdown")
+    @Bean
     CacheLoaderRegister cacheLoader() {
         CacheLoaderRegister holder = new CacheLoaderRegister();
         holder.put("user", SingletonSupplier.of(() -> (CacheLoader<Key, User>) key -> {

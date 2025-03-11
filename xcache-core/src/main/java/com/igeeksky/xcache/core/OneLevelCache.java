@@ -48,7 +48,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<CacheValue<V>> doAsyncGet(String storeKey) {
+    protected CompletableFuture<CacheValue<V>> doGetAsync(String storeKey) {
         return store.getCacheValueAsync(storeKey);
     }
 
@@ -58,7 +58,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Map<String, CacheValue<V>>> doAsyncGetAll(Set<String> keys) {
+    protected CompletableFuture<Map<String, CacheValue<V>>> doGetAllAsync(Set<String> keys) {
         return store.getAllCacheValuesAsync(keys);
     }
 
@@ -68,7 +68,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncPut(String key, V value) {
+    protected CompletableFuture<Void> doPutAsync(String key, V value) {
         return store.putAsync(key, value);
     }
 
@@ -78,7 +78,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncPutAll(Map<String, ? extends V> keyValues) {
+    protected CompletableFuture<Void> doPutAllAsync(Map<String, ? extends V> keyValues) {
         return store.putAllAsync(keyValues);
     }
 
@@ -88,7 +88,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncRemove(String key) {
+    protected CompletableFuture<Void> doRemoveAsync(String key) {
         return store.removeAsync(key);
     }
 
@@ -98,7 +98,7 @@ public class OneLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncRemoveAll(Set<String> keys) {
+    protected CompletableFuture<Void> doRemoveAllAsync(Set<String> keys) {
         return store.removeAllAsync(keys);
     }
 

@@ -510,7 +510,7 @@ public class CacheAnnotationTest {
     }
 
     /**
-     * 注意：⭐⭐⭐⭐⭐当方法创建的值集与传入的键集不匹配时，方法返回值是不确定的。
+     * 注意：⭐⭐⭐当方法创建的值集与传入的键集不匹配时，方法返回值是不确定的。
      */
     @Test
     public void cacheable_all_eval_keys() {
@@ -536,16 +536,55 @@ public class CacheAnnotationTest {
         keyValues1.forEach((key, user) -> userService.deleteUserByCache(key));
         keyValues2.forEach((key, user) -> userService.deleteUserByCache(key));
 
-        // ⭐⭐⭐⭐⭐ 第一次调用，缓存未命中，执行方法，返回 4 个元素
+        // ⭐⭐⭐ 第一次调用，缓存未命中，会执行方法，返回 4 个元素
         // 因为传入的缓存键集是 2 个，而方法返回值是 4 个，所以只会缓存 2 个元素，查询缓存时也只会找到 2 个元素
         Map<Key, User> result1 = userService.getUserListByEvalKeys(new HashSet<>(keyValues1.keySet()), keyValues2.keySet());
         keyValues1.forEach((key, user) -> Assertions.assertEquals(result1.get(key), user));
         keyValues2.forEach((key, user) -> Assertions.assertEquals(result1.get(key), user));
 
-        // ⭐⭐⭐⭐⭐ 第二次调用，缓存全命中，不执行方法，返回 2 个元素
+        // ⭐⭐⭐ 第二次调用，缓存全命中，不执行方法，返回 2 个元素
         Map<Key, User> result2 = userService.getUserListByEvalKeys(new HashSet<>(keyValues1.keySet()), keyValues2.keySet());
         keyValues1.forEach((key, user) -> Assertions.assertNull(result2.get(key)));
         keyValues2.forEach((key, user) -> Assertions.assertEquals(result2.get(key), user));
+    }
+
+    @Test
+    public void cacheable_all_condition() {
+        log.info("数据集一：缓存条件为 true：condition = \"#keys.?[getAge > 18].size > 0\"");
+        Map<Key, User> keyValues = createKeyUserMap("cacheable_all_1", 18, 5);
+        // 删除缓存元素
+        keyValues.forEach((key, user) -> userService.deleteUserByCache(key));
+        // 第一次调用：包含 age > 18 的元素，condition 为 true，缓存数据
+        Map<Key, User> result1 = userService.getUserListByCondition(new HashSet<>(keyValues.keySet()));
+        keyValues.forEach((key, user) -> Assertions.assertEquals(user, result1.get(key)));
+        // 缓存验证：是否 5 个元素都已缓存
+        keyValues.forEach((key, user) -> Assertions.assertEquals(user, userService.getUserByCache(key).getValue()));
+        // 第二次调用：判断有缓存和无缓存是否结果一致
+        Map<Key, User> result2 = userService.getUserListByCondition(new HashSet<>(keyValues.keySet()));
+        keyValues.forEach((key, user) -> Assertions.assertEquals(user, result2.get(key)));
+
+        log.info("数据集二：缓存条件为 false：condition = \"#keys.?[getAge > 18].size > 0\"");
+        Map<Key, User> keyValues2 = createKeyUserMap("cacheable_all_2", 16, 3);
+        // 删除缓存元素
+        keyValues2.forEach((key, user) -> userService.deleteUserByCache(key));
+        // 第一次调用：不包含 age > 18 的元素，condition 为 false，不缓存数据
+        Map<Key, User> result3 = userService.getUserListByCondition(keyValues2.keySet());
+        keyValues2.forEach((key, user) -> Assertions.assertEquals(user, result3.get(key)));
+        // 缓存验证：是否 3 个元素都未缓存
+        keyValues2.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key)));
+        // 第二次调用：判断有缓存和无缓存是否结果一致
+        Map<Key, User> result4 = userService.getUserListByCondition(keyValues2.keySet());
+        keyValues2.forEach((key, user) -> Assertions.assertEquals(user, result4.get(key)));
+    }
+
+    private static Map<Key, User> createKeyUserMap(String name, int age, int size) {
+        Map<Key, User> map = HashMap.newHashMap(size);
+        for (int i = 0; i < size; i++, age++) {
+            Key key = new Key(age, name + age);
+            User user = new User("0", key.getName(), key.getAge());
+            map.put(key, user);
+        }
+        return map;
     }
 
     @Test

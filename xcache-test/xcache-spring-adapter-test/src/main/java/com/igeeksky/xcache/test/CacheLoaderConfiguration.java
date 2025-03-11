@@ -38,9 +38,9 @@ class CacheLoaderConfiguration {
 
     @Bean
     CacheLoaderRegister cacheLoader() {
-        CacheLoaderRegister holder = new CacheLoaderRegister();
-        holder.put("user", SingletonSupplier.of(() -> (CacheLoader<Key, User>) database::get));
-        return holder;
+        CacheLoaderRegister register = new CacheLoaderRegister();
+        register.put("user", SingletonSupplier.of(() -> (CacheLoader<Key, User>) database::get));
+        return register;
     }
 
 }
