@@ -1,12 +1,11 @@
-package com.igeeksky.xcache.test.core;
+package com.igeeksky.xcache.test;
 
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.domain.Key;
 import com.igeeksky.xcache.domain.User;
-import com.igeeksky.xcache.test.UserLoaderService;
-import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.HashSet;
@@ -24,11 +23,15 @@ import java.util.concurrent.locks.LockSupport;
 @SpringBootTest
 public class CacheLoaderTest {
 
-    @Resource
-    private Map<Key, User> database;
+    private final Map<Key, User> database;
 
-    @Resource
-    private UserLoaderService userLoaderService;
+    private final UserLoaderService userLoaderService;
+
+    @Autowired
+    public CacheLoaderTest(Map<Key, User> database, UserLoaderService userLoaderService) {
+        this.database = database;
+        this.userLoaderService = userLoaderService;
+    }
 
     @Test
     void getOrLoad() {

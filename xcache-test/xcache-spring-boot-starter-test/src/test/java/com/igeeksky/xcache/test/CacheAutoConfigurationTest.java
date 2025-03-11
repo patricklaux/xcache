@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.test.autoconfigure;
+package com.igeeksky.xcache.test;
 
 import com.igeeksky.xcache.core.CacheManager;
 import org.junit.jupiter.api.Test;
@@ -16,10 +16,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest
 class CacheAutoConfigurationTest {
 
-    private CacheManager cacheManager;
+    private final CacheManager cacheManager;
 
     @Autowired
-    public void setCacheManager(CacheManager cacheManager) {
+    public CacheAutoConfigurationTest(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
     }
 

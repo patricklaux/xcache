@@ -103,7 +103,7 @@ public class StoreProps {
     /**
      * Hash键序列数量
      * <p>
-     * 仅适用于 Redis 集群模式，且数据存储类型为 Hash，其它模式下此配置无意义。
+     * 仅用于 Redis 集群模式，且采用 Redis-Hash 作为数据存储，其它模式下此配置无意义。
      * <p>
      * 默认值：32 <br>
      * {@link CacheConstants#DEFAULT_EXTRA_KEY_SEQUENCE_SIZE}

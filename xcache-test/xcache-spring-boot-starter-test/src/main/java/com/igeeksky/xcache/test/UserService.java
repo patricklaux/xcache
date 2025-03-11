@@ -6,6 +6,8 @@ import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.CacheManager;
 import com.igeeksky.xcache.domain.Key;
 import com.igeeksky.xcache.domain.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -24,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 @CacheConfig(name = "user", keyType = Key.class, valueType = User.class)
 public class UserService {
 
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private final Cache<Key, User> cache;
 
     /**
@@ -40,43 +43,169 @@ public class UserService {
     }
 
     public CacheValue<User> getUserByCache(Key key) {
-        System.out.println("getUserByCache: " + key);
+        log.info("getUserByCache: key: {}", key);
         return cache.getCacheValue(key);
     }
 
     public void saveUsersToCache(Map<Key, User> keyValues) {
-        System.out.println("saveUserToCache");
+        log.info("saveUsersToCache: keyValues: {}", keyValues);
         cache.putAll(keyValues);
     }
 
     /**
-     * "#result" 获取的是方法返回值，而不是参数 result
+     * 默认缓存方法返回值
      */
-    @CachePut(value = "#result")
-    public User save(Key key, User result) {
+    @CachePut
+    public User saveUser(Key key, User user) {
+        log.info("saveUser: key:{}, user:{}", key, user);
+        return user;
+    }
+
+    /**
+     * 默认缓存方法返回值
+     */
+    @CachePut
+    public User saveCacheMethodResult(Key key) {
+        log.info("saveCacheMethodResult: key:{}", key);
         return new User("1", "MethodResult", 18);
     }
 
-    @CacheRemove
-    public void deleteByKey(Key key) {
-        System.out.println("deleteByKey:" + key);
+    /**
+     * 缓存方法返回值
+     * <p>
+     * 方法返回值默认采用 {@code result} 作为键保存。
+     * 如方法参数名也为 {@code result}，则 "#result" 获取到的是方法返回值，而不是方法参数值。
+     */
+    @CachePut(value = "#result")
+    public User saveCacheMethodResult(Key key, User result) {
+        log.info("saveCacheMethodResult: key:{}, result:{}", key, result);
+        return new User("1", "MethodResult", 18);
+    }
+
+    /**
+     * 缓存方法参数值
+     * <p>
+     * 方法参数值默认采用 {@code result} 作为键保存。
+     * 如方法参数名也为 {@code result}，如想缓存方法参数值，则需通过 {@code "#p" + index} 获取方法参数值。
+     */
+    @CachePut(value = "#p1")
+    public User saveCacheParamsResult(Key key, User result) {
+        log.info("saveCacheParamsResult: key:{}, result:{}", key, result);
+        return new User("1", "MethodResult", 18);
+    }
+
+    /**
+     * 通过表达式 {@code #key & #user} 获取 {@code key & value}
+     */
+    @CachePut(key = "#key", value = "#user")
+    public User saveByEvalKeyValue(User user, Key key) {
+        log.info("saveByEvalKeyValue: key:{}, user:{}", key, user);
+        return new User("1", "MethodResult", 18);
+    }
+
+    /**
+     * 通过 condition 表达式 判断是否缓存
+     * <p>
+     * 年龄大于 18岁才缓存，即 condition 表达式计算结果为 true 时才缓存。
+     */
+    @CachePut(key = "#key", condition = "#user.age > 18")
+    public User saveByEvalCondition(Key key, User user) {
+        log.info("saveByEvalCondition: key:{}, user:{}", key, user);
+        return user;
+    }
+
+    /**
+     * 通过 unless 表达式 判断是否缓存
+     * <p>
+     * 年龄大于 18岁不缓存，即 unless 表达式计算结果为 false 时才缓存。
+     */
+    @CachePut(key = "#key", unless = "#result.age > 18")
+    public User saveByUnless(Key key, User user) {
+        log.info("saveByUnless: key:{}, user:{}", key, user);
+        return user;
+    }
+
+    /**
+     * 无 keyValues 表达式：默认缓存方法返回值
+     */
+    @CachePutAll
+    public Map<Key, User> saveUsers(Map<Key, User> users) {
+        log.info("saveUsers: users:{}", users);
+        Map<Key, User> results = HashMap.newHashMap(users.size());
+        users.forEach((key, user) -> {
+            User clone = user.clone();
+            clone.setAge(user.getAge() + 1);
+            results.put(key, clone);
+        });
+        return results;
+    }
+
+    /**
+     * 有 keyValues 表达式：缓存表达式计算结果，即方法参数值
+     */
+    @CachePutAll(keyValues = "#users")
+    public Map<Key, User> saveUsersByEvalKeyValues(Map<Key, User> users) {
+        log.info("saveUsersByEvalKeyValues: users:{}", users);
+        Map<Key, User> results = HashMap.newHashMap(users.size());
+        users.forEach((key, user) -> {
+            User clone = user.clone();
+            clone.setAge(user.getAge() + 1);
+            results.put(key, clone);
+        });
+        return results;
+    }
+
+    /**
+     * condition 表达式计算结果为 true 时才缓存：即年龄大于 18岁才缓存
+     */
+    @CachePutAll(condition = "#users.values.?[getAge > 18].size > 0")
+    public Map<Key, User> saveUsersByCondition(Map<Key, User> users) {
+        log.info("saveUsersByCondition: users:{}", users);
+        Map<Key, User> results = HashMap.newHashMap(users.size());
+        users.forEach((key, user) -> {
+            User clone = user.clone();
+            clone.setAge(user.getAge() + 1);
+            results.put(key, clone);
+        });
+        return results;
+    }
+
+    /**
+     * unless 表达式计算结果为 false 时才缓存：即年龄小于等于 18岁才缓存
+     */
+    @CachePutAll(unless = "#users.values.?[getAge > 18].size > 0")
+    public Map<Key, User> saveUsersByUnless(Map<Key, User> users) {
+        log.info("saveUsersByUnless: users:{}", users);
+        Map<Key, User> results = HashMap.newHashMap(users.size());
+        users.forEach((key, user) -> {
+            User clone = user.clone();
+            clone.setAge(user.getAge() + 1);
+            results.put(key, clone);
+        });
+        return results;
     }
 
     @Cacheable
     public User getUser(Key key, int times) {
-        System.out.println("getUser:" + times);
+        log.info("getUser: key:{}, times:{}", key, times);
         return new User(Integer.toString(times), key.getName(), key.getAge());
+    }
+
+    @Cacheable(key = "#key2")
+    public User getUserByEvalKey(Key key1, Key key2) {
+        log.info("getUserByEvalKey: key1:{}, key2:{}", key1, key2);
+        return new User(Integer.toString(2), key2.getName(), key2.getAge());
     }
 
     @Cacheable
     public Optional<User> getOptionalUser(Key key, int times) {
-        System.out.println("getOptionalUser:" + times);
+        log.info("getOptionalUser: key:{}, times:{}", key, times);
         return Optional.of(new User(Integer.toString(times), key.getName(), key.getAge()));
     }
 
     @Cacheable
     public CompletableFuture<User> getFutureUser(Key key, int times) {
-        System.out.println("getFutureUser:" + times);
+        log.info("getFutureUser: key:{}, times:{}", key, times);
         return CompletableFuture.completedFuture(new User(Integer.toString(times), key.getName(), key.getAge()));
     }
 
@@ -89,43 +218,57 @@ public class UserService {
      */
     @Cacheable
     public CompletableFuture<User> getNullFutureUser(Key key) {
+        log.info("getNullFutureUser:{}", key);
         return CompletableFuture.completedFuture(null);
     }
 
     @Cacheable(condition = "#times < 2")
-    public User getUserByKeyCondition(Key key, int times) {
-        System.out.println("getUserByIdCondition:" + times);
+    public User getUserByCondition(Key key, int times) {
+        log.info("getUserByKeyCondition:times {}", times);
         return new User(Integer.toString(times), key.getName(), key.getAge());
     }
 
     @CacheableAll
     public Map<Key, User> getUserList(Set<Key> keys, int times) {
-        System.out.println("getUserList:" + keys);
-        Map<Key, User> users = new HashMap<>(keys.size() * 2);
+        if (times >= 1) {
+            throw new RuntimeException("times >= 2");
+        }
+        log.info("getUserList: keys:{} times:{}", keys, times);
+        Map<Key, User> users = HashMap.newHashMap(keys.size());
         keys.forEach(key -> users.put(key, new User(Integer.toString(times), key.getName(), key.getAge())));
         return users;
     }
 
-    @CachePut
-    public User saveUser(Key key, User user) {
-        System.out.println("saveUser:" + key + ":" + user);
-        return user;
+    @CacheableAll(keys = "#keys2")
+    public Map<Key, User> getUserListByEvalKeys(Set<Key> keys1, Set<Key> keys2) {
+        log.info("getUserListByEvalKeys: keys1:{} keys2:{}", keys1, keys2);
+        Map<Key, User> users = HashMap.newHashMap(keys2.size());
+        keys1.forEach(key -> users.put(key, new User(Integer.toString(0), key.getName(), key.getAge())));
+        keys2.forEach(key -> users.put(key, new User(Integer.toString(0), key.getName(), key.getAge())));
+        return users;
     }
 
-    @CachePutAll
-    public Map<Key, User> saveUsers(Map<Key, User> users) {
-        users.forEach((key, name) -> System.out.println("saveUser:" + key + ":" + name));
+    @CacheableAll(condition = "#keys.?[getAge > 18].size > 0")
+    public Map<Key, User> getUserListByCondition(Set<Key> keys) {
+        log.info("getUserListByEvalKeys: keys:{}", keys);
+        Map<Key, User> users = HashMap.newHashMap(keys.size());
+        keys.forEach(key -> users.put(key, new User(Integer.toString(0), key.getName(), key.getAge())));
         return users;
+    }
+
+    @CacheRemove
+    public void deleteByKey(Key key) {
+        log.info("deleteByKey: key:{}", key);
     }
 
     @CacheRemoveAll
     public void deleteUsers(Set<Key> ids) {
-        System.out.println("deleteUsers:" + ids);
+        log.info("deleteUsers:{}", ids);
     }
 
     @CacheClear
     public void deleteAllUsers() {
-        System.out.println("deleteAllUsers");
+        log.info("deleteAllUsers");
     }
 
 }

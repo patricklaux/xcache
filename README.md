@@ -22,7 +22,7 @@
 
 ## 3. 特性
 
-- 支持多级缓存：一级缓存默认采用 `Caffeine`，二级缓存默认采用 `Redis`，最多可支持三级缓存。
+- 支持多级缓存：一级缓存采用 `Caffeine`，二级缓存采用 `Redis`，最多可支持三级缓存。
 - 缓存数据同步：通过缓存事件广播，多个应用实例的缓存数据保持一致。
 - 缓存指标统计：支持调用次数、命中次数等指标，指标存储和数据展现可自由扩展。
 - 缓存数据刷新：定时自动刷新缓存数据，避免慢查询导致应用响应缓慢。
@@ -32,7 +32,7 @@
 - 支持缓存空值：可选择缓存空值，减少无效回源查询。
 - 缓存数据压缩：可选择数据压缩，降低内存(磁盘)消耗。
 - 支持缓存注解：`Cacheable`，`CacheableAll`，`CachePut`，`CachePutAll`，…… ，`CacheClear`
-- 适配 `Spring Cache`：如希望使用 `Spring Cache` ，可添加 `Xcache` 适配，即可解锁更多功能。
+- 适配 `Spring Cache` 注解：如希望使用 `Spring Cache` 注解，可依赖 `Xcache` 适配项目，即可解锁更多功能。
 
 ## 4. 运行环境
 
@@ -50,7 +50,7 @@ git clone https://github.com/patricklaux/xcache-samples.git
 
 ### 5.1. 第一步：引入缓存依赖
 
-如直接通过调用方法操作缓存，不使用缓存注解，仅需引入 ``xcache-spring-boot-starter`` 。
+如直接通过调用方法操作缓存，不使用缓存注解，仅需引入 `xcache-spring-boot-starter` 。
 
 主要依赖：`Caffeine`（内嵌缓存），`Lettuce`（`Redis` 客户端），`Jackson`（序列化）
 
@@ -152,7 +152,7 @@ public class UserCacheService {
         // 将更新后的用户信息写入缓存
         cache.put(user.getId(), updated);
         // 如果为了更好地保持数据一致性，这里可选择直接删除缓存数据，后续查询时再从数据源加载
-        // cache.evict(user.getId());
+        // cache.remove(user.getId());
         return updated;
     }
 
@@ -167,7 +167,7 @@ public class UserCacheService {
         // 将更新后的用户信息写入缓存
         cache.putAll(updated);
         // 如果为了更好地保持数据一致性，这里可选择直接删除缓存数据，后续查询时再从数据源加载
-        // cache.evictAll(updated.keySet());
+        // cache.removeAll(updated.keySet());
         return updated;
     }
 
@@ -232,7 +232,7 @@ public class UserCacheService {
 
 ## 6. 项目构建
 
-如希望尝试新特性，可以将项目克隆到本地进行编译（需要 JDK21）。
+如希望尝试新特性，可以将项目克隆到本地进行编译。
 
 ```bash
 # 1. git clone项目到本地

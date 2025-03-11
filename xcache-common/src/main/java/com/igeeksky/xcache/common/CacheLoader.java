@@ -1,8 +1,7 @@
 package com.igeeksky.xcache.common;
 
 
-import com.igeeksky.xtool.core.collection.Maps;
-
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,7 +14,7 @@ import java.util.Set;
  * @since 0.0.4 2021-09-05
  */
 @FunctionalInterface
-public interface CacheLoader<K, V> extends AutoCloseable {
+public interface CacheLoader<K, V> {
 
     /**
      * 单个回源取值
@@ -32,7 +31,7 @@ public interface CacheLoader<K, V> extends AutoCloseable {
      * @return 返回键值对集合，不能返回 null
      */
     default Map<K, V> loadAll(Set<? extends K> keys) {
-        Map<K, V> map = Maps.newHashMap(keys.size());
+        Map<K, V> map = HashMap.newHashMap(keys.size());
         for (K key : keys) {
             V value = load(key);
             if (value != null) {
@@ -40,10 +39,6 @@ public interface CacheLoader<K, V> extends AutoCloseable {
             }
         }
         return map;
-    }
-
-    default void close() {
-        // do nothing
     }
 
 }

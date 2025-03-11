@@ -5,6 +5,8 @@ import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.core.CacheManager;
 import com.igeeksky.xcache.domain.Key;
 import com.igeeksky.xcache.domain.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -23,6 +25,7 @@ import java.util.Map;
 @CacheConfig(cacheNames = "user")
 public class SpringUserService {
 
+    private static final Logger log = LoggerFactory.getLogger(SpringUserService.class);
     private final Cache<Object, Object> cache;
 
     /**
@@ -41,8 +44,7 @@ public class SpringUserService {
      * @return 缓存数据
      */
     public User getUserByCache(Key key) {
-
-        System.out.println("getUserByCache: " + key);
+        log.info("getUserByCache: key: {}", key);
         CacheValue<Object> cacheValue = cache.getCacheValue(key);
         if (cacheValue != null) {
             return (User) cacheValue.getValue();

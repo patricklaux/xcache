@@ -43,8 +43,6 @@ public class SyncMessageListener<V> implements MessageListener<CacheSyncMessage>
             log.debug("onMessage: {}", message);
         }
 
-        log.info("onMessage: {}", message);
-
         if (!enabled) return;
 
         String sourceId = message.getSid();

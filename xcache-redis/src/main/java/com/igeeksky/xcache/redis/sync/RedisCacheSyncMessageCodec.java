@@ -3,13 +3,13 @@ package com.igeeksky.xcache.redis.sync;
 import com.igeeksky.xcache.extension.sync.CacheSyncMessage;
 import com.igeeksky.xredis.common.stream.StreamCodec;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
-import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.lang.ArrayUtils;
 import com.igeeksky.xtool.core.lang.Assert;
 import com.igeeksky.xtool.core.lang.ByteArray;
 import com.igeeksky.xtool.core.lang.codec.Codec;
 import com.igeeksky.xtool.core.lang.codec.StringCodec;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -64,7 +64,7 @@ public class RedisCacheSyncMessageCodec implements StreamCodec<byte[], byte[], C
     }
 
     public Map<byte[], byte[]> encodeMsg(CacheSyncMessage message) {
-        Map<byte[], byte[]> body = Maps.newHashMap(4);
+        Map<byte[], byte[]> body = HashMap.newHashMap(4);
         body.put(sid.getValue(), stringCodec.encode(message.getSid()));
         body.put(type.getValue(), stringCodec.encode(Integer.toString(message.getType())));
         Set<String> keys = message.getKeys();
@@ -75,7 +75,7 @@ public class RedisCacheSyncMessageCodec implements StreamCodec<byte[], byte[], C
     }
 
     public CacheSyncMessage decodeMsg(Map<byte[], byte[]> body) {
-        Map<ByteArray, byte[]> temp = Maps.newHashMap(body.size());
+        Map<ByteArray, byte[]> temp = HashMap.newHashMap(body.size());
         body.forEach((k, v) -> temp.put(ByteArray.wrap(k), v));
 
         CacheSyncMessage message = new CacheSyncMessage();

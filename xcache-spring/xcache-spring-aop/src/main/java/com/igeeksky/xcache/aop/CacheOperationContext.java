@@ -65,7 +65,7 @@ public class CacheOperationContext {
                                  MethodInvocation invocation, Method method, Object target, Class<?> targetClass) {
         this.expressionEvaluator = expressionEvaluator;
         this.parameterNameDiscoverer = this.expressionEvaluator.getParameterNameDiscoverer();
-        this.operations = Maps.newHashMap(cacheOperations.size());
+        this.operations = HashMap.newHashMap(cacheOperations.size());
         for (CacheOperation cacheOperation : cacheOperations) {
             this.operations.put(cacheOperation.getClass(), cacheOperation);
         }
@@ -159,92 +159,88 @@ public class CacheOperationContext {
             this.proceed();
             return;
         }
-
         // 使用 SpEL 获取 keys 集合
         Set<Object> keys = (Set<Object>) this.generateKey(operation.getKeys(), false);
         if (CollectionUtils.isEmpty(keys)) {
             this.proceed();
             return;
         }
-
         // 根据注解获取对应的缓存实例，并从缓存读取数据
         Cache<Object, Object> cache = this.getOrCreateCache(operation);
         Map<Object, CacheValue<Object>> cacheHits = cache.getAllCacheValues(keys);
 
-        // 移除已缓存的键
-        keys.removeAll(cacheHits.keySet());
-        // 如果集合为空，说明所有数据均已缓存，不执行方法，直接将缓存结果集作为最终结果并返回
-        if (keys.isEmpty()) {
-            this.result = wrapReturnType(this.method.getReturnType(), toCachedResult(cacheHits));
-            return;
-        }
-
-        // 预创建待缓存数据集
-        Map<Object, Object> cachePuts = createNullValueCachePuts(keys);
-        // 执行方法
-        this.proceed();
-        Map<Object, Object> resultMap = (Map<Object, Object>) unwrapReturnType(this.result);
-        // 方法结果集替换原有空值，并存入到缓存
-        saveToCache(cache, cachePuts, resultMap);
-
-        // 如果缓存命中数据为空，直接返回方法结果集
+        // 全部未命中缓存---------
+        // 调用方法，并将方法结果集存入缓存，然后返回
         if (Maps.isEmpty(cacheHits)) {
+            this.proceed();
+            saveToCache(cache, keys, (Map<Object, Object>) unwrapReturnType(this.result));
             return;
         }
 
-        // 如果方法结果集为空，直接返回缓存命中数据
-        Map<Object, Object> cachedResult = toCachedResult(cacheHits);
-        if (Maps.isEmpty(resultMap)) {
-            this.result = wrapReturnType(this.method.getReturnType(), cachedResult);
+        // 移除已命中缓存的键
+        keys.removeAll(cacheHits.keySet());
+        Map<Object, Object> cacheResults = toCacheResults(cacheHits);
+        // 全部命中缓存---------
+        // 如果键集合为空，说明全部命中缓存，不再执行方法，直接将缓存结果集作为最终结果返回
+        if (keys.isEmpty()) {
+            this.result = wrapReturnType(this.method.getReturnType(), cacheResults);
             return;
         }
 
+        // 部分命中缓存---------
+        // 预创建未命中缓存的键集（避免调用方法后键被删除）
+        List<Object> cacheMisses = new ArrayList<>(keys);
+        this.proceed();
+        Map<Object, Object> methodResults = (Map<Object, Object>) unwrapReturnType(this.result);
+        // 如方法结果集为空，也可能要保存空值到缓存
+        saveToCache(cache, cacheMisses, methodResults);
+
+        // 当方法结果集为空，缓存结果集不为空，返回缓存结果集
+        if (Maps.isEmpty(methodResults)) {
+            if (Maps.isNotEmpty(cacheResults)) {
+                this.result = wrapReturnType(this.method.getReturnType(), cacheResults);
+            }
+            return;
+        }
         // 合并缓存结果集和方法结果集，形成最终结果集
-        resultMap.putAll(cachedResult);
+        // 方法结果集不为空，那么不可能是无法添加元素的 Collections.emptyMap()，所以直接使用 methodResults 存放所有数据。
+        methodResults.putAll(cacheResults);
     }
 
     /**
-     * 将含值的缓存数据转换为缓存结果集
+     * 将包含值的缓存数据转换为缓存结果集
      *
      * @param cacheHits 缓存命中的数据
      * @return 缓存结果集
      */
-    private static Map<Object, Object> toCachedResult(Map<Object, CacheValue<Object>> cacheHits) {
-        Map<Object, Object> cachedResult = Maps.newHashMap(cacheHits.size());
-        cacheHits.forEach((k, cv) -> {
-            if (cv.hasValue()) {
-                cachedResult.put(k, cv.getValue());
+    private static Map<Object, Object> toCacheResults(Map<Object, CacheValue<Object>> cacheHits) {
+        Map<Object, Object> cachedResult = HashMap.newHashMap(cacheHits.size());
+        cacheHits.forEach((key, cacheValue) -> {
+            if (cacheValue != null && cacheValue.hasValue()) {
+                cachedResult.put(key, cacheValue.getValue());
             }
         });
         return cachedResult;
     }
 
     /**
-     * 为了避免执行方法时删除键，先将所有待存入缓存的值都预设为空
+     * 方法命中结果批量写入缓存
      *
-     * @param keys 待存入缓存的键集合
-     * @return 预设为空的键值对集合
+     * @param cache         缓存实例
+     * @param cacheMisses   未命中缓存的键集
+     * @param methodResults 方法结果集
      */
-    private static Map<Object, Object> createNullValueCachePuts(Set<Object> keys) {
-        Map<Object, Object> cachePuts = Maps.newHashMap(keys.size());
-        keys.forEach(k -> cachePuts.put(k, null));
-        return cachePuts;
-    }
-
-    /**
-     * 将待存入缓存的数据批量写入缓存
-     * <p>
-     * 如果方法执行结果不为空，替换对应空值
-     *
-     * @param cache     缓存实例
-     * @param cachePuts 待存入缓存的数据（值为空）
-     * @param result    方法执行结果
-     */
-    private static void saveToCache(Cache<Object, Object> cache, Map<Object, Object> cachePuts, Map<Object, Object> result) {
-        if (Maps.isNotEmpty(result)) {
-            cachePuts.putAll(result);
+    private static void saveToCache(Cache<Object, Object> cache, Collection<Object> cacheMisses,
+                                    Map<Object, Object> methodResults) {
+        Map<Object, Object> keyValues = HashMap.newHashMap(cacheMisses.size());
+        // 提示：这里不能只保存有值的键集。
+        // 如果缓存配置为支持保存空值，那么回源查询后依然无值的键集需缓存空值。
+        if (Maps.isNotEmpty(methodResults)) {
+            cacheMisses.forEach(key -> keyValues.put(key, methodResults.get(key)));
+        } else {
+            cacheMisses.forEach(key -> keyValues.put(key, null));
         }
-        cache.putAll(cachePuts);
+        cache.putAll(keyValues);
     }
 
     private void processCachePut(CachePutOperation operation, List<Runnable> afterInvokeRunners) {

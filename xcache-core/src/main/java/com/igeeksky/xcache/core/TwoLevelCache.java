@@ -8,6 +8,7 @@ import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xcache.props.StoreLevel;
 import com.igeeksky.xtool.core.collection.Maps;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -70,7 +71,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<CacheValue<V>> doAsyncGet(String storeKey) {
+    protected CompletableFuture<CacheValue<V>> doGetAsync(String storeKey) {
         return first.getCacheValueAsync(storeKey)
                 .thenCompose(firstValue -> {
                     if (firstValue != null) {
@@ -100,7 +101,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Map<String, CacheValue<V>>> doAsyncGetAll(Set<String> keys) {
+    protected CompletableFuture<Map<String, CacheValue<V>>> doGetAllAsync(Set<String> keys) {
         Set<String> cloneKeys = new HashSet<>(keys);
         return first.getAllCacheValuesAsync(cloneKeys)
                 .thenCompose(firstAll -> {
@@ -115,7 +116,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
 
     private static <V> Map<String, CacheValue<V>> addToResult(Map<String, CacheValue<V>> firstAll,
                                                               Set<String> cloneKeys, int size) {
-        Map<String, CacheValue<V>> result = Maps.newHashMap(size);
+        Map<String, CacheValue<V>> result = HashMap.newHashMap(size);
         if (Maps.isNotEmpty(firstAll)) {
             for (Map.Entry<String, CacheValue<V>> entry : firstAll.entrySet()) {
                 String key = entry.getKey();
@@ -133,7 +134,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
                                                               Map<String, CacheValue<V>> secondAll,
                                                               Store<V> first) {
         if (Maps.isNotEmpty(secondAll)) {
-            Map<String, V> saveToLower = Maps.newHashMap(secondAll.size());
+            Map<String, V> saveToLower = HashMap.newHashMap(secondAll.size());
             for (Map.Entry<String, CacheValue<V>> entry : secondAll.entrySet()) {
                 String key = entry.getKey();
                 CacheValue<V> cacheValue = entry.getValue();
@@ -158,7 +159,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncPut(String key, V value) {
+    protected CompletableFuture<Void> doPutAsync(String key, V value) {
         return second.putAsync(key, value)
                 .thenCompose(vod -> first.putAsync(key, value))
                 .whenCompleteAsync((vod, throwable) -> {
@@ -176,7 +177,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncPutAll(Map<String, ? extends V> keyValues) {
+    protected CompletableFuture<Void> doPutAllAsync(Map<String, ? extends V> keyValues) {
         return second.putAllAsync(keyValues)
                 .whenCompleteAsync((vod, throwable) -> {
                     if (throwable == null) {
@@ -194,7 +195,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncRemove(String key) {
+    protected CompletableFuture<Void> doRemoveAsync(String key) {
         return second.removeAsync(key)
                 .whenCompleteAsync((vod, throwable) -> {
                     if (throwable == null) {
@@ -212,7 +213,7 @@ public class TwoLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncRemoveAll(Set<String> keys) {
+    protected CompletableFuture<Void> doRemoveAllAsync(Set<String> keys) {
         return second.removeAllAsync(keys)
                 .whenCompleteAsync((vod, throwable) -> {
                     if (throwable == null) {

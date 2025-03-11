@@ -6,14 +6,10 @@ import com.igeeksky.xcache.core.ExtraStoreConvertor;
 import com.igeeksky.xredis.common.RedisOperatorProxy;
 import com.igeeksky.xtool.core.ExpiryKeyValue;
 import com.igeeksky.xtool.core.KeyValue;
-import com.igeeksky.xtool.core.collection.Maps;
 import com.igeeksky.xtool.core.lang.RandomUtils;
 import com.igeeksky.xtool.core.lang.codec.StringCodec;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -56,7 +52,7 @@ public class RedisStringStore<V> extends RedisStore<V> {
     public CompletableFuture<Map<String, CacheValue<V>>> getAllCacheValuesAsync(Set<? extends String> keys) {
         return this.operator.mgetAsync(toStoreKeys(keys))
                 .thenApply(keyValues -> {
-                    Map<String, CacheValue<V>> result = Maps.newHashMap(keyValues.size());
+                    Map<String, CacheValue<V>> result = HashMap.newHashMap(keyValues.size());
                     for (KeyValue<byte[], byte[]> kv : keyValues) {
                         if (kv != null && kv.hasValue()) {
                             CacheValue<V> cacheValue = this.convertor.fromExtraStoreValue(kv.getValue());
@@ -132,7 +128,7 @@ public class RedisStringStore<V> extends RedisStore<V> {
 
     private CompletableFuture<Void> putAllUnlimitedTtl(Map<? extends String, ? extends V> keyValues) {
         List<byte[]> removeKeys = new ArrayList<>();
-        Map<byte[], byte[]> putKeyValues = Maps.newHashMap(keyValues.size());
+        Map<byte[], byte[]> putKeyValues = HashMap.newHashMap(keyValues.size());
         keyValues.forEach((k, v) -> {
             byte[] storeKey = toStoreKey(k);
             byte[] storeValue = this.convertor.toExtraStoreValue(v);

@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.test.autoconfigure;
+package com.igeeksky.xcache.test;
 
 import com.igeeksky.xcache.autoconfigure.CacheAutoConfiguration;
 import com.igeeksky.xcache.autoconfigure.register.CacheLoaderRegister;
@@ -40,11 +40,11 @@ public class CacheLoaderConfiguration {
         return database;
     }
 
-    @Bean(destroyMethod = "shutdown")
+    @Bean
     CacheLoaderRegister cacheLoader() {
         CacheLoaderRegister holder = new CacheLoaderRegister();
         holder.put("user", SingletonSupplier.of(() -> (CacheLoader<Key, User>) key -> {
-            log.info("CacheLoader:load key: {}", key);
+            log.warn("CacheLoader:load key: {}", key);
             return database.get(key);
         }));
         return holder;

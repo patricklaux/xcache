@@ -8,6 +8,7 @@ import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xcache.props.StoreLevel;
 import com.igeeksky.xtool.core.collection.Maps;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -63,7 +64,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<CacheValue<V>> doAsyncGet(String storeKey) {
+    protected CompletableFuture<CacheValue<V>> doGetAsync(String storeKey) {
         return stores[0].getCacheValueAsync(storeKey)
                 .thenCompose(firstValue -> {
                     if (firstValue != null) {
@@ -103,7 +104,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Map<String, CacheValue<V>>> doAsyncGetAll(Set<String> keys) {
+    protected CompletableFuture<Map<String, CacheValue<V>>> doGetAllAsync(Set<String> keys) {
         Set<String> cloneKeys = new HashSet<>(keys);
         return stores[0].getAllCacheValuesAsync(cloneKeys)
                 .thenCompose(firstAll -> {
@@ -128,7 +129,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
 
     private static <V> Map<String, CacheValue<V>> addToResult(Map<String, CacheValue<V>> firstAll,
                                                               Set<String> cloneKeys, int size) {
-        Map<String, CacheValue<V>> result = Maps.newHashMap(size);
+        Map<String, CacheValue<V>> result = HashMap.newHashMap(size);
         if (Maps.isNotEmpty(firstAll)) {
             for (Map.Entry<String, CacheValue<V>> entry : firstAll.entrySet()) {
                 String key = entry.getKey();
@@ -146,7 +147,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     private static <V> void addToResult(Map<String, CacheValue<V>> result, Set<String> cloneKeys,
                                         Map<String, CacheValue<V>> cacheValues, Store<V>... lowerStores) {
         if (Maps.isNotEmpty(cacheValues)) {
-            Map<String, V> saveToLower = Maps.newHashMap(cacheValues.size());
+            Map<String, V> saveToLower = HashMap.newHashMap(cacheValues.size());
             for (Map.Entry<String, CacheValue<V>> entry : cacheValues.entrySet()) {
                 String key = entry.getKey();
                 CacheValue<V> cacheValue = entry.getValue();
@@ -176,7 +177,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncPut(String key, V value) {
+    protected CompletableFuture<Void> doPutAsync(String key, V value) {
         return stores[2].putAsync(key, value)
                 .thenCompose(ignored -> stores[1].putAsync(key, value))
                 .thenCompose(ignored -> stores[0].putAsync(key, value))
@@ -196,7 +197,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncPutAll(Map<String, ? extends V> keyValues) {
+    protected CompletableFuture<Void> doPutAllAsync(Map<String, ? extends V> keyValues) {
         return stores[2].putAllAsync(keyValues)
                 .thenCompose(ignored -> stores[1].putAllAsync(keyValues))
                 .thenCompose(ignored -> stores[0].putAllAsync(keyValues))
@@ -216,7 +217,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncRemove(String key) {
+    protected CompletableFuture<Void> doRemoveAsync(String key) {
         return stores[2].removeAsync(key)
                 .thenCompose(ignored -> stores[1].removeAsync(key))
                 .thenCompose(ignored -> stores[0].removeAsync(key))
@@ -236,7 +237,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     }
 
     @Override
-    protected CompletableFuture<Void> doAsyncRemoveAll(Set<String> keys) {
+    protected CompletableFuture<Void> doRemoveAllAsync(Set<String> keys) {
         return stores[2].removeAllAsync(keys)
                 .thenCompose(ignored -> stores[1].removeAllAsync(keys))
                 .thenCompose(ignored -> stores[0].removeAllAsync(keys))
