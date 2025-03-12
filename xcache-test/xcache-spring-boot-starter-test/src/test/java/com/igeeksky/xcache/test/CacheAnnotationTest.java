@@ -510,42 +510,29 @@ public class CacheAnnotationTest {
     }
 
     /**
-     * 注意：⭐⭐⭐当方法创建的值集与传入的键集不匹配时，方法返回值是不确定的。
+     * 注意：⭐⭐⭐当方法创建的值集与传入缓存的键集不匹配时，方法返回值是不确定的。
      */
     @Test
     public void cacheable_all_eval_keys() {
-        Key jack04 = new Key("jack04");
-        Key jack05 = new Key("jack05");
-        Key jack06 = new Key("jack06");
-        Key jack07 = new Key("jack07");
-
-        User userJack04 = new User("0", jack04.getName(), jack04.getAge());
-        User userJack05 = new User("0", jack05.getName(), jack05.getAge());
-        User userJack06 = new User("0", jack06.getName(), jack06.getAge());
-        User userJack07 = new User("0", jack07.getName(), jack07.getAge());
-
-        Map<Key, User> keyValues1 = new HashMap<>();
-        Map<Key, User> keyValues2 = new HashMap<>();
-        keyValues1.put(jack04, userJack04);
-        keyValues1.put(jack05, userJack05);
-
-        keyValues2.put(jack06, userJack06);
-        keyValues2.put(jack07, userJack07);
+        Map<Key, User> keysUsers = createKeyUserMap("cacheable_all_eval_keys", 17, 4);
 
         // 删除缓存元素
-        keyValues1.forEach((key, user) -> userService.deleteUserByCache(key));
-        keyValues2.forEach((key, user) -> userService.deleteUserByCache(key));
+        keysUsers.forEach((key, user) -> userService.deleteUserByCache(key));
 
         // ⭐⭐⭐ 第一次调用，缓存未命中，会执行方法，返回 4 个元素
-        // 因为传入的缓存键集是 2 个，而方法返回值是 4 个，所以只会缓存 2 个元素，查询缓存时也只会找到 2 个元素
-        Map<Key, User> result1 = userService.getUserListByEvalKeys(new HashSet<>(keyValues1.keySet()), keyValues2.keySet());
-        keyValues1.forEach((key, user) -> Assertions.assertEquals(result1.get(key), user));
-        keyValues2.forEach((key, user) -> Assertions.assertEquals(result1.get(key), user));
+        // 因为传入缓存的键集是 2 个，所以只会缓存 2 个元素，后续查询缓存时也只会找到 2 个元素
+        Map<Key, User> methodResult1 = userService.getUserListByEvalKeys(new HashSet<>(keysUsers.keySet()));
+        keysUsers.forEach((key, user) -> Assertions.assertEquals(methodResult1.get(key), user));
 
-        // ⭐⭐⭐ 第二次调用，缓存全命中，不执行方法，返回 2 个元素
-        Map<Key, User> result2 = userService.getUserListByEvalKeys(new HashSet<>(keyValues1.keySet()), keyValues2.keySet());
-        keyValues1.forEach((key, user) -> Assertions.assertNull(result2.get(key)));
-        keyValues2.forEach((key, user) -> Assertions.assertEquals(result2.get(key), user));
+        // ⭐⭐⭐ 第二次调用，缓存全命中，不执行方法，只会返回缓存中的 2 个元素
+        Map<Key, User> methodResult2 = userService.getUserListByEvalKeys(new HashSet<>(keysUsers.keySet()));
+        keysUsers.forEach((key, user) -> {
+            if (user.getAge() > 18) {
+                Assertions.assertEquals(user, methodResult2.get(key));
+            } else {
+                Assertions.assertNull(methodResult2.get(key));
+            }
+        });
     }
 
     @Test
@@ -577,6 +564,353 @@ public class CacheAnnotationTest {
         keyValues2.forEach((key, user) -> Assertions.assertEquals(user, result4.get(key)));
     }
 
+    @Test
+    public void cache_remove() {
+        Key key = new Key("cache_remove1");
+        User user = new User("0", key.getName(), key.getAge());
+        userService.saveUser(key, user);
+
+        Assertions.assertEquals(user, userService.getUserByCache(key).getValue());
+
+        userService.deleteByKey(key);
+
+        Assertions.assertNull(userService.getUserByCache(key));
+    }
+
+    @Test
+    public void cache_remove1() {
+        Key key = new Key("cache_remove1");
+        User user = new User("0", key.getName(), key.getAge());
+        userService.saveUser(key, user);
+
+        Assertions.assertEquals(user, userService.getUserByCache(key).getValue());
+
+        userService.deleteByEvalKey(1, key);
+
+        Assertions.assertNull(userService.getUserByCache(key));
+    }
+
+    @Test
+    public void cache_remove2() {
+        Key key1 = new Key(18, "cache_remove2");
+        User user = new User("0", key1.getName(), key1.getAge());
+        userService.saveUser(key1, user);
+        Assertions.assertEquals(user, userService.getUserByCache(key1).getValue());
+
+        // 未删除，condition age > 18 为 false，不删除
+        userService.deleteByEvalCondition(key1);
+        Assertions.assertEquals(user, userService.getUserByCache(key1).getValue());
+
+        Key key2 = new Key(19, "cache_remove2");
+        userService.saveUser(key2, user);
+        Assertions.assertEquals(user, userService.getUserByCache(key2).getValue());
+
+        // 已删除，condition age > 18 为 true，删除
+        userService.deleteByEvalCondition(key2);
+        Assertions.assertNull(userService.getUserByCache(key2));
+    }
+
+    @Test
+    public void cache_remove_before_invocation() {
+        Key key1 = new Key(18, "delete_before_invocation");
+        User user = new User("0", key1.getName(), key1.getAge());
+        userService.saveUser(key1, user);
+        Assertions.assertEquals(user, userService.getUserByCache(key1).getValue());
+
+        // ⭐⭐⭐ 方法调用前删除缓存，unless 表达式无效
+        userService.deleteBeforeInvocation(key1);
+        Assertions.assertNull(userService.getUserByCache(key1));
+    }
+
+    @Test
+    public void cache_remove_after_invocation() {
+        Key key1 = new Key(18, "cache_remove_after_invocation");
+        User user = new User("0", key1.getName(), key1.getAge());
+        userService.saveUser(key1, user);
+        Assertions.assertEquals(user, userService.getUserByCache(key1).getValue());
+
+        // 方法调用后删除缓存，unless 表达式有效
+        userService.deleteAfterInvocation(key1);
+        Assertions.assertNull(userService.getUserByCache(key1));
+    }
+
+    @Test
+    public void cache_remove_eval_unless() {
+        Key key1 = new Key(18, "cache_remove_after_invocation");
+        User user = new User("0", key1.getName(), key1.getAge());
+        userService.saveUser(key1, user);
+        Assertions.assertEquals(user, userService.getUserByCache(key1).getValue());
+
+        // unless 为 false，删除缓存元素
+        userService.deleteEvalUnless(key1);
+        Assertions.assertNull(userService.getUserByCache(key1));
+
+        Key key2 = new Key(19, "cache_remove_after_invocation");
+        User user2 = new User("0", key1.getName(), key1.getAge());
+        userService.saveUser(key2, user2);
+        Assertions.assertEquals(user2, userService.getUserByCache(key2).getValue());
+
+        // unless 为 true，未删除缓存元素
+        userService.deleteEvalUnless(key2);
+        Assertions.assertNotNull(userService.getUserByCache(key2));
+    }
+
+    @Test
+    public void cache_remove_condition_unless() {
+        Key key1 = new Key(18, "cache_remove_after_invocation");
+        User user = new User("0", key1.getName(), key1.getAge());
+        userService.saveUser(key1, user);
+        Assertions.assertEquals(user, userService.getUserByCache(key1).getValue());
+
+        // unless 为 false，删除缓存元素
+        userService.deleteEvalConditionUnless(key1);
+        Assertions.assertNull(userService.getUserByCache(key1));
+
+        Key key2 = new Key(19, "cache_remove_after_invocation");
+        User user2 = new User("0", key1.getName(), key1.getAge());
+        userService.saveUser(key2, user2);
+        Assertions.assertEquals(user2, userService.getUserByCache(key2).getValue());
+
+        // unless 为 true，未删除缓存元素
+        userService.deleteEvalConditionUnless(key2);
+        Assertions.assertNotNull(userService.getUserByCache(key2));
+    }
+
+
+    @Test
+    public void cache_remove_condition_unless2() {
+        Key key1 = new Key(18, "cache_remove_condition_unless2");
+        User user = new User("0", key1.getName(), key1.getAge());
+        userService.saveUser(key1, user);
+        Assertions.assertEquals(user, userService.getUserByCache(key1).getValue());
+
+        // condition 为 false，unless 表达式无意义，未删除缓存元素
+        userService.deleteEvalConditionFalseUnless(key1);
+        Assertions.assertEquals(user, userService.getUserByCache(key1).getValue());
+
+        Key key2 = new Key(19, "cache_remove_after_invocation");
+        User user2 = new User("0", key1.getName(), key1.getAge());
+        userService.saveUser(key2, user2);
+        Assertions.assertEquals(user2, userService.getUserByCache(key2).getValue());
+
+        // condition 为 false，unless 表达式无意义，未删除缓存元素
+        userService.deleteEvalConditionFalseUnless(key2);
+        Assertions.assertEquals(user2, userService.getUserByCache(key2).getValue());
+    }
+
+
+    @Test
+    public void cache_remove_all() {
+        Map<Key, User> keysUsers = createKeyUserMap("cache_remove_all", 10, 2);
+
+        userService.saveUsersToCache(new HashMap<>(keysUsers));
+        keysUsers.forEach((key, user) -> Assertions.assertEquals(user, userService.getUserByCache(key).getValue()));
+        userService.deleteUsers(new HashSet<>(keysUsers.keySet()));
+
+        keysUsers.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_remove_all_eval_keys() {
+        Map<Key, User> keysUsers = createKeyUserMap("cache_remove_all_eval_keys", 10, 2);
+
+        userService.saveUsersToCache(new HashMap<>(keysUsers));
+        keysUsers.forEach((key, user) -> Assertions.assertEquals(user, userService.getUserByCache(key).getValue()));
+        userService.deleteUsersEvalKeys(1, new HashSet<>(keysUsers.keySet()));
+
+        keysUsers.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_remove_all_before_invocation() {
+        Map<Key, User> keysUsers = createKeyUserMap("cache_remove_all_before_invocation", 10, 2);
+
+        userService.saveUsersToCache(new HashMap<>(keysUsers));
+        keysUsers.forEach((key, user) -> Assertions.assertEquals(user, userService.getUserByCache(key).getValue()));
+        userService.deleteUsersBeforeInvocation(new HashSet<>(keysUsers.keySet()));
+
+        keysUsers.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_remove_all_after_invocation() {
+        Map<Key, User> keysUsers = createKeyUserMap("cache_remove_all_after_invocation", 10, 2);
+
+        userService.saveUsersToCache(new HashMap<>(keysUsers));
+        keysUsers.forEach((key, user) -> Assertions.assertEquals(user, userService.getUserByCache(key).getValue()));
+        userService.deleteUsersAfterInvocation(new HashSet<>(keysUsers.keySet()));
+
+        keysUsers.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_remove_all_condition_unless_1() {
+        Map<Key, User> keysUsers = createKeyUserMap("cache_remove_all_condition_unless_1", 10, 2);
+
+        userService.saveUsersToCache(new HashMap<>(keysUsers));
+        keysUsers.forEach((key, user) -> Assertions.assertEquals(user, userService.getUserByCache(key).getValue()));
+        userService.deleteUsersConditionTrueUnlessFalse(new HashSet<>(keysUsers.keySet()));
+
+        keysUsers.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_remove_all_condition_unless_2() {
+        Map<Key, User> keysUsers = createKeyUserMap("cache_remove_all_condition_unless_2", 10, 2);
+
+        userService.saveUsersToCache(new HashMap<>(keysUsers));
+        keysUsers.forEach((key, user) -> Assertions.assertEquals(user, userService.getUserByCache(key).getValue()));
+        userService.deleteUsersConditionTrueUnlessTrue(new HashSet<>(keysUsers.keySet()));
+
+        keysUsers.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_remove_all_condition_unless_3() {
+        Map<Key, User> keysUsers = createKeyUserMap("cache_remove_all_condition_unless_3", 10, 2);
+
+        userService.saveUsersToCache(new HashMap<>(keysUsers));
+        keysUsers.forEach((key, user) -> Assertions.assertEquals(user, userService.getUserByCache(key).getValue()));
+        userService.deleteUsersConditionFalseUnlessFalse(new HashSet<>(keysUsers.keySet()));
+
+        keysUsers.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_remove_all_condition_unless_4() {
+        Map<Key, User> keysUsers = createKeyUserMap("cache_remove_all_condition_unless_3", 10, 2);
+
+        userService.saveUsersToCache(new HashMap<>(keysUsers));
+        keysUsers.forEach((key, user) -> Assertions.assertEquals(user, userService.getUserByCache(key).getValue()));
+        userService.deleteUsersConditionFalseUnlessTrue(new HashSet<>(keysUsers.keySet()));
+
+        keysUsers.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_clear() {
+        Map<Key, User> users = createKeyUserMap("cache_clear", 10, 5);
+        users.forEach(userService::saveUser);
+
+        users.forEach((key, user) -> Assertions.assertEquals(user, userService.getUserByCache(key).getValue()));
+
+        userService.deleteAllUsers();
+
+        users.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_clear_BeforeInvocation() {
+        Map<Key, User> users = createKeyUserMap("cache_clear", 10, 5);
+        users.forEach(userService::saveUser);
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+
+        userService.deleteAllUsersBeforeInvocation();
+
+        users.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_clear_AfterInvocation() {
+        Map<Key, User> users = createKeyUserMap("cache_clear", 10, 5);
+        users.forEach(userService::saveUser);
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+
+        userService.deleteAllUsersAfterInvocation();
+
+        users.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_clear_ConditionTrue() {
+        Map<Key, User> users = createKeyUserMap("cache_clear", 10, 5);
+        users.forEach(userService::saveUser);
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+
+        userService.deleteAllUsersConditionTrue();
+
+        users.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_clear_ConditionFalse() {
+        Map<Key, User> users = createKeyUserMap("cache_clear", 10, 5);
+        users.forEach(userService::saveUser);
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+
+        userService.deleteAllUsersConditionFalse();
+
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_clear_UnlessTrue() {
+        Map<Key, User> users = createKeyUserMap("cache_clear", 10, 5);
+        users.forEach(userService::saveUser);
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+
+        userService.deleteAllUsersUnlessTrue();
+
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+    }
+
+
+    @Test
+    public void cache_clear_UnlessFalse() {
+        Map<Key, User> users = createKeyUserMap("cache_clear", 10, 5);
+        users.forEach(userService::saveUser);
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+
+        userService.deleteAllUsersUnlessFalse();
+
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+    }
+
+
+    @Test
+    public void cache_clear_ConditionTrueUnlessFalse() {
+        Map<Key, User> users = createKeyUserMap("cache_clear", 10, 5);
+        users.forEach(userService::saveUser);
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+
+        userService.deleteAllUsersConditionTrueUnlessFalse();
+
+        users.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_clear_ConditionTrueUnlessTrue() {
+        Map<Key, User> users = createKeyUserMap("cache_clear", 10, 5);
+        users.forEach(userService::saveUser);
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+
+        userService.deleteAllUsersConditionTrueUnlessTrue();
+
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_clear_ConditionFalseUnlessFalse() {
+        Map<Key, User> users = createKeyUserMap("cache_clear", 10, 5);
+        users.forEach(userService::saveUser);
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+
+        userService.deleteAllUsersConditionFalseUnlessFalse();
+
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void cache_clear_ConditionFalseUnlessTrue() {
+        Map<Key, User> users = createKeyUserMap("cache_clear", 10, 5);
+        users.forEach(userService::saveUser);
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+
+        userService.deleteAllUsersConditionFalseUnlessTrue();
+
+        users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+    }
+
     private static Map<Key, User> createKeyUserMap(String name, int age, int size) {
         Map<Key, User> map = HashMap.newHashMap(size);
         for (int i = 0; i < size; i++, age++) {
@@ -585,56 +919,6 @@ public class CacheAnnotationTest {
             map.put(key, user);
         }
         return map;
-    }
-
-    @Test
-    public void cacheRemoveAll1() {
-        Key jack10 = new Key("jack10");
-        Key jack11 = new Key("jack11");
-
-        User userJack10 = new User("0", jack10.getName(), jack10.getAge());
-        User userJack11 = new User("0", jack11.getName(), jack11.getAge());
-
-        Map<Key, User> keyValues = new HashMap<>();
-        keyValues.put(jack10, userJack10);
-        keyValues.put(jack11, userJack11);
-
-        userService.saveUsersToCache(new HashMap<>(keyValues));
-
-        Assertions.assertEquals(userJack10, userService.getUserByCache(jack10).getValue());
-        Assertions.assertEquals(userJack11, userService.getUserByCache(jack11).getValue());
-
-        userService.deleteUsers(new HashSet<>(keyValues.keySet()));
-
-        Assertions.assertNull(userService.getUserByCache(jack10));
-        Assertions.assertNull(userService.getUserByCache(jack11));
-    }
-
-    @Test
-    public void cache_remove() {
-        Key jack12 = new Key("jack12");
-        User userJack12 = new User("0", jack12.getName(), jack12.getAge());
-        userService.saveUser(jack12, userJack12);
-
-        Assertions.assertEquals(userJack12, userService.getUserByCache(jack12).getValue());
-
-        userService.deleteByKey(jack12);
-
-        Assertions.assertNull(userService.getUserByCache(jack12));
-    }
-
-    @Test
-    public void cache_clear() {
-        Key jack13 = new Key("jack13");
-        User userJack13 = new User("0", jack13.getName(), jack13.getAge());
-        User user = userService.saveUser(jack13, userJack13);
-
-        Assertions.assertNotNull(user);
-        Assertions.assertEquals(user, userService.getUserByCache(jack13).getValue());
-
-        userService.deleteAllUsers();
-
-        Assertions.assertNull(userService.getUserByCache(jack13));
     }
 
 }

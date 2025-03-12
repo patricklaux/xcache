@@ -149,6 +149,9 @@ public interface Base<K, V> {
 
     /**
      * 清空缓存中的所有数据
+     * <p>
+     * Redis 缓存，当使用 Redis-String 作为数据存储，
+     * 实现类采用 ScanCursor 删除数据，数据量大时，此方法会耗时较长，请谨慎使用。
      */
     void clear();
 

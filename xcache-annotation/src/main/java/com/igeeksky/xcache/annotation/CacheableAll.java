@@ -27,7 +27,7 @@ import java.lang.annotation.*;
  * 3. 被 {@code @CacheableAll} 注解修饰的方法，其返回的 {@code Map} 类型必须是可修改的，
  * 因为缓存结果集需要添加到该 {@code Map}。
  * <p>
- * 4. ⭐⭐⭐⭐⭐ 传入的键集与方法创建的 {@code Map} 的值必须是对应的。<br>
+ * 4. ⭐⭐⭐⭐⭐ 传入缓存的键集与方法创建的 {@code Map} 的值必须是对应的。<br>
  * 例如，如传入的键集为 {@code {1, 2, 3}}，
  * 方法创建的 {@code Map} 为 {@code {{1,value}, {2, value}, {3, value}, {4, value}}}，
  * 多出一个跟传入的键集完全对不上的 {@code {4, value}}，那么该方法的返回结果集将是不确定的。<br>

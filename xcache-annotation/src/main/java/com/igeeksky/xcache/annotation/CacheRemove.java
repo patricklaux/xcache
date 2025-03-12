@@ -49,14 +49,15 @@ public @interface CacheRemove {
      * <p>
      * 如果未配置，unless 表达式结果默认为 false。
      * <p>
-     * 如果 condition 表达式结果为 true，beforeInvocation 为 false，
-     * 且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (remove)
+     * 如果 condition 表达式结果为 false，unless 表达式结果无意义，一定不会执行缓存操作。
+     * 如果 beforeInvocation 为 true，unless 表达式结果无意义；
+     * 如果 beforeInvocation 为 false，unless 表达式结果为 false，调用被注解方法后执行缓存操作 (remove)
      */
     String unless() default "";
 
     /**
-     * true： 调用被注解方法前驱逐缓存元素；<p>
-     * false：调用被注解方法后驱逐缓存元素。
+     * true： 调用被注解方法前驱逐缓存元素，unless 表达式无意义；<p>
+     * false：调用被注解方法后，根据 unless 表达式结果判断是否驱逐缓存元素。
      * <p>
      * 默认值：false
      */
