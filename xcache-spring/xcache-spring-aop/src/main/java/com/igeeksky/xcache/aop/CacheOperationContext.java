@@ -257,7 +257,16 @@ public class CacheOperationContext {
                 return;
             }
             Cache<Object, Object> cache = this.getOrCreateCache(operation);
-            cache.put(key, this.computeValue(operation.getValue()));
+            Object computed = this.computeValue(operation.getValue());
+            if (computed instanceof CompletableFuture<?> future) {
+                future.whenComplete((value, t) -> {
+                    if (t == null) {
+                        cache.put(key, value);
+                    }
+                });
+                return;
+            }
+            cache.put(key, ObjectUtils.unwrapOptional(computed));
         });
     }
 
@@ -270,12 +279,27 @@ public class CacheOperationContext {
             if (!this.unlessPassing(operation.getUnless())) {
                 return;
             }
-            Map<Object, Object> keyValues = (Map<Object, Object>) this.computeValue(operation.getKeyValues());
-            if (Maps.isEmpty(keyValues)) {
+            Object computed = this.computeValue(operation.getKeyValues());
+            if (computed == null) {
                 return;
             }
-            Cache<Object, Object> cache = this.getOrCreateCache(operation);
-            cache.putAll(keyValues);
+            if (computed instanceof CompletableFuture<?> future) {
+                future.whenComplete((value, t) -> {
+                    if (t == null) {
+                        Map<Object, Object> keyValues = (Map<Object, Object>) value;
+                        if (Maps.isNotEmpty(keyValues)) {
+                            Cache<Object, Object> cache = this.getOrCreateCache(operation);
+                            cache.putAll(keyValues);
+                        }
+                    }
+                });
+                return;
+            }
+            Map<Object, Object> keyValues = (Map<Object, Object>) ObjectUtils.unwrapOptional(computed);
+            if (Maps.isNotEmpty(keyValues)) {
+                Cache<Object, Object> cache = this.getOrCreateCache(operation);
+                cache.putAll(keyValues);
+            }
         });
     }
 
@@ -329,7 +353,6 @@ public class CacheOperationContext {
         Cache<Object, Object> cache = this.getOrCreateCache(operation);
         cache.removeAll(keys);
     }
-
 
     private void processCacheClear(CacheClearOperation operation, List<Runnable> afterInvokeRunners) {
         if (this.conditionNotPassing(operation.getCondition())) {

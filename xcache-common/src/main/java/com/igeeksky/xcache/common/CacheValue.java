@@ -36,10 +36,7 @@ public class CacheValue<V> {
 
     @Override
     public String toString() {
-        if (value == null) {
-            return "{}";
-        }
-        return "{\"value\":" + value + "}";
+        return (value == null) ? "{}" : "{\"value\":" + value + "}";
     }
 
 }

@@ -11,10 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -41,6 +38,105 @@ public class CacheAnnotationTest {
     @AfterAll
     public static void afterAll() throws InterruptedException {
         Thread.sleep(1);
+    }
+
+    @Test
+    public void cache_put_future_result() {
+        Key jack03 = new Key("jack03");
+        User userJack03 = new User("0", jack03.getName(), jack03.getAge());
+
+        // 删除缓存元素
+        userService.deleteUserByCache(jack03);
+
+        // 调用方法，缓存元素
+        userService.saveUserFuture(jack03, userJack03);
+
+        // 读取缓存，判断是否保存成功
+        CacheValue<User> cacheValue = userService.getUserByCache(jack03);
+        Assertions.assertEquals(userJack03, cacheValue.getValue());
+    }
+
+    @Test
+    public void cache_put_future_null_result() {
+        Key jack03 = new Key("jack03");
+
+        // 删除缓存元素
+        userService.deleteUserByCache(jack03);
+
+        // 调用方法，缓存元素
+        CompletableFuture<User> future = userService.saveUserFuture(jack03, null);
+        Assertions.assertNotNull(future);
+
+        // 读取缓存，判断是否保存成功
+        CacheValue<User> cacheValue = userService.getUserByCache(jack03);
+        Assertions.assertNotNull(cacheValue);
+        Assertions.assertNull(cacheValue.getValue());
+    }
+
+    @Test
+    public void cache_put_null_future() {
+        Key jack03 = new Key("jack03");
+
+        // 删除缓存元素
+        userService.deleteUserByCache(jack03);
+
+        // 调用方法，缓存元素
+        CompletableFuture<User> future = userService.saveUserNullFuture(jack03, null);
+        Assertions.assertNull(future);
+
+        // 读取缓存，判断是否保存成功
+        CacheValue<User> cacheValue = userService.getUserByCache(jack03);
+        Assertions.assertNull(cacheValue.getValue());
+    }
+
+    @Test
+    public void cache_put_optional_result() {
+        Key jack03 = new Key("jack03");
+        User userJack03 = new User("0", jack03.getName(), jack03.getAge());
+
+        // 删除缓存元素
+        userService.deleteUserByCache(jack03);
+
+        // 调用方法，缓存元素
+        Optional<User> optional = userService.saveUserOptional(jack03, userJack03);
+        Assertions.assertNotNull(optional);
+
+        // 读取缓存，判断是否保存成功
+        CacheValue<User> cacheValue = userService.getUserByCache(jack03);
+        Assertions.assertEquals(userJack03, cacheValue.getValue());
+    }
+
+    @Test
+    public void cache_put_optional_null_result() {
+        Key jack03 = new Key("jack03");
+
+        // 删除缓存元素
+        userService.deleteUserByCache(jack03);
+
+        // 调用方法，缓存元素
+        Optional<User> optional = userService.saveUserOptional(jack03, null);
+        Assertions.assertNotNull(optional);
+
+        // 读取缓存，判断是否保存成功
+        CacheValue<User> cacheValue = userService.getUserByCache(jack03);
+        Assertions.assertNotNull(cacheValue);
+        Assertions.assertNull(cacheValue.getValue());
+    }
+
+    @Test
+    public void cache_put_null_optional() {
+        Key jack03 = new Key("jack03");
+
+        // 删除缓存元素
+        userService.deleteUserByCache(jack03);
+
+        // 调用方法，缓存元素
+        Optional<User> future = userService.saveUserNullOptional(jack03, null);
+        Assertions.assertNull(future);
+
+        // 读取缓存，判断是否保存成功
+        CacheValue<User> cacheValue = userService.getUserByCache(jack03);
+        Assertions.assertNull(cacheValue.getValue());
     }
 
     @Test
@@ -348,12 +444,10 @@ public class CacheAnnotationTest {
 
         // 2. 第一次：调用方法，并缓存元素
         User result1 = userService.getUser(jack01, 2);
-        System.out.println(result1);
         Assertions.assertEquals(userJack01, result1);
 
         // 3. 第二次：不调用方法，读取缓存
         User result2 = userService.getUser(jack01, 3);
-        System.out.println(result2);
         Assertions.assertEquals(userJack01, result2);
     }
 
@@ -659,7 +753,8 @@ public class CacheAnnotationTest {
     public void cache_remove_condition_unless() {
         Key key1 = new Key(18, "cache_remove_after_invocation");
         User user = new User("0", key1.getName(), key1.getAge());
-        userService.saveUser(key1, user);
+        User saved = userService.saveUser(key1, user);
+        Assertions.assertEquals(saved, userService.getUserByCache(key1).getValue());
         Assertions.assertEquals(user, userService.getUserByCache(key1).getValue());
 
         // unless 为 false，删除缓存元素
@@ -909,6 +1004,13 @@ public class CacheAnnotationTest {
         userService.deleteAllUsersConditionFalseUnlessTrue();
 
         users.forEach((key, user) -> Assertions.assertNotNull(userService.getUserByCache(key)));
+    }
+
+    @Test
+    public void otherTest() {
+        Assertions.assertTrue(UserService.alwaysTrue());
+        Assertions.assertFalse(UserService.alwaysFalse());
+        Assertions.assertNotNull(UserService.newHashSet(List.of(new Key("s"))));
     }
 
     private static Map<Key, User> createKeyUserMap(String name, int age, int size) {

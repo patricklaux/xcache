@@ -58,6 +58,30 @@ public class UserService {
         return user;
     }
 
+    @CachePut
+    public CompletableFuture<User> saveUserFuture(Key key, User user) {
+        log.info("saveUserFuture: key:{}, user:{}", key, user);
+        return CompletableFuture.completedFuture(user);
+    }
+
+    @CachePut
+    public CompletableFuture<User> saveUserNullFuture(Key key, User user) {
+        log.info("saveUserNullFuture: key:{}, user:{}", key, user);
+        return null;
+    }
+
+    @CachePut
+    public Optional<User> saveUserOptional(Key key, User user) {
+        log.info("saveUserOptional: key:{}, user:{}", key, user);
+        return Optional.ofNullable(user);
+    }
+
+    @CachePut
+    public Optional<User> saveUserNullOptional(Key key, User user) {
+        log.info("saveUserNullOptional: key:{}, user:{}", key, user);
+        return null;
+    }
+
     /**
      * 默认缓存方法返回值
      */
@@ -264,10 +288,6 @@ public class UserService {
         return users;
     }
 
-    public static Set<Key> newHashSet(Collection<Key> keys) {
-        return new HashSet<>(keys);
-    }
-
     @CacheableAll(condition = "#keys.?[getAge > 18].size > 0")
     public Map<Key, User> getUserListByCondition(Set<Key> keys) {
         log.info("getUserListByCondition: keys:{}", keys);
@@ -433,6 +453,10 @@ public class UserService {
     public static boolean alwaysFalse() {
         log.info("alwaysFalse");
         return false;
+    }
+
+    public static Set<Key> newHashSet(Collection<Key> keys) {
+        return new HashSet<>(keys);
     }
 
 }
