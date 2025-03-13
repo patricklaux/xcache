@@ -50,7 +50,7 @@ xcache:
           test: test
       second: # 二级缓存配置
         provider: lettuce # StoreProviderId（默认值：none）
-        redis-type: STRING # Redis 命令类型（默认：STRING，如无需过期，可设为 HASH）
+        redis-type: STRING # Redis 数据类型（默认：STRING，如无需过期，可设为 HASH）
         expire-after-write: 7200000 # 数据写入后的存活时间（外部缓存默认值：7200000 单位：毫秒）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，仅适用于外部缓存）
         enable-random-ttl: true # 是否使用随机存活时间（默认值：true，避免大量的 key 集中过期）

@@ -42,18 +42,18 @@ public class CacheAnnotationTest {
 
     @Test
     public void cache_put_future_result() {
-        Key jack03 = new Key("jack03");
-        User userJack03 = new User("0", jack03.getName(), jack03.getAge());
+        Key key = new Key("cache_put_future_result");
+        User user = new User("0", key.getName(), key.getAge());
 
         // 删除缓存元素
-        userService.deleteUserByCache(jack03);
+        userService.deleteUserByCache(key);
 
         // 调用方法，缓存元素
-        userService.saveUserFuture(jack03, userJack03);
+        userService.saveUserFuture(key, user);
 
         // 读取缓存，判断是否保存成功
-        CacheValue<User> cacheValue = userService.getUserByCache(jack03);
-        Assertions.assertEquals(userJack03, cacheValue.getValue());
+        CacheValue<User> cacheValue = userService.getUserByCache(key);
+        Assertions.assertEquals(user, cacheValue.getValue());
     }
 
     @Test
