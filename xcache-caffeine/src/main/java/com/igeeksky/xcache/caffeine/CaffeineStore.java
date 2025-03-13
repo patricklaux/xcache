@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.core.EmbedStoreValueConvertor;
+import com.igeeksky.xtool.core.KeyValue;
 import com.igeeksky.xtool.core.collection.Maps;
 
 import java.util.HashMap;
@@ -41,7 +42,7 @@ public class CaffeineStore<V> implements Store<V> {
 
     @Override
     public CompletableFuture<CacheValue<V>> getCacheValueAsync(String key) {
-        return CompletableFuture.completedFuture(this.getCacheValue(key));
+        return CompletableFuture.completedFuture(key).thenApply(this::getCacheValue);
     }
 
     @Override
@@ -62,7 +63,7 @@ public class CaffeineStore<V> implements Store<V> {
 
     @Override
     public CompletableFuture<Map<String, CacheValue<V>>> getAllCacheValuesAsync(Set<? extends String> keys) {
-        return CompletableFuture.completedFuture(this.getAllCacheValues(keys));
+        return CompletableFuture.completedFuture(keys).thenApply(this::getAllCacheValues);
     }
 
     @Override
@@ -77,10 +78,8 @@ public class CaffeineStore<V> implements Store<V> {
 
     @Override
     public CompletableFuture<Void> putAsync(String key, V value) {
-        return CompletableFuture.supplyAsync(() -> {
-            this.put(key, value);
-            return null;
-        });
+        return CompletableFuture.completedFuture(KeyValue.create(key, value))
+                .thenAccept(kv -> this.put(kv.getKey(), kv.getValue()));
     }
 
     @Override
@@ -90,10 +89,7 @@ public class CaffeineStore<V> implements Store<V> {
 
     @Override
     public CompletableFuture<Void> putAllAsync(Map<? extends String, ? extends V> keyValues) {
-        return CompletableFuture.supplyAsync(() -> {
-            this.putAll(keyValues);
-            return null;
-        });
+        return CompletableFuture.completedFuture(keyValues).thenAccept(this::putAll);
     }
 
     @Override
@@ -103,10 +99,7 @@ public class CaffeineStore<V> implements Store<V> {
 
     @Override
     public CompletableFuture<Void> removeAsync(String key) {
-        return CompletableFuture.supplyAsync(() -> {
-            this.remove(key);
-            return null;
-        });
+        return CompletableFuture.completedFuture(key).thenAccept(this::remove);
     }
 
     @Override
@@ -116,10 +109,7 @@ public class CaffeineStore<V> implements Store<V> {
 
     @Override
     public CompletableFuture<Void> removeAllAsync(Set<? extends String> keys) {
-        return CompletableFuture.supplyAsync(() -> {
-            this.removeAll(keys);
-            return null;
-        });
+        return CompletableFuture.completedFuture(keys).thenAccept((this::removeAll));
     }
 
     @Override

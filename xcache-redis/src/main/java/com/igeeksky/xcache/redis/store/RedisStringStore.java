@@ -45,12 +45,17 @@ public class RedisStringStore<V> extends RedisStore<V> {
 
     @Override
     public CompletableFuture<CacheValue<V>> getCacheValueAsync(String key) {
-        return this.operator.getAsync(toStoreKey(key)).thenApply(this.convertor::fromExtraStoreValue);
+        return CompletableFuture.completedFuture(key)
+                .thenApply(this::toStoreKey)
+                .thenCompose(this.operator::getAsync)
+                .thenApply(this.convertor::fromExtraStoreValue);
     }
 
     @Override
     public CompletableFuture<Map<String, CacheValue<V>>> getAllCacheValuesAsync(Set<? extends String> keys) {
-        return this.operator.mgetAsync(toStoreKeys(keys))
+        return CompletableFuture.completedFuture(keys)
+                .thenApply(this::toStoreKeys)
+                .thenCompose(this.operator::mgetAsync)
                 .thenApply(keyValues -> {
                     Map<String, CacheValue<V>> result = HashMap.newHashMap(keyValues.size());
                     for (KeyValue<byte[], byte[]> kv : keyValues) {
@@ -67,29 +72,33 @@ public class RedisStringStore<V> extends RedisStore<V> {
 
     @Override
     public CompletableFuture<Void> putAsync(String key, V value) {
-        byte[] storeKey = toStoreKey(key);
-        byte[] storeValue = this.convertor.toExtraStoreValue(value);
-        if (storeValue == null) {
-            return this.operator.delAsync(storeKey).thenApply(ignored -> null);
-        }
-        if (this.expireAfterWrite > 0) {
-            long ttl = (this.enableRandomTtl) ? randomTtl() : expireAfterWrite;
-            return this.operator.psetexAsync(storeKey, ttl, storeValue)
-                    .thenApply(status -> checkResult(status, key, value));
-        }
-        return this.operator.setAsync(storeKey, storeValue)
-                .thenApply(status -> checkResult(status, key, value));
+        return CompletableFuture.completedFuture(KeyValue.create(key, value))
+                .thenApply(kv -> kv.map(this::toStoreKey, this.convertor::toExtraStoreValue))
+                .thenCompose(kv -> {
+                    byte[] storeKey = kv.getKey();
+                    byte[] storeValue = kv.getValue();
+                    if (storeValue == null) {
+                        return this.operator.delAsync(storeKey).thenApply(ignored -> null);
+                    }
+                    if (this.expireAfterWrite > 0) {
+                        long ttl = (this.enableRandomTtl) ? randomTtl() : expireAfterWrite;
+                        return this.operator.psetexAsync(storeKey, ttl, storeValue)
+                                .thenApply(status -> checkResult(status, key, value));
+                    }
+                    return this.operator.setAsync(storeKey, storeValue)
+                            .thenApply(status -> checkResult(status, key, value));
+                });
     }
 
     @Override
     public CompletableFuture<Void> putAllAsync(Map<? extends String, ? extends V> keyValues) {
         if (this.expireAfterWrite > 0) {
             if (this.enableRandomTtl) {
-                return this.putAllRandomTtl(keyValues);
+                return CompletableFuture.completedFuture(keyValues).thenCompose(this::putAllRandomTtl);
             }
-            return this.putAllFixTtl(keyValues);
+            return CompletableFuture.completedFuture(keyValues).thenCompose(this::putAllFixTtl);
         }
-        return this.putAllUnlimitedTtl(keyValues);
+        return CompletableFuture.completedFuture(keyValues).thenCompose(this::putAllUnlimitedTtl);
     }
 
     private CompletableFuture<Void> putAllRandomTtl(Map<? extends String, ? extends V> keyValues) {
@@ -146,12 +155,18 @@ public class RedisStringStore<V> extends RedisStore<V> {
 
     @Override
     public CompletableFuture<Void> removeAsync(String key) {
-        return this.operator.delAsync(toStoreKey(key)).thenApply(ignore -> null);
+        return CompletableFuture.completedFuture(key)
+                .thenApply(this::toStoreKey)
+                .thenCompose(this.operator::delAsync)
+                .thenApply(ignore -> null);
     }
 
     @Override
     public CompletableFuture<Void> removeAllAsync(Set<? extends String> keys) {
-        return this.operator.delAsync(toStoreKeys(keys)).thenApply(ignore -> null);
+        return CompletableFuture.completedFuture(keys)
+                .thenApply(this::toStoreKeys)
+                .thenCompose(this.operator::delAsync)
+                .thenApply(ignore -> null);
     }
 
     @Override
