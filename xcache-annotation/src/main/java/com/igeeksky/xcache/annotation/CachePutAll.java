@@ -3,6 +3,8 @@ package com.igeeksky.xcache.annotation;
 import org.springframework.aot.hint.annotation.Reflective;
 
 import java.lang.annotation.*;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 缓存注解
@@ -31,6 +33,8 @@ public @interface CachePutAll {
      * SpEL表达式，用于从参数中提取键值对集合 (Map)。
      * <p>
      * 如果未配置，默认采用方法返回值作为缓存键值对集合 (Map)。
+     * <p>
+     * 可以是 {@link CompletableFuture} 或 {@link Optional} 类型，缓存框架会自动拆装获取原值并缓存。
      */
     String keyValues() default "";
 

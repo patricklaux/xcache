@@ -515,13 +515,50 @@ public class CacheAnnotationTest {
         userService.deleteUserByCache(jack03);
 
         // 第一次调用，调用方法，并缓存数据
-        Optional<User> result0 = userService.getOptionalUser(jack03, 0);
+        Optional<User> result0 = userService.getUserOptional(jack03);
         log.info("cacheable_optional:result0: {}", result0);
         Assertions.assertEquals(userJack03, result0.orElse(null));
 
-        Optional<User> result1 = userService.getOptionalUser(jack03, 0);
+        Optional<User> result1 = userService.getUserOptional(jack03);
         log.info("cacheable_optional:result1: {}", result1);
         Assertions.assertEquals(userJack03, result1.orElse(null));
+    }
+
+    @Test
+    public void cacheable_optional_null() {
+        Key jack03 = new Key("jack03");
+
+        // 删除缓存元素
+        userService.deleteUserByCache(jack03);
+
+        // 第一次调用，调用方法，并缓存数据
+        Optional<User> result0 = userService.getUserOptionalNull(jack03);
+        log.info("cacheable_optional_null:result0: {}", result0);
+        Assertions.assertNotNull(result0);
+        Assertions.assertNull(result0.orElse(null));
+
+        CacheValue<User> result1 = userService.getUserByCache(jack03);
+        log.info("cacheable_optional_null:result1: {}", result1);
+        Assertions.assertNotNull(result1);
+        Assertions.assertNull(result1.getValue());
+    }
+
+    @Test
+    public void cacheable_null_optional() {
+        Key key = new Key("cacheable_null_optional");
+
+        // 删除缓存元素
+        userService.deleteUserByCache(key);
+
+        // 第一次调用，调用方法，并缓存数据
+        Optional<User> result0 = userService.getUserNullOptional(key);
+        log.info("cacheable_null_optional:result0: {}", result0);
+        Assertions.assertNull(result0);
+
+        CacheValue<User> result1 = userService.getUserByCache(key);
+        log.info("cacheable_null_optional:result1: {}", result1);
+        Assertions.assertNotNull(result1);
+        Assertions.assertNull(result1.getValue());
     }
 
     @Test
@@ -533,32 +570,48 @@ public class CacheAnnotationTest {
         userService.deleteUserByCache(jack03);
 
         // 第一次调用，调用方法，并缓存数据
-        CompletableFuture<User> result0 = userService.getFutureUser(jack03, 0);
+        CompletableFuture<User> result0 = userService.getUserFuture(jack03, 0);
         System.out.println("0: " + result0);
         Assertions.assertEquals(userJack03, result0.get());
 
-        CompletableFuture<User> result1 = userService.getFutureUser(jack03, 0);
+        CompletableFuture<User> result1 = userService.getUserFuture(jack03, 0);
         System.out.println("0: " + result1);
         Assertions.assertEquals(userJack03, result1.get());
     }
 
     @Test
-    public void cacheable_null_future() throws ExecutionException, InterruptedException {
-        Key jack03 = new Key("jack03");
+    public void cacheable_future_null() throws ExecutionException, InterruptedException {
+        Key key = new Key("cacheable_future_null");
 
         // 删除缓存元素
-        userService.deleteUserByCache(jack03);
+        userService.deleteUserByCache(key);
 
         // 第一次调用，调用方法，并缓存数据
-        CompletableFuture<User> result0 = userService.getNullFutureUser(jack03);
-        System.out.println("0: " + result0);
+        CompletableFuture<User> result0 = userService.getUserFutureNull(key);
         Assertions.assertNull(result0.get());
 
-        CompletableFuture<User> result1 = userService.getFutureUser(jack03, 0);
-        System.out.println("0: " + result1);
+        CompletableFuture<User> result1 = userService.getUserFuture(key, 0);
         Assertions.assertNull(result1.get());
 
-        CacheValue<User> cacheValue = userService.getUserByCache(jack03);
+        CacheValue<User> cacheValue = userService.getUserByCache(key);
+        Assertions.assertFalse(cacheValue.hasValue());
+    }
+
+    @Test
+    public void cacheable_null_future() {
+        Key key = new Key("cacheable_null_future");
+
+        // 删除缓存元素
+        userService.deleteUserByCache(key);
+
+        // 第一次调用，调用方法，CompletableFuture 为 null
+        CompletableFuture<User> future1 = userService.getUserNullFuture(key);
+        Assertions.assertNull(future1);
+
+        CompletableFuture<User> future2 = userService.getUserNullFuture(key);
+        Assertions.assertNotNull(future2);
+
+        CacheValue<User> cacheValue = userService.getUserByCache(key);
         Assertions.assertFalse(cacheValue.hasValue());
     }
 
@@ -601,6 +654,129 @@ public class CacheAnnotationTest {
         // times >=1 时，缓存已有全部元素，无需调用方法，调用方法会抛出异常
         Map<Key, User> result2 = userService.getUserList(new HashSet<>(keyValues.keySet()), 1);
         keyValues.forEach((key, user) -> Assertions.assertEquals(result2.get(key), user));
+    }
+
+    @Test
+    public void cacheable_all_future() throws ExecutionException, InterruptedException {
+        Map<Key, User> keysUsers = createKeyUserMap("cacheable_all_eval_keys", 17, 4);
+
+        // 删除缓存元素
+        keysUsers.forEach((key, user) -> userService.deleteUserByCache(key));
+
+        // 第一次调用：调用方法，并缓存数据
+        CompletableFuture<Map<Key, User>> future1 = userService.getUserListFuture(new HashSet<>(keysUsers.keySet()));
+        Assertions.assertNotNull(future1.get());
+
+        // 验证缓存是否 4 个元素都存在
+        keysUsers.forEach((key, user) -> Assertions.assertEquals(user, userService.getUserByCache(key).getValue()));
+
+        // 第一次调用：无需调用方法
+        CompletableFuture<Map<Key, User>> future2 = userService.getUserListFuture(new HashSet<>(keysUsers.keySet()));
+        Assertions.assertNotNull(future2.get());
+    }
+
+    @Test
+    public void cacheable_all_future_null() throws ExecutionException, InterruptedException {
+        Map<Key, User> keysUsers = createKeyUserMap("cacheable_all_future_null", 17, 4);
+
+        // 删除缓存元素
+        keysUsers.forEach((key, user) -> userService.deleteUserByCache(key));
+
+        // 第一次调用：调用方法，并缓存空值
+        CompletableFuture<Map<Key, User>> future1 = userService.getUserListFutureNull(new HashSet<>(keysUsers.keySet()));
+        Assertions.assertNull(future1.get());
+
+        // 验证缓存是否 4 个元素都存在
+        keysUsers.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key).getValue()));
+
+        // 第二次调用：无需调用方法，返回缓存的空值
+        CompletableFuture<Map<Key, User>> future2 = userService.getUserListFutureNull(new HashSet<>(keysUsers.keySet()));
+        Map<Key, User> map = future2.get();
+        Assertions.assertNotNull(map);
+        Assertions.assertTrue(map.isEmpty());
+    }
+
+    @Test
+    public void cacheable_all_null_future() throws ExecutionException, InterruptedException {
+        Map<Key, User> keysUsers = createKeyUserMap("cacheable_all_null_future", 17, 4);
+
+        // 删除缓存元素
+        keysUsers.forEach((key, user) -> userService.deleteUserByCache(key));
+
+        // 第一次调用：调用方法，并缓存空值
+        CompletableFuture<Map<Key, User>> future1 = userService.getUserListNullFuture(new HashSet<>(keysUsers.keySet()));
+        Assertions.assertNull(future1);
+
+        // 验证缓存是否 4 个元素都不存在
+        keysUsers.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key).getValue()));
+
+        // 第二次调用：无需调用方法，返回缓存的空值
+        CompletableFuture<Map<Key, User>> future2 = userService.getUserListNullFuture(new HashSet<>(keysUsers.keySet()));
+        Map<Key, User> map = future2.get();
+        Assertions.assertNotNull(map);
+        Assertions.assertTrue(map.isEmpty());
+    }
+
+
+    @Test
+    public void cacheable_all_optional() {
+        Map<Key, User> keysUsers = createKeyUserMap("cacheable_all_eval_keys", 17, 4);
+
+        // 删除缓存元素
+        keysUsers.forEach((key, user) -> userService.deleteUserByCache(key));
+
+        // 第一次调用：调用方法，并缓存数据
+        Optional<Map<Key, User>> optional1 = userService.getUserListOptional(new HashSet<>(keysUsers.keySet()));
+        Assertions.assertNotNull(optional1.orElse(null));
+
+        // 验证缓存是否 4 个元素都存在
+        keysUsers.forEach((key, user) -> Assertions.assertEquals(user, userService.getUserByCache(key).getValue()));
+
+        // 第一次调用：无需调用方法
+        Optional<Map<Key, User>> optional2 = userService.getUserListOptional(new HashSet<>(keysUsers.keySet()));
+        Assertions.assertNotNull(optional2.orElse(null));
+    }
+
+    @Test
+    public void cacheable_all_optional_null() {
+        Map<Key, User> keysUsers = createKeyUserMap("cacheable_all_future_null", 17, 4);
+
+        // 删除缓存元素
+        keysUsers.forEach((key, user) -> userService.deleteUserByCache(key));
+
+        // 第一次调用：调用方法，并缓存空值
+        Optional<Map<Key, User>> optional1 = userService.getUserListOptionalNull(new HashSet<>(keysUsers.keySet()));
+        Assertions.assertNull(optional1.orElse(null));
+
+        // 验证缓存是否 4 个元素都存在
+        keysUsers.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key).getValue()));
+
+        // 第二次调用：无需调用方法，返回缓存的空值
+        Optional<Map<Key, User>> optional2 = userService.getUserListOptionalNull(new HashSet<>(keysUsers.keySet()));
+        Map<Key, User> map = optional2.orElse(null);
+        Assertions.assertNotNull(map);
+        Assertions.assertTrue(map.isEmpty());
+    }
+
+    @Test
+    public void cacheable_all_null_optional() {
+        Map<Key, User> keysUsers = createKeyUserMap("cacheable_all_null_future", 17, 4);
+
+        // 删除缓存元素
+        keysUsers.forEach((key, user) -> userService.deleteUserByCache(key));
+
+        // 第一次调用：调用方法，并缓存空值，Optional 为空
+        Optional<Map<Key, User>> optional1 = userService.getUserListNullOptional(new HashSet<>(keysUsers.keySet()));
+        Assertions.assertNull(optional1);
+
+        // 验证缓存是否 4 个元素都不存在
+        keysUsers.forEach((key, user) -> Assertions.assertNull(userService.getUserByCache(key).getValue()));
+
+        // 第二次调用：无需调用方法，Optional 不为空
+        Optional<Map<Key, User>> optional2 = userService.getUserListNullOptional(new HashSet<>(keysUsers.keySet()));
+        Map<Key, User> map = optional2.orElse(null);
+        Assertions.assertNotNull(map);
+        Assertions.assertTrue(map.isEmpty());
     }
 
     /**

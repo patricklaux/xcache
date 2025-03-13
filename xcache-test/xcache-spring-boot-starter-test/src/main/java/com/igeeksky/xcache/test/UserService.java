@@ -64,6 +64,13 @@ public class UserService {
         return CompletableFuture.completedFuture(user);
     }
 
+    /**
+     * ⭐⭐⭐ 这是一个错误示例！⭐⭐⭐
+     * <p>
+     * 方法返回值的 {@link CompletableFuture} 不建议为 null！！
+     * <p>
+     * 当缓存未命中时，方法会返回 {@code null}；缓存命中时，缓存框架会返回 {@code CompletableFuture#completedFuture(null)}。
+     */
     @CachePut
     public CompletableFuture<User> saveUserNullFuture(Key key, User user) {
         log.info("saveUserNullFuture: key:{}, user:{}", key, user);
@@ -76,6 +83,13 @@ public class UserService {
         return Optional.ofNullable(user);
     }
 
+    /**
+     * ⭐⭐⭐ 这是一个错误示例！⭐⭐⭐
+     * <p>
+     * 方法返回值的 {@link Optional} 不建议为 null！！
+     * <p>
+     * 当缓存未命中时，方法会返回 {@code null}；缓存命中时，缓存框架会返回 {@link Optional#ofNullable(Object)}。
+     */
     @CachePut
     public Optional<User> saveUserNullOptional(Key key, User user) {
         log.info("saveUserNullOptional: key:{}, user:{}", key, user);
@@ -219,14 +233,33 @@ public class UserService {
     }
 
     @Cacheable
-    public Optional<User> getOptionalUser(Key key, int times) {
-        log.info("getOptionalUser: key:{}, times:{}", key, times);
-        return Optional.of(new User(Integer.toString(times), key.getName(), key.getAge()));
+    public Optional<User> getUserOptional(Key key) {
+        log.info("getUserOptional: key:{}", key);
+        return Optional.of(new User("0", key.getName(), key.getAge()));
     }
 
     @Cacheable
-    public CompletableFuture<User> getFutureUser(Key key, int times) {
-        log.info("getFutureUser: key:{}, times:{}", key, times);
+    public Optional<User> getUserOptionalNull(Key key) {
+        log.info("getUserOptionalNull: key:{}", key);
+        return Optional.empty();
+    }
+
+    /**
+     * ⭐⭐⭐ 这是一个错误示例！⭐⭐⭐
+     * <p>
+     * 方法返回值的 {@link Optional} 不建议为 null！！
+     * <p>
+     * 当缓存未命中时，方法会返回 {@code null}；缓存命中时，缓存框架会返回 {@code Optional#ofNullable(null)}。
+     */
+    @Cacheable
+    public Optional<User> getUserNullOptional(Key key) {
+        log.info("getUserNullOptional: key:{}", key);
+        return null;
+    }
+
+    @Cacheable
+    public CompletableFuture<User> getUserFuture(Key key, int times) {
+        log.info("getUserFuture: key:{}, times:{}", key, times);
         return CompletableFuture.completedFuture(new User(Integer.toString(times), key.getName(), key.getAge()));
     }
 
@@ -238,9 +271,22 @@ public class UserService {
      * @return CompletableFuture 不能为 null
      */
     @Cacheable
-    public CompletableFuture<User> getNullFutureUser(Key key) {
-        log.info("getNullFutureUser:{}", key);
+    public CompletableFuture<User> getUserFutureNull(Key key) {
+        log.info("getUserFutureNull:{}", key);
         return CompletableFuture.completedFuture(null);
+    }
+
+    /**
+     * ⭐⭐⭐ 这是一个错误示例！⭐⭐⭐
+     * <p>
+     * 方法返回值的 {@link CompletableFuture} 不建议为 null！！
+     * <p>
+     * 当缓存未命中时，方法会返回 {@code null}；缓存命中时，缓存框架会返回 {@code CompletableFuture#completedFuture(null)}。
+     */
+    @Cacheable
+    public CompletableFuture<User> getUserNullFuture(Key key) {
+        log.info("getUserNullFuture:{}", key);
+        return null;
     }
 
     @Cacheable(condition = "#times < 2")
@@ -258,6 +304,60 @@ public class UserService {
         Map<Key, User> users = HashMap.newHashMap(keys.size());
         keys.forEach(key -> users.put(key, new User(Integer.toString(times), key.getName(), key.getAge())));
         return users;
+    }
+
+    @CacheableAll
+    public CompletableFuture<Map<Key, User>> getUserListFuture(Set<Key> keys) {
+        log.info("getUserListFuture: keys:{}", keys);
+        Map<Key, User> users = HashMap.newHashMap(keys.size());
+        keys.forEach(key -> users.put(key, new User("0", key.getName(), key.getAge())));
+        return CompletableFuture.completedFuture(users);
+    }
+
+    @CacheableAll
+    public CompletableFuture<Map<Key, User>> getUserListFutureNull(Set<Key> keys) {
+        log.info("getUserListFutureNull: keys:{}", keys);
+        return CompletableFuture.completedFuture(null);
+    }
+
+    /**
+     * ⭐⭐⭐ 这是一个错误示例！⭐⭐⭐
+     * <p>
+     * 方法返回值的 {@link CompletableFuture} 不建议为 null！！
+     * <p>
+     * 当缓存未命中时，方法会返回 {@code null}；缓存命中时，缓存框架会返回 {@code CompletableFuture#completedFuture(Map)}。
+     */
+    @CacheableAll
+    public CompletableFuture<Map<Key, User>> getUserListNullFuture(Set<Key> keys) {
+        log.info("getUserListNullFuture: keys:{}", keys);
+        return null;
+    }
+
+    @CacheableAll
+    public Optional<Map<Key, User>> getUserListOptional(Set<Key> keys) {
+        log.info("getUserListOptional: keys:{}", keys);
+        Map<Key, User> users = HashMap.newHashMap(keys.size());
+        keys.forEach(key -> users.put(key, new User("0", key.getName(), key.getAge())));
+        return Optional.of(users);
+    }
+
+    @CacheableAll
+    public Optional<Map<Key, User>> getUserListOptionalNull(Set<Key> keys) {
+        log.info("getUserListOptionalNull: keys:{}", keys);
+        return Optional.empty();
+    }
+
+    /**
+     * ⭐⭐⭐ 这是一个错误示例！⭐⭐⭐
+     * <p>
+     * 方法返回值的 {@link Optional} 不建议为 null！！
+     * <p>
+     * 当缓存未命中时，方法会返回 {@code null}；缓存命中时，缓存框架会返回 {@code Optional#ofNullable(Map)}。
+     */
+    @CacheableAll
+    public Optional<Map<Key, User>> getUserListNullOptional(Set<Key> keys) {
+        log.info("getUserListNullOptional: keys:{}", keys);
+        return null;
     }
 
     /**
