@@ -6,7 +6,6 @@ import com.igeeksky.xtool.core.KeyValue;
 import com.igeeksky.xtool.core.collection.CollectionUtils;
 import com.igeeksky.xtool.core.lang.codec.StringCodec;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +41,7 @@ public class RedisHashStoreHelper<V> {
      */
     public Map<String, CacheValue<V>> toResult(List<KeyValue<byte[], byte[]>> keyValues) {
         if (CollectionUtils.isEmpty(keyValues)) {
-            return Collections.emptyMap();
+            return HashMap.newHashMap(0);
         }
 
         Map<String, CacheValue<V>> result = HashMap.newHashMap(keyValues.size());
