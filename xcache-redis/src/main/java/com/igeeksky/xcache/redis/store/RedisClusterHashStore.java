@@ -108,8 +108,9 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
     }
 
     private CompletableFuture<Void> putAllRandomTtl(Map<? extends String, ? extends V> fieldValues) {
+        int capacity = this.clusterHelper.calculateCapacity(fieldValues.size());
         Map<byte[], List<byte[]>> removeKeyFields = Maps.newHashMap();
-        Map<byte[], List<ExpiryKeyValue<byte[], byte[]>>> expiryKeysFieldsValues = Maps.newHashMap();
+        Map<byte[], List<ExpiryKeyValue<byte[], byte[]>>> expiryKeysFieldsValues = Maps.newHashMap(capacity);
         fieldValues.forEach((field, value) -> {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
             byte[] storeKey = this.clusterHelper.selectSlot(storeField);
@@ -128,8 +129,9 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
     }
 
     private CompletableFuture<Void> putAllFixTtl(Map<? extends String, ? extends V> fieldValues) {
+        int capacity = this.clusterHelper.calculateCapacity(fieldValues.size());
         Map<byte[], List<byte[]>> removeKeyFields = Maps.newHashMap();
-        Map<byte[], List<KeyValue<byte[], byte[]>>> keyFieldValues = HashMap.newHashMap(fieldValues.size());
+        Map<byte[], List<KeyValue<byte[], byte[]>>> keyFieldValues = HashMap.newHashMap(capacity);
         fieldValues.forEach((field, value) -> {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
             byte[] storeKey = this.clusterHelper.selectSlot(storeField);
@@ -148,9 +150,9 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
     }
 
     private CompletableFuture<Void> putAllUnlimitedTtl(Map<? extends String, ? extends V> keyValues) {
-        int maximum = this.clusterHelper.calculateCapacity(keyValues.size());
+        int capacity = this.clusterHelper.calculateCapacity(keyValues.size());
         Map<byte[], List<byte[]>> removeKeyFields = Maps.newHashMap();
-        Map<byte[], Map<byte[], byte[]>> keyFieldValues = HashMap.newHashMap(maximum);
+        Map<byte[], Map<byte[], byte[]>> keyFieldValues = HashMap.newHashMap(capacity);
 
         keyValues.forEach((field, value) -> {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);

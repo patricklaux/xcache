@@ -6,9 +6,7 @@ import com.igeeksky.xcache.core.store.StoreProxy;
 import com.igeeksky.xcache.extension.metrics.CacheMetricsMonitor;
 import com.igeeksky.xcache.extension.sync.CacheSyncMonitor;
 import com.igeeksky.xcache.props.StoreLevel;
-import com.igeeksky.xtool.core.collection.Maps;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -78,7 +76,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
                                 }
                                 return stores[2].getCacheValueAsync(storeKey)
                                         .whenComplete((thirdValue, t) -> {
-                                            if (thirdValue != null) {
+                                            if (t == null && thirdValue != null) {
                                                 V value = thirdValue.getValue();
                                                 stores[1].putAsync(storeKey, value)
                                                         .thenCompose(vod -> stores[0].putAsync(storeKey, value));
@@ -91,16 +89,18 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
     @Override
     protected Map<String, CacheValue<V>> doGetAll(Set<String> keys) {
         Set<String> cloneKeys = new HashSet<>(keys);
-        Map<String, CacheValue<V>> result = addToResult(stores[0].getAllCacheValues(cloneKeys), cloneKeys, keys.size());
+        Map<String, CacheValue<V>> firstAll = stores[0].getAllCacheValues(cloneKeys);
+        CacheHelper.removeHitKeys(cloneKeys, firstAll);
         if (cloneKeys.isEmpty()) {
-            return result;
+            return firstAll;
         }
-        addToResult(result, cloneKeys, stores[1].getAllCacheValues(cloneKeys), stores[0]);
+        Map<String, CacheValue<V>> secondAll = stores[1].getAllCacheValues(cloneKeys);
+        CacheHelper.removeHitKeys(cloneKeys, secondAll);
         if (cloneKeys.isEmpty()) {
-            return result;
+            return CacheHelper.mergeResult(firstAll, secondAll, stores[0]);
         }
-        addToResult(result, cloneKeys, stores[2].getAllCacheValues(cloneKeys), stores[0], stores[1]);
-        return result;
+        Map<String, CacheValue<V>> thirdAll = stores[2].getAllCacheValues(cloneKeys);
+        return CacheHelper.mergeResult(firstAll, secondAll, thirdAll, stores[0], stores[1]);
     }
 
     @Override
@@ -108,64 +108,21 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
         Set<String> cloneKeys = new HashSet<>(keys);
         return stores[0].getAllCacheValuesAsync(cloneKeys)
                 .thenCompose(firstAll -> {
-                    Map<String, CacheValue<V>> result = addToResult(firstAll, cloneKeys, keys.size());
+                    CacheHelper.removeHitKeys(cloneKeys, firstAll);
                     if (cloneKeys.isEmpty()) {
-                        return CompletableFuture.completedFuture(result);
+                        return CompletableFuture.completedFuture(firstAll);
                     }
                     return stores[1].getAllCacheValuesAsync(cloneKeys)
                             .thenCompose(secondAll -> {
-                                addToResult(result, cloneKeys, secondAll, stores[0]);
+                                CacheHelper.removeHitKeys(cloneKeys, secondAll);
                                 if (cloneKeys.isEmpty()) {
+                                    Map<String, CacheValue<V>> result = CacheHelper.mergeResult(firstAll, secondAll, stores[0]);
                                     return CompletableFuture.completedFuture(result);
                                 }
                                 return stores[2].getAllCacheValuesAsync(cloneKeys)
-                                        .thenApply(thirdAll -> {
-                                            addToResult(result, cloneKeys, thirdAll, stores[0], stores[1]);
-                                            return result;
-                                        });
+                                        .thenApply(thirdAll -> CacheHelper.mergeResult(firstAll, secondAll, thirdAll, stores[0], stores[1]));
                             });
                 });
-    }
-
-    private static <V> Map<String, CacheValue<V>> addToResult(Map<String, CacheValue<V>> firstAll,
-                                                              Set<String> cloneKeys, int size) {
-        Map<String, CacheValue<V>> result = HashMap.newHashMap(size);
-        if (Maps.isNotEmpty(firstAll)) {
-            for (Map.Entry<String, CacheValue<V>> entry : firstAll.entrySet()) {
-                String key = entry.getKey();
-                CacheValue<V> cacheValue = entry.getValue();
-                if (cacheValue != null) {
-                    result.put(key, cacheValue);
-                    cloneKeys.remove(key);
-                }
-            }
-        }
-        return result;
-    }
-
-    @SafeVarargs
-    private static <V> void addToResult(Map<String, CacheValue<V>> result, Set<String> cloneKeys,
-                                        Map<String, CacheValue<V>> cacheValues, Store<V>... lowerStores) {
-        if (Maps.isNotEmpty(cacheValues)) {
-            Map<String, V> saveToLower = HashMap.newHashMap(cacheValues.size());
-            for (Map.Entry<String, CacheValue<V>> entry : cacheValues.entrySet()) {
-                String key = entry.getKey();
-                CacheValue<V> cacheValue = entry.getValue();
-                if (cacheValue != null) {
-                    result.put(key, cacheValue);
-                    cloneKeys.remove(key);
-                    saveToLower.put(key, cacheValue.getValue());
-                }
-            }
-            // 高层缓存数据保存到低层缓存
-            if (Maps.isNotEmpty(saveToLower)) {
-                CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
-                for (int i = lowerStores.length - 1; i >= 0; i--) {
-                    Store<V> store = lowerStores[i];
-                    future = future.thenCompose(ignored -> store.putAllAsync(saveToLower));
-                }
-            }
-        }
     }
 
     @Override
@@ -181,7 +138,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
         return stores[2].putAsync(key, value)
                 .thenCompose(ignored -> stores[1].putAsync(key, value))
                 .thenCompose(ignored -> stores[0].putAsync(key, value))
-                .whenCompleteAsync((ignored, throwable) -> {
+                .whenComplete((ignored, throwable) -> {
                     if (throwable == null) {
                         syncMonitor.afterPut(key);
                     }
@@ -201,7 +158,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
         return stores[2].putAllAsync(keyValues)
                 .thenCompose(ignored -> stores[1].putAllAsync(keyValues))
                 .thenCompose(ignored -> stores[0].putAllAsync(keyValues))
-                .whenCompleteAsync((ignored, throwable) -> {
+                .whenComplete((ignored, throwable) -> {
                     if (throwable == null) {
                         syncMonitor.afterPutAll(keyValues.keySet());
                     }
@@ -221,7 +178,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
         return stores[2].removeAsync(key)
                 .thenCompose(ignored -> stores[1].removeAsync(key))
                 .thenCompose(ignored -> stores[0].removeAsync(key))
-                .whenCompleteAsync((ignored, throwable) -> {
+                .whenComplete((ignored, throwable) -> {
                     if (throwable == null) {
                         syncMonitor.afterRemove(key);
                     }
@@ -241,7 +198,7 @@ public class ThreeLevelCache<K, V> extends AbstractCache<K, V> {
         return stores[2].removeAllAsync(keys)
                 .thenCompose(ignored -> stores[1].removeAllAsync(keys))
                 .thenCompose(ignored -> stores[0].removeAllAsync(keys))
-                .whenCompleteAsync((ignored, throwable) -> {
+                .whenComplete((ignored, throwable) -> {
                     if (throwable == null) {
                         syncMonitor.afterRemoveAll(keys);
                     }

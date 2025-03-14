@@ -221,7 +221,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     public Map<K, CacheValue<V>> getAllCacheValues(Set<? extends K> keys) {
         Map<String, K> keyMapping = this.createKeyMapping(keys);
         if (Maps.isEmpty(keyMapping)) {
-            return HashMap.newHashMap(0);
+            return Collections.emptyMap();
         }
         return toKeyCacheValues(keyMapping, this.doGetAll(Collections.unmodifiableSet(keyMapping.keySet())));
     }
@@ -232,7 +232,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
                 .thenApply(this::createKeyMapping)
                 .thenCompose(keyMapping -> {
                     if (Maps.isEmpty(keyMapping)) {
-                        return CompletableFuture.completedFuture(HashMap.newHashMap(0));
+                        return CompletableFuture.completedFuture(Collections.emptyMap());
                     }
                     return this.doGetAllAsync(Collections.unmodifiableSet(keyMapping.keySet()))
                             .thenApply(cacheValues -> toKeyCacheValues(keyMapping, cacheValues));
@@ -243,7 +243,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
     public Map<K, V> getAll(Set<? extends K> keys) {
         Map<String, K> keyMapping = this.createKeyMapping(keys);
         if (Maps.isEmpty(keyMapping)) {
-            return HashMap.newHashMap(0);
+            return Collections.emptyMap();
         }
         Map<String, CacheValue<V>> cacheValues = this.doGetAll(Collections.unmodifiableSet(keyMapping.keySet()));
         return fromKeyCacheValues(keyMapping, cacheValues, cacheValues.size());
@@ -255,7 +255,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
                 .thenApply(this::createKeyMapping)
                 .thenCompose(keyMapping -> {
                     if (Maps.isEmpty(keyMapping)) {
-                        return CompletableFuture.completedFuture(HashMap.newHashMap(0));
+                        return CompletableFuture.completedFuture(Collections.emptyMap());
                     }
                     return this.doGetAllAsync(Collections.unmodifiableSet(keyMapping.keySet()))
                             .thenApply(cacheValues -> fromKeyCacheValues(keyMapping, cacheValues, cacheValues.size()));
@@ -283,7 +283,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
         requireNonNull(cacheLoader, error, "cacheLoader must not be null.");
         Map<String, K> keyMapping = this.createKeyMapping(keys);
         if (Maps.isEmpty(keyMapping)) {
-            return HashMap.newHashMap(0);
+            return Collections.emptyMap();
         }
         Map<String, CacheValue<V>> cacheValues = this.doGetAll(Collections.unmodifiableSet(keyMapping.keySet()));
         Map<K, V> result = fromKeyCacheValues(keyMapping, cacheValues, keyMapping.size());
@@ -300,7 +300,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
                 .thenApply(this::createKeyMapping)
                 .thenCompose(keyMapping -> {
                     if (Maps.isEmpty(keyMapping)) {
-                        return CompletableFuture.completedFuture(HashMap.newHashMap(0));
+                        return CompletableFuture.completedFuture(Collections.emptyMap());
                     }
                     return this.doGetAllAsync(Collections.unmodifiableSet(keyMapping.keySet()))
                             .thenApply(cacheValues -> fromKeyCacheValues(keyMapping, cacheValues, keyMapping.size()))

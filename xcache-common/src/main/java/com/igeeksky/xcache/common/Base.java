@@ -67,10 +67,10 @@ public interface Base<K, V> {
      * 根据键集从缓存中读取值
      *
      * @param keys 多个键的集合
-     * @return KeyValues – 键值对映射 <p>
+     * @return KeyValues – 键值对映射<p>
      * CacheValue 不为空，表示已缓存： <p>
      * 1. CacheValue.hasValue() == true，缓存的是正常值； <p>
-     * 2. CacheValue.hasValue() == false，缓存的是空值； <p>
+     * 2. CacheValue.hasValue() == false，缓存的是空值
      */
     Map<K, CacheValue<V>> getAllCacheValues(Set<? extends K> keys);
 

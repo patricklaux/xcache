@@ -48,7 +48,7 @@ Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架�
 * `MetricsSystem`：缓存指标信息的收集、存储、计算与展示。
 * `SyncMessage`：缓存数据同步信息，用于维护各个缓存实例的数据一致性。
 * `MQ`：消息队列，用于转发数据同步消息（已有实现采用 `Redis Stream`）。
-* `DataSource`：数据源，当缓存无数据时，从数据源加载数据并存入缓存。
+* `DataSource`：数据源，当缓存无数据或数据到期刷新，从数据源加载数据并存入缓存。
 
 ### 2.3. 运行环境
 
@@ -66,10 +66,9 @@ git clone https://github.com/patricklaux/xcache-samples.git
 
 ### 3.0. Maven bom
 
-Xcache 支持 bom 方式统一管理版本，可在 pom.xml 文件中添加如下配置片段，后续真正引入组件依赖时可省略版本号。
+Xcache 支持 bom 方式，可在 pom.xml 文件中添加如下配置片段，以统一管理版本。
 
 ```xml
-
 <dependencyManagement>
     <dependencies>
         <dependency>
@@ -1286,28 +1285,32 @@ xcache:
 
 ```java
 // ⭐⭐⭐ 这是一个错误示例！ ⭐⭐⭐
-@Test
-public void test(){
-    Set<Integer> keys = Set.of(1, 2);
-    // 第一次调用：当缓存未全部命中时，会调用方法，返回 {{1, 1}, {2, 2}, {3, 3}}；
-    Map<Integer, Integer> keysValues1 = getList(keys);
-    Assertions.assertEquals(Map.of(1, 1, 2, 2, 3, 3), keysValues1);
-    // 第二次调用：当缓存已全部命中时，不调用方法，返回 {{1, 1}, {2, 2}}。
-    Map<Integer, Integer> keysValues2 = getList(keys);
-    Assertions.assertEquals(Map.of(1, 1, 2, 2), keysValues2);
-}
+public class CacheableAllTest {
+    
+    @Test
+    public void test(){
+        Set<Integer> keys = Set.of(1, 2);
+        // 第一次调用：当缓存未全部命中时，会调用方法，返回 {{1, 1}, {2, 2}, {3, 3}}；
+        Map<Integer, Integer> keysValues1 = getList(keys);
+        Assertions.assertEquals(Map.of(1, 1, 2, 2, 3, 3), keysValues1);
+        // 第二次调用：当缓存已全部命中时，不调用方法，返回 {{1, 1}, {2, 2}}。
+        Map<Integer, Integer> keysValues2 = getList(keys);
+        Assertions.assertEquals(Map.of(1, 1, 2, 2), keysValues2);
+    }
 
-/**
- * ⭐⭐⭐ 这是一个错误示例！ ⭐⭐⭐
- * 如果传入的 keys 是 {1, 2}，而方法创建的 Map 是 {{1, 1}, {2, 2}, {3, 3}}，方法返回值不确定。
- */
-@CacheableAll
-public Map<Integer, Integer> getList(Set<Integer> keys) {
-    Map<Integer, Integer> map = new HashMap<>();
-	Map.put(1, 1);
-  	Map.put(2, 2);
-    Map.put(3, 3);
-    return map;
+    /**
+     * ⭐⭐⭐ 这是一个错误示例！ ⭐⭐⭐
+     * 如果传入的 keys 是 {1, 2}，而方法创建的 Map 是 {{1, 1}, {2, 2}, {3, 3}}，方法返回值不确定。
+     */
+    @CacheableAll
+    public Map<Integer, Integer> getList(Set<Integer> keys) {
+        Map<Integer, Integer> map = new HashMap<>();
+        Map.put(1, 1);
+        Map.put(2, 2);
+        Map.put(3, 3);
+        return map;
+    }
+    
 }
 ```
 
@@ -1479,7 +1482,6 @@ unless 默认为 false，该表达式是在调用被注解方法之后进行解�
 如使用 Maven 进行编译，可参考如下示例：
 
 ```xml
-
 <plugin>
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-compiler-plugin</artifactId>
@@ -1497,11 +1499,13 @@ unless 默认为 false，该表达式是在调用被注解方法之后进行解�
 如不想添加编译参数，则需使用 【#a + index】 或 【#p + index】 的方式来获取方法参数。
 
 ```java
-// #a0 或 #p0 表示获取方法的第 1 个参数，#a1 或 #p1 表示获取方法的第 2 个参数，如此类推。
-@CachePut(key = "#a0", value = "#a1")
-//@CachePut(key = "#p0", value = "#p1")
-public void save(long id, User user) {
-    // do something
+public class TestCase {
+    // #a0 或 #p0 表示获取方法的第 1 个参数，#a1 或 #p1 表示获取方法的第 2 个参数，如此类推。
+    @CachePut(key = "#a0", value = "#a1")
+    //@CachePut(key = "#p0", value = "#p1")
+    public void save(long id, User user) {
+        doSomething();
+    }
 }
 ```
 
@@ -1516,135 +1520,145 @@ public void save(long id, User user) {
 如表达式计算是在被注解方法执行之后，“#result” 获取到的是被注解方法的返回结果。
 
 ```java
-/**
- * 此示例，"#result" 获取到的是方法返回结果，而不是参数中的 result。
- * 因为 @CachePut 的表达式计算和缓存逻辑执行是在方法执行之后。
- */
-@CachePut(value = "#result")
-public User save(long id, User result) {
-    return new User(1, "MethodResult", 18);
+public class TestCase {
+
+    /**
+     * 此示例，"#result" 获取到的是方法返回结果，而不是参数中的 result。
+     * 因为 @CachePut 的表达式计算和缓存逻辑执行是在方法执行之后。
+     */
+    @CachePut(value = "#result")
+    public User save(long id, User result) {
+        return new User(1, "MethodResult", 18);
+    }
+
 }
 ```
 
 如果参数命名为 result，又希望表达式中使用该参数，那么可使用 【#a+index】 或 【#p+index】 来获取参数中的值。
 
 ```java
+public class TestCase {
 
-@CachePut(value = "#a1")
-//@CachePut(value = "#p1")
-public User save(long id, User result) {
-    return new User(1, "MethodResult", 18);
+    @CachePut(value = "#a1")
+    // @CachePut(value = "#p1")
+    public User save(long id, User result) {
+        return new User(1, "MethodResult", 18);
+    }
 }
 ```
 
 ## 6. 缓存接口
 
-缓存核心接口位于 `com.igeeksky.xcache.common.cache`：
+缓存核心接口位于 `com.igeeksky.xcache.common`：
 
 ### 6.1. 主要接口
 
 ```java
+public interface Cache<K, V> extends Base<K, V> {
+
     /**
- * 根据键从缓存中读取值（返回值为原始值）
- */
-V get(K key);
+     * 根据键从缓存中读取值（返回值为原始值）
+     */
+    V get(K key);
 
-CompletableFuture<V> getAsync(K key);    //异步
+    CompletableFuture<V> getAsync(K key);    //异步
 
-/**
- * 根据键从缓存中读取值（返回值为包装类）
- */
-CacheValue<V> getCacheValue(K key);
+    /**
+     * 根据键从缓存中读取值（返回值为包装类）
+     */
+    CacheValue<V> getCacheValue(K key);
 
-CompletableFuture<CacheValue<V>> getCacheValueAsync(K key);    //异步
+    CompletableFuture<CacheValue<V>> getCacheValueAsync(K key);    //异步
 
-/**
- * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值；
- * 2. 如果缓存未命中，则通过方法传入的 cacheLoader 回源取值，取值结果先存入缓存，最后返回该值。
- * <p>
- * 注：回源取值时将加锁执行。
- */
-V getOrLoad(K key, CacheLoader<K, V> cacheLoader);
+    /**
+     * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值；
+     * 2. 如果缓存未命中，则通过方法传入的 cacheLoader 回源取值，取值结果先存入缓存，最后返回该值。
+     * <p>
+     * 注：回源取值时将加锁执行。
+     */
+    V getOrLoad(K key, CacheLoader<K, V> cacheLoader);
 
-CompletableFuture<V> getOrLoadAsync(K key, CacheLoader<K, V> cacheLoader);    //异步
+    CompletableFuture<V> getOrLoadAsync(K key, CacheLoader<K, V> cacheLoader);    //异步
 
-/**
- * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值。
- * 2. 如果缓存未命中，通过缓存内部的 cacheLoader 回源取值，取值结果存入缓存并返回；
- * <p>
- * 注1：回源取值时将加锁执行。
- * 注2：如果缓存内部无 CacheLoader，将抛出异常。
- */
-V getOrLoad(K key);
+    /**
+     * 1. 先从缓存取值，如果缓存有命中，返回已缓存的值。
+     * 2. 如果缓存未命中，通过缓存内部的 cacheLoader 回源取值，取值结果存入缓存并返回；
+     * <p>
+     * 注1：回源取值时将加锁执行。
+     * 注2：如果缓存内部无 CacheLoader，将抛出异常。
+     */
+    V getOrLoad(K key);
 
-CompletableFuture<V> getOrLoadAsync(K key);    //异步
+    CompletableFuture<V> getOrLoadAsync(K key);    //异步
 
-/**
- * 根据键集从缓存中读取值（返回值为原始值）
- */
-Map<K, V> getAll(Set<? extends K> keys);
+    /**
+     * 根据键集从缓存中读取值（返回值为原始值）
+     */
+    Map<K, V> getAll(Set<? extends K> keys);
 
-CompletableFuture<Map<K, V>> getAllAsync(Set<? extends K> keys);    //异步
+    CompletableFuture<Map<K, V>> getAllAsync(Set<? extends K> keys);    //异步
 
-/**
- * 根据键集从缓存中读取值（返回值为包装类）
- */
-Map<K, CacheValue<V>> getAllCacheValues(Set<? extends K> keys);
+    /**
+     * 根据键集从缓存中读取值（返回值为包装类）
+     */
+    Map<K, CacheValue<V>> getAllCacheValues(Set<? extends K> keys);
 
-CompletableFuture<Map<K, CacheValue<V>>> getAllCacheValuesAsync(Set<? extends K> keys);    //异步
+    CompletableFuture<Map<K, CacheValue<V>>> getAllCacheValuesAsync(Set<? extends K> keys);    //异步
 
-/**
- * 1. 先从缓存取值，如果缓存命中全部数据，返回缓存数据集。
- * 2. 如果缓存有未命中数据，通过方法传入的 cacheLoader 回源取值，取值结果先存入缓存，最后返回合并结果集：缓存数据集+回源取值结果集。
- * 注：批量回源取值不加锁。
- */
-Map<K, V> getAllOrLoad(Set<? extends K> keys, CacheLoader<K, V> cacheLoader);
+    /**
+     * 1. 先从缓存取值，如果缓存命中全部数据，返回缓存数据集。
+     * 2. 如果缓存有未命中数据，通过方法传入的 cacheLoader 回源取值，取值结果先存入缓存，最后返回合并结果集：缓存数据集+回源取值结果集。
+     * 注：批量回源取值不加锁。
+     */
+    Map<K, V> getAllOrLoad(Set<? extends K> keys, CacheLoader<K, V> cacheLoader);
 
-CompletableFuture<Map<K, V>> getAllOrLoadAsync(Set<? extends K> keys, CacheLoader<K, V> cacheLoader);    //异步
+    CompletableFuture<Map<K, V>> getAllOrLoadAsync(Set<? extends K> keys, CacheLoader<K, V> cacheLoader);    //异步
 
-/**
- * 1. 先从缓存取值，如果缓存命中全部数据，返回缓存数据集。
- * 2. 如果有缓存未命中数据，通过缓存内部的 cacheLoader 回源取值，取值结果先存入缓存，最后返回合并结果集：缓存数据集+回源取值结果集。
- * <p>
- * 注1：批量回源取值不加锁；
- * 注2：如果缓存内部无 CacheLoader，将抛出异常。
- */
-Map<K, V> getAllOrLoad(Set<? extends K> keys);
+    /**
+     * 1. 先从缓存取值，如果缓存命中全部数据，返回缓存数据集。
+     * 2. 如果有缓存未命中数据，通过缓存内部的 cacheLoader 回源取值，取值结果先存入缓存，最后返回合并结果集：缓存数据集+回源取值结果集。
+     * <p>
+     * 注1：批量回源取值不加锁；
+     * 注2：如果缓存内部无 CacheLoader，将抛出异常。
+     */
+    Map<K, V> getAllOrLoad(Set<? extends K> keys);
 
-CompletableFuture<Map<K, V>> getAllOrLoadAsync(Set<? extends K> keys);    //异步
+    CompletableFuture<Map<K, V>> getAllOrLoadAsync(Set<? extends K> keys);    //异步
 
-/**
- * 将单个键值对存入缓存
- */
-void put(K key, V value);
+    /**
+     * 将单个键值对存入缓存
+     */
+    void put(K key, V value);
 
-CompletableFuture<Void> putAsync(K key, V value);    //异步
+    CompletableFuture<Void> putAsync(K key, V value);    //异步
 
-/**
- * 将多个键值对存入缓存
- */
-void putAll(Map<? extends K, ? extends V> keyValues);
+    /**
+     * 将多个键值对存入缓存
+     */
+    void putAll(Map<? extends K, ? extends V> keyValues);
 
-CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> keyValues);    //异步
+    CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> keyValues);    //异步
 
-/**
- * 根据键将数据逐出缓存
- */
-void remove(K key);
+    /**
+     * 根据键将数据逐出缓存
+     */
+    void remove(K key);
 
-CompletableFuture<Void> removeAsync(K key);    //异步
+    CompletableFuture<Void> removeAsync(K key);    //异步
 
-/**
- * 根据键集将数据逐出缓存
- */
-void removeAll(Set<? extends K> keys);
+    /**
+     * 根据键集将数据逐出缓存
+     */
+    void removeAll(Set<? extends K> keys);
 
-CompletableFuture<Void> removeAllAsync(Set<? extends K> keys);    //异步
+    CompletableFuture<Void> removeAllAsync(Set<? extends K> keys);    //异步
 
-/**
- * 清空缓存中的所有数据（只有同步方法）
- */
-void clear();
+    /**
+     * 清空缓存中的所有数据（只有同步方法）
+     */
+    void clear();
+    
+}
 ```
 
 ### 6.2. 关于空值
@@ -1667,24 +1681,28 @@ Xcache 被设计为可缓存空值，`CacheValue` 是缓存值的包装类。
 当使用缓存查询接口 `CacheValue<V> getCacheValue(K key)` 时，可通过 `cacheValue` 是否为 `null` 来判断是否还未缓存该数据。
 
 ```java
-public void test() {
-    CacheValue<User> cacheValue = cache.get(id);
-    if (cacheValue == null) {
-        // 未缓存，从数据源读取数据
-        User user = userDao.find(id);
-        // 取值结果存入缓存，如果缓存设置成允许缓存空值，那么下次查询时 cacheValue 将不为 null
-        cache.put(id, user);
-        doSomething();
-    } else {
-        if (cacheValue.hasValue()) {
-            // 已缓存，数据源有数据
-            User user = cacheValue.getValue();
+public class TestCase {
+
+    public void test() {
+        CacheValue<User> cacheValue = cache.get(id);
+        if (cacheValue == null) {
+            // 未缓存，从数据源读取数据
+            User user = userDao.find(id);
+            // 取值结果存入缓存，如果缓存设置成允许缓存空值，那么下次查询时 cacheValue 将不为 null
+            cache.put(id, user);
             doSomething();
         } else {
-            // 已缓存，数据源无数据（无需再回源确认）
-            doSomething();
+            if (cacheValue.hasValue()) {
+                // 已缓存，数据源有数据
+                User user = cacheValue.getValue();
+                doSomething();
+            } else {
+                // 已缓存，数据源无数据（无需再回源确认）
+                doSomething();
+            }
         }
     }
+
 }
 ```
 
@@ -1987,31 +2005,35 @@ Cache-Aside 策略是最常用的缓存模式，其主要特点是缓存对象�
 #### 8.1.3. 代码示例
 
 ```java
-/**
- * 读数据
- */
-public User getUser(Long id) {
-    CacheValue<User> cacheValue = cache.getCacheValue(id);
-    if (cacheValue != null) {
-        // 如果缓存中有数据，直接返回缓存数据；
-        return cacheValue.getValue();
-    }
-    // 如果缓存中无数据，从数据源查找数据
-    User user = userDao.find(id);
-    // 回源结果写入缓存
-    cache.put(id, user);
-    // 响应结果
-    return user;
-}
+public class TestCase {
 
-/**
- * 写数据
- */
-public void saveOrUpdateUser(User user) {
-    // 持久化到数据源
-    Long id = userDao.saveOrUpdateUser(user);
-    // 数据写入缓存
-    cache.put(id, user);
+    /**
+     * 读数据
+     */
+    public User getUser(Long id) {
+        CacheValue<User> cacheValue = cache.getCacheValue(id);
+        if (cacheValue != null) {
+            // 如果缓存中有数据，直接返回缓存数据；
+            return cacheValue.getValue();
+        }
+        // 如果缓存中无数据，从数据源查找数据
+        User user = userDao.find(id);
+        // 回源结果写入缓存
+        cache.put(id, user);
+        // 响应结果
+        return user;
+    }
+
+    /**
+     * 写数据
+     */
+    public void saveOrUpdateUser(User user) {
+        // 持久化到数据源
+        Long id = userDao.saveOrUpdateUser(user);
+        // 数据写入缓存
+        cache.put(id, user);
+    }
+
 }
 ```
 

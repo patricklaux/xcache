@@ -8,6 +8,7 @@ import com.igeeksky.xcache.core.EmbedStoreValueConvertor;
 import com.igeeksky.xtool.core.KeyValue;
 import com.igeeksky.xtool.core.collection.Maps;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -49,7 +50,7 @@ public class CaffeineStore<V> implements Store<V> {
     public Map<String, CacheValue<V>> getAllCacheValues(Set<? extends String> keys) {
         Map<String, CacheValue<Object>> keyValues = store.getAllPresent(keys);
         if (Maps.isEmpty(keyValues)) {
-            return Maps.newHashMap();
+            return Collections.emptyMap();
         }
         Map<String, CacheValue<V>> result = HashMap.newHashMap(keyValues.size());
         keyValues.forEach((key, value) -> {
