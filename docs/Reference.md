@@ -1790,7 +1790,7 @@ public class UserCacheService {
     public User getUser(Long id) {
         // 1. 首先查询缓存，如果缓存命中，则直接返回缓存数据；
         // 2. 如果缓存未命中，则由缓存直接调用 cacheLoader 从数据源加载数据。
-        return cache.getOrLoad(id, cacheLoader);
+        return cache.getOrLoad(id, this.cacheLoader);
     }
 
     /**
@@ -1859,7 +1859,7 @@ public class UserCacheService {
      */
     public User getUser(Long id) {
         // 1. 首先查询缓存，如果缓存命中，则直接返回缓存数据；
-        // 2. 如果缓存未命中，则由缓存调用内部的 cacheLoader 从数据源加载数据，然后存入缓存。
+        // 2. 如果缓存未命中，cache 会调用内部的 cacheLoader 回源取值，然后存入缓存。
         return cache.getOrLoad(id);
     }
 
@@ -1871,7 +1871,7 @@ public class UserCacheService {
      */
     public Map<Long, User> getUsers(Set<Long> ids) {
         // 1. 首先查询缓存，如果缓存全部命中，则直接返回缓存数据；
-        // 2. 如果存在未命中数据，则调用 cache 对象内部的 cacheLoader 从数据源加载。
+        // 2. 如果存在未命中数据，cache 会调用内部的 cacheLoader 回源取值，然后存入缓存。
         return cache.getAllorLoad(ids);
     }
 
@@ -1966,18 +1966,21 @@ Cache-Aside 策略是最常用的缓存模式，其主要特点是缓存对象�
 
 #### 8.1.1. 读数据
 
-1. 用户向应用程序发出请求。
-2. 应用程序从缓存读取数据。
-3. 如果缓存未命中，由**应用程序**从数据源读取数据。
-4. **应用程序**将数据写入缓存。
-5. 返回数据给用户。
+1. 用户向应用程序请求读取数据。
+2. 应用程序尝试从缓存获取数据，如果缓存命中，直接跳转【5】。
+3. 【Cache Miss】**应用程序**从数据源加载数据。
+4. 【Cache Miss】**应用程序**保存回源结果到缓存。
+5. 应用程序返回响应结果给用户。
 
 ![image-20241122205329526](images/cache-aside1.png)
 
 #### 8.1.2. 写数据
 
-1. 应用程序将数据写入数据源。
-2. 应用程序将数据写入缓存。
+1. 用户向应用程序请求写入数据。
+2. **应用程序**将数据写入数据源。
+3. **应用程序**将数据写入缓存。
+4. 缓存保存数据。
+5. 应用程序返回响应结果给用户。
 
 ![image-20241122205733264](images/cache-aside2.png)
 
@@ -1993,21 +1996,22 @@ public User getUser(Long id) {
         // 如果缓存中有数据，直接返回缓存数据；
         return cacheValue.getValue();
     }
-    // 如果缓存中无数据，从数据源查找数据，并将结果存入缓存
+    // 如果缓存中无数据，从数据源查找数据
     User user = userDao.find(id);
+    // 回源结果写入缓存
     cache.put(id, user);
+    // 响应结果
     return user;
 }
 
 /**
  * 写数据
  */
-public void updateUser(Long id, User user) {
-    // 更新数据源
-    userDao.update(id, user);
-    // 删除缓存数据（或更新缓存数据）
-    cache.remove(id);
-    // cache.put(id, user);
+public void saveOrUpdateUser(User user) {
+    // 持久化到数据源
+    Long id = userDao.saveOrUpdateUser(user);
+    // 数据写入缓存
+    cache.put(id, user);
 }
 ```
 
@@ -2017,9 +2021,11 @@ public void updateUser(Long id, User user) {
 
 #### 8.2.1. 读数据
 
-2. 应用程序从缓存读取数据。
-3. 如果缓存中有该数据：返回缓存数据，【结束】。
-4. 如果缓存中无该数据：由**缓存**从数据源读取数据，并将该数据写入到缓存，【结束】。
+1. 用户向应用程序请求读取数据。
+2. **缓存**接收应用程序的读取指令，如果缓存命中，直接跳转【5】。
+3. 【Cache Miss】**缓存**从数据源加载数据。
+4. 【Cache Miss】**缓存**保存回源结果。
+5. 应用程序返回响应结果给用户。
 
 ![image-20241122210852584](images/read-through.png)
 
@@ -2033,9 +2039,11 @@ public void updateUser(Long id, User user) {
 
 #### 8.3.1. 写数据
 
-2. 应用程序向缓存请求写入数据。
-3. **缓存**先将数据**同步**写入数据源。
-4. **缓存**再将数据写入自身存储。
+1. 用户向应用程序请求写入数据。
+2. **缓存**接收应用程序的写入指令。
+3. **缓存**将数据**同步**写入数据源。
+4. **缓存**保存数据。
+5. 应用程序返回响应结果给用户。
 
 ![image-20241122212348666](images/wright-through.png)
 
@@ -2049,9 +2057,11 @@ public void updateUser(Long id, User user) {
 
 #### 8.4.1. 写数据
 
-1. 应用程序向缓存请求写入数据。
-2. **缓存**先将数据**异步**写入数据源。
-3. **缓存**再将数据写入自身存储。
+1. 用户向应用程序请求写入数据。
+2. **缓存**接收应用程序的写入指令。
+3. **缓存**将数据**异步**写入数据源。
+4. **缓存**保存数据。
+5. 应用程序返回响应结果给用户。
 
 ![image-20241122212749274](images/wright-behind.png)
 
@@ -2061,9 +2071,9 @@ public void updateUser(Long id, User user) {
 
 ### 8.5. Refresh-Ahead
 
-Refresh-Ahead，即预刷新，一般会使用独立的线程（进程）在缓存数据过期之前从数据源加载数据并存入缓存。
+`Refresh-Ahead`，即预刷新，一般会使用独立的线程（进程）在缓存数据过期之前从数据源加载数据并存入缓存。
 
-Xcache 支持 Refresh-Ahead 策略，可以通过配置开启。
+Xcache 支持 `Refresh-Ahead`，可通过配置开启。
 
 ```yaml
 xcache: #【2】
@@ -2073,7 +2083,7 @@ xcache: #【2】
       cache-refresh: #【5】缓存刷新配置
         provider: none #【6】CacheRefreshProviderId（默认值：none，不启用缓存刷新）
         refresh-after-write: 10000 #【7】数据写入缓存后，每隔此配置的时长刷新一次（默认值：3600000 毫秒）
-        refresh-tasks-size: 16384 #【8】刷新线程一个周期发起运行的最大任务数（默认值：16384）
+        refresh-task-size: 16384 #【8】刷新线程一个周期发起运行的最大任务数（默认值：16384）
         refresh-thread-period: 10000 #【9】刷新线程运行间隔周期（默认值：10000 毫秒）
       first: #【10】一级缓存配置
         provider: caffeine #【11】使用 id 为 caffeine 的 StoreProvider 作为一级缓存
@@ -2106,9 +2116,9 @@ xcache: #【2】
 
 ### 8.6. 小结
 
-这是五种常见的缓存模式，大家可以根据业务场景选择合适的策略组合。
+这是几种常见的缓存模式，大家可以根据业务场景选择合适的策略组合。
 
-一般来说，读操作用 Read-Through，写操作用 Cache-Aside，如需要在数据过期前预刷新，则再加上 Refresh-Ahead 。
+一般来说，读操作用 `Read-Through`，写操作用 `Cache-Aside`，如需要在数据过期前预刷新，则再加上 `Refresh-Ahead` 。
 
 ## 9. 模块简介
 

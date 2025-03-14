@@ -36,9 +36,9 @@ xcache:
         provider: caffeine # StoreProviderId（默认值：caffeine）
         initial-capacity: 65536 # 初始容量（默认值：65536）
         maximum-size: 65536 # 最大容量（默认值：65536）
-        maximum-weight: 0 # 最大权重 （默认值：0，如小于等于 0，表示不采用基于权重的驱逐策略）
-        key-strength: STRONG # 基于键的引用类型执行驱逐策略（默认值：STRONG）
-        value-strength: STRONG # 基于值的引用类型执行驱逐策略（默认值：STRONG）
+        maximum-weight: 0 # 最大权重 （默认值：0，如小于等于 0，表示不采用基于权重的驱逐策略，适用于 caffeine）
+        key-strength: STRONG # 基于键的引用类型执行驱逐策略（默认值：STRONG，适用于 caffeine）
+        value-strength: STRONG # 基于值的引用类型执行驱逐策略（默认值：STRONG，适用于 caffeine）
         expire-after-write: 3600000 # 数据写入后的存活时间（内嵌缓存默认值：3600000 单位：毫秒）
         expire-after-access: 300000 # 数据访问后的存活时间（默认值：300000 单位：毫秒，适用于 caffeine）
         enable-random-ttl: true # 是否使用随机存活时间（默认值：true，避免大量的 key 集中过期）
