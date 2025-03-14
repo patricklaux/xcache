@@ -62,6 +62,7 @@
 - [X] 【文档】 README.md，Reference.md
 - [X] 【测试】 缓存注解
 - [X] 【注释】 缓存注解
+- [X] 【开发】 Redis 获取数据超时时取消 Future
 
 ### 待完成任务
 

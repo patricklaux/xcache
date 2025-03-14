@@ -49,7 +49,7 @@ public class RedisCacheRefreshTest {
                 .provider("test")
                 .refreshAfterWrite(50)
                 .refreshThreadPeriod(1000)
-                .refreshSequenceSize(16)
+                .refreshSlotSize(16)
                 .refreshTasksSize(16)
                 .shutdownTimeout(1)
                 .shutdownQuietPeriod(0)

@@ -27,8 +27,8 @@ public abstract class AbstractCacheMetricsProvider implements CacheMetricsProvid
 
     private final Map<String, CacheMetricsMonitor> monitors = new ConcurrentHashMap<>();
 
-    public AbstractCacheMetricsProvider(ScheduledExecutorService scheduler, long interval) {
-        Assert.isTrue(interval > 0L, "stat interval must be greater than 0");
+    public AbstractCacheMetricsProvider(ScheduledExecutorService scheduler, long period) {
+        Assert.isTrue(period > 0L, "stat period must be greater than 0");
         scheduledFuture = scheduler.scheduleAtFixedRate(() -> {
             try {
                 Collection<CacheMetricsMonitor> values = monitors.values();
@@ -40,7 +40,7 @@ public abstract class AbstractCacheMetricsProvider implements CacheMetricsProvid
             } catch (Throwable e) {
                 log.error("CacheStatProvider PublishTask has error:{}", e.getMessage(), e);
             }
-        }, interval, interval, TimeUnit.MILLISECONDS);
+        }, period, period, TimeUnit.MILLISECONDS);
     }
 
     @Override

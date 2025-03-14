@@ -11,11 +11,11 @@ import com.igeeksky.xtool.core.json.SimpleJSON;
 public class RedisMetricsOptions {
 
     /**
-     * 缓存指标统计的时间间隔
+     * 缓存指标统计的间隔时长
      * <p>
      * 默认值：60000，单位：毫秒
      */
-    private long interval = 60000;
+    private long period = 60000;
 
     /**
      * Redis stream 最大长度
@@ -52,12 +52,12 @@ public class RedisMetricsOptions {
      */
     private String codec = CacheConstants.JACKSON_CODEC;
 
-    public long getInterval() {
-        return interval;
+    public long getPeriod() {
+        return period;
     }
 
-    public void setInterval(long interval) {
-        this.interval = interval;
+    public void setPeriod(long period) {
+        this.period = period;
     }
 
     public Boolean getEnableGroupPrefix() {

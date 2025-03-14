@@ -28,7 +28,7 @@ public class RedisMetricsConfig {
     private RedisMetricsConfig(Builder builder) {
         this.codec = builder.codec;
         this.maxLen = builder.maxLen;
-        this.period = builder.interval;
+        this.period = builder.period;
         this.group = builder.group;
         this.enableGroupPrefix = builder.enableGroupPrefix;
         this.operator = builder.operator;
@@ -69,7 +69,7 @@ public class RedisMetricsConfig {
 
     public static class Builder {
         private long maxLen = 1000;
-        private long interval = 60000;
+        private long period = 60000;
         private String group;
         private StreamOperator<byte[], byte[]> operator;
         private RedisCacheMetricsCodec codec;
@@ -84,10 +84,10 @@ public class RedisMetricsConfig {
             return this;
         }
 
-        public Builder interval(Long interval) {
-            if (interval != null) {
-                Assert.isTrue(interval > 0L, "interval must be greater than 0");
-                this.interval = interval;
+        public Builder period(Long period) {
+            if (period != null) {
+                Assert.isTrue(period > 0L, "period must be greater than 0");
+                this.period = period;
             }
             return this;
         }

@@ -20,8 +20,8 @@ public class LogCacheMetricsProvider extends AbstractCacheMetricsProvider {
     private static final ExecutorService EXECUTOR = executor();
     private static final LogCacheMetricsPublisher PUBLISHER = LogCacheMetricsPublisher.getInstance();
 
-    public LogCacheMetricsProvider(ScheduledExecutorService scheduler, long interval) {
-        super(scheduler, interval);
+    public LogCacheMetricsProvider(ScheduledExecutorService scheduler, long period) {
+        super(scheduler, period);
     }
 
     /**

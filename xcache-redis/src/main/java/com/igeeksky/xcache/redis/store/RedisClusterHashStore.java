@@ -55,7 +55,7 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
         StringCodec stringCodec = StringCodec.getInstance(config.getCharset());
         this.convertor = new ExtraStoreConvertor<>(config.isEnableNullValue(), config.isEnableCompressValue(),
                 config.getValueCodec(), config.getValueCompressor());
-        this.clusterHelper = new RedisClusterHelper(config.getKeySequenceSize(), hashKey, stringCodec);
+        this.clusterHelper = new RedisClusterHelper(config.getDataSlotSize(), hashKey, stringCodec);
         this.hashStoreHelper = new RedisHashStoreHelper<>(stringCodec, this.convertor::fromExtraStoreValue);
     }
 
@@ -64,7 +64,7 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
         return CompletableFuture.completedFuture(field)
                 .thenApply(this.hashStoreHelper::toStoreField)
                 .thenCompose(storeField -> {
-                    byte[] storeKey = this.clusterHelper.selectKey(storeField);
+                    byte[] storeKey = this.clusterHelper.selectSlot(storeField);
                     return this.operator.hgetAsync(storeKey, storeField);
                 }).thenApply(this.convertor::fromExtraStoreValue);
     }
@@ -84,7 +84,7 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
                 .thenCompose(fieldValue -> {
                     byte[] storeField = fieldValue.getKey();
                     byte[] storeValue = fieldValue.getValue();
-                    byte[] storeKey = this.clusterHelper.selectKey(storeField);
+                    byte[] storeKey = this.clusterHelper.selectSlot(storeField);
                     if (storeValue == null) {
                         return this.operator.hdelAsync(storeKey, storeField).thenApply(ignore -> null);
                     }
@@ -112,7 +112,7 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
         Map<byte[], List<ExpiryKeyValue<byte[], byte[]>>> expiryKeysFieldsValues = Maps.newHashMap();
         fieldValues.forEach((field, value) -> {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
-            byte[] storeKey = this.clusterHelper.selectKey(storeField);
+            byte[] storeKey = this.clusterHelper.selectSlot(storeField);
             byte[] storeValue = this.convertor.toExtraStoreValue(value);
             if (storeValue == null) {
                 removeKeyFields.computeIfAbsent(storeKey, k -> new ArrayList<>()).add(storeField);
@@ -132,7 +132,7 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
         Map<byte[], List<KeyValue<byte[], byte[]>>> keyFieldValues = HashMap.newHashMap(fieldValues.size());
         fieldValues.forEach((field, value) -> {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
-            byte[] storeKey = this.clusterHelper.selectKey(storeField);
+            byte[] storeKey = this.clusterHelper.selectSlot(storeField);
             byte[] storeValue = this.convertor.toExtraStoreValue(value);
             if (storeValue == null) {
                 removeKeyFields.computeIfAbsent(storeKey, k -> new ArrayList<>()).add(storeField);
@@ -154,7 +154,7 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
 
         keyValues.forEach((field, value) -> {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
-            byte[] storeKey = this.clusterHelper.selectKey(storeField);
+            byte[] storeKey = this.clusterHelper.selectSlot(storeField);
             byte[] storeValue = this.convertor.toExtraStoreValue(value);
             if (storeValue == null) {
                 removeKeyFields.computeIfAbsent(storeKey, k -> new ArrayList<>()).add(storeField);
@@ -175,7 +175,7 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
         return CompletableFuture.completedFuture(field)
                 .thenApply(this.hashStoreHelper::toStoreField)
                 .thenCompose(storeField -> {
-                    byte[] storeKey = this.clusterHelper.selectKey(storeField);
+                    byte[] storeKey = this.clusterHelper.selectSlot(storeField);
                     return this.operator.hdelAsync(storeKey, storeField).thenApply(ignore -> null);
                 });
     }
@@ -190,7 +190,7 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
 
     @Override
     public void clear() {
-        byte[][] hashKeys = this.clusterHelper.getKeys();
+        byte[][] hashKeys = this.clusterHelper.getSlots();
         this.operator.del(hashKeys);
     }
 
@@ -199,7 +199,7 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
         Map<byte[], List<byte[]>> keyFields = HashMap.newHashMap(maximum);
         for (String field : fields) {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
-            byte[] storeKey = this.clusterHelper.selectKey(storeField);
+            byte[] storeKey = this.clusterHelper.selectSlot(storeField);
             keyFields.computeIfAbsent(storeKey, k -> new ArrayList<>()).add(storeField);
         }
         return keyFields;

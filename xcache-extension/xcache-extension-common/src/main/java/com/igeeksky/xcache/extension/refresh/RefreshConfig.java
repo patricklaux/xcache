@@ -32,7 +32,7 @@ public class RefreshConfig {
 
     private final int refreshThreadPeriod;
 
-    private final int refreshSequenceSize;
+    private final int refreshSlotSize;
 
     private final int refreshTasksSize;
 
@@ -57,7 +57,7 @@ public class RefreshConfig {
         this.refreshThreadPeriod = builder.refreshThreadPeriod;
         this.refreshTasksSize = builder.refreshTasksSize;
         this.refreshAfterWrite = builder.refreshAfterWrite;
-        this.refreshSequenceSize = builder.refreshSequenceSize;
+        this.refreshSlotSize = builder.refreshSlotSize;
         this.shutdownTimeout = builder.shutdownTimeout;
         this.shutdownQuietPeriod = builder.shutdownQuietPeriod;
         this.shutdownBehavior = builder.shutdownBehavior;
@@ -108,8 +108,8 @@ public class RefreshConfig {
         return refreshAfterWrite;
     }
 
-    public int getRefreshSequenceSize() {
-        return refreshSequenceSize;
+    public int getRefreshSlotSize() {
+        return refreshSlotSize;
     }
 
     public long getShutdownTimeout() {
@@ -154,7 +154,7 @@ public class RefreshConfig {
 
         private int refreshTasksSize = CacheConstants.DEFAULT_REFRESH_TASKS_SIZE;
 
-        private int refreshSequenceSize = CacheConstants.DEFAULT_REFRESH_SEQUENCE_SIZE;
+        private int refreshSlotSize = CacheConstants.DEFAULT_REFRESH_SLOT_SIZE;
 
         private int refreshAfterWrite = CacheConstants.DEFAULT_REFRESH_AFTER_WRITE;
 
@@ -261,11 +261,11 @@ public class RefreshConfig {
         /**
          * 刷新键序列数量（大于等于 16）
          *
-         * @param refreshSequenceSize 刷新键序列数量
+         * @param refreshSlotSize 刷新键序列数量
          * @return {@code this} – Builder
          */
-        public Builder refreshSequenceSize(int refreshSequenceSize) {
-            this.refreshSequenceSize = refreshSequenceSize;
+        public Builder refreshSlotSize(int refreshSlotSize) {
+            this.refreshSlotSize = refreshSlotSize;
             return this;
         }
 
@@ -328,8 +328,8 @@ public class RefreshConfig {
             Assert.notNull(charset, "charset must not be null");
             Assert.notNull(provider, "provider must not be null");
             Assert.isTrue(refreshThreadPeriod > 0, "refreshThreadPeriod must be greater than 0");
-            Assert.isTrue(refreshSequenceSize >= 16, "refreshSequenceSize must be greater than or equal to 16");
-            Assert.isTrue(refreshTasksSize >= refreshSequenceSize, "refreshTasksSize must be greater than or equal to refreshSequenceSize");
+            Assert.isTrue(refreshSlotSize >= 16, "refreshSequenceSize must be greater than or equal to 16");
+            Assert.isTrue(refreshTasksSize >= refreshSlotSize, "refreshTasksSize must be greater than or equal to refreshSequenceSize");
             Assert.isTrue(refreshAfterWrite > 0, "refreshAfterWrite must be greater than 0");
             Assert.isTrue(shutdownTimeout > 0, "shutdownTimeout must be greater than 0");
             Assert.isTrue(shutdownQuietPeriod < shutdownTimeout, "shutdownQuietPeriod must be less than shutdownTimeout");

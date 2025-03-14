@@ -1,6 +1,6 @@
 ## Xcache  Reference Guide
 
-Author: Patrick.Lau Version: 1.0.0
+**Author**: Patrick.Lau	**Version**: 1.0.0
 
 ## 1. 基本说明
 
@@ -1232,6 +1232,8 @@ xcache:
 5. 缓存指标统计：统计数据输出到日志。
 6. 缓存数据同步、缓存数据刷新 …… 等：无。
 
+
+
 ## 5. 缓存注解
 
 > 这里的缓存注解指的是 `Xcache` 定义的注解，非 `Spring Cache` 注解。
@@ -1272,29 +1274,44 @@ xcache:
 
 ![cacheableAll](images/cacheableAll.png)
 
-> 注意：
->
-> 1. `@Cacheable` 加锁执行，`@CacheableAll` 不加锁执行。
->
-> 2. ⭐⭐⭐ 被 `@CacheableAll` 注解修饰的方法，其返回的 `Map` 类型必须是可修改的，因为缓存结果集需要添加到该 `Map` 。
->
-> 3. ⭐⭐⭐ 当方法创建的值集与缓存的键集不匹配时，方法返回值是不确定的。
-     >
-     >    ```java
->    /**
->     * 如果传入的 keys 是 {1, 2}，而方法创建的 Map 是 {{1, 1}, {2, 2}, {3, 3}}。
->     * 当缓存未全部命中时，会调用方法，返回 {{1, 1}, {2, 2}, {3, 3}}；
->     * 当缓存已全部命中时，不调用方法，返回 {{1, 1}, {2, 2}}。
->     */
->    @CacheableAll
->    public Map<Integer, Integer> getList(Set<Integer> keys) {
->        Map<Integer, Integer> map = new HashMap<>();
->    	Map.put(1, 1);
->      	Map.put(2, 2);
->        Map.put(3, 3);
->        return map;
->    }
->    ```
+
+
+**注意**：
+
+1. `@Cacheable` 加锁执行，`@CacheableAll` 不加锁执行。
+
+2. ⭐⭐⭐ 被 `@CacheableAll` 注解修饰的方法，其返回的 `Map` 类型必须可修改，因为缓存结果集需要添加到该 `Map` 。
+
+3. ⭐⭐⭐ 传入缓存的键集与方法创建的值集必须是对应的，否则方法返回值将是不确定的。
+
+```java
+// ⭐⭐⭐ 这是一个错误示例！ ⭐⭐⭐
+@Test
+public void test(){
+    Set<Integer> keys = Set.of(1, 2);
+    // 第一次调用：当缓存未全部命中时，会调用方法，返回 {{1, 1}, {2, 2}, {3, 3}}；
+    Map<Integer, Integer> keysValues1 = getList(keys);
+    Assertions.assertEquals(Map.of(1, 1, 2, 2, 3, 3), keysValues1);
+    // 第二次调用：当缓存已全部命中时，不调用方法，返回 {{1, 1}, {2, 2}}。
+    Map<Integer, Integer> keysValues2 = getList(keys);
+    Assertions.assertEquals(Map.of(1, 1, 2, 2), keysValues2);
+}
+
+/**
+ * ⭐⭐⭐ 这是一个错误示例！ ⭐⭐⭐
+ * 如果传入的 keys 是 {1, 2}，而方法创建的 Map 是 {{1, 1}, {2, 2}, {3, 3}}，方法返回值不确定。
+ */
+@CacheableAll
+public Map<Integer, Integer> getList(Set<Integer> keys) {
+    Map<Integer, Integer> map = new HashMap<>();
+	Map.put(1, 1);
+  	Map.put(2, 2);
+    Map.put(3, 3);
+    return map;
+}
+```
+
+
 
 ### 5.3. @CachePut
 
@@ -1869,17 +1886,9 @@ public class UserCacheService {
 
 另，如果希望使用缓存数据刷新功能，则必须通过自动配置注入 `CacheLoader`。
 
-### 7.2. 数据回写
+### 7.2. 存在断言
 
-#### 7.2.1. CacheWriter
-
-`CacheWriter` 主要用于实现 write-through 和 write-behind 模式。
-
-> `CacheWriter` 已在 1.0.0 稳定版本中移除，数据回写需考虑各种业务场景和可能异常，并不适合集成到缓存框架。
-
-### 7.3. 存在断言
-
-#### 7.3.1. ContainsPredicate
+#### 7.2.1. ContainsPredicate
 
 cache 内部在调用 `CacheLoader` 之前，如果存在 `ContainsPredicate`，先调用  `ContainsPredicate`  判断数据源是否存在该数据，只有为
 `true` 时才会调用 `CacheLoader`，其接口定义如下：
@@ -1906,7 +1915,7 @@ public interface ContainsPredicate<K> {
 }
 ```
 
-#### 7.3.2. 用法示例
+#### 7.2.2. 用法示例
 
 `ContainsPredicate` 的实现类作为 bean 对象注入到 spring 容器。
 
@@ -1957,9 +1966,11 @@ Cache-Aside 策略是最常用的缓存模式，其主要特点是缓存对象�
 
 #### 8.1.1. 读数据
 
+1. 用户向应用程序发出请求。
 2. 应用程序从缓存读取数据。
-3. 如果缓存中有该数据，【结束】。
-4. 如果缓存中无该数据，由**应用程序**从数据源读取数据，并将该数据写入到缓存，【结束】。
+3. 如果缓存未命中，由**应用程序**从数据源读取数据。
+4. **应用程序**将数据写入缓存。
+5. 返回数据给用户。
 
 ![image-20241122205329526](images/cache-aside1.png)
 
@@ -2002,7 +2013,7 @@ public void updateUser(Long id, User user) {
 
 ### 8.2. Read-Through
 
-Read-Through 策略也是常用的缓存模式，其主要特点是由**缓存**与数据源直接交互，执行读数据的操作。
+`Read-Through` 策略也是常用的缓存模式，其主要特点是由**缓存**与数据源直接交互，执行读数据的操作。
 
 #### 8.2.1. 读数据
 
@@ -2018,7 +2029,7 @@ Read-Through 策略也是常用的缓存模式，其主要特点是由**缓存**
 
 ### 8.3. Write-Through
 
-Write-Through 的主要特点是缓存与数据源直接交互，由**缓存**将数据**同步**写入数据源。
+`Write-Through` 的主要特点是缓存与数据源直接交互，由**缓存**将数据**同步**写入数据源。
 
 #### 8.3.1. 写数据
 
@@ -2073,10 +2084,10 @@ xcache: #【2】
         expire-after-write: 7200000 #【16】数据写入后的存活时间（外部缓存默认值：7200000 毫秒）
         enable-random-ttl: true #【13】是否使用随机存活时间（默认值：true）
   redis: #【17】Redis 配置
-    lettuce: #【24】Lettuce 客户端配置
-      - id: lettuce #【26】创建 id 为 lettuce 的 RedisOperatorFactory
-        standalone: #【27】单机模式 或 副本集模式
-          node: 192.168.0.100:6379 #【28】Redis 节点
+    lettuce: #【18】Lettuce 客户端配置
+      - id: lettuce #【19】创建 id 为 lettuce 的 RedisOperatorFactory
+        standalone: #【20】单机模式 或 副本集模式
+          node: 192.168.0.100:6379 #【21】Redis 节点
 ```
 
 1、【6】`provider`：这里指定了缓存刷新的具体实现，配置的可选值有 `none`，`embed` 或自定义 id。

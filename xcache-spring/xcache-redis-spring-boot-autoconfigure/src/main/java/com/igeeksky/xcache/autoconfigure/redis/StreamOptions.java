@@ -49,7 +49,7 @@ public class StreamOptions {
      * <p>
      * 默认值： 10 单位：毫秒
      */
-    private long interval = 10;
+    private long period = 10;
 
     /**
      * 读取 Stream 时的阻塞时长
@@ -144,8 +144,8 @@ public class StreamOptions {
      *
      * @return {@code long} – 两次拉取消息任务的间隔时长
      */
-    public long getInterval() {
-        return interval;
+    public long getPeriod() {
+        return period;
     }
 
     /**
@@ -153,10 +153,10 @@ public class StreamOptions {
      * <p>
      * 默认值： 10 单位：毫秒（{@code 必须大于 0}）
      *
-     * @param interval 两次拉取消息任务的间隔时长
+     * @param period 两次拉取消息任务的间隔时长
      */
-    public void setInterval(long interval) {
-        this.interval = interval;
+    public void setPeriod(long period) {
+        this.period = period;
     }
 
     @Override

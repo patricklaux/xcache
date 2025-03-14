@@ -19,47 +19,47 @@ public class RedisClusterHelper {
     private final byte[][] keys;
     private final List<byte[]> keysList;
 
-    public RedisClusterHelper(int capacity, String prefix, StringCodec codec) {
-        this.size = tableSizeFor(capacity);
+    public RedisClusterHelper(int slotSize, String prefix, StringCodec codec) {
+        this.size = tableSizeFor(slotSize);
         this.mask = size - 1;
-        this.keys = initKeys(this.size, prefix, codec);
+        this.keys = initSlots(this.size, prefix, codec);
         this.keysList = List.of(keys);
     }
 
     /**
-     * 获取键序列大小
+     * 获取槽数量
      *
-     * @return 键序列大小
+     * @return 槽数量
      */
     public int getSize() {
         return size;
     }
 
     /**
-     * 获取键序列
+     * 获取所有的槽名称（数组）
      *
-     * @return 键序列
+     * @return 所有的槽名称（数组）
      */
-    public byte[][] getKeys() {
+    public byte[][] getSlots() {
         return keys;
     }
 
     /**
-     * 获取键序列
+     * 获取所有的槽名称（不可变列表）
      *
-     * @return {@code List<byte[]>} – 键序列（不可变列表）
+     * @return {@code List<byte[]>} – 所有的槽名称（不可变列表）
      */
-    public List<byte[]> getKeysList() {
+    public List<byte[]> getSlotsList() {
         return keysList;
     }
 
     /**
-     * 选择键
+     * 选择槽
      *
      * @param member 成员
-     * @return 键
+     * @return 槽名称
      */
-    public byte[] selectKey(byte[] member) {
+    public byte[] selectSlot(byte[] member) {
         return keys[CRC16.crc16(member) & mask];
     }
 
@@ -96,13 +96,13 @@ public class RedisClusterHelper {
     }
 
     /**
-     * 初始化键序列
+     * 初始化槽序列
      * <p/>
-     * 仅集群模式时使用，用于将键和值分散到不同的节点。
+     * 仅集群模式时使用，用于将数据分散到不同的节点。
      *
      * @return 顺序表名
      */
-    private static byte[][] initKeys(int cap, String prefix, StringCodec codec) {
+    private static byte[][] initSlots(int cap, String prefix, StringCodec codec) {
         byte[][] keys = new byte[cap][];
         for (int i = 0; i < cap; i++) {
             keys[i] = codec.encode(prefix + ":" + i);

@@ -26,9 +26,9 @@ public class CacheProperties {
     private String group;
 
     /**
-     * 缓存统计间隔时长（仅用于配置 LogCacheMetricsProvider）
+     * 缓存指标统计间隔时长（仅用于配置 LogCacheMetricsProvider）
      */
-    private Long logMetricsInterval;
+    private Long logMetricsPeriod;
 
     /**
      * 模板配置（必填）
@@ -119,8 +119,8 @@ public class CacheProperties {
      *
      * @return {@link Long} – 缓存指标统计间隔时长
      */
-    public Long getLogMetricsInterval() {
-        return logMetricsInterval;
+    public Long getLogMetricsPeriod() {
+        return logMetricsPeriod;
     }
 
     /**
@@ -128,11 +128,11 @@ public class CacheProperties {
      * <p>
      * 默认值：60000，单位：毫秒
      *
-     * @param logStatInterval 缓存指标统计间隔时长
+     * @param logMetricsPeriod 缓存指标统计间隔时长
      * @see LogCacheMetricsProvider
      */
-    public void setLogMetricsInterval(Long logStatInterval) {
-        this.logMetricsInterval = logStatInterval;
+    public void setLogMetricsPeriod(Long logMetricsPeriod) {
+        this.logMetricsPeriod = logMetricsPeriod;
     }
 
     @Override
@@ -141,8 +141,8 @@ public class CacheProperties {
         if (group != null) {
             joiner.add("\"group\":\"" + group + "\"");
         }
-        if (logMetricsInterval != null) {
-            joiner.add("\"logStatInterval\":" + logMetricsInterval);
+        if (logMetricsPeriod != null) {
+            joiner.add("\"logMetricsPeriod\":" + logMetricsPeriod);
         }
         if (template != null) {
             joiner.add("\"template\":" + template);

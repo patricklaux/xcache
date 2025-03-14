@@ -169,9 +169,9 @@ public class PropsUtil {
             to.setRefreshAfterWrite(refreshAfterWrite);
         }
 
-        Integer refreshTasksSize = from.getRefreshTasksSize();
+        Integer refreshTasksSize = from.getRefreshTaskSize();
         if (refreshTasksSize != null) {
-            to.setRefreshTasksSize(refreshTasksSize);
+            to.setRefreshTaskSize(refreshTasksSize);
         }
 
         Integer refreshThreadPeriod = from.getRefreshThreadPeriod();
@@ -179,9 +179,9 @@ public class PropsUtil {
             to.setRefreshThreadPeriod(refreshThreadPeriod);
         }
 
-        Integer refreshSequenceSize = from.getRefreshSequenceSize();
-        if (refreshSequenceSize != null) {
-            to.setRefreshSequenceSize(refreshSequenceSize);
+        Integer refreshSlotSize = from.getRefreshSlotSize();
+        if (refreshSlotSize != null) {
+            to.setRefreshSlotSize(refreshSlotSize);
         }
 
         Long shutdownTimeout = from.getShutdownTimeout();
@@ -222,9 +222,9 @@ public class PropsUtil {
             to.setProvider(storeProvider);
         }
 
-        Integer keySequenceSize = from.getKeySequenceSize();
-        if (keySequenceSize != null) {
-            to.setKeySequenceSize(keySequenceSize);
+        Integer dataSlotSize = from.getDataSlotSize();
+        if (dataSlotSize != null) {
+            to.setDataSlotSize(dataSlotSize);
         }
 
         Integer initialCapacity = from.getInitialCapacity();
@@ -343,9 +343,9 @@ public class PropsUtil {
         RefreshProps props = new RefreshProps();
         props.setProvider(CacheConstants.DEFAULT_REFRESH_PROVIDER);
         props.setRefreshAfterWrite(CacheConstants.DEFAULT_REFRESH_AFTER_WRITE);
-        props.setRefreshTasksSize(CacheConstants.DEFAULT_REFRESH_TASKS_SIZE);
+        props.setRefreshTaskSize(CacheConstants.DEFAULT_REFRESH_TASKS_SIZE);
         props.setRefreshThreadPeriod(CacheConstants.DEFAULT_REFRESH_THREAD_PERIOD);
-        props.setRefreshSequenceSize(CacheConstants.DEFAULT_REFRESH_SEQUENCE_SIZE);
+        props.setRefreshSlotSize(CacheConstants.DEFAULT_REFRESH_SLOT_SIZE);
         props.setShutdownTimeout(CacheConstants.DEFAULT_SHUTDOWN_TIMEOUT);
         props.setShutdownQuietPeriod(CacheConstants.DEFAULT_SHUTDOWN_QUIET_PERIOD);
         props.setShutdownBehavior(CacheConstants.DEFAULT_SHUTDOWN_BEHAVIOR.name());
@@ -392,7 +392,7 @@ public class PropsUtil {
         props.setProvider(CacheConstants.DEFAULT_EMBED_STORE_PROVIDER);
 
         props.setRedisType(RedisType.STRING);
-        props.setKeySequenceSize(CacheConstants.DEFAULT_EXTRA_KEY_SEQUENCE_SIZE);
+        props.setDataSlotSize(CacheConstants.DEFAULT_EXTRA_DATA_SLOT_SIZE);
 
         props.setInitialCapacity(CacheConstants.DEFAULT_EMBED_INITIAL_CAPACITY);
         props.setMaximumSize(CacheConstants.DEFAULT_EMBED_MAXIMUM_SIZE);
@@ -425,7 +425,7 @@ public class PropsUtil {
         props.setProvider(CacheConstants.DEFAULT_EXTRA_STORE_PROVIDER);
 
         props.setRedisType(RedisType.STRING);
-        props.setKeySequenceSize(CacheConstants.DEFAULT_EXTRA_KEY_SEQUENCE_SIZE);
+        props.setDataSlotSize(CacheConstants.DEFAULT_EXTRA_DATA_SLOT_SIZE);
 
         props.setInitialCapacity(CacheConstants.DEFAULT_EMBED_INITIAL_CAPACITY);
         props.setMaximumSize(CacheConstants.DEFAULT_EMBED_MAXIMUM_SIZE);

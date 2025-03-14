@@ -221,7 +221,7 @@ public class LettuceCacheAutoConfiguration {
         return SingletonSupplier.of(() -> {
             RedisMetricsConfig config = RedisMetricsConfig.builder()
                     .maxLen(options.getMaxLen())
-                    .interval(options.getInterval())
+                    .period(options.getPeriod())
                     .group(group)
                     .enableGroupPrefix(options.getEnableGroupPrefix())
                     .operator(streamOperatorSupplier.get())
