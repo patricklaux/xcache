@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/20
  */
-public abstract class RedisStore<V> implements Store<V> {
+public abstract class AbstractRedisStore<V> implements Store<V> {
 
     private static final String OK = "OK";
 
@@ -28,7 +28,7 @@ public abstract class RedisStore<V> implements Store<V> {
      *
      * @param timeout 同步操作超时（毫秒）
      */
-    public RedisStore(long timeout) {
+    public AbstractRedisStore(long timeout) {
         this.timeout = timeout;
     }
 

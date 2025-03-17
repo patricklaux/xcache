@@ -2,6 +2,8 @@
 
 **Author**: Patrick.Lau	**Version**: 1.0.0
 
+
+
 ## 1. 基本说明
 
 ### 1.1. 文档版本
@@ -30,6 +32,8 @@ https://github.com/patricklaux/xcache/tree/main/xcache-test
 
 当然，也欢迎您补充更多的测试用例。
 
+
+
 ## 2. 相关介绍
 
 ### 2.1. 简介
@@ -55,6 +59,8 @@ Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架�
 `SpringBoot`：3.3.0+
 
 `JDK`：21+
+
+
 
 ## 3. 项目示例
 
@@ -286,7 +292,7 @@ public class UserCacheService {
 
 #### 3.2.1. 第一步：引入依赖
 
-使用 Xcache 注解，除了依赖 `xcache-spring-boot-starter`，还需引入 `xcache-spring-aop`。
+使用 `Xcache` 注解，除了依赖 `xcache-spring-boot-starter`，还需引入 `xcache-spring-aop`。
 
 ```xml
 
@@ -804,6 +810,8 @@ public class UserCacheService {
 
 3. 对已使用 `Spring cache` 注解的项目，只需引入 `Xcache` 相关依赖，几乎不用改动代码，就可将缓存实现替换成 `Xcache`。
 
+
+
 ## 4. 缓存配置
 
 作为开源框架项目，关于配置项，我在设计时遵循三个基本原则：
@@ -1235,7 +1243,21 @@ xcache:
 
 ## 5. 缓存注解
 
-> 这里的缓存注解指的是 `Xcache` 定义的注解，非 `Spring Cache` 注解。
+虽然，我个人并不太喜欢注解方式来使用缓存，但 `Xcache` 依然定义了注解。
+
+为什么不喜欢注解？
+
+1. 业务场景受限，无法像方法调用一样精细控制逻辑；
+2. 注解相当于是代码黑箱，很难深入地理解程序逻辑；
+3. 注解其实是程序魔法，为了让魔法能够得到预期的结果，魔法师需要精巧地设计每一步骤，使用者也得小心翼翼地避免踩坑。
+
+总之，设计越精巧越脆弱，越不透明越要小心。
+
+另外，`Xcache` 注解当前不支持 `ASPECTJ` 代理。
+
+如果说注解是魔法，那么字节码增强就是创造魔法的魔法，更非我所喜。
+
+因此，并无任何计划支持  `ASPECTJ` 代理，除非未来有同学提 `ISSUE` 强烈要求。
 
 ### 5.1. @Cacheable
 
@@ -1453,11 +1475,11 @@ public class CacheableAllTest {
 
 `@EnableCache` 是类注解，用于启用 Xcache 缓存注解功能。
 
-| 属性           | 必填 |            默认值            | 作用                                                         |
-|:-------------|:--:|:-------------------------:|------------------------------------------------------------|
-| basePackages | 是  |             无             | 指定需要扫描缓存注解的包路径                                             |
-| order        | 否  | Ordered.LOWEST_PRECEDENCE | 指定切面优先级                                                    |
-| AdviceMode   | 否  |     AdviceMode.PROXY      | 指定代理模式<br />当前仅支持 AdviceMode.PROXY，不支持 AdviceMode.ASPECTJ。 |
+| 属性         | 必填 |          默认值           | 作用                                                         |
+| :----------- | :--: | :-----------------------: | ------------------------------------------------------------ |
+| basePackages |  是  |            无             | 指定需要扫描缓存注解的包路径                                 |
+| order        |  否  | Ordered.LOWEST_PRECEDENCE | 指定切面优先级                                               |
+| AdviceMode   |  否  |     AdviceMode.PROXY      | 指定代理模式<br />仅支持 AdviceMode.PROXY，不支持 AdviceMode.ASPECTJ。 |
 
 ### 5.10. 其它事项
 
@@ -1546,6 +1568,8 @@ public class TestCase {
     }
 }
 ```
+
+
 
 ## 6. 缓存接口
 
@@ -1715,6 +1739,8 @@ public class TestCase {
 > 通过 `cacheValue` 是否为 `null` 来决定是否回源取值，需将该缓存实例配置为允许缓存空值。
 >
 > 即，缓存实例至少有一级的缓存数据存储的  `enable-null-value` 配置项为 `true`（默认为  `true`）。
+
+
 
 ## 7. 功能扩展
 
@@ -1976,6 +2002,8 @@ public class ContainsPredicateAutoConfiguration {
 
 用户仅需将 `ContainsPredicate` 实现类作为 bean 注入到 Spring 容器，具体使用由 Cache 对象内部自动处理。
 
+
+
 ## 8. 缓存模式
 
 ### 8.1. Cache-Aside
@@ -2142,6 +2170,8 @@ xcache: #【2】
 
 一般来说，读操作用 `Read-Through`，写操作用 `Cache-Aside`，如需要在数据过期前预刷新，则再加上 `Refresh-Ahead` 。
 
+
+
 ## 9. 模块简介
 
 Xcache 拆分为多个子模块，以下是所有模块列表。
@@ -2173,6 +2203,8 @@ Xcache 拆分为多个子模块，以下是所有模块列表。
 | xcache-spring-adapter-test                | jar  | 主要用于 Spring cache 适配的测试。                        |
 | xcache-test-base                          | jar  | 主要用于缓存方法的测试，与及基础接口的公共测试用例。      |
 | xcache-test-domain                        | jar  | 测试项目的数据对象定义。                                  |
+
+
 
 ## 10. 相关项目
 

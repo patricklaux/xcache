@@ -5,7 +5,6 @@ import com.igeeksky.xcache.common.Cache;
 import com.igeeksky.xcache.common.CacheLoader;
 import com.igeeksky.xcache.common.CacheValue;
 import com.igeeksky.xcache.common.ContainsPredicate;
-import com.igeeksky.xcache.extension.NoOpCacheLoader;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -37,7 +36,7 @@ public class NoOpCache<K, V> implements Cache<K, V> {
         this.name = config.getName();
         this.keyType = config.getKeyType();
         this.valueType = config.getValueType();
-        this.cacheLoader = cacheLoader != null ? cacheLoader : NoOpCacheLoader.getInstance();
+        this.cacheLoader = cacheLoader;
         this.containsPredicate = containsPredicate;
         this.error = "Cache:[" + this.name + "], %s";
     }
@@ -87,6 +86,9 @@ public class NoOpCache<K, V> implements Cache<K, V> {
 
     @Override
     public V getOrLoad(K key) {
+        if (this.cacheLoader == null) {
+            return this.get(key);
+        }
         return this.getOrLoad(key, this.cacheLoader);
     }
 
@@ -156,11 +158,17 @@ public class NoOpCache<K, V> implements Cache<K, V> {
 
     @Override
     public Map<K, V> getAllOrLoad(Set<? extends K> keys) {
+        if (this.cacheLoader == null) {
+            return this.getAll(keys);
+        }
         return this.getAllOrLoad(keys, this.cacheLoader);
     }
 
     @Override
     public CompletableFuture<Map<K, V>> getAllOrLoadAsync(Set<? extends K> keys) {
+        if (this.cacheLoader == null) {
+            return this.getAllAsync(keys);
+        }
         return this.getAllOrLoadAsync(keys, this.cacheLoader);
     }
 

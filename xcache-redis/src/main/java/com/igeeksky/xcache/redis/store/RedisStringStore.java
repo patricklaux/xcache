@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/13
  */
-public class RedisStringStore<V> extends RedisStore<V> {
+public class RedisStringStore<V> extends AbstractRedisStore<V> {
 
     private final RedisOperatorProxy operator;
 
@@ -115,7 +115,7 @@ public class RedisStringStore<V> extends RedisStore<V> {
         if (!removeKeys.isEmpty()) {
             this.operator.delAsync(removeKeys.toArray(new byte[0][]));
         }
-        return this.operator.psetexAsync(putKeyValues).thenApply(RedisStore::checkResult);
+        return this.operator.psetexAsync(putKeyValues).thenApply(AbstractRedisStore::checkResult);
     }
 
     private CompletableFuture<Void> putAllFixTtl(Map<? extends String, ? extends V> keyValues) {
@@ -132,7 +132,7 @@ public class RedisStringStore<V> extends RedisStore<V> {
         if (!removeKeys.isEmpty()) {
             this.operator.delAsync(removeKeys.toArray(new byte[0][]));
         }
-        return this.operator.psetexAsync(putKeyValues, expireAfterWrite).thenApply(RedisStore::checkResult);
+        return this.operator.psetexAsync(putKeyValues, expireAfterWrite).thenApply(AbstractRedisStore::checkResult);
     }
 
     private CompletableFuture<Void> putAllUnlimitedTtl(Map<? extends String, ? extends V> keyValues) {
@@ -150,7 +150,7 @@ public class RedisStringStore<V> extends RedisStore<V> {
         if (!removeKeys.isEmpty()) {
             this.operator.delAsync(removeKeys.toArray(new byte[0][]));
         }
-        return this.operator.msetAsync(putKeyValues).thenApply(RedisStore::checkResult);
+        return this.operator.msetAsync(putKeyValues).thenApply(AbstractRedisStore::checkResult);
     }
 
     @Override

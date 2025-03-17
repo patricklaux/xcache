@@ -22,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Patrick.Lau
  * @since 0.0.3
  */
-public class RedisHashStore<V> extends RedisStore<V> {
+public class RedisHashStore<V> extends AbstractRedisStore<V> {
 
     private final byte[] hashKey;
 
@@ -153,7 +153,7 @@ public class RedisHashStore<V> extends RedisStore<V> {
         if (!removeFields.isEmpty()) {
             this.redisOperator.hdelAsync(hashKey, removeFields.toArray(new byte[0][]));
         }
-        return this.redisOperator.hmsetAsync(hashKey, storeFieldValues).thenApply(RedisStore::checkResult);
+        return this.redisOperator.hmsetAsync(hashKey, storeFieldValues).thenApply(AbstractRedisStore::checkResult);
     }
 
     @Override

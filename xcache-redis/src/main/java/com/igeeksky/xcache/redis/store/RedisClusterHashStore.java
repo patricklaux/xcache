@@ -27,7 +27,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Patrick.Lau
  * @since 1.0.0
  */
-public class RedisClusterHashStore<V> extends RedisStore<V> {
+public class RedisClusterHashStore<V> extends AbstractRedisStore<V> {
 
     private final boolean enableRandomTtl;
     private final long expireAfterWrite;
@@ -169,7 +169,7 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
             this.operator.hdelAsync(removeKeyFields);
         }
 
-        return this.operator.hmsetAsync(keyFieldValues).thenApply(RedisStore::checkResult);
+        return this.operator.hmsetAsync(keyFieldValues).thenApply(AbstractRedisStore::checkResult);
     }
 
     @Override

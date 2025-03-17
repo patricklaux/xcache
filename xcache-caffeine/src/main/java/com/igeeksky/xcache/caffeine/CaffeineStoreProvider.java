@@ -9,10 +9,14 @@ import com.igeeksky.xcache.common.ReferenceType;
 import com.igeeksky.xcache.common.Store;
 import com.igeeksky.xcache.core.store.StoreConfig;
 import com.igeeksky.xcache.core.store.StoreProvider;
-import com.igeeksky.xtool.core.collection.CollectionUtils;
+import com.igeeksky.xtool.core.lang.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Caffeine 缓存提供者
@@ -22,13 +26,31 @@ import java.util.List;
  */
 public class CaffeineStoreProvider implements StoreProvider {
 
-    private final List<CaffeineExpiryProvider> expiryProviders;
-    private final List<CaffeineWeigherProvider> weigherProviders;
+    private static final Logger log = LoggerFactory.getLogger(CaffeineStoreProvider.class);
 
-    public CaffeineStoreProvider(List<CaffeineExpiryProvider> expiryProviders,
-                                 List<CaffeineWeigherProvider> weigherProviders) {
-        this.expiryProviders = expiryProviders;
-        this.weigherProviders = weigherProviders;
+    private final Map<String, Expiry<String, CacheValue<Object>>> expires = new HashMap<>();
+    private final Map<String, Weigher<String, CacheValue<Object>>> weighers = new HashMap<>();
+
+    public CaffeineStoreProvider(List<CaffeineExpiryRegister> expiryRegisters,
+                                 List<CaffeineWeigherRegister> weigherRegisters) {
+        expiryRegisters.forEach(register -> {
+            Map<String, Expiry<String, CacheValue<Object>>> map = register.getAll();
+            map.forEach((name, expiry) -> {
+                Expiry<String, CacheValue<Object>> old = expires.put(name, expiry);
+                Assert.isTrue(old == null, () -> "Caffeine:Expiry: [" + name + "] duplicate id.");
+            });
+        });
+        weigherRegisters.forEach(register -> {
+            Map<String, Weigher<String, CacheValue<Object>>> map = register.getAll();
+            map.forEach((name, weigher) -> {
+                Weigher<String, CacheValue<Object>> old = weighers.put(name, weigher);
+                Assert.isTrue(old == null, () -> "Caffeine:Weigher: [" + name + "] duplicate id.");
+            });
+        });
+        if (log.isDebugEnabled()) {
+            log.debug("Caffeine:Expires: [{}] ", expires);
+            log.debug("Caffeine:Weighers: [{}] ", weighers);
+        }
     }
 
     @Override
@@ -38,14 +60,10 @@ public class CaffeineStoreProvider implements StoreProvider {
         Caffeine<Object, Object> builder = Caffeine.newBuilder();
         // 1. 设置基于时间的驱逐策略
         // 1.1. 基于时间的自定义驱逐策略
-        if (CollectionUtils.isNotEmpty(expiryProviders)) {
-            for (CaffeineExpiryProvider expiryProvider : expiryProviders) {
-                Expiry<String, CacheValue<Object>> expiry = expiryProvider.get(config.getName());
-                if (expiry != null) {
-                    builder.expireAfter(expiry);
-                    return createCaffeineStore(config, builder);
-                }
-            }
+        Expiry<String, CacheValue<Object>> expiry = expires.get(config.getName());
+        if (expiry != null) {
+            builder.expireAfter(expiry);
+            return createCaffeineStore(config, builder);
         }
 
         boolean enableRandomTtl = config.isEnableRandomTtl();
@@ -54,13 +72,7 @@ public class CaffeineStoreProvider implements StoreProvider {
 
         // 1.2. 基于随机时间的驱逐策略
         if (enableRandomTtl) {
-            if (expireAfterWrite <= 0L) {
-                throw new CacheConfigException("enableRandomTtl: expireAfterWrite must be greater than 0");
-            }
-            Duration durationWrite = Duration.ofMillis(expireAfterWrite);
-            Duration durationAccess = Duration.ofMillis(expireAfterAccess);
-            RandomRangeExpiry<String, Object> expiry = new RandomRangeExpiry<>(durationWrite, durationAccess);
-            builder.expireAfter(expiry);
+            builder.expireAfter(createRandomExpiry(expireAfterWrite, expireAfterAccess));
             return createCaffeineStore(config, builder);
         }
 
@@ -73,6 +85,16 @@ public class CaffeineStoreProvider implements StoreProvider {
         }
 
         return createCaffeineStore(config, builder);
+    }
+
+    private static RandomRangeExpiry<String, Object> createRandomExpiry(long expireAfterWrite, long expireAfterAccess) {
+        if (expireAfterWrite <= 0L) {
+            throw new CacheConfigException("enableRandomTtl: expireAfterWrite must be greater than 0");
+        }
+        Duration durationWrite = Duration.ofMillis(expireAfterWrite);
+        Duration durationWriteMin = Duration.ofMillis(expireAfterWrite * 4 / 5);
+        Duration durationAccess = Duration.ofMillis(expireAfterAccess);
+        return new RandomRangeExpiry<>(durationWrite, durationWriteMin, durationAccess);
     }
 
     private <V> Store<V> createCaffeineStore(CaffeineConfig<V> config, Caffeine<Object, Object> builder) {
@@ -91,19 +113,11 @@ public class CaffeineStoreProvider implements StoreProvider {
         // 4. 基于权重的驱逐策略
         long maximumWeight = config.getMaximumWeight();
         if (maximumWeight > 0) {
-            boolean hasWeigher = false;
             builder.maximumWeight(maximumWeight);
-            if (CollectionUtils.isNotEmpty(weigherProviders)) {
-                for (CaffeineWeigherProvider weigherProvider : weigherProviders) {
-                    Weigher<String, CacheValue<Object>> weigher = weigherProvider.get(config.getName());
-                    if (null != weigher) {
-                        builder.weigher(weigher);
-                        hasWeigher = true;
-                        break;
-                    }
-                }
-            }
-            if (!hasWeigher) {
+            Weigher<String, CacheValue<Object>> weigher = weighers.get(config.getName());
+            if (null != weigher) {
+                builder.weigher(weigher);
+            } else {
                 builder.weigher(Weigher.singletonWeigher());
             }
         }
@@ -133,4 +147,5 @@ public class CaffeineStoreProvider implements StoreProvider {
 
         return new CaffeineStore<>(builder.build(), config);
     }
+
 }
