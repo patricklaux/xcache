@@ -7,7 +7,9 @@ import com.igeeksky.xtool.core.concurrent.VirtualThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -53,6 +55,17 @@ public final class RefreshHelper {
             }
         }
         return true;
+    }
+
+    public static void close(Map<String, CacheRefresh> container, long shutdownTimeout) {
+        ArrayList<Future<?>> futures = new ArrayList<>(container.size());
+        container.forEach((name, refresh) -> {
+            try {
+                futures.add(refresh.shutdownAsync());
+            } catch (Exception ignored) {
+            }
+        });
+        Futures.awaitAll(futures, shutdownTimeout, TimeUnit.MILLISECONDS);
     }
 
     public static void shutdown(CacheRefresh cacheRefresh, String name, long quietPeriod, long timeout, TimeUnit unit) {

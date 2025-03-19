@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * 用于向 CacheManager 注册 CacheLoader
+ * 用于向 ComponentManager 注册 CacheLoader
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-02
