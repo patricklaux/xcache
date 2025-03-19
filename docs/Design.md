@@ -2,11 +2,15 @@
 
 **Author**: Patrick.Lau	**Version**: 1.0.0
 
-
+--------
 
 ## 1. 概述
 
+这篇文章是我在设计和实现过程中记录下来的点点滴滴。
 
+`Xcache` 定义和实现了许多组件，如果希望更深入地了解框架逻辑，又或者希望根据业务需要实现自定义扩展，又或者希望能够参与 `Xcache` 的开发，那么阅读本文也许是个不错的选择。
+
+不管如何，希望能有所帮助。如有建议，欢迎提出！谢谢！
 
 
 ---
@@ -36,9 +40,9 @@
 
 ### 3.1 接口与实现
 
-| 接口     | CacheManager     | Cache                                                        |
-| -------- | ---------------- | ------------------------------------------------------------ |
-| **实现** | CacheManagerImpl | NoOpcache<br />OneLevelCache<br />TwoLevelCache<br />ThreeLevelCache |
+| 接口     | `CacheManager`     | `Cache`                                                      |
+| -------- | ------------------ | ------------------------------------------------------------ |
+| **实现** | `CacheManagerImpl` | `NoOpcache`<br />`OneLevelCache`<br />`TwoLevelCache`<br />`ThreeLevelCache` |
 
 缓存实例`Cache` 由 `CacheManager` 统一创建和管理，根据不同配置创建不同类型的缓存实例：
 
@@ -49,7 +53,7 @@
 
 ### 3.2 图示
 
-![image-20250317142529888](images/Design/cache-interface.png)
+![cache-interface](images/Design/cache-interface.png)
 
 ---
 
@@ -57,10 +61,10 @@
 
 ### 4.1 接口与实现
 
-| 接口         | StoreProvider         | Store                                                        |
-| ------------ | --------------------- | ------------------------------------------------------------ |
-| **Caffeine** | CaffeineStoreProvider | CaffeineStore                                                |
-| **Redis**    | RedisStoreProvider    | RedisStringStore<br />RedisHashStore<br />RedisClusterHashStore |
+| 接口         | `StoreProvider`         | `Store`                                                      |
+| ------------ | ----------------------- | ------------------------------------------------------------ |
+| **Caffeine** | `CaffeineStoreProvider` | `CaffeineStore`                                              |
+| **Redis**    | `RedisStoreProvider`    | `RedisStringStore`<br />`RedisHashStore`<br />`RedisClusterHashStore` |
 
 * `StoreProvider` 为工厂接口，用于创建 `Store` 对象。
 
@@ -80,16 +84,11 @@
 
 * 当保存或更新缓存数据时，`RandomRangeExpiry` 将生成一个随机过期时间：
 
-  ```java
-  long timeToLive = RandomUtils.nextLong(expireAfterCreate * 0.8, expireAfterCreate);
-  ```
-
+  `long timeToLive = RandomUtils.nextLong(expireAfterCreate * 0.8, expireAfterCreate);`
+  
 * 当访问缓存数据时，`RandomRangeExpiry` 将比较该数据剩余存活时间 和配置的 `expireAfterAccess`，并返回较大值：
 
-  ```java
-  // currentDuration 为剩余存活时间
-  long timeToLive =  Math.max(currentDuration, expireAfterAccess);
-  ```
+  `long timeToLive =  Math.max(currentDuration, expireAfterAccess);`  (`currentDuration` 为剩余存活时间)
 
 #### 扩展：过期时间策略
 
@@ -136,9 +135,9 @@
 ## 5. 数据存在断言
 ### 5.1. 接口与实现
 
-|     接口     | ContainsPredicate           |
-| :----------: | --------------------------- |
-| **默认实现** | AlwaysTrueContainsPredicate |
+|     接口     | `ContainsPredicate`           |
+| :----------: | ----------------------------- |
+| **默认实现** | `AlwaysTrueContainsPredicate` |
 
 * `ContainsPredicate`
 
@@ -164,12 +163,12 @@
 
 ## 6. 缓存锁
 
-### 接口与实现
+### 6.1. 接口与实现
 
-| 接口         | CacheLockProvider      | LockService      | Lock          |
-| ------------ | ---------------------- | ---------------- | ------------- |
-| **内嵌锁**   | EmbedCacheLockProvider | EmbedLockService | EmbedLock     |
-| **Redis 锁** | RedisLockProvider      | RedisLockService | RedisSpinLock |
+| 接口         | `CacheLockProvider`      | `LockService`      | `Lock`          |
+| ------------ | ------------------------ | ------------------ | --------------- |
+| **内嵌锁**   | `EmbedCacheLockProvider` | `EmbedLockService` | `EmbedLock`     |
+| **Redis 锁** | `RedisLockProvider`      | `RedisLockService` | `RedisSpinLock` |
 
 * `CacheLockProvider`：工厂类。用于创建 `LockService`。
 
@@ -179,15 +178,17 @@
 * `EmbedLock`：内嵌锁。锁的作用范围为单个应用实例。
 * `RedisSpinLock`：分布式锁。锁的作用范围为所有应用实例。
 
-### 加锁解锁流程
+### 6.2. 加锁解锁流程
 
-![image-20250317224941861](images/Design/cache-lock.png)
+![cache-lock](images/Design/cache-lock.png)
 
 
 
 ---------------------
 
 ## 7. 数据回源加载
+
+### 7.1. 接口
 
 * `CacheLoader`
 
@@ -201,9 +202,9 @@
 
   `CacheManager` 在创建 `Cache` 时，会通过缓存名称查找并使用注入的对象。
 
-### 回源加载流程
+### 7.2. 回源加载流程
 
-![image-20250317224223211](images/Design/cache-load.png)
+![cache-load](images/Design/cache-load.png)
 
 上面这个流程中，我们可以看到只有 `ContainsPredicate`  返回 `true` 时才会加锁回源。
 
@@ -213,9 +214,9 @@
 
 ## 8. 缓存数据刷新
 
-### 接口与实现
+### 8.1. 接口与实现
 
-| 接口           | CacheRefreshProvider        | CacheRefresh                                        |
+| 接口           | `CacheRefreshProvider`      | `CacheRefresh`                                      |
 | -------------- | --------------------------- | --------------------------------------------------- |
 | **内嵌刷新**   | `EmbedCacheRefreshProvider` | `EmbedCacheRefresh`                                 |
 | **Redis 刷新** | `RedisCacheRefreshProvider` | `RedisCacheRefresh`<br />`RedisClusterCacheRefresh` |
@@ -230,15 +231,25 @@
 
 #### 图示
 
-![image-20250318142045089](images/Design/cache-refresh.png)
+![cache-refresh](images/Design/cache-refresh.png)
 
-### 说明
+### 8.2. 说明
 
 如果使用 `EmbedCacheRefresh`， 当一个应用有多个实例时，多个实例会独立进行数据刷新。因为同一刷新信息可能存在于多个应用实例，所以可能会重复刷新。
 
 如果使用 `RedisCacheRefresh` ，且 `RedisServer` 是被所有应用实例共享的，那么刷新信息只会保存一份，因此不会重复刷新。
 
 当缓存数据是各应用实例私有的，建议使用 `EmbedCacheRefresh`；当缓存数据是各应用实例共享的，建议使用 `RedisCacheRefresh`。
+
+### 8.3. 优雅停机
+
+当应用停止时，Spring 的 `ShutdownHook` 将会调用 `shutdown` 接口，缓存刷新程序将根据用户配置执行停机策略。
+
+如果仅有内嵌缓存（如 `Caffeine`），建议配置为 `INTERRUPT`。
+
+如果有共享缓存（如 `Redis`），建议配置为 `AWAIT`，因为取消任务会导致数据刷新失败，从而有可能导致数据过期。当然，如果配置的数据过期时间数倍于刷新周期，配置为 `CANCEL` 或 `INTERRUPT` 也是可以的。
+
+![image-20250319203806427](images/Design/image-20250319203806427.png)
 
 ---
 
@@ -248,9 +259,9 @@
 
 如果要开启缓存数据同步，至少需要两级缓存：其中一级为私有缓存（如 `Caffeine`），另一级为共享缓存（如被所有服务实例共享的 `Redis`）。
 
-### 接口与实现
+### 9.1. 接口与实现
 
-| 接口       | CacheSyncProvider        | CacheSyncMonitor       | MessageListener       |
+| 接口       | `CacheSyncProvider`      | `CacheSyncMonitor`     | `MessageListener`     |
 | ---------- | ------------------------ | ---------------------- | --------------------- |
 |            |                          | `CacheSyncMonitorImpl` | `SyncMessageListener` |
 |            |                          | `NoOpCacheSyncMonitor` |                       |
@@ -264,13 +275,17 @@
 
 `RedisCacheSyncProvider`：使用 `Redis-Stream` 发送和接收缓存数据同步信息。
 
-### 图示
+`CacheSyncMonitorImpl`：`CacheSyncMonitor` 的默认实现。
 
-![image-20250319143856680](images/Design/cache-sync-interface.png)
+`NoOpCacheSyncMonitor`：当用户未配置有效的 `CacheSyncProvider`，使用此类以避免空判断。
 
-### 流程
+#### 图示
 
-![image-20250319154214486](images/Design/cache-sync-process.png)
+![cache-sync-interface](images/Design/cache-sync-interface.png)
+
+### 9.2. 流程
+
+![cache-sync-process](images/Design/cache-sync-process.png)
 
 **注意**：
 
@@ -278,69 +293,103 @@
 2. `Service(B)` 接收到数据同步信息之后，所做的仅仅是删除旧数据。
 3. 当有用户访问 `Service(B)` 获取数据时，`Service(B)` 才会从 `Shared Cache` 读取数据。
 
-### 最终一致性
+### 9.3. 说明
 
-缓存数据同步，并不能保证访问应用实例 A 和 应用实例 B 得到的数据是一致的。
+缓存数据同步，并不能保证访问服务实例 A 和 服务实例 B 得到的数据在任意时刻都是一致的。
 
 如：实例 A 的缓存数据变动后，在实例 B 的`SyncMessageListener` 收到消息并完成缓存数据更新之前，实例 B 的返回结果与实例 A 的返回结果是不同的。
 
-如果没有数据同步，那么实例 B 的缓存数据只有等到数据过期重新加载数据后才会与实例 A 的缓存数据一致，有了缓存数据同步，只是将这个不一致的时间周期缩短。
+如果没有数据同步，那么实例 B 的缓存数据只有等到数据过期重新加载数据后才会与实例 A 的缓存数据一致。
 
-也就是说，缓存数据同步，采用的是最终一致性模型。
+有了缓存数据同步，只是将这个不一致的时间周期缩短。
 
-如果要实现强一致性，需要在数据更新时对所有实例进行加锁，代价太大。
+也就是说，缓存数据同步，采用的是**最终一致性**模型。
+
+如果要实现强一致性，需在数据更新时对所有实例进行加锁，代价太大。
 
 ---
 
 ## 10. 缓存指标统计
 
+### 10.1.接口与实现
 
+|              | `CacheMetricsProvider`      | `CacheMetricsMonitor`     |
+| ------------ | --------------------------- | ------------------------- |
+|              |                             | `CacheMetricsMonitorImpl` |
+|              |                             | `NoOpCacheMetricsMonitor` |
+| 输出到日志   | `LogCacheMetricsProvider`   |                           |
+| 输出到 Redis | `RedisCacheMetricsProvider` |                           |
+
+`CacheMetricsMonitor`：负责记录缓存指标信息。
+
+`CacheMetricsProvider`：负责创建 `CacheMetricsMonitor`，与及采集和输出统计指标。
+
+`CacheMetricsMonitorImpl`：默认实现。
+
+`NoOpCacheMetricsMonitor`：当用户未配置有效的 `CacheMetricsProvider`，使用此类以避免空判断。
+
+### 10.2. 说明
+
+无论是输出到日志还是 Redis，`CacheMetricsProvider` 仅负责发送指标统计信息，具体的数据呈现需用户自行实现。
+
+后续，也许会接入 `micrometer`，这样可以更方便地实现数据呈现。
 
 
 ---
 
 ## 11. 编解码与压缩
 
-### 接口
+### 11.1. 接口与实现
 
-`Codec`
+#### 编解码
 
-`KeyCodec`
+| 接口    | `CodecProvider`    | `Codec`                                   | `KeyCodec`                                      |
+| ------- | ------------------ | ----------------------------------------- | ----------------------------------------------- |
+| JDK     | `JdkCodecProvider` | `JdkCodec`                                | `JdkKeyCodec`                                   |
+| Jackson |                    | `GenericJacksonCodec`<br />`JacksonCodec` | `GenericJacksonKeyCodec`<br />`JacksonKeyCodec` |
 
-`CodecProvider`
+#### 数据压缩
 
-### 实现
+| 接口      | `CompressorProvider`         | `Compressor`         |
+| --------- | ---------------------------- | -------------------- |
+| `Deflate` | `DeflaterCompressorProvider` | `DeflaterCompressor` |
+| `Gzip`    | `GzipCompressorProvider`     | `GzipCompressor`     |
 
+### 说明
 
+所有键都会通过 `KeyCodec` 转换成 `String` 形式。
 
----
+值编码与压缩：先编码，后压缩。
 
+值解码与压缩：先解压缩，后解码。
 
+对于内嵌缓存，值编解码和数据压缩都是可选的；对于外部缓存，仅数据压缩是可选的。
 
 
 ---
 
 ## 12. 缓存组件管理
 
-### 12.1 组件注册
-`Register`
-
-
-
-### 12.2 组件容器
+### 12.1. 组件容器
 `ComponentManager`
 
+所有组件都会按照类别和 ID 注册到 `ComponentManager`，缓存初始化时会根据 ID 从 `ComponentManager` 获取对应实例。
 
+### 12.2. 组件注册
+
+`Register`
+
+所有组件都有 ID，配置时通过 ID 来确定使用的实例对象，因此需要通过 `Register` 将对象实例注册到  `ComponentManager`。
 
 ### 12.3 单例模式与延迟加载
 `SingletonSupplier`
 
-
+大多数组件的对象实例注册时使用的是 `SingletonSupplier`。如果有使用，则获取单例对象，如果未使用，则不会初始化对象。
 
 ### 12.4 优雅停机
 `GracefulShutdown`
 
-
+对于某些内部需要执行计划任务的对象，又或者是具有连接池的对象，都实现了 `GracefulShutdown` 接口。
 
 ---
 
