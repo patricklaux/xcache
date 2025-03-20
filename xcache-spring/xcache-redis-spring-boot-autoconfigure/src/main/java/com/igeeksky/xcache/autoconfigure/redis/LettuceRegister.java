@@ -1,6 +1,6 @@
 package com.igeeksky.xcache.autoconfigure.redis;
 
-import com.igeeksky.xcache.autoconfigure.register.Register;
+import com.igeeksky.xcache.common.Register;
 import com.igeeksky.xtool.core.lang.Assert;
 
 import java.util.Collections;

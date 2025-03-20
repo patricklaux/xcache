@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.autoconfigure.register;
 
+import com.igeeksky.xcache.common.Register;
 import com.igeeksky.xcache.core.SingletonSupplier;
 import com.igeeksky.xcache.extension.compress.CompressorProvider;
 import com.igeeksky.xtool.core.lang.Assert;

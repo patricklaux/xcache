@@ -5,8 +5,8 @@ xcache:
       charset: UTF-8 # 字符集 (默认 UTF-8)
       cache-lock: # 缓存锁配置
         provider: lettuce # LockProviderId（默认值：embed）
-        initial-capacity: 128 # HashMap 初始容量（默认值：256）
         lease-time: 1000 # 锁租期 （默认值：1000 毫秒）
+        initial-capacity: 128 # HashMap 初始容量（默认值：256）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true）
         params: # 用于自定义扩展实现的非标参数，map 类型 （如不使用，请删除，否则会提示参数读取异常）
           test: test
@@ -14,9 +14,9 @@ xcache:
       cache-refresh: # 缓存刷新配置
         provider: none # CacheRefreshProviderId（默认值：none，不启用缓存刷新）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，适用于外部刷新实现）
+        refresh-task-size: 16384 # 刷新线程一个周期发起运行的最大任务数（默认值：16384）
+        refresh-slot-size: 16 # 刷新键序列数量（默认值：16），适用于 Redis 集群模式，其它模式下此配置无效
         refresh-after-write: 10000 # 数据写入缓存后，每隔此配置的时长刷新一次（默认值：3600000 毫秒）
-        refresh-tasks-size: 16384 # 刷新线程一个周期发起运行的最大任务数（默认值：16384）
-        refresh-sequence-size: 16 # 刷新键序列数量（默认值：16），适用于 Redis 集群模式，其它模式下此配置无效
         refresh-thread-period: 10000 # 刷新线程运行间隔周期（默认值：10000 毫秒）
         shutdown-timeout: 2000 # 等待刷新任务执行完毕的最大时长（默认值：2000 毫秒）
         shutdown-quiet-period: 100 # 静默期：等待刷新任务队列执行完毕的最短时长（默认值：100 毫秒）
@@ -36,9 +36,9 @@ xcache:
         provider: caffeine # StoreProviderId（默认值：caffeine）
         initial-capacity: 65536 # 初始容量（默认值：65536）
         maximum-size: 65536 # 最大容量（默认值：65536）
-        maximum-weight: 0 # 最大权重 （默认值：0，如小于等于 0，表示不采用基于权重的驱逐策略）
-        key-strength: STRONG # 基于键的引用类型执行驱逐策略（默认值：STRONG）
-        value-strength: STRONG # 基于值的引用类型执行驱逐策略（默认值：STRONG）
+        maximum-weight: 0 # 最大权重 （默认值：0，如小于等于 0，表示不采用基于权重的驱逐策略，适用于 caffeine）
+        key-strength: STRONG # 基于键的引用类型执行驱逐策略（默认值：STRONG，适用于 caffeine）
+        value-strength: STRONG # 基于值的引用类型执行驱逐策略（默认值：STRONG，适用于 caffeine）
         expire-after-write: 3600000 # 数据写入后的存活时间（内嵌缓存默认值：3600000 单位：毫秒）
         expire-after-access: 300000 # 数据访问后的存活时间（默认值：300000 单位：毫秒，适用于 caffeine）
         enable-random-ttl: true # 是否使用随机存活时间（默认值：true，避免大量的 key 集中过期）
@@ -50,7 +50,7 @@ xcache:
           test: test
       second: # 二级缓存配置
         provider: lettuce # StoreProviderId（默认值：none）
-        redis-type: STRING # Redis 命令类型（默认：STRING，如无需过期，可设为 HASH）
+        redis-type: STRING # Redis 数据类型（默认：STRING，如无需过期，可设为 HASH）
         expire-after-write: 7200000 # 数据写入后的存活时间（外部缓存默认值：7200000 单位：毫秒）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，仅适用于外部缓存）
         enable-random-ttl: true # 是否使用随机存活时间（默认值：true，避免大量的 key 集中过期）
@@ -65,7 +65,7 @@ xcache:
       third: # 三级缓存配置
         provider: none # StoreProviderId（三级缓存默认值：none）
         redis-type: HASH # Redis 命令类型（默认：STRING，如无需过期，可设为 HASH）
-        keySequenceSize: 16 # HASH 键序列数量，仅用于 Redis 集群模式，且采用 Redis-Hash 作为数据存储，其它模式下无意义。（默认值：16）
+        data-slot-size: 16 # 数据槽数量，仅用于 Redis 集群模式，且采用 Redis-Hash 作为数据存储，其它模式下无意义。（默认值：16）
         expire-after-write: 7200000 # 数据写入后的存活时间（外部缓存默认值：7200000 单位：毫秒）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，仅适用于外部缓存）
         enable-random-ttl: true # 是否使用随机存活时间（默认值：true，避免大量的 key 集中过期）
@@ -86,7 +86,7 @@ xcache:
       template-id: t0 # 模板id（默认值：t0，如未配置，默认从 id 为 t0 的模板中复制配置项）
       # …… 其余配置项与模板配置相同，所以直接省略
       # 另，如此缓存配置与 id 为 t0 的模板配置完全相同，name 与 template-id 其实也可以省略。
-  log-metrics-interval: 60000 # 缓存指标采集的间隔时长，仅用于 LogCacheMetricsProvider（默认值：60000 单位：毫秒）
+  log-metrics-period: 60000 # 缓存指标采集的间隔时长，仅用于 LogCacheMetricsProvider（默认值：60000 单位：毫秒）
   scheduler: # 调度器配置
     core-pool-size: 1 # 定时任务调度器核心线程数，如未配置，则使用 (核心数 / 8)，最小为 1。
   redis: # Redis 配置（如不使用 Redis，可直接删除此配置项；如未配置，则不会生成相应的实例对象）
@@ -95,7 +95,7 @@ xcache:
         batch-size: 10000 # 单批次命令提交数量阈值（默认值：10000）
         metrics: # RedisCacheMetricsProvider 配置
           # 另，Redis StreamPublisher 仅负责发送统计指标信息，统计汇总需用户自行实现
-          interval: 60000 # 缓存指标统计的时间间隔（默认值：60000，单位：毫秒）
+          period: 60000 # 缓存指标统计的间隔时长（默认值：60000，单位：毫秒）
           max-len: 10000 # Redis stream 最大长度（默认值：10000，采用近似裁剪，实际长度可能略大于配置值）
           charset: UTF-8 # 字符集，用于缓存统计指标消息的编解码（默认值：UTF-8）
           codec: jackson # 统计消息编解码
@@ -103,7 +103,7 @@ xcache:
         stream: # StreamContainer 配置
           block: -1 # 读取 Stream 时的阻塞时长（默认值： 10 单位：毫秒）
           count: 1000 # 同步任务每次从 Stream 读取的最大消息数量（默认值： 1000）
-          interval: 10 # 当次同步任务结束后，下次任务开始前的间隔时长（默认值： 10 单位：毫秒）
+          period: 10 # 当次同步任务结束后，下次任务开始前的间隔时长（默认值： 10 单位：毫秒）
         sync:
           codec: jackson # 缓存数据同步消息编解码
         standalone: # 单机模式 或 副本集模式

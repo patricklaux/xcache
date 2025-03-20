@@ -27,15 +27,15 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
                                     ExecutorService executor, RedisOperatorProxy operator) {
         super(config, scheduler, operator);
         this.executor = executor;
+        int slotSize = config.getRefreshSlotSize();
         String refreshKey = config.getRefreshKey();
-        int sequenceSize = config.getRefreshSequenceSize();
-        this.clusterHelper = new RedisClusterHelper(sequenceSize, refreshKey, this.stringCodec);
+        this.clusterHelper = new RedisClusterHelper(slotSize, refreshKey, this.stringCodec);
     }
 
     @Override
     public void onPut(String key) {
         byte[] member = stringCodec.encode(key);
-        byte[] refreshKey = clusterHelper.selectKey(member);
+        byte[] refreshKey = clusterHelper.selectSlot(member);
         this.put(new byte[][]{refreshKey}, new byte[][]{refreshAfterWrite, member});
     }
 
@@ -44,7 +44,7 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
         Map<byte[], List<byte[]>> map = HashMap.newHashMap(clusterHelper.calculateCapacity(keys.size()));
         for (String key : keys) {
             byte[] member = stringCodec.encode(key);
-            byte[] refreshKey = clusterHelper.selectKey(member);
+            byte[] refreshKey = clusterHelper.selectSlot(member);
             map.computeIfAbsent(refreshKey, k -> {
                 List<byte[]> list = new ArrayList<>();
                 list.add(refreshAfterWrite);
@@ -60,7 +60,7 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
     @Override
     public void onRemove(String key) {
         byte[] member = stringCodec.encode(key);
-        byte[] refreshKey = clusterHelper.selectKey(member);
+        byte[] refreshKey = clusterHelper.selectSlot(member);
         this.remove(refreshKey, member);
     }
 
@@ -69,7 +69,7 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
         Map<byte[], List<byte[]>> map = HashMap.newHashMap(clusterHelper.calculateCapacity(keys.size()));
         for (String key : keys) {
             byte[] member = stringCodec.encode(key);
-            byte[] refreshKey = clusterHelper.selectKey(member);
+            byte[] refreshKey = clusterHelper.selectSlot(member);
             map.computeIfAbsent(refreshKey, k -> new ArrayList<>()).add(member);
         }
         for (Map.Entry<byte[], List<byte[]>> entry : map.entrySet()) {
@@ -83,7 +83,7 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
             return;
         }
         // SortedSet 键序列
-        final List<byte[]> refreshKeys = new LinkedList<>(clusterHelper.getKeysList());
+        final List<byte[]> refreshKeys = new LinkedList<>(clusterHelper.getSlotsList());
         // 最大任务数，大于等于键的数量，确保每个 SortedSet 至少能刷新 1 个元素（避免 refreshTasksSize 设定过小）
         final int maximum = Math.max(refreshKeys.size(), config.getRefreshTasksSize());
         // maximum / keysSize，确保每个 SortedSet 都能刷新至少 count 个元素

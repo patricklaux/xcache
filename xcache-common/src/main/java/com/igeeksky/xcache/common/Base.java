@@ -67,10 +67,10 @@ public interface Base<K, V> {
      * 根据键集从缓存中读取值
      *
      * @param keys 多个键的集合
-     * @return KeyValues – 键值对映射 <p>
+     * @return KeyValues – 键值对映射<p>
      * CacheValue 不为空，表示已缓存： <p>
      * 1. CacheValue.hasValue() == true，缓存的是正常值； <p>
-     * 2. CacheValue.hasValue() == false，缓存的是空值； <p>
+     * 2. CacheValue.hasValue() == false，缓存的是空值
      */
     Map<K, CacheValue<V>> getAllCacheValues(Set<? extends K> keys);
 
@@ -149,6 +149,9 @@ public interface Base<K, V> {
 
     /**
      * 清空缓存中的所有数据
+     * <p>
+     * Redis 缓存，当使用 Redis-String 作为数据存储，
+     * 实现类采用 ScanCursor 删除数据，数据量大时，此方法会耗时较长，请谨慎使用。
      */
     void clear();
 

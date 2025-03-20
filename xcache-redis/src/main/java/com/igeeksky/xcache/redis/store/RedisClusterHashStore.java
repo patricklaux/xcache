@@ -27,7 +27,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Patrick.Lau
  * @since 1.0.0
  */
-public class RedisClusterHashStore<V> extends RedisStore<V> {
+public class RedisClusterHashStore<V> extends AbstractRedisStore<V> {
 
     private final boolean enableRandomTtl;
     private final long expireAfterWrite;
@@ -55,55 +55,65 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
         StringCodec stringCodec = StringCodec.getInstance(config.getCharset());
         this.convertor = new ExtraStoreConvertor<>(config.isEnableNullValue(), config.isEnableCompressValue(),
                 config.getValueCodec(), config.getValueCompressor());
-        this.clusterHelper = new RedisClusterHelper(config.getKeySequenceSize(), hashKey, stringCodec);
+        this.clusterHelper = new RedisClusterHelper(config.getDataSlotSize(), hashKey, stringCodec);
         this.hashStoreHelper = new RedisHashStoreHelper<>(stringCodec, this.convertor::fromExtraStoreValue);
     }
 
     @Override
     public CompletableFuture<CacheValue<V>> getCacheValueAsync(String field) {
-        byte[] storeField = this.hashStoreHelper.toStoreField(field);
-        byte[] storeKey = this.clusterHelper.selectKey(storeField);
-        return this.operator.hgetAsync(storeKey, storeField).thenApply(this.convertor::fromExtraStoreValue);
+        return CompletableFuture.completedFuture(field)
+                .thenApply(this.hashStoreHelper::toStoreField)
+                .thenCompose(storeField -> {
+                    byte[] storeKey = this.clusterHelper.selectSlot(storeField);
+                    return this.operator.hgetAsync(storeKey, storeField);
+                }).thenApply(this.convertor::fromExtraStoreValue);
     }
 
     @Override
     public CompletableFuture<Map<String, CacheValue<V>>> getAllCacheValuesAsync(Set<? extends String> fields) {
-        Map<byte[], List<byte[]>> keyFields = this.toKeyFields(fields);
-        return this.operator.hmgetAsync(keyFields).thenApply(this.hashStoreHelper::toResult);
+        return CompletableFuture.completedFuture(fields)
+                .thenApply(this::toKeyFields)
+                .thenCompose(this.operator::hmgetAsync)
+                .thenApply(this.hashStoreHelper::toResult);
     }
 
     @Override
     public CompletableFuture<Void> putAsync(String field, V value) {
-        byte[] storeField = this.hashStoreHelper.toStoreField(field);
-        byte[] storeValue = this.convertor.toExtraStoreValue(value);
-        byte[] storeKey = this.clusterHelper.selectKey(storeField);
-        if (storeValue == null) {
-            return this.operator.hdelAsync(storeKey, storeField).thenApply(ignore -> null);
-        }
-        if (this.expireAfterWrite > 0) {
-            long ttl = (this.enableRandomTtl) ? randomTtl() : expireAfterWrite;
-            return this.operator.hpsetAsync(storeKey, ttl, storeField, storeValue).thenApply(ignore -> null);
-        }
-        return this.operator.hsetAsync(storeKey, storeField, storeValue).thenApply(ignore -> null);
+        return CompletableFuture.completedFuture(KeyValue.create(field, value))
+                .thenApply(fieldValue -> fieldValue.map(this.hashStoreHelper::toStoreField, this.convertor::toExtraStoreValue))
+                .thenCompose(fieldValue -> {
+                    byte[] storeField = fieldValue.getKey();
+                    byte[] storeValue = fieldValue.getValue();
+                    byte[] storeKey = this.clusterHelper.selectSlot(storeField);
+                    if (storeValue == null) {
+                        return this.operator.hdelAsync(storeKey, storeField).thenApply(ignore -> null);
+                    }
+                    if (this.expireAfterWrite > 0) {
+                        long ttl = (this.enableRandomTtl) ? randomTtl() : expireAfterWrite;
+                        return this.operator.hpsetAsync(storeKey, ttl, storeField, storeValue).thenApply(ignore -> null);
+                    }
+                    return this.operator.hsetAsync(storeKey, storeField, storeValue).thenApply(ignore -> null);
+                });
     }
 
     @Override
-    public CompletableFuture<Void> putAllAsync(Map<? extends String, ? extends V> keyValues) {
+    public CompletableFuture<Void> putAllAsync(Map<? extends String, ? extends V> fieldValues) {
         if (expireAfterWrite > 0) {
             if (this.enableRandomTtl) {
-                return this.putAllRandomTtl(keyValues);
+                return CompletableFuture.completedFuture(fieldValues).thenCompose(this::putAllRandomTtl);
             }
-            return this.putAllFixTtl(keyValues);
+            return CompletableFuture.completedFuture(fieldValues).thenCompose(this::putAllFixTtl);
         }
-        return this.putAllUnlimitedTtl(keyValues);
+        return CompletableFuture.completedFuture(fieldValues).thenCompose(this::putAllUnlimitedTtl);
     }
 
     private CompletableFuture<Void> putAllRandomTtl(Map<? extends String, ? extends V> fieldValues) {
+        int capacity = this.clusterHelper.calculateCapacity(fieldValues.size());
         Map<byte[], List<byte[]>> removeKeyFields = Maps.newHashMap();
-        Map<byte[], List<ExpiryKeyValue<byte[], byte[]>>> expiryKeysFieldsValues = Maps.newHashMap();
+        Map<byte[], List<ExpiryKeyValue<byte[], byte[]>>> expiryKeysFieldsValues = Maps.newHashMap(capacity);
         fieldValues.forEach((field, value) -> {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
-            byte[] storeKey = this.clusterHelper.selectKey(storeField);
+            byte[] storeKey = this.clusterHelper.selectSlot(storeField);
             byte[] storeValue = this.convertor.toExtraStoreValue(value);
             if (storeValue == null) {
                 removeKeyFields.computeIfAbsent(storeKey, k -> new ArrayList<>()).add(storeField);
@@ -119,11 +129,12 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
     }
 
     private CompletableFuture<Void> putAllFixTtl(Map<? extends String, ? extends V> fieldValues) {
+        int capacity = this.clusterHelper.calculateCapacity(fieldValues.size());
         Map<byte[], List<byte[]>> removeKeyFields = Maps.newHashMap();
-        Map<byte[], List<KeyValue<byte[], byte[]>>> keyFieldValues = HashMap.newHashMap(fieldValues.size());
+        Map<byte[], List<KeyValue<byte[], byte[]>>> keyFieldValues = HashMap.newHashMap(capacity);
         fieldValues.forEach((field, value) -> {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
-            byte[] storeKey = this.clusterHelper.selectKey(storeField);
+            byte[] storeKey = this.clusterHelper.selectSlot(storeField);
             byte[] storeValue = this.convertor.toExtraStoreValue(value);
             if (storeValue == null) {
                 removeKeyFields.computeIfAbsent(storeKey, k -> new ArrayList<>()).add(storeField);
@@ -139,13 +150,13 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
     }
 
     private CompletableFuture<Void> putAllUnlimitedTtl(Map<? extends String, ? extends V> keyValues) {
-        int maximum = this.clusterHelper.calculateCapacity(keyValues.size());
+        int capacity = this.clusterHelper.calculateCapacity(keyValues.size());
         Map<byte[], List<byte[]>> removeKeyFields = Maps.newHashMap();
-        Map<byte[], Map<byte[], byte[]>> keyFieldValues = HashMap.newHashMap(maximum);
+        Map<byte[], Map<byte[], byte[]>> keyFieldValues = HashMap.newHashMap(capacity);
 
         keyValues.forEach((field, value) -> {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
-            byte[] storeKey = this.clusterHelper.selectKey(storeField);
+            byte[] storeKey = this.clusterHelper.selectSlot(storeField);
             byte[] storeValue = this.convertor.toExtraStoreValue(value);
             if (storeValue == null) {
                 removeKeyFields.computeIfAbsent(storeKey, k -> new ArrayList<>()).add(storeField);
@@ -158,24 +169,30 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
             this.operator.hdelAsync(removeKeyFields);
         }
 
-        return this.operator.hmsetAsync(keyFieldValues).thenApply(RedisStore::checkResult);
+        return this.operator.hmsetAsync(keyFieldValues).thenApply(AbstractRedisStore::checkResult);
     }
 
     @Override
     public CompletableFuture<Void> removeAsync(String field) {
-        byte[] storeField = this.hashStoreHelper.toStoreField(field);
-        byte[] storeKey = this.clusterHelper.selectKey(storeField);
-        return this.operator.hdelAsync(storeKey, storeField).thenApply(ignore -> null);
+        return CompletableFuture.completedFuture(field)
+                .thenApply(this.hashStoreHelper::toStoreField)
+                .thenCompose(storeField -> {
+                    byte[] storeKey = this.clusterHelper.selectSlot(storeField);
+                    return this.operator.hdelAsync(storeKey, storeField).thenApply(ignore -> null);
+                });
     }
 
     @Override
     public CompletableFuture<Void> removeAllAsync(Set<? extends String> fields) {
-        return this.operator.hdelAsync(this.toKeyFields(fields)).thenApply(ignore -> null);
+        return CompletableFuture.completedFuture(fields)
+                .thenApply(this::toKeyFields)
+                .thenCompose(this.operator::hdelAsync)
+                .thenApply(ignore -> null);
     }
 
     @Override
     public void clear() {
-        byte[][] hashKeys = this.clusterHelper.getKeys();
+        byte[][] hashKeys = this.clusterHelper.getSlots();
         this.operator.del(hashKeys);
     }
 
@@ -184,7 +201,7 @@ public class RedisClusterHashStore<V> extends RedisStore<V> {
         Map<byte[], List<byte[]>> keyFields = HashMap.newHashMap(maximum);
         for (String field : fields) {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
-            byte[] storeKey = this.clusterHelper.selectKey(storeField);
+            byte[] storeKey = this.clusterHelper.selectSlot(storeField);
             keyFields.computeIfAbsent(storeKey, k -> new ArrayList<>()).add(storeField);
         }
         return keyFields;

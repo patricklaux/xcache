@@ -108,8 +108,8 @@ public class CacheAutoConfiguration {
     @Bean(destroyMethod = "shutdown")
     @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     CacheMetricsProviderRegister logCacheMetricsProviderRegister(ScheduledExecutorService scheduler) {
-        long interval = (cacheProperties.getLogMetricsInterval() != null) ?
-                cacheProperties.getLogMetricsInterval() :
+        long interval = (cacheProperties.getLogMetricsPeriod() != null) ?
+                cacheProperties.getLogMetricsPeriod() :
                 CacheConstants.DEFAULT_METRICS_INTERVAL;
         Assert.isTrue(interval > 0, "log-stat-interval must be greater than 0");
 

@@ -3,6 +3,8 @@ package com.igeeksky.xcache.annotation;
 import org.springframework.aot.hint.annotation.Reflective;
 
 import java.lang.annotation.*;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 缓存注解
@@ -31,6 +33,8 @@ public @interface CachePutAll {
      * SpEL表达式，用于从参数中提取键值对集合 (Map)。
      * <p>
      * 如果未配置，默认采用方法返回值作为缓存键值对集合 (Map)。
+     * <p>
+     * 可以是 {@link CompletableFuture} 或 {@link Optional} 类型，缓存框架会自动拆装获取原值并缓存。
      */
     String keyValues() default "";
 
@@ -39,7 +43,7 @@ public @interface CachePutAll {
      * <p>
      * 如果未配置，condition 表达式结果默认为 true。
      * <p>
-     * 如果 condition 表达式结果为 true，且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (putAll)
+     * 调用被注解方法前解析此表达式，如 condition 表达式结果为 false，不执行缓存操作。
      */
     String condition() default "";
 
@@ -48,7 +52,7 @@ public @interface CachePutAll {
      * <p>
      * 如果未配置，unless 表达式结果默认为 false。
      * <p>
-     * 如果 condition 表达式结果为 true，且 unless 表达式结果为 false，调用被注解方法后执行缓存操作 (putAll)
+     * 调用被注解方法后解析此表达式，如 unless 表达式结果为 true，不执行缓存操作。
      */
     String unless() default "";
 

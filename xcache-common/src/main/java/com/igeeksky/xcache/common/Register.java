@@ -1,4 +1,4 @@
-package com.igeeksky.xcache.autoconfigure.register;
+package com.igeeksky.xcache.common;
 
 import java.util.Map;
 

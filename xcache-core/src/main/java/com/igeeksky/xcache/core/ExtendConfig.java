@@ -3,7 +3,7 @@ package com.igeeksky.xcache.core;
 
 import com.igeeksky.xcache.common.CacheLoader;
 import com.igeeksky.xcache.common.ContainsPredicate;
-import com.igeeksky.xcache.extension.NoOpContainsPredicate;
+import com.igeeksky.xcache.extension.AlwaysTrueContainsPredicate;
 import com.igeeksky.xcache.extension.lock.LockService;
 import com.igeeksky.xcache.extension.refresh.CacheRefresh;
 import com.igeeksky.xcache.extension.metrics.CacheMetricsMonitor;
@@ -114,11 +114,11 @@ public class ExtendConfig<K, V> {
     /**
      * 存在断言，用于判断数据源是否包含某个键
      *
-     * @return 如果有配置，返回配置的断言；否则返回无操作断言 {@link NoOpContainsPredicate}
+     * @return 如果有配置，返回配置的断言；否则返回无操作断言 {@link AlwaysTrueContainsPredicate}
      */
     public ContainsPredicate<K> getContainsPredicate() {
         if (containsPredicate == null) {
-            return NoOpContainsPredicate.getInstance();
+            return AlwaysTrueContainsPredicate.getInstance();
         }
         return containsPredicate;
     }

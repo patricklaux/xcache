@@ -24,11 +24,11 @@ public class RefreshProps {
 
     private Integer refreshAfterWrite;
 
-    private Integer refreshTasksSize;
+    private Integer refreshTaskSize;
 
     private Integer refreshThreadPeriod;
 
-    private Integer refreshSequenceSize;
+    private Integer refreshSlotSize;
 
     private Long shutdownTimeout;
 
@@ -106,7 +106,7 @@ public class RefreshProps {
     /**
      * 刷新线程一个周期发起运行的最大任务数
      * <p>
-     * 默认值：16384 （必须大于等于 refreshSequenceSize）<br>
+     * 默认值：16384 （必须大于等于 refreshSlotSize）<br>
      * {@link CacheConstants#DEFAULT_REFRESH_TASKS_SIZE}
      * <p>
      * 增加此限制的主要目的是为了限制单个服务器同时运行的任务数，以避免服务器资源耗尽。<br>
@@ -114,7 +114,7 @@ public class RefreshProps {
      * 另，刷新线程每次启动时，会先检查上一周期发起的全部任务是否已全部完成，未完成则终止当次运行。
      * <p>
      * <b>示例：</b><p>
-     * 假设配置为 {@code {refresh-tasks-size: 16384, refresh-thread-period: 10000}}，
+     * 假设配置为 {@code {refresh-task-size: 16384, refresh-thread-period: 10000}}，
      * 那么刷新线程每隔 10 秒启动一次，每次最多会刷新 16384 条数据。
      * <p>
      * <b>注意：</b><p>
@@ -122,28 +122,28 @@ public class RefreshProps {
      * 此值应大于等于 {@code sequence-size}，且最好为 {@code sequence-size} 的整数倍。
      * <p>
      * <b>建议值：</b><p>
-     * {@code refresh-tasks-size >= 需刷新数据总量 ÷ (refresh-after-write ÷ refresh-thread-period) × 4}<br>
+     * {@code refresh-task-size >= 需刷新数据总量 ÷ (refresh-after-write ÷ refresh-thread-period) × 4}<br>
      * 譬如刷新数据总量为 1000000，数据刷新周期为 3600000 毫秒（3600秒），刷新线程启动周期为 10000 毫秒（10秒）<br>
      * 计算： {@code 1000000 ÷ (3600000 ÷ 10000) × 4 ≈  11000 } <br>
-     * 那么， {@code refresh-tasks-size} 保持默认值 16384 是比较合适的。 <br>
-     * 另外，如果刷新数据总量很小，即使 {@code refresh-tasks-size} 配置得很大，但一个运行周期内发起的刷新任务也是很少的。<br>
+     * 那么， {@code refresh-task-size} 保持默认值 16384 是比较合适的。 <br>
+     * 另外，如果刷新数据总量很小，即使 {@code refresh-task-size} 配置得很大，但一个运行周期内发起的刷新任务也是很少的。<br>
      * 总之，在服务器资源、网络带宽……等许可范围内，宁大勿小，避免无法及时刷新。
      *
      * @return {@link Integer} - 刷新线程一个周期发起运行的最大任务数
      */
-    public Integer getRefreshTasksSize() {
-        return refreshTasksSize;
+    public Integer getRefreshTaskSize() {
+        return refreshTaskSize;
     }
 
     /**
      * 设置刷新线程一个周期发起运行的最大任务数
      * <p>
-     * 默认值：16384 （必须大于等于 refreshSequenceSize）
+     * 默认值：16384 （必须大于等于 refreshSlotSize）
      *
-     * @param refreshTasksSize 刷新线程一个周期发起运行的最大任务数
+     * @param refreshTaskSize 刷新线程一个周期发起运行的最大任务数
      */
-    public void setRefreshTasksSize(Integer refreshTasksSize) {
-        this.refreshTasksSize = refreshTasksSize;
+    public void setRefreshTaskSize(Integer refreshTaskSize) {
+        this.refreshTaskSize = refreshTaskSize;
     }
 
     /**
@@ -171,43 +171,44 @@ public class RefreshProps {
     }
 
     /**
-     * 刷新键序列数量
+     * 刷新槽数量
      * <p>
      * 适用于 Redis 集群模式，其它模式下此配置无效。
      * <p>
      * 默认值：16 <br>
-     * {@link CacheConstants#DEFAULT_REFRESH_SEQUENCE_SIZE}
+     * {@link CacheConstants#DEFAULT_REFRESH_SLOT_SIZE}
      * <p>
      * 如使用 {@code RedisCacheRefresh} 作为缓存刷新，将使用 Redis 的 SortedSet 记录需要刷新的数据和时间。<br>
      * 当 Redis 为集群模式时，为了让数据尽可能均匀分布于各个 Redis 节点，会创建多个 SortedSet。<br>
-     * 读取或保存刷新数据时，使用 crc16 算法计算 key 的哈希值，然后取余 {@code refresh-sequence-size} 以选择使用哪个 SortedSet。
+     * 读取或保存刷新数据时，使用 crc16 算法计算 key 的哈希值，然后取余 {@code refresh-slot-size} 以选择使用哪个 SortedSet。
      * <p>
      * <b>示例：</b><p>
-     * 设 {@code {group: shop, name: user, sequence-size: 16, enable-group-prefix: true}}，那么 Redis 中会创建
-     * {@code ["refresh:shop:user:0"、"refresh:shop:user:1", "refresh:shop:user:2", ……, "refresh:shop:user:14", ""refresh:shop:user:15"]}
+     * 设配置为： {@code {group: shop, name: user, refresh-slot-size: 16, enable-group-prefix: true}}，
+     * 那么 Redis 中会创建 {@code ["refresh:shop:user:0"、"refresh:shop:user:1",
+     * "refresh:shop:user:2", ……, "refresh:shop:user:14", ""refresh:shop:user:15"]}
      * 共 16个 SortedSet。
      * <p>
      * <b>注意：</b><p>
-     * 1、Redis 集群节点数越多，此配置值应越大。<br>
+     * 1、集群节点数越多，刷新槽数量应越大。<br>
      * 2、最小值为 16，最大值为 16384。<br>
      * 3、配置值如非 2 的整数次幂，将自动转换为 2 的整数次幂。<br>
-     * 4、配置值不宜过小：过小会导致数据倾斜。<br>
-     * 5、配置值不宜过大：因为刷新线程运行时会遍历所有的 SortedSet，更多的 SortedSet，意味着更多的网络请求。<br>
-     * 建议 {@code sequence-size ≈ (主节点数量 × 4)}
+     * 4、配置值过小：会导致数据倾斜。<br>
+     * 5、配置值过大：会导致过多的网络请求（刷新任务需遍历所有的 SortedSet）。<br>
+     * 建议值：{@code refresh-slot-size ≈ (主节点数量 × 4)}
      *
-     * @return {@link Integer} - 刷新键序列数量
+     * @return {@link Integer} - 刷新槽数量
      */
-    public Integer getRefreshSequenceSize() {
-        return refreshSequenceSize;
+    public Integer getRefreshSlotSize() {
+        return refreshSlotSize;
     }
 
     /**
-     * 刷新键序列数量
+     * 刷新槽数量
      *
-     * @param refreshSequenceSize 刷新键序列数量
+     * @param refreshSlotSize 刷新槽数量
      */
-    public void setRefreshSequenceSize(Integer refreshSequenceSize) {
-        this.refreshSequenceSize = refreshSequenceSize;
+    public void setRefreshSlotSize(Integer refreshSlotSize) {
+        this.refreshSlotSize = refreshSlotSize;
     }
 
     /**

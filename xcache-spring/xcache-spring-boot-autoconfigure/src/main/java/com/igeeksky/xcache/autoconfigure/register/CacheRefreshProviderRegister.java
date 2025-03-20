@@ -1,5 +1,6 @@
 package com.igeeksky.xcache.autoconfigure.register;
 
+import com.igeeksky.xcache.common.Register;
 import com.igeeksky.xcache.core.SingletonSupplier;
 import com.igeeksky.xcache.extension.refresh.CacheRefreshProvider;
 import com.igeeksky.xtool.core.io.IOUtils;

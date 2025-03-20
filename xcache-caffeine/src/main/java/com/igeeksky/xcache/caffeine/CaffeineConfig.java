@@ -114,4 +114,5 @@ public class CaffeineConfig<V> {
     public Codec<V> getValueCodec() {
         return valueCodec;
     }
+
 }

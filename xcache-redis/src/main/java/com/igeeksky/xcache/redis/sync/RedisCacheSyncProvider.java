@@ -72,7 +72,7 @@ public class RedisCacheSyncProvider implements CacheSyncProvider {
                 .subscribe(new Subscriber<>() {
                     @Override
                     public void onNext(XStreamMessage<byte[], byte[]> element) {
-                        listener.accept(codec.decodeMsg(element.body()));
+                        listener.onMessage(codec.decodeMsg(element.body()));
                     }
 
                     @Override

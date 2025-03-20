@@ -22,8 +22,9 @@ class RandomRangeExpiryTest {
     @BeforeEach
     void setUp() {
         Duration expireAfterCreate = Duration.ofMillis(2000);
+        Duration expireAfterCreateMin = Duration.ofMillis(1500);
         Duration expireAfterAccess = Duration.ofMillis(1000);
-        RandomRangeExpiry<String, String> expiry = new RandomRangeExpiry<>(expireAfterCreate, expireAfterAccess);
+        RandomRangeExpiry<String, String> expiry = new RandomRangeExpiry<>(expireAfterCreate, expireAfterCreateMin, expireAfterAccess);
         cache = Caffeine.newBuilder()
                 .expireAfter(expiry)
                 .maximumSize(1024)

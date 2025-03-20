@@ -20,7 +20,7 @@
 
     <scm>
         <url>https://github.com/patricklaux/xcache</url>
-        <connection>scm:git:https://github.com/patricklaux/xcache</connection>
+        <connection>scm:git:https://github.com/patricklaux/xcache.git</connection>
         <developerConnection>scm:git:https://github.com/patricklaux/xcache</developerConnection>
     </scm>
 

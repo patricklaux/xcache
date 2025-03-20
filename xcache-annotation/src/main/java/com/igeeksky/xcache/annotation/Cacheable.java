@@ -7,23 +7,27 @@ import java.lang.annotation.*;
 /**
  * 缓存注解
  * <p>
- * 对应 V value = cache.get(K key, CacheLoader loader) 方法 <p>
- * 如果数据未缓存，则反射执行方法并缓存；
+ * 如果数据未缓存，则反射执行方法并缓存；<br>
  * 如果数据已缓存，则直接返回已缓存数据。
  * <p>
- * 如果一个类中有多个同名缓存的注解，name, keyType, valueType，
+ * 如果一个类中有多个同名缓存实例的注解，{@code name}, {@code keyType}, {@code valueType}，
  * 这三个公共属性可用类注解 {@link CacheConfig} 配置，此注解保持默认即可。
  * <p>
- * <b>注意</b>：<p>
+ * <b>注意</b>：
+ * <p>
  * 1. 请勿与其它缓存注解用于同一方法！<br>
- * 因为当成功从缓存获取数据时，目标方法将不会被调用。<p>
+ * 当成功从缓存获取数据时，被注解方法将不会被调用。
+ * <p>
  * 2. 如使用 SpEL表达式通过参数名获取数据，项目编译时需使用 {@code -parameters } 记录方法参数名信息，否则无法正确解析。<br>
- * 如使用 maven-compiler-plugin，需配置：{@code <parameters>true</parameters> } <p>
- * 3. 目标方法的返回值除了返回缓存值类型，也可以是 {@code Optional } 类型，如：{@code Optional<User> }，
- * 或是 {@code CompletableFuture } 类型，如：{@code CompletableFuture<User> }。 <br>
- * 缓存实现中会通过 {@code CompletableFuture.get()} 或 {@code Optional.orElse(null) } 方法获取真正的值再缓存。<br>
- * 需要注意的是，如果目标方法返回值是 {@code Optional<V> } ，其包含的值可以为 null，但 Optional 本身不能为 null；
- * {@code CompletableFuture } 亦如是。
+ * 如使用 maven-compiler-plugin，需配置：{@code <parameters>true</parameters> }
+ * <p>
+ * 3. 被注解方法的返回值可以是 {@code Optional } 或 {@code CompletableFuture } 类型。 <br>
+ * 缓存框架会通过 {@code CompletableFuture.get()} 或 {@code Optional.orElse(null) } 方法获取包含的值再缓存。
+ * <p>
+ * 4. 另：{@code Optional } 或 {@code CompletableFuture } 包含的值可以为 {@code null}，
+ * 但自身不建议为 {@code null}，否则方法返回值会时有时无：<br>
+ * 命中缓存时不为 {@code null}，
+ * 未命中缓存时为 {@code null}。
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-12
@@ -47,9 +51,7 @@ public @interface Cacheable {
      * <p>
      * 如果未配置，condition 表达式结果默认为 true。
      * <p>
-     * 如果 condition 表达式结果为 true，调用被注解方法前执行缓存操作 (get)，<p>
-     * 1. 缓存中有值：不再调用被注解方法，直接返回缓存的值；<p>
-     * 2. 缓存中无值：调用被注解方法，然后缓存被注解方法执行结果，返回被注解方法执行结果。
+     * 调用被注解方法前解析此表达式，如 condition 表达式结果为 false，不执行缓存操作。
      */
     String condition() default "";
 

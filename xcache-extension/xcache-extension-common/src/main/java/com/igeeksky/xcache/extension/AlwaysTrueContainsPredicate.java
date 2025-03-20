@@ -11,13 +11,13 @@ import com.igeeksky.xcache.common.ContainsPredicate;
  * @author Patrick.Lau
  * @since 0.0.4 2023-09-12
  */
-public class NoOpContainsPredicate<K> implements ContainsPredicate<K> {
+public class AlwaysTrueContainsPredicate<K> implements ContainsPredicate<K> {
 
-    private static final NoOpContainsPredicate<?> INSTANCE = new NoOpContainsPredicate<>();
+    private static final AlwaysTrueContainsPredicate<?> INSTANCE = new AlwaysTrueContainsPredicate<>();
 
     @SuppressWarnings("unchecked")
-    public static <K> NoOpContainsPredicate<K> getInstance() {
-        return (NoOpContainsPredicate<K>) INSTANCE;
+    public static <K> AlwaysTrueContainsPredicate<K> getInstance() {
+        return (AlwaysTrueContainsPredicate<K>) INSTANCE;
     }
 
     /**

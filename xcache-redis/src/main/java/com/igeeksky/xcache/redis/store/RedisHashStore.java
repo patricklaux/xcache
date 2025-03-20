@@ -22,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Patrick.Lau
  * @since 0.0.3
  */
-public class RedisHashStore<V> extends RedisStore<V> {
+public class RedisHashStore<V> extends AbstractRedisStore<V> {
 
     private final byte[] hashKey;
 
@@ -56,39 +56,49 @@ public class RedisHashStore<V> extends RedisStore<V> {
 
     @Override
     public CompletableFuture<CacheValue<V>> getCacheValueAsync(String field) {
-        byte[] storeField = this.hashStoreHelper.toStoreField(field);
-        return this.redisOperator.hgetAsync(this.hashKey, storeField).thenApply(this.convertor::fromExtraStoreValue);
+        return CompletableFuture.completedFuture(field)
+                .thenApply(this.hashStoreHelper::toStoreField)
+                .thenCompose(storeField -> this.redisOperator.hgetAsync(this.hashKey, storeField))
+                .thenApply(this.convertor::fromExtraStoreValue);
     }
 
     @Override
     public CompletableFuture<Map<String, CacheValue<V>>> getAllCacheValuesAsync(Set<? extends String> fields) {
-        byte[][] storeFields = this.toStoreFields(fields);
-        return this.redisOperator.hmgetAsync(this.hashKey, storeFields).thenApply(this.hashStoreHelper::toResult);
+        return CompletableFuture.completedFuture(fields)
+                .thenApply(this::toStoreFields)
+                .thenCompose(storeFields -> this.redisOperator.hmgetAsync(this.hashKey, storeFields))
+                .thenApply(this.hashStoreHelper::toResult);
     }
 
     @Override
     public CompletableFuture<Void> putAsync(String field, V value) {
-        byte[] storeField = this.hashStoreHelper.toStoreField(field);
-        byte[] storeValue = this.convertor.toExtraStoreValue(value);
-        if (storeValue == null) {
-            return this.redisOperator.hdelAsync(hashKey, storeField).thenApply(ignore -> null);
-        }
-        if (this.expireAfterWrite > 0) {
-            long ttl = (this.enableRandomTtl) ? randomTtl() : expireAfterWrite;
-            return this.redisOperator.hpsetAsync(hashKey, ttl, storeField, storeValue).thenApply(ignore -> null);
-        }
-        return this.redisOperator.hsetAsync(hashKey, storeField, storeValue).thenApply(ignore -> null);
+        return CompletableFuture.completedFuture(KeyValue.create(field, value))
+                .thenApply(fieldValue -> fieldValue.map(this.hashStoreHelper::toStoreField,
+                        this.convertor::toExtraStoreValue))
+                .thenCompose(fieldValue -> {
+                    byte[] storeField = fieldValue.getKey();
+                    byte[] storeValue = fieldValue.getValue();
+                    if (storeValue == null) {
+                        return this.redisOperator.hdelAsync(hashKey, storeField).thenApply(ignore -> null);
+                    }
+                    if (this.expireAfterWrite > 0) {
+                        long ttl = (this.enableRandomTtl) ? randomTtl() : expireAfterWrite;
+                        return this.redisOperator.hpsetAsync(hashKey, ttl, storeField, storeValue)
+                                .thenApply(ignore -> null);
+                    }
+                    return this.redisOperator.hsetAsync(hashKey, storeField, storeValue).thenApply(ignore -> null);
+                });
     }
 
     @Override
     public CompletableFuture<Void> putAllAsync(Map<? extends String, ? extends V> fieldValues) {
-        if (this.expireAfterWrite > 0) {
+        if (expireAfterWrite > 0) {
             if (this.enableRandomTtl) {
-                return this.putAllRandomTtl(fieldValues);
+                return CompletableFuture.completedFuture(fieldValues).thenCompose(this::putAllRandomTtl);
             }
-            return this.putAllFixTtl(fieldValues);
+            return CompletableFuture.completedFuture(fieldValues).thenCompose(this::putAllFixTtl);
         }
-        return this.putAllUnlimitedTtl(fieldValues);
+        return CompletableFuture.completedFuture(fieldValues).thenCompose(this::putAllUnlimitedTtl);
     }
 
     private CompletableFuture<Void> putAllRandomTtl(Map<? extends String, ? extends V> fieldValues) {
@@ -128,34 +138,38 @@ public class RedisHashStore<V> extends RedisStore<V> {
         return this.redisOperator.hmpsetAsync(hashKey, expireAfterWrite, storeFieldValues).thenApply(ignore -> null);
     }
 
-    private CompletableFuture<Void> putAllUnlimitedTtl(Map<? extends String, ? extends V> keyValues) {
+    private CompletableFuture<Void> putAllUnlimitedTtl(Map<? extends String, ? extends V> fieldValues) {
         List<byte[]> removeFields = new ArrayList<>();
-        Map<byte[], byte[]> fieldValues = HashMap.newHashMap(keyValues.size());
-        keyValues.forEach((field, value) -> {
+        Map<byte[], byte[]> storeFieldValues = HashMap.newHashMap(fieldValues.size());
+        fieldValues.forEach((field, value) -> {
             byte[] storeField = this.hashStoreHelper.toStoreField(field);
             byte[] storeValue = this.convertor.toExtraStoreValue(value);
             if (storeValue == null) {
                 removeFields.add(storeField);
             } else {
-                fieldValues.put(storeField, storeValue);
+                storeFieldValues.put(storeField, storeValue);
             }
         });
         if (!removeFields.isEmpty()) {
             this.redisOperator.hdelAsync(hashKey, removeFields.toArray(new byte[0][]));
         }
-        return this.redisOperator.hmsetAsync(hashKey, fieldValues).thenApply(RedisStore::checkResult);
+        return this.redisOperator.hmsetAsync(hashKey, storeFieldValues).thenApply(AbstractRedisStore::checkResult);
     }
 
     @Override
     public CompletableFuture<Void> removeAsync(String field) {
-        byte[] storeField = this.hashStoreHelper.toStoreField(field);
-        return this.redisOperator.hdelAsync(hashKey, storeField).thenApply(ignore -> null);
+        return CompletableFuture.completedFuture(field)
+                .thenApply(this.hashStoreHelper::toStoreField)
+                .thenCompose(storeField -> this.redisOperator.hdelAsync(hashKey, storeField))
+                .thenApply(ignore -> null);
     }
 
     @Override
     public CompletableFuture<Void> removeAllAsync(Set<? extends String> fields) {
-        byte[][] storeFields = this.toStoreFields(fields);
-        return this.redisOperator.hdelAsync(hashKey, storeFields).thenApply(ignore -> null);
+        return CompletableFuture.completedFuture(fields)
+                .thenApply(this::toStoreFields)
+                .thenCompose(storeFields -> this.redisOperator.hdelAsync(hashKey, storeFields))
+                .thenApply(ignore -> null);
     }
 
     @Override

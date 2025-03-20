@@ -1,6 +1,7 @@
 package com.igeeksky.xcache.autoconfigure.register;
 
 import com.igeeksky.xcache.common.CacheLoader;
+import com.igeeksky.xcache.common.Register;
 import com.igeeksky.xcache.core.SingletonSupplier;
 import com.igeeksky.xtool.core.lang.Assert;
 
@@ -10,7 +11,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * 用于向 CacheManager 注册 CacheLoader
+ * 用于向 ComponentManager 注册 CacheLoader
  *
  * @author Patrick.Lau
  * @since 0.0.4 2023-10-02

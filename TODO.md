@@ -60,11 +60,13 @@
 - [X] 【文档】 application.yml
 - [X] 【开发】 stat 模块 ——> metrics 模块
 - [X] 【文档】 README.md，Reference.md
-- [X] 【测试】 测试 Xcache 注解参数
+- [X] 【测试】 缓存注解
+- [X] 【注释】 缓存注解
+- [X] 【开发】 Redis 获取数据超时时取消 Future
 
 ### 待完成任务
 
-- [ ] 【开发】 如果被注解方法返回值为 `CompletableFuture`，则使用 `Cache` 的异步方法
 - [ ] 【开发】 接入 `micrometer` 作为 `metrics` 实现模块
 - [ ] 【开发】 native-image 适配
+- [ ] 【开发】 Reference
 

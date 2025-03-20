@@ -5,7 +5,9 @@ import com.igeeksky.xtool.core.collection.Maps;
 import java.util.Map;
 
 /**
- * 本地缓存锁服务
+ * 内嵌锁服务
+ * <p>
+ * 根据传入的键创建锁或获取已有的锁，并使用计数器来管理锁的生命周期。
  *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/22

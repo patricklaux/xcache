@@ -23,7 +23,7 @@ public class RedisStoreConfig<V> {
 
     private final long expireAfterWrite;
 
-    private final int keySequenceSize;
+    private final int dataSlotSize;
 
     private final boolean enableGroupPrefix;
 
@@ -49,7 +49,7 @@ public class RedisStoreConfig<V> {
         this.enableCompressValue = storeConfig.isEnableCompressValue();
         this.valueCodec = storeConfig.getValueCodec();
         this.valueCompressor = storeConfig.getValueCompressor();
-        this.keySequenceSize = storeConfig.getKeySequenceSize();
+        this.dataSlotSize = storeConfig.getDataSlotSize();
     }
 
     public String getName() {
@@ -96,8 +96,8 @@ public class RedisStoreConfig<V> {
         return valueCodec;
     }
 
-    public int getKeySequenceSize() {
-        return keySequenceSize;
+    public int getDataSlotSize() {
+        return dataSlotSize;
     }
 
 }
