@@ -970,7 +970,7 @@ xcache:
         provider: none # CacheRefreshProviderId（默认值：none，不启用缓存刷新）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，适用于外部刷新实现）
         refresh-after-write: 10000 # （默认值：3600000 毫秒）
-        refresh-tasks-size: 16384
+        refresh-tasks-size: 1024 # 刷新线程一个周期内发起运行的最大任务数（默认值：1024）
         refresh-sequence-size: 16 # 刷新键序列数量（默认值：16），适用于 Redis 集群模式，其它模式下此配置无效
         refresh-thread-period: 10000 # 刷新间隔周期（默认值：10000 毫秒）
         shutdown-timeout: 2000
@@ -2133,7 +2133,7 @@ xcache: #【2】
       cache-refresh: #【5】缓存刷新配置
         provider: none #【6】CacheRefreshProviderId（默认值：none，不启用缓存刷新）
         refresh-after-write: 10000 #【7】数据写入缓存后，每隔此配置的时长刷新一次（默认值：3600000 毫秒）
-        refresh-task-size: 16384 #【8】刷新线程一个周期发起运行的最大任务数（默认值：16384）
+        refresh-task-size: 1024 #【8】刷新线程一个周期发起运行的最大任务数（默认值：1024）
         refresh-thread-period: 10000 #【9】刷新线程运行间隔周期（默认值：10000 毫秒）
       first: #【10】一级缓存配置
         provider: caffeine #【11】使用 id 为 caffeine 的 StoreProvider 作为一级缓存
