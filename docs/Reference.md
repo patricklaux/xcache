@@ -2,7 +2,7 @@
 
 **Author**: Patrick.Lau	**Version**: 1.0.0
 
-
+-----------
 
 ## 1. 基本说明
 
@@ -32,7 +32,7 @@ https://github.com/patricklaux/xcache/tree/main/xcache-test
 
 当然，也欢迎您补充更多的测试用例。
 
-
+------------
 
 ## 2. 相关介绍
 
@@ -46,13 +46,20 @@ Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架�
 
 **说明**：
 
-* `Cache`：缓存实例。
-* `CacheStore`：缓存数据存储，每个缓存实例最多可支持三级缓存数据存储。
-* `MetricsMessage`：缓存指标信息，用于记录缓存调用次数及命中率等指标。
-* `MetricsSystem`：缓存指标信息的收集、存储、计算与展示。
-* `SyncMessage`：缓存数据同步信息，用于维护各个缓存实例的数据一致性。
+* `Cache API`：缓存操作接口。
+* `Cache Annotation`：缓存注解。
+* `Cache`：缓存对象。
+* `Store`：缓存数据存储，每个缓存对象实例最多可支持三级缓存数据存储。
+* `Codec`：数据编解码（序列化与反序列化）。
+* `Compressor`：数据压缩。
+* `CacheLoader`：数据加载，用于从数据源读取数据。
+* `CacheRefresh`：缓存数据刷新，定时通过 `CacheLoader` 加载并刷新缓存数据。
+* `CacheSync`：缓存数据同步，用于维护各实例间私有缓存数据的一致性。
+* `CacheMetrics`：缓存指标采集，用于记录缓存调用次数及命中率等指标。
+* `MetricsSystem`：缓存指标信息的存储、计算与展示。
 * `MQ`：消息队列，用于转发数据同步消息（已有实现采用 `Redis Stream`）。
-* `DataSource`：数据源，当缓存无数据或数据到期刷新，从数据源加载数据并存入缓存。
+* `DataSource`：数据源。
+* `Redis` or `Other……`：缓存数据存储仓库。
 
 ### 2.3. 运行环境
 
@@ -60,7 +67,7 @@ Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架�
 
 `JDK`：21+
 
-
+-----------
 
 ## 3. 项目示例
 
@@ -99,7 +106,6 @@ Xcache 支持 bom 方式，可在 pom.xml 文件中添加如下配置片段，�
 主要组件：Caffeine（内嵌缓存），Lettuce（Redis 客户端），Jackson（序列化）
 
 ```xml
-
 <dependencies>
     <dependency>
         <groupId>com.igeeksky.xcache</groupId>
@@ -295,7 +301,6 @@ public class UserCacheService {
 使用 `Xcache` 注解，除了依赖 `xcache-spring-boot-starter`，还需引入 `xcache-spring-aop`。
 
 ```xml
-
 <dependencies>
     <dependency>
         <groupId>com.igeeksky.xcache</groupId>
@@ -810,7 +815,7 @@ public class UserCacheService {
 
 3. 对已使用 `Spring cache` 注解的项目，只需引入 `Xcache` 相关依赖，几乎不用改动代码，就可将缓存实现替换成 `Xcache`。
 
-
+------------
 
 ## 4. 缓存配置
 
