@@ -61,7 +61,7 @@ public interface CacheConstants {
     boolean DEFAULT_EXTRA_ENABLE_GROUP_PREFIX = true;
     boolean DEFAULT_EXTRA_ENABLE_RANDOM_TTL = true;
     boolean DEFAULT_EXTRA_ENABLE_NULL_VALUE = true;
-    int DEFAULT_EXTRA_DATA_SLOT_SIZE = 32;
+    int DEFAULT_EXTRA_DATA_SLOT_SIZE = 1;
     // 外部缓存默认配置 end
 
 
@@ -79,7 +79,7 @@ public interface CacheConstants {
 
     String DEFAULT_REFRESH_PROVIDER = NONE;
     int DEFAULT_REFRESH_TASKS_SIZE = 1024;
-    int DEFAULT_REFRESH_SLOT_SIZE = 16;
+    int DEFAULT_REFRESH_SLOT_SIZE = 1;
     int DEFAULT_REFRESH_THREAD_PERIOD = 10000;
     int DEFAULT_REFRESH_AFTER_WRITE = 3600000;
     long DEFAULT_SHUTDOWN_TIMEOUT = 2000;

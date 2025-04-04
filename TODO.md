@@ -68,7 +68,7 @@
 
 ### 待完成任务
 
-- [ ] 【开发】 `Redis-Hash` 支持配置 data-slot 数量为 1
+- [ ] 【开发】 `Redis-Hash` 数据槽数量默认为 1
 - [ ] 【开发】 适配 `Pika`
 - [ ] 【开发】 接入 `micrometer` 作为 `metrics` 实现模块
 - [ ] 【开发】 native-image 适配

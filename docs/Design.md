@@ -1,6 +1,6 @@
 # Xcache 设计与实现
 
-**Author**: Patrick.Lau	**Version**: 1.0.0
+**Author**: Patrick.Lau	**Version**: 1.0.1
 
 --------
 
@@ -126,9 +126,9 @@
 
 **一致性 Hash**
 
-当使用集群模式，且数据存储使用 `Redis-Hash` 数据结构时，为了避免数据集中在某个节点进行存储，`RedisClusterHashStore` 会创建多个 `HashTable` 作为数据 `slot`，名称为 `cache-name:0`, `cache-name:1`, ...  , `cache-name:n-1`, `cache-name:n`。
+当使用集群模式，且数据存储使用 `Redis-Hash` 数据结构时，为了避免数据集中存储于某个节点，`RedisClusterHashStore` 可根据配置创建多个 `HashTable` 作为数据槽，并自动命名为 `cache-name:0`, `cache-name:1`, ...  , `cache-name:n-1`, `cache-name:n`。
 
-`n` 的值可以通过 `data-slot-size` 进行配置，默认为 16。
+`n` 的值可以通过 `data-slot-size` 进行配置，默认为 1，可配置为 `节点数 × 4`。
 
 当需要查询或操作数据时，将根据键的 `CRC16` 计算值求余得到数据所在的 `slot`。
 
@@ -307,7 +307,7 @@
 
 也就是说，缓存数据同步，采用的是**最终一致性**模型。
 
-如果要实现强一致性，需在缓存数据更新时对所有实例进行加锁，代价太大。
+如果要实现强一致性，需在缓存数据更新时对所有实例进行加锁，或者使用类似于 `Raft` 这样的一致性协议，代价太大。
 
 ---
 
@@ -397,7 +397,7 @@
 
 ## 13. 缓存配置生成
 
-![image-20250315105128216](images/Design/cache-config.png)
+![cache-config](images/Design/cache-config.png)
 
 
 
