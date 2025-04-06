@@ -13,6 +13,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
+ * 使用 Redis-String 存储缓存数据
+ *
  * @author Patrick.Lau
  * @since 1.0.0 2024/6/13
  */

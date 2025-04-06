@@ -41,7 +41,7 @@ public class RedisCacheRefreshProvider implements CacheRefreshProvider {
     public CacheRefresh getCacheRefresh(RefreshConfig config) {
         RefreshHelper.resetMaxShutdownTimeout(maxShutdownTimeout, config.getShutdownTimeout());
         return this.container.computeIfAbsent(config.getName(), name -> {
-            if (this.operator.isCluster()) {
+            if (config.getRefreshSlotSize() > 1) {
                 return new RedisClusterCacheRefresh(config, scheduler, executor, operator);
             } else {
                 return new RedisCacheRefresh(config, scheduler, executor, operator);

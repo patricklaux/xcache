@@ -184,6 +184,10 @@ public class StoreConfig<V> {
         return redisType;
     }
 
+    public int getDataSlotSize() {
+        return dataSlotSize;
+    }
+
     public Map<String, Object> getParams() {
         return params;
     }
@@ -192,9 +196,6 @@ public class StoreConfig<V> {
         return new Builder<>(valueType);
     }
 
-    public int getDataSlotSize() {
-        return dataSlotSize;
-    }
 
     public static class Builder<V> {
 
@@ -348,5 +349,7 @@ public class StoreConfig<V> {
         public StoreConfig<V> build() {
             return new StoreConfig<>(this);
         }
+
     }
+
 }

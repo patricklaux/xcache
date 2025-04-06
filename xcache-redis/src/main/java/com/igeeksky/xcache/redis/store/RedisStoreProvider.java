@@ -30,7 +30,7 @@ public class RedisStoreProvider implements StoreProvider {
         if (redisType == null || Objects.equals(RedisType.STRING, redisType)) {
             return new RedisStringStore<>(this.operator, config);
         }
-        if (this.operator.isCluster()) {
+        if (config.getDataSlotSize() > 1) {
             return new RedisClusterHashStore<>(this.operator, config);
         }
         return new RedisHashStore<>(this.operator, config);

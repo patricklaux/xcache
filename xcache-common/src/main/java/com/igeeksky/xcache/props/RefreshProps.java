@@ -173,13 +173,13 @@ public class RefreshProps {
     /**
      * 刷新槽数量
      * <p>
-     * 适用于 Redis 集群模式，其它模式下此配置无效。
-     * <p>
-     * 默认值：16 <br>
+     * 默认值：1 <br>
      * {@link CacheConstants#DEFAULT_REFRESH_SLOT_SIZE}
      * <p>
+     * 当配置值小于等于 1 时，仅创建一个 SortedSet。<br>
+     * 当配置值大于 1 时，将创建 16 ~ 16384 个 SortedSet。<br>
      * 如使用 {@code RedisCacheRefresh} 作为缓存刷新，将使用 Redis 的 SortedSet 记录需要刷新的数据和时间。<br>
-     * 当 Redis 为集群模式时，为了让数据尽可能均匀分布于各个 Redis 节点，会创建多个 SortedSet。<br>
+     * 当 Redis 为集群模式时，为了让数据尽可能均匀分布于各个 Redis 节点，可配置为创建多个 SortedSet。<br>
      * 读取或保存刷新数据时，使用 crc16 算法计算 key 的哈希值，然后取余 {@code refresh-slot-size} 以选择使用哪个 SortedSet。
      * <p>
      * <b>示例：</b><p>
@@ -189,11 +189,11 @@ public class RefreshProps {
      * 共 16个 SortedSet。
      * <p>
      * <b>注意：</b><p>
-     * 1、集群节点数越多，刷新槽数量应越大。<br>
-     * 2、最小值为 16，最大值为 16384。<br>
-     * 3、配置值如非 2 的整数次幂，将自动转换为 2 的整数次幂。<br>
-     * 4、配置值过小：会导致数据倾斜。<br>
-     * 5、配置值过大：会导致过多的网络请求（刷新任务需遍历所有的 SortedSet）。<br>
+     * 1、集群节点数越多，槽数量应越多。<br>
+     * 2、配置值如非 2 的整数次幂，将自动转换为 2 的整数次幂。<br>
+     * 3、配置值过小：会导致数据倾斜。<br>
+     * 4、配置值过大：会导致过多的网络请求（刷新任务需遍历所有的 SortedSet）。<br>
+     * 5、Xcache 并不判断是否为集群，只根据配置值是否大于 1 来决定是创建一个还是多个 SortedSet。<br>
      * 建议值：{@code refresh-slot-size ≈ (主节点数量 × 4)}
      *
      * @return {@link Integer} - 刷新槽数量

@@ -80,8 +80,9 @@ public class StoreProps {
      * Redis 数据存储类型
      * <p>
      * 可选值：<br>
-     * STRING（默认值） – 优点：可以设置过期时间；缺点：key 长，耗内存，缓存数据清空操作复杂。<br>
-     * HASH – 优点：key 更短，省内存，便于清空缓存数据；缺点：无法设置过期时间。
+     * STRING（默认值） – 优点：可以设置过期时间；缺点：key 有前缀，较耗内存，缓存数据清空操作复杂。<br>
+     * HASH – 优点：key 更短，省内存，便于清空缓存数据；缺点：如果 RedisServer 的版本小于 7.4.0，无法设置过期时间；
+     * 如为 Redis-Compatible DB，无法设置过期时间。
      * <p>
      * {@link CacheConstants#DEFAULT_EXTRA_REDIS_TYPE}
      *
@@ -103,13 +104,15 @@ public class StoreProps {
     /**
      * 数据槽数量
      * <p>
-     * 仅用于 Redis 集群模式，且采用 Redis-Hash 作为数据存储，其它模式下此配置无意义。
+     * 仅适用于采用 Redis-Hash 作为数据存储，其它模式下此配置无意义。
      * <p>
-     * 默认值：16 <br>
+     * 默认值：1 <br>
      * {@link CacheConstants#DEFAULT_EXTRA_DATA_SLOT_SIZE}
      * <p>
-     * 当 Redis 为集群模式时，为了让数据尽可能均匀分布于各个 Redis 节点，会创建多个 HashTable。<br>
-     * 读取或保存数据时，使用 crc16 算法计算 key 的哈希值，然后取余 {@code data-slot-size} 以选择使用哪个 HashTable。
+     * 当配置值小于等于 1 时，仅创建一个 HashTable。<br>
+     * 当配置值大于 1 时，将创建 16 ~ 16384 个 HashTable。<br>
+     * 当 Redis 为集群模式时，为了让数据尽可能均匀分布于各个节点，可以通过此配置创建多个 HashTable。<br>
+     * 读取或保存数据时，将使用 crc16 算法计算 key 的哈希值，然后取余 {@code data-slot-size} 以选择使用哪个 HashTable。
      * <p>
      * <b>示例：</b><p>
      * 设 {@code {group: shop, name: user, data-slot-size: 16, enable-group-prefix: true}}，那么 Redis 中会创建
@@ -117,11 +120,11 @@ public class StoreProps {
      * 共 16 个 HashTable。
      * <p>
      * <b>注意：</b><p>
-     * 1、集群节点数越多，槽数量应越大。<br>
-     * 2、最小值为 16，最大值为 16384。<br>
-     * 3、配置值如非 2 的整数次幂，将自动转换为 2 的整数次幂。<br>
-     * 4、配置值过小：会导致数据倾斜。<br>
-     * 5、配置值过大：会产生更多的网络请求。<br>
+     * 1、集群节点数越多，槽数量应越多。<br>
+     * 2、配置值如非 2 的整数次幂，将自动转换为 2 的整数次幂。<br>
+     * 3、配置值过小：会导致数据倾斜。<br>
+     * 4、配置值过大：会产生更多的网络请求。<br>
+     * 5、Xcache 并不判断是否为集群，只根据配置值是否大于 1 来决定是创建一个还是多个 HashTable。<br>
      * 建议 {@code data-slot-size ≈ (主节点数量 × 4)}
      *
      * @return {@link Integer} - 数据槽数量

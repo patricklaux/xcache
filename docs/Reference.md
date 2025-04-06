@@ -1,6 +1,6 @@
 ## Xcache  Reference Guide
 
-**Author**: Patrick.Lau	**Version**: 1.0.0
+**Author**: Patrick.Lau	**Version**: 1.0.1
 
 -----------
 
@@ -876,10 +876,10 @@ Redis 配置部分，用于创建 Redis 相关的对象。
 
 其它配置部分，用于创建无外部服务依赖的一些对象。
 
-| 类别                          | 名称       | 说明                                                                                                                                                                                       |
-|-----------------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| xcache.log-metrics-interval | 缓存指标统计配置 | 用于创建 `LogCacheMetricsProvider` 对象<br />当前 Xcache 的缓存指标统计支持两种输出方式：<br />一是将缓存指标数据输出到日志，二是将缓存指标数据发送到 Redis。<br />此配置项仅用于日志输出方式；如希望使用 Redis 进行指标数据采集，需在 xcache.redis.lettuce[i].metrics 配置。 |
-| xcache.scheduler            | 任务调度器配置  | 用于创建 `ScheduledExecutorService` 对象<br />缓存数据定时刷新、缓存指标定时采集和发送均依赖于此调度器。                                                                                                                    |
+| 类别                      | 名称             | 说明                                                         |
+| ------------------------- | ---------------- | ------------------------------------------------------------ |
+| xcache.log-metrics-period | 缓存指标统计配置 | 用于创建 `LogCacheMetricsProvider` 对象<br />当前 Xcache 的缓存指标统计支持两种输出方式：<br />一是将缓存指标数据输出到日志，二是将缓存指标数据发送到 Redis。<br />此配置项仅用于日志输出方式；如希望使用 Redis 进行指标数据采集，需在 xcache.redis.lettuce[i].metrics 配置。 |
+| xcache.scheduler          | 任务调度器配置   | 用于创建 `ScheduledExecutorService` 对象<br />缓存数据定时刷新、缓存指标定时采集和发送均依赖于此调度器。 |
 
 **相关配置类**：
 
@@ -975,8 +975,8 @@ xcache:
         provider: none # CacheRefreshProviderId（默认值：none，不启用缓存刷新）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，适用于外部刷新实现）
         refresh-after-write: 10000 # （默认值：3600000 毫秒）
-        refresh-tasks-size: 1024 # 刷新线程一个周期内发起运行的最大任务数（默认值：1024）
-        refresh-sequence-size: 16 # 刷新键序列数量（默认值：16），适用于 Redis 集群模式，其它模式下此配置无效
+        refresh-task-size: 1024 # 刷新线程一个周期内发起运行的最大任务数（默认值：1024）
+        refresh-slot-size: 16 # 刷新数据槽数量（默认值：1），如为 Redis 集群，建议配置为大于 {节点数 × 4}
         refresh-thread-period: 10000 # 刷新间隔周期（默认值：10000 毫秒）
         shutdown-timeout: 2000
         shutdown-quiet-period: 100
@@ -1010,7 +1010,7 @@ xcache:
           test: test
       second: # 二级缓存配置
         provider: lettuce # StoreProviderId（默认值：none）
-        redis-type: STRING # Redis 命令类型（默认：STRING，如无需过期，可设为 HASH）
+        redis-type: STRING # Redis 数据结构类型（默认：STRING）
         expire-after-write: 7200000 # 数据写入后的存活时间（外部缓存默认值：7200000 单位：毫秒）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，仅适用于外部缓存）
         enable-random-ttl: true # 是否使用随机存活时间（默认值：true，避免大量的 key 集中过期）
@@ -1024,7 +1024,8 @@ xcache:
           test: test
       third: # 三级缓存配置
         provider: none # StoreProviderId（三级缓存默认值：none）
-        redis-type: STRING # Redis 命令类型（默认：STRING，如无需过期，可设为 HASH）
+        redis-type: HASH # Redis 数据结构类型（默认：STRING）
+        data-slot-size: : 16 # HASH 数据槽数量（默认值：1），如为集群，建议配置为大于 {节点数 × 4}
         expire-after-write: 7200000 # 数据写入后的存活时间（外部缓存默认值：7200000 单位：毫秒）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，仅适用于外部缓存）
         enable-random-ttl: true # 是否使用随机存活时间（默认值：true，避免大量的 key 集中过期）
@@ -1045,16 +1046,17 @@ xcache:
       template-id: t0 # 模板id（默认值：t0，如未配置，默认从 id 为 t0 的模板中复制配置项）
       # …… 其余配置项与模板配置相同，所以直接省略
       # 另，如此缓存配置与 id 为 t0 的模板配置完全相同，name 与 template-id 其实也可以省略。
-  log-metrics-interval: 60000 # 缓存指标采集的间隔时长，仅用于 LogCacheMetricsProvider（默认值：60000 单位：毫秒）
+  log-metrics-period: 60000 # 缓存指标采集的间隔时长，仅用于 LogCacheMetricsProvider（默认值：60000 单位：毫秒）
   scheduler: # 调度器配置
     core-pool-size: 1 # 定时任务调度器核心线程数，如未配置，则使用 (核心数 / 8)，最小为 1。
   redis: # Redis 配置（如不使用 Redis，可直接删除此配置项；如未配置，则不会生成相应的实例对象）
     lettuce: # Lettuce 客户端配置
       - id: lettuce # RedisOperatorFactory 唯一标识（默认值：lettuce）
         batch-size: 10000 # 单批次命令提交数量阈值（默认值：10000）
+        compatible: false # 是否为兼容模式（默认值：false，如为 true，则使用兼容模式，不使用脚本操作缓存数据）
         metrics: # RedisCacheMetricsProvider 配置
           # 另，Redis StreamPublisher 仅负责发送统计指标信息，统计汇总需用户自行实现
-          interval: 60000 # 缓存指标统计的时间间隔（默认值：60000，单位：毫秒）
+          period: 60000 # 缓存指标统计的时间间隔（默认值：60000，单位：毫秒）
           max-len: 10000 # Redis stream 最大长度（默认值：10000，采用近似裁剪，实际长度可能略大于配置值）
           charset: UTF-8 # 字符集，用于缓存统计指标消息的编解码（默认值：UTF-8）
           codec: jackson # 统计消息编解码
@@ -1062,7 +1064,7 @@ xcache:
         stream: # StreamContainer 配置
           block: -1 # 读取 Stream 时的阻塞时长（默认值： 10 单位：毫秒）
           count: 1000 # 同步任务每次从 Stream 读取的最大消息数量（默认值： 1000）
-          interval: 10 # 当次同步任务结束后，下次任务开始前的间隔时长（默认值： 10 单位：毫秒）
+          period: 10 # 当次同步任务结束后，下次任务开始前的间隔时长（默认值： 10 单位：毫秒）
         sync:
           codec: jackson # 缓存数据同步消息编解码
         standalone: # 单机模式 或 副本集模式
