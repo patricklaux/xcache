@@ -88,7 +88,7 @@ public class EmbedCacheRefresh implements CacheRefresh {
         this.config = config;
         this.executor = executor;
         this.scheduler = scheduler;
-        this.refreshTasksSize = config.getRefreshTasksSize();
+        this.refreshTasksSize = config.getRefreshTaskSize();
         this.refreshAfterWrite = config.getRefreshAfterWrite();
         this.refreshThreadPeriod = config.getRefreshThreadPeriod();
     }

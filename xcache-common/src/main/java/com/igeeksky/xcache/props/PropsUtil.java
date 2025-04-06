@@ -343,7 +343,7 @@ public class PropsUtil {
         RefreshProps props = new RefreshProps();
         props.setProvider(CacheConstants.DEFAULT_REFRESH_PROVIDER);
         props.setRefreshAfterWrite(CacheConstants.DEFAULT_REFRESH_AFTER_WRITE);
-        props.setRefreshTaskSize(CacheConstants.DEFAULT_REFRESH_TASKS_SIZE);
+        props.setRefreshTaskSize(CacheConstants.DEFAULT_REFRESH_TASK_SIZE);
         props.setRefreshThreadPeriod(CacheConstants.DEFAULT_REFRESH_THREAD_PERIOD);
         props.setRefreshSlotSize(CacheConstants.DEFAULT_REFRESH_SLOT_SIZE);
         props.setShutdownTimeout(CacheConstants.DEFAULT_SHUTDOWN_TIMEOUT);

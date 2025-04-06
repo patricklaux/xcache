@@ -39,6 +39,9 @@ public class RedisCacheRefreshProvider implements CacheRefreshProvider {
 
     @Override
     public CacheRefresh getCacheRefresh(RefreshConfig config) {
+        if (operator.isCompatible()) {
+            throw new UnsupportedOperationException("RedisCacheRefresh doesn't support Redis-Compatible DB.");
+        }
         RefreshHelper.resetMaxShutdownTimeout(maxShutdownTimeout, config.getShutdownTimeout());
         return this.container.computeIfAbsent(config.getName(), name -> {
             if (config.getRefreshSlotSize() > 1) {

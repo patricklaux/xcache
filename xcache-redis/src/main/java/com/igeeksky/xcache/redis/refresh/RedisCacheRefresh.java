@@ -69,7 +69,7 @@ public class RedisCacheRefresh extends AbstractRedisCacheRefresh {
         if (isShutdown()) {
             return;
         }
-        int refreshTasksSize = config.getRefreshTasksSize();
+        int refreshTasksSize = config.getRefreshTaskSize();
         int total = 0, index = 0, count = Math.min(FUTURES_LENGTH, refreshTasksSize);
 
         Future<?>[] futures = new Future<?>[count];

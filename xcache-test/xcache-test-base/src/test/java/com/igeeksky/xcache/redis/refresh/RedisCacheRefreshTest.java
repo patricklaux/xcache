@@ -50,7 +50,7 @@ public class RedisCacheRefreshTest {
                 .refreshAfterWrite(50)
                 .refreshThreadPeriod(1000)
                 .refreshSlotSize(16)
-                .refreshTasksSize(16)
+                .refreshTaskSize(16)
                 .shutdownTimeout(1)
                 .shutdownQuietPeriod(0)
                 .shutdownBehavior(ShutdownBehavior.AWAIT)
