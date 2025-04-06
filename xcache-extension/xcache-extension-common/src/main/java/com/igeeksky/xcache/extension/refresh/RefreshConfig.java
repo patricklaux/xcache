@@ -34,7 +34,7 @@ public class RefreshConfig {
 
     private final int refreshSlotSize;
 
-    private final int refreshTasksSize;
+    private final int refreshTaskSize;
 
     private final int refreshAfterWrite;
 
@@ -55,7 +55,7 @@ public class RefreshConfig {
         this.provider = builder.provider;
         this.sid = builder.sid;
         this.refreshThreadPeriod = builder.refreshThreadPeriod;
-        this.refreshTasksSize = builder.refreshTasksSize;
+        this.refreshTaskSize = builder.refreshTaskSize;
         this.refreshAfterWrite = builder.refreshAfterWrite;
         this.refreshSlotSize = builder.refreshSlotSize;
         this.shutdownTimeout = builder.shutdownTimeout;
@@ -100,8 +100,8 @@ public class RefreshConfig {
         return refreshThreadPeriod;
     }
 
-    public int getRefreshTasksSize() {
-        return refreshTasksSize;
+    public int getRefreshTaskSize() {
+        return refreshTaskSize;
     }
 
     public int getRefreshAfterWrite() {
@@ -152,7 +152,7 @@ public class RefreshConfig {
 
         private Charset charset = CacheConstants.DEFAULT_CHARSET;
 
-        private int refreshTasksSize = CacheConstants.DEFAULT_REFRESH_TASKS_SIZE;
+        private int refreshTaskSize = CacheConstants.DEFAULT_REFRESH_TASK_SIZE;
 
         private int refreshSlotSize = CacheConstants.DEFAULT_REFRESH_SLOT_SIZE;
 
@@ -237,13 +237,13 @@ public class RefreshConfig {
         }
 
         /**
-         * 刷新任务队列大小（大于等于 refreshSequenceSize）
+         * 刷新任务队列大小（大于等于 refreshSlotSize）
          *
-         * @param refreshTasksSize 刷新任务队列大小
+         * @param refreshTaskSize 刷新任务队列大小
          * @return {@code this} – Builder
          */
-        public Builder refreshTasksSize(int refreshTasksSize) {
-            this.refreshTasksSize = refreshTasksSize;
+        public Builder refreshTaskSize(int refreshTaskSize) {
+            this.refreshTaskSize = refreshTaskSize;
             return this;
         }
 
@@ -259,9 +259,9 @@ public class RefreshConfig {
         }
 
         /**
-         * 刷新键序列数量（大于等于 16）
+         * 刷新数据槽数量（大于等于 1）
          *
-         * @param refreshSlotSize 刷新键序列数量
+         * @param refreshSlotSize 刷新数据槽数量
          * @return {@code this} – Builder
          */
         public Builder refreshSlotSize(int refreshSlotSize) {
@@ -328,8 +328,7 @@ public class RefreshConfig {
             Assert.notNull(charset, "charset must not be null");
             Assert.notNull(provider, "provider must not be null");
             Assert.isTrue(refreshThreadPeriod > 0, "refreshThreadPeriod must be greater than 0");
-            Assert.isTrue(refreshSlotSize >= 16, "refreshSequenceSize must be greater than or equal to 16");
-            Assert.isTrue(refreshTasksSize >= refreshSlotSize, "refreshTasksSize must be greater than or equal to refreshSequenceSize");
+            Assert.isTrue(refreshTaskSize >= refreshSlotSize, "refreshTasksSize must be greater than or equal to refreshSlotSize");
             Assert.isTrue(refreshAfterWrite > 0, "refreshAfterWrite must be greater than 0");
             Assert.isTrue(shutdownTimeout > 0, "shutdownTimeout must be greater than 0");
             Assert.isTrue(shutdownQuietPeriod < shutdownTimeout, "shutdownQuietPeriod must be less than shutdownTimeout");

@@ -327,7 +327,7 @@ public class CacheManagerImpl implements CacheManager {
                 .group(config.getGroup())
                 .charset(config.getCharset())
                 .provider(props.getProvider())
-                .refreshTasksSize(props.getRefreshTaskSize())
+                .refreshTaskSize(props.getRefreshTaskSize())
                 .refreshAfterWrite(props.getRefreshAfterWrite())
                 .refreshThreadPeriod(props.getRefreshThreadPeriod())
                 .refreshSlotSize(props.getRefreshSlotSize())

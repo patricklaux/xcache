@@ -25,6 +25,9 @@ public class RedisLockProvider implements CacheLockProvider {
 
     @Override
     public RedisLockService get(LockConfig config) {
+        if (operator.isCompatible()) {
+            throw new UnsupportedOperationException("RedisLock doesn't support Redis-Compatible DB.");
+        }
         return new RedisLockService(config, operator, scheduler);
     }
 

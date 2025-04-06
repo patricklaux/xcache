@@ -85,7 +85,7 @@ public class RedisClusterCacheRefresh extends AbstractRedisCacheRefresh {
         // SortedSet 键序列
         final List<byte[]> refreshKeys = new LinkedList<>(clusterHelper.getSlotsList());
         // 最大任务数，大于等于键的数量，确保每个 SortedSet 至少能刷新 1 个元素（避免 refreshTasksSize 设定过小）
-        final int maximum = Math.max(refreshKeys.size(), config.getRefreshTasksSize());
+        final int maximum = Math.max(refreshKeys.size(), config.getRefreshTaskSize());
         // maximum / keysSize，确保每个 SortedSet 都能刷新至少 count 个元素
         final int count = Math.min(FUTURES_LENGTH, maximum / refreshKeys.size());
         // futures 数组长度

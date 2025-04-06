@@ -107,7 +107,7 @@ public class RefreshProps {
      * 刷新线程一个周期发起运行的最大任务数
      * <p>
      * 默认值：16384 （必须大于等于 refreshSlotSize）<br>
-     * {@link CacheConstants#DEFAULT_REFRESH_TASKS_SIZE}
+     * {@link CacheConstants#DEFAULT_REFRESH_TASK_SIZE}
      * <p>
      * 增加此限制的主要目的是为了限制单个服务器同时运行的任务数，以避免服务器资源耗尽。<br>
      * 当某个时间周期内需要刷新的数据量超过此值，那么剩余未刷新数据将会顺延至下一次线程启动，起到平峰削谷的作用。<br>
