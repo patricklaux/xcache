@@ -22,6 +22,8 @@ public class LettuceConfig {
 
     private int batchSize = 10000;
 
+    private boolean compatible = false;
+
     private StreamOptions stream;
 
     private RedisMetricsOptions metrics;
@@ -85,6 +87,32 @@ public class LettuceConfig {
      */
     public void setBatchSize(int batchSize) {
         this.batchSize = batchSize;
+    }
+
+    /**
+     * 兼容模式，默认值：false
+     * <p>
+     * true：兼容模式，不使用脚本执行数据操作，仅使用 Redis String、Hash……等命令执行数据操作。
+     * <p>
+     * false：非兼容模式，部分批量数据操作使用脚本执行，以提高性能。
+     *
+     * @return {@code Boolean} – 兼容模式，默认值：false
+     */
+    public boolean isCompatible() {
+        return compatible;
+    }
+
+    /**
+     * 兼容模式，默认值：false
+     * <p>
+     * true：兼容模式，不使用脚本执行数据操作，仅使用 Redis String、Hash……等命令执行数据操作。
+     * <p>
+     * false：非兼容模式，部分批量数据操作使用脚本执行，以提高性能。
+     *
+     * @param compatible 是否为兼容模式
+     */
+    public void setCompatible(boolean compatible) {
+        this.compatible = compatible;
     }
 
     /**

@@ -80,8 +80,9 @@ public class StoreProps {
      * Redis 数据存储类型
      * <p>
      * 可选值：<br>
-     * STRING（默认值） – 优点：可以设置过期时间；缺点：key 长，耗内存，缓存数据清空操作复杂。<br>
-     * HASH – 优点：key 更短，省内存，便于清空缓存数据；缺点：无法设置过期时间。
+     * STRING（默认值） – 优点：可以设置过期时间；缺点：key 有前缀，较耗内存，缓存数据清空操作复杂。<br>
+     * HASH – 优点：key 更短，省内存，便于清空缓存数据；缺点：如果 RedisServer 的版本小于 7.4.0，无法设置过期时间；
+     * 如为 Redis-Compatible DB，无法设置过期时间。
      * <p>
      * {@link CacheConstants#DEFAULT_EXTRA_REDIS_TYPE}
      *

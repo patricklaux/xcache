@@ -6,7 +6,7 @@ xcache: # xcache 配置根节点
         provider: caffeine # 使用 id 为 caffeine 的 StoreProvider 创建一级缓存实例（默认值：caffeine）
       second: # 二级缓存配置
         provider: lettuce # 使用 id 为 lettuce 的 StoreProvider 创建二级缓存实例（默认值：none）
-        redis-type: HASH # Redis 数据类型（默认：STRING，如无需过期，可设为 HASH）
+        redis-type: HASH # Redis 数据类型（默认：STRING）
       cache-lock: # 缓存锁配置
         provider: lettuce # LockProviderId（默认值：embed）
         lease-time: 1000 # 锁租期 （默认值：1000 毫秒）

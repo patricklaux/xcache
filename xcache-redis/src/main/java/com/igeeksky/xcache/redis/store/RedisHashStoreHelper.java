@@ -88,6 +88,12 @@ public class RedisHashStoreHelper<V> {
             return;
         }
         String version = redisOperator.version();
+        if (version == null) {
+            String errorMsg = "If using hash as storage and expireAfterWrite > 0," +
+                    " the server must be not redis-compatible.";
+            throw new UnsupportedOperationException(errorMsg);
+        }
+
         String[] array = version.split("\\.");
         String errorMsg = "If using hash as storage and expireAfterWrite > 0," +
                 " the redis_server version must be greater than or equal to 7.4.0";

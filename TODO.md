@@ -65,11 +65,11 @@
 - [X] 【开发】 Redis 获取数据超时时取消 Future
 - [X] 【文档】 Reference
 - [X] 【文档】 架构图
+- [X] 【开发】 `Redis-Hash` 数据槽数量默认为 1
 
 ### 待完成任务
 
-- [ ] 【开发】 `Redis-Hash` 数据槽数量默认为 1
-- [ ] 【开发】 适配 `Pika`
+- [ ] 【开发】 缓存指标增加耗时统计
 - [ ] 【开发】 接入 `micrometer` 作为 `metrics` 实现模块
 - [ ] 【开发】 native-image 适配
 - [ ] 【测试】 增加 Store 测试用例

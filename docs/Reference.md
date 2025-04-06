@@ -976,7 +976,7 @@ xcache:
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，适用于外部刷新实现）
         refresh-after-write: 10000 # （默认值：3600000 毫秒）
         refresh-task-size: 1024 # 刷新线程一个周期内发起运行的最大任务数（默认值：1024）
-        refresh-slot-size: 16 # 刷新数据槽数量（默认值：1），如为 Redis 集群，建议配置为 {节点数 × 4}
+        refresh-slot-size: 16 # 刷新数据槽数量（默认值：1），如为 Redis 集群，建议配置为大于 {节点数 × 4}
         refresh-thread-period: 10000 # 刷新间隔周期（默认值：10000 毫秒）
         shutdown-timeout: 2000
         shutdown-quiet-period: 100
@@ -1010,7 +1010,7 @@ xcache:
           test: test
       second: # 二级缓存配置
         provider: lettuce # StoreProviderId（默认值：none）
-        redis-type: STRING # Redis 命令类型（默认：STRING，如无需过期，可设为 HASH）
+        redis-type: STRING # Redis 数据结构类型（默认：STRING）
         expire-after-write: 7200000 # 数据写入后的存活时间（外部缓存默认值：7200000 单位：毫秒）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，仅适用于外部缓存）
         enable-random-ttl: true # 是否使用随机存活时间（默认值：true，避免大量的 key 集中过期）
@@ -1024,8 +1024,8 @@ xcache:
           test: test
       third: # 三级缓存配置
         provider: none # StoreProviderId（三级缓存默认值：none）
-        redis-type: HASH # Redis 命令类型（默认：STRING，如无需过期，可设为 HASH）
-        data-slot-size: : 16 # HASH 数据槽数量（默认值：1），如为集群，建议配置为 {节点数 × 4}
+        redis-type: HASH # Redis 数据结构类型（默认：STRING）
+        data-slot-size: : 16 # HASH 数据槽数量（默认值：1），如为集群，建议配置为大于 {节点数 × 4}
         expire-after-write: 7200000 # 数据写入后的存活时间（外部缓存默认值：7200000 单位：毫秒）
         enable-group-prefix: true # 是否添加 group 作为前缀（默认值：true，仅适用于外部缓存）
         enable-random-ttl: true # 是否使用随机存活时间（默认值：true，避免大量的 key 集中过期）
@@ -1053,6 +1053,7 @@ xcache:
     lettuce: # Lettuce 客户端配置
       - id: lettuce # RedisOperatorFactory 唯一标识（默认值：lettuce）
         batch-size: 10000 # 单批次命令提交数量阈值（默认值：10000）
+        compatible: false # 是否为兼容模式（默认值：false，如为 true，则使用兼容模式，不使用脚本操作缓存数据）
         metrics: # RedisCacheMetricsProvider 配置
           # 另，Redis StreamPublisher 仅负责发送统计指标信息，统计汇总需用户自行实现
           period: 60000 # 缓存指标统计的时间间隔（默认值：60000，单位：毫秒）

@@ -59,11 +59,12 @@ public class LettuceHolder {
 
         long timeout = genericConfig.getTimeout();
         int batchSize = lettuceConfig.getBatchSize();
+        boolean compatible = lettuceConfig.isCompatible();
 
         this.redisOperatorSupplier = SingletonSupplier.of(() -> factory.redisOperator(CODEC));
         this.redisOperatorProxySupplier = SingletonSupplier.of(() -> {
             RedisOperator<byte[], byte[]> redisOperator = this.redisOperatorSupplier.get();
-            return new LettuceOperatorProxy(timeout, batchSize, redisOperator);
+            return new LettuceOperatorProxy(timeout, batchSize, compatible, redisOperator);
         });
         this.streamOperatorSupplier = SingletonSupplier.of(() -> {
             RedisOperator<byte[], byte[]> redisOperator = this.redisOperatorSupplier.get();
