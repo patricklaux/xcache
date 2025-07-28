@@ -8,7 +8,7 @@
 
 ## 2. 基本架构
 
-<img src="docs/images/architecture.png" alt="Architecture" style="zoom:50%;" />
+<img src="docs/images/xcache-architecture.png" alt="Architecture" style="zoom:50%;" />
 
 **说明**：
 
