@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>xcache-spring-adapter-autoconfigure</artifactId>
+    <name>xcache-spring-adapter-autoconfigure</name>
 
     <dependencies>
         <dependency>
