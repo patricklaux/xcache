@@ -15,4 +15,4 @@ xcache: #【1】Xcache 配置的根节点
     lettuce: #【15】Lettuce 配置
       - id: lettuce #【16】RedisOperatorFactory，RedisStoreProvider…… 唯一标识
         standalone: #【17】单机模式（或副本集模式）配置
-          node: 127.0.0.1:6379 #【18】节点地址
+          node: 192.168.50.157:6379 #【18】节点地址

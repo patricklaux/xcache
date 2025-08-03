@@ -1,6 +1,6 @@
 # Xcache 设计与实现
 
-**Author**: Patrick.Lau	**Version**: 1.0.1
+**Author**: Patrick.Lau	**Version**: 1.0.2
 
 --------
 
@@ -24,17 +24,17 @@
 ### 2.1 数据查询
 - **流程**：按照一级缓存 → 二级缓存 → 三级缓存的顺序依次查询。
 - **图示**：
-  ![cache-data-query](images/Design/cache-data-query.png)
+  ![cache-data-query](images/Design/xcache-cache-data-query.png)
 
 ### 2.2 数据写入
 - **流程**：按照三级缓存 → 二级缓存 → 一级缓存的顺序依次写入。
 - **图示**：
-  ![cache-data-write](images/Design/cache-data-write.png)
+  ![cache-data-write](images/Design/xcache-cache-data-write.png)
 
 ### 2.3 数据删除
 - **流程**：按照三级缓存 → 二级缓存 → 一级缓存的顺序依次删除。
 - **图示**：
-  ![cache-data-delete](images/Design/cache-data-delete.png)
+  ![cache-data-delete](images/Design/xcache-cache-data-delete.png)
 
 ---
 
@@ -55,7 +55,7 @@
 
 ### 3.2 图示
 
-![cache-interface](images/Design/cache-interface.png)
+![cache-interface](images/Design/xcache-cache-interface.png)
 
 ---
 
@@ -74,7 +74,7 @@
 
 `Caffeine` 是高性能的 Java 缓存库，关于其性能和设计这里不再赘述，感兴趣的移步 [Github](https://github.com/ben-manes/caffeine)。
 
-这里介绍一下 其预留的一些扩展点，及如何在 `Xcache` 中运用这些扩展点。
+这里介绍一下其预留的一些扩展点，及如何在 `Xcache` 中运用这些扩展点。
 
 #### 随机过期时间
 
@@ -118,19 +118,31 @@
 
 `RedisHashStore` 使用 `Redis-Hash` 作为数据存储，支持 `Standalone` 和 `Sentinel`  模式。
 
-另，Redis 7.4.0 及之后的版本，已经支持对 Hash 字段设置过期时间，
+另，Redis 7.4.0 及之后的版本，已经支持对 Hash 字段设置过期时间。
 
 #### RedisClusterHashStore
 
 `RedisHashStore` 使用 `Redis-Hash` 作为数据存储，支持 `cluster` 模式。
 
-**一致性 Hash**
+#### 一致性 Hash
 
-当使用集群模式，且数据存储使用 `Redis-Hash` 数据结构时，为了避免数据集中存储于某个节点，`RedisClusterHashStore` 可根据配置创建多个 `HashTable` 作为数据槽，并自动命名为 `cache-name:0`, `cache-name:1`, ...  , `cache-name:n-1`, `cache-name:n`。
+如 `Redis-Server` 为集群模式，且数据存储使用 `Redis-Hash` 数据结构时，为了避免数据集中存储于某个节点，`RedisClusterHashStore` 可根据配置创建多个 `HashTable` 作为数据槽，并自动命名为 `cache-name:0`, `cache-name:1`, ...  , `cache-name:n-1`, `cache-name:n`。
 
 `n` 的值可以通过 `data-slot-size` 进行配置，默认为 1，可配置为 `节点数 × 4`。
 
 当需要查询或操作数据时，将根据键的 `CRC16` 计算值求余得到数据所在的 `slot`。
+
+#### 兼容模式
+
+当数据集规模非常大时，如果将所有数据都存放到内存型缓存库，费用将会非常高昂，一个比较好的解决方案是采用硬盘型缓存库。
+
+开源界有许多硬盘型缓存库，这些库很多都兼容 Redis 通信协议，通常都支持常用的 `String` 和 `Hash` 这两种数据类型，但绝大多数都不支持脚本或函数执行。
+
+当使用兼容 `Redis` 的硬盘型缓存库时，`Redis` 客户端初始化时可以将 `compatible` 配置为 `true`，打开兼容模式，则不再使用脚本来操作缓存数据。
+
+兼容模式下，`RedisSpinLock`、`RedisCacheRefresh` 因为必须使用脚本来实现，因此一定无法使用。
+
+> 注：非兼容模式下，部分批量数据操作会采用脚本来提升性能。
 
 ---
 
@@ -182,7 +194,7 @@
 
 ### 6.2. 加锁解锁流程
 
-![cache-lock](images/Design/cache-lock.png)
+![cache-lock](images/Design/xcache-cache-lock.png)
 
 
 
@@ -206,7 +218,7 @@
 
 ### 7.2. 回源加载流程
 
-![cache-load](images/Design/cache-load.png)
+![cache-load](images/Design/xcache-cache-load.png)
 
 上面这个流程中，我们可以看到只有 `ContainsPredicate`  返回 `true` 时才会加锁回源。
 
@@ -233,7 +245,7 @@
 
 #### 图示
 
-![cache-refresh](images/Design/cache-refresh.png)
+![cache-refresh](images/Design/xcache-cache-refresh.png)
 
 ### 8.2. 说明
 
@@ -251,7 +263,7 @@
 
 如果有共享缓存（如 `Redis`），可以配置为 `AWAIT`，取消刷新任务有可能会导致缓存数据过期。当然，更好的方式是将数据过期时间配置为数倍于刷新周期，即使一次刷新失败，缓存数据也不会过期，除非是连续多次刷新失败。
 
-![cache-refresh-shutdown](images/Design/cache-refresh-shutdown.png)
+![cache-refresh-shutdown](images/Design/xcache-cache-refresh-shutdown.png)
 
 ---
 
@@ -283,11 +295,11 @@
 
 #### 图示
 
-![cache-sync-interface](images/Design/cache-sync-interface.png)
+![cache-sync-interface](images/Design/xcache-cache-sync-interface.png)
 
 ### 9.2. 流程
 
-![cache-sync-process](images/Design/cache-sync-process.png)
+![cache-sync-process](images/Design/xcache-cache-sync-process.png)
 
 **注意**：
 
@@ -397,7 +409,7 @@
 
 ## 13. 缓存配置生成
 
-![cache-config](images/Design/cache-config.png)
+![cache-config](images/Design/xcache-cache-config.png)
 
 
 

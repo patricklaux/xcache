@@ -42,7 +42,7 @@ Xcache 是易于扩展、功能强大且配置灵活的 Java 多级缓存框架�
 
 ### 2.2. 架构
 
-![Architecture](images/architecture.png)
+![Architecture](images/xcache-architecture.png)
 
 **说明**：
 
@@ -612,7 +612,6 @@ public class UserCacheService {
 使用 Spring cache 注解，除了需引入 `xcache-spring-boot-starter`，还需引入 `xcache-spring-adapter-autoconfigure`。
 
 ```xml
-
 <dependencies>
     <dependency>
         <groupId>com.igeeksky.xcache</groupId>
@@ -1282,7 +1281,7 @@ xcache:
 
 #### 5.1.2. 执行逻辑
 
-![image-20241021093622933](images/cacheable.png)
+![image-20241021093622933](images/xcache-cacheable.png)
 
 ### 5.2. @CacheableAll
 
@@ -1300,7 +1299,7 @@ xcache:
 
 #### 5.2.2. 执行逻辑
 
-![cacheableAll](images/cacheableAll.png)
+![cacheableAll](images/xcache-cacheableAll.png)
 
 
 
@@ -1363,7 +1362,7 @@ public class CacheableAllTest {
 
 #### 5.3.2. 执行逻辑
 
-![cacheableAll](images/cachePut.png)
+![cacheableAll](images/xcache-cachePut.png)
 
 ### 5.4. @CachePutAll
 
@@ -1382,7 +1381,7 @@ public class CacheableAllTest {
 
 #### 5.4.2. 执行逻辑
 
-![cacheableAll](images/cachePutAll.png)
+![cacheableAll](images/xcache-cachePutAll.png)
 
 ### 5.5. @CacheRemove
 
@@ -1402,7 +1401,7 @@ public class CacheableAllTest {
 
 #### 5.5.2. 执行逻辑
 
-![cacheRemove](images/cacheRemove.png)
+![cacheRemove](images/xcache-cacheRemove.png)
 
 ### 5.6. @CacheRemoveAll
 
@@ -1422,7 +1421,7 @@ public class CacheableAllTest {
 
 #### 5.6.2. 执行逻辑
 
-![cacheRemoveAll](images/cacheRemoveAll.png)
+![cacheRemoveAll](images/xcache-cacheRemoveAll.png)
 
 ### 5.7. @CacheClear
 
@@ -1441,7 +1440,7 @@ public class CacheableAllTest {
 
 #### 5.7.2. 执行逻辑
 
-![cacheClear](images/cacheClear.png)
+![cacheClear](images/xcache-cacheClear.png)
 
 ### 5.8. @CacheConfig
 
@@ -1461,7 +1460,7 @@ public class CacheableAllTest {
 
 #### 5.8.2. 执行逻辑
 
-![cacheClear](images/cacheConfig.png)
+![cacheClear](images/xcache-cacheConfig.png)
 
 1. 公共属性完整性
 
@@ -2025,7 +2024,7 @@ Cache-Aside 策略是最常用的缓存模式，其主要特点是缓存对象�
 4. 【Cache Miss】**应用程序**保存回源结果到缓存。
 5. 应用程序返回响应结果给用户。
 
-![image-20241122205329526](images/cache-aside1.png)
+![image-20241122205329526](images/xcache-cache-aside1.png)
 
 #### 8.1.2. 写数据
 
@@ -2035,7 +2034,7 @@ Cache-Aside 策略是最常用的缓存模式，其主要特点是缓存对象�
 4. 缓存保存数据。
 5. 应用程序返回响应结果给用户。
 
-![image-20241122205733264](images/cache-aside2.png)
+![image-20241122205733264](images/xcache-cache-aside2.png)
 
 #### 8.1.3. 代码示例
 
@@ -2084,7 +2083,7 @@ public class TestCase {
 4. 【Cache Miss】**缓存**保存回源结果。
 5. 应用程序返回响应结果给用户。
 
-![image-20241122210852584](images/read-through.png)
+![image-20241122210852584](images/xcache-read-through.png)
 
 #### 8.2.2. 代码示例
 
@@ -2102,7 +2101,7 @@ public class TestCase {
 4. **缓存**保存数据。
 5. 应用程序返回响应结果给用户。
 
-![image-20241122212348666](images/wright-through.png)
+![image-20241122212348666](images/xcache-wright-through.png)
 
 #### 8.3.2. 代码示例
 
@@ -2120,7 +2119,7 @@ public class TestCase {
 4. **缓存**保存数据。
 5. 应用程序返回响应结果给用户。
 
-![image-20241122212749274](images/wright-behind.png)
+![image-20241122212749274](images/xcache-wright-behind.png)
 
 #### 8.4.2. 代码示例
 
