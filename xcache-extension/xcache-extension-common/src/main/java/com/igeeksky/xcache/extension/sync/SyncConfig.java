@@ -8,6 +8,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 数据同步配置
+ *
+ * @param <V> 缓存值类型
  * @author Patrick.Lau
  * @since 1.0.0 2024/7/7
  */
