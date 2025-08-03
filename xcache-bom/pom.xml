@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>xcache-bom</artifactId>
-    <name>xcache dependencies</name>
+    <name>xcache bom</name>
     <description>${project.name}</description>
     <url>https://github.com/patricklaux/xcache</url>
 
